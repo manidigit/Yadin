@@ -1,0 +1,8 @@
+{
+  "name": "Yadin",
+  "description": "Smart spaced repetition vocabulary learning application",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
