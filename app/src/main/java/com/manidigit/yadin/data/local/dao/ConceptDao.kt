@@ -16,7 +16,6 @@ data class ConceptWithContents(
     val id: String,
     val entryType: String,
     val categoryId: String?,
-    val favorite: Boolean,
     val active: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
@@ -87,9 +86,6 @@ interface ConceptDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertConceptCategory(item: ConceptCategoryEntity)
 
-    @Query("UPDATE concepts SET favorite = :favorite, updatedAt = :timestamp WHERE id = :conceptId")
-    suspend fun setFavorite(conceptId: String, favorite: Boolean, timestamp: Long = System.currentTimeMillis())
-
     @Query("UPDATE concepts SET active = 0, updatedAt = :timestamp WHERE id = :conceptId")
     suspend fun softDeleteConcept(conceptId: String, timestamp: Long = System.currentTimeMillis())
 
@@ -111,13 +107,6 @@ interface ConceptDao {
         LIMIT :limit
     """)
     suspend fun searchConcepts(query: String, limit: Int = 100): List<ConceptEntity>
-
-    @Query("""
-        SELECT c.* FROM concepts c
-        WHERE c.active = 1 AND c.favorite = 1
-        ORDER BY c.updatedAt DESC
-    """)
-    fun getFavoriteConceptsFlow(): Flow<List<ConceptEntity>>
 
     @Query("""
         SELECT c.* FROM concepts c

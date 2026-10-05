@@ -121,7 +121,6 @@ class VocabularyRepository(
             id = conceptEntity.id,
             entryType = conceptEntity.entryType,
             categoryId = conceptEntity.categoryId,
-            favorite = conceptEntity.favorite,
             active = conceptEntity.active,
             createdAt = conceptEntity.createdAt,
             updatedAt = conceptEntity.updatedAt
@@ -202,7 +201,6 @@ class VocabularyRepository(
                 id = conceptId,
                 entryType = entryType,
                 categoryId = categoryId,
-                favorite = false,
                 active = true,
                 createdAt = now,
                 updatedAt = now
@@ -329,10 +327,6 @@ class VocabularyRepository(
             conceptDao.insertContents(contents)
             Result.success(Unit)
         }
-    }
-
-    suspend fun setFavorite(conceptId: String, favorite: Boolean) {
-        conceptDao.setFavorite(conceptId, favorite)
     }
 
     suspend fun deleteWord(conceptId: String) {

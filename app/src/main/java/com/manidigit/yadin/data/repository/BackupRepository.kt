@@ -98,7 +98,6 @@ class BackupRepository(
                 co.put("id", c.id)
                 co.put("entryType", c.entryType.name)
                 co.put("categoryId", c.categoryId)
-                co.put("favorite", c.favorite)
                 co.put("active", c.active)
                 co.put("createdAt", c.createdAt)
                 co.put("updatedAt", c.updatedAt)
@@ -319,7 +318,6 @@ class BackupRepository(
                                 id = cid,
                                 entryType = entryType,
                                 categoryId = co.optString("categoryId", "").ifEmpty { null },
-                                favorite = co.optBoolean("favorite", false),
                                 active = co.optBoolean("active", true),
                                 createdAt = co.optLong("createdAt", System.currentTimeMillis()),
                                 updatedAt = co.optLong("updatedAt", System.currentTimeMillis())

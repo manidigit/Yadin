@@ -462,18 +462,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun toggleFavorite(conceptId: String, currentFav: Boolean) {
-        viewModelScope.launch {
-            vocabularyRepo.setFavorite(conceptId, !currentFav)
-            _selectedWordDetail.value?.let {
-                if (it.concept.id == conceptId) {
-                    _selectedWordDetail.value = it.copy(concept = it.concept.copy(favorite = !currentFav))
-                }
-            }
-            performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value)
-        }
-    }
-
     fun deleteWord(conceptId: String) {
         viewModelScope.launch {
             vocabularyRepo.deleteWord(conceptId)
@@ -531,6 +519,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Backup & Restore
+    fun exportBackupToUri(type: BackupType, uri: android.net.Uri) {
+        viewModelScope.launch {
+            _isBackupProcessing.value = true
+            _isBackupError.value = false
+            _backupProgress.value = 0f
+            _backupProgressMessage.value = "در حال ایجاد فایل پشتیبان..."
+            try {
+                val json = backupRepo.createBackupJson(type) { p, msg ->
+                    _backupProgress.value = p
+                    _backupProgressMessage.value = msg
+                }
+                val context = getApplication<Application>()
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(json.toByteArray(Charsets.UTF_8))
+                    outputStream.flush()
+                }
+                _backupLastResult.value = "فایل پشتیبان با موفقیت در مسیر انتخاب‌شده ذخیره شد."
+                _isBackupError.value = false
+            } catch (e: Exception) {
+                _backupLastResult.value = "خطا در ذخیره فایل پشتیبان: ${e.message}"
+                _isBackupError.value = true
+            } finally {
+                _isBackupProcessing.value = false
+            }
+        }
+    }
+
     fun exportBackup(type: BackupType) {
         viewModelScope.launch {
             _isBackupProcessing.value = true

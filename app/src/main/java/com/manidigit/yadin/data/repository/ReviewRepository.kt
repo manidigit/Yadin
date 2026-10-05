@@ -211,8 +211,7 @@ class ReviewRepository(
                     pronunciation = sourceContent.pronunciation,
                     categoryName = category,
                     stage = stage,
-                    difficulty = diff,
-                    isFavorite = concept.favorite
+                    difficulty = diff
                 )
             )
         }
@@ -243,25 +242,30 @@ class ReviewRepository(
             val difficulty: VocabularyDifficulty
         )
 
-        val pool = allContents.map { content ->
-            DistractorPoolItem(
-                conceptId = content.conceptId,
-                text = content.text.trim(),
-                categoryId = categoryMap[content.conceptId],
-                entryType = entryTypeMap[content.conceptId] ?: EntryType.WORD,
-                difficulty = diffMap[content.conceptId] ?: VocabularyDifficulty.MEDIUM
-            )
+        // Group translations for each concept so full meanings appear in one option
+        val pool = allContents.groupBy { it.conceptId }.mapNotNull { (cId, contentsList) ->
+            val combinedText = contentsList.map { it.text.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("، ")
+            if (combinedText.isBlank()) null else {
+                DistractorPoolItem(
+                    conceptId = cId,
+                    text = combinedText,
+                    categoryId = categoryMap[cId],
+                    entryType = entryTypeMap[cId] ?: EntryType.WORD,
+                    difficulty = diffMap[cId] ?: VocabularyDifficulty.MEDIUM
+                )
+            }
         }.distinctBy { normalizeQuiz(it.text) }
 
         val questions = mutableListOf<QuizQuestion>()
 
         for (card in cards) {
-            val correctAnswer = card.targetTranslations.firstOrNull()?.trim() ?: ""
-            val allCorrect = card.targetTranslations.map { it.trim() }
+            val correctAnswer = card.targetTranslations.map { it.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("، ")
+            val allCorrectParts = card.targetTranslations.map { it.trim() }
 
             val candidatePool = pool.filter { item ->
                 item.conceptId != card.conceptId &&
-                !allCorrect.any { correct -> QuizDistractorScorer.areSemanticallyColliding(item.text, correct) }
+                !QuizDistractorScorer.areSemanticallyColliding(item.text, correctAnswer) &&
+                !allCorrectParts.any { correct -> QuizDistractorScorer.areSemanticallyColliding(item.text, correct) }
             }
 
             data class ScoredCandidate(

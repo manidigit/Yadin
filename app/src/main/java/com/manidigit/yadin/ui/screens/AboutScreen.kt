@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.School
@@ -301,9 +300,9 @@ fun AboutScreen(onBack: () -> Unit) {
                     color = colors.onSurfaceVariant
                 )
                 Icon(
-                    imageVector = Icons.Default.Favorite,
+                    imageVector = Icons.Default.AutoAwesome,
                     contentDescription = null,
-                    tint = colors.error,
+                    tint = colors.primary,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(

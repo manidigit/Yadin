@@ -88,7 +88,6 @@ class SeedImporter(
                                             var id = ""
                                             var categoryId: String? = null
                                             var entryTypeStr = "WORD"
-                                            var fav = false
                                             var act = true
                                             while (reader.hasNext()) {
                                                 when (reader.nextName()) {
@@ -101,7 +100,6 @@ class SeedImporter(
                                                         }
                                                     }
                                                     "entryType" -> entryTypeStr = reader.nextString()
-                                                    "favorite" -> fav = reader.nextBoolean()
                                                     "active" -> act = reader.nextBoolean()
                                                     else -> reader.skipValue()
                                                 }
@@ -109,7 +107,7 @@ class SeedImporter(
                                             reader.endObject()
                                             if (id.isNotEmpty()) {
                                                 val eType = try { EntryType.valueOf(entryTypeStr) } catch (_: Exception) { EntryType.WORD }
-                                                concepts.add(ConceptEntity(id, eType, categoryId, fav, act))
+                                                concepts.add(ConceptEntity(id, eType, categoryId, act))
                                             }
                                         }
                                         reader.endArray()

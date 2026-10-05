@@ -303,7 +303,6 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onCategoryFilterChange = { viewModel.onCategoryFilterChanged(it) },
                 onStageFilterChange = { viewModel.onStageFilterChanged(it) },
                 onSelectWord = { conceptId -> viewModel.selectWordDetail(conceptId) },
-                onToggleFavorite = { cid, fav -> viewModel.toggleFavorite(cid, fav) },
                 onAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
                 onBack = { viewModel.navigateTo(Screen.Home) }
             )
@@ -316,8 +315,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 word = wordDetail,
                 onBack = { viewModel.navigateTo(Screen.Library) },
                 onEdit = { viewModel.navigateTo(Screen.EditWordScreen(screen.conceptId)) },
-                onDelete = { viewModel.deleteWord(screen.conceptId) },
-                onToggleFavorite = { fav -> viewModel.toggleFavorite(screen.conceptId, fav) }
+                onDelete = { viewModel.deleteWord(screen.conceptId) }
             )
         }
 
@@ -421,6 +419,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 lastResult = lastResult,
                 isError = isError,
                 onExportBackup = { type -> viewModel.exportBackup(type) },
+                onExportBackupToUri = { type, uri -> viewModel.exportBackupToUri(type, uri) },
                 onRestoreBackup = { json, replace -> viewModel.restoreBackup(json, replace) },
                 onBack = { viewModel.navigateTo(Screen.Settings) }
             )

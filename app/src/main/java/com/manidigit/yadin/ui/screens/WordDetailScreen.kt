@@ -20,8 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -50,8 +48,7 @@ fun WordDetailScreen(
     word: WordDetail?,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    onToggleFavorite: (Boolean) -> Unit
+    onDelete: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
@@ -109,13 +106,6 @@ fun WordDetailScreen(
                 )
 
                 Row {
-                    IconButton(onClick = { onToggleFavorite(word.concept.favorite) }) {
-                        Icon(
-                            imageVector = if (word.concept.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "علاقه‌مندی",
-                            tint = if (word.concept.favorite) colors.error else colors.onSurfaceVariant
-                        )
-                    }
                     IconButton(onClick = onDelete) {
                         Icon(
                             imageVector = Icons.Default.Delete,

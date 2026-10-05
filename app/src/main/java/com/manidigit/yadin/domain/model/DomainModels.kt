@@ -4,7 +4,6 @@ data class Concept(
     val id: String,
     val entryType: EntryType,
     val categoryId: String?,
-    val favorite: Boolean,
     val active: Boolean,
     val createdAt: Long,
     val updatedAt: Long
@@ -118,8 +117,7 @@ data class ReviewCard(
     val pronunciation: String?,
     val categoryName: String?,
     val stage: Stage,
-    val difficulty: VocabularyDifficulty,
-    val isFavorite: Boolean
+    val difficulty: VocabularyDifficulty
 )
 
 data class QuizQuestion(

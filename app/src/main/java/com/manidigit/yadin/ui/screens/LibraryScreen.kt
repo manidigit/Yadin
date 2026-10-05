@@ -21,8 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -60,7 +58,6 @@ fun LibraryScreen(
     onCategoryFilterChange: (String?) -> Unit,
     onStageFilterChange: (Stage?) -> Unit,
     onSelectWord: (String) -> Unit,
-    onToggleFavorite: (String, Boolean) -> Unit,
     onAddWord: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -198,8 +195,7 @@ fun LibraryScreen(
                     items(words, key = { it.concept.id }) { word ->
                         WordItemCard(
                             word = word,
-                            onClick = { onSelectWord(word.concept.id) },
-                            onToggleFav = { onToggleFavorite(word.concept.id, word.concept.favorite) }
+                            onClick = { onSelectWord(word.concept.id) }
                         )
                     }
                     item {
@@ -252,8 +248,7 @@ fun FilterChip(
 @Composable
 fun WordItemCard(
     word: WordDetail,
-    onClick: () -> Unit,
-    onToggleFav: () -> Unit
+    onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
@@ -307,15 +302,6 @@ fun WordItemCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SpeakButton(text = word.sourceContent.text, languageCode = "es")
-
-                IconButton(onClick = onToggleFav) {
-                    Icon(
-                        imageVector = if (word.concept.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "علاقه‌مندی",
-                        tint = if (word.concept.favorite) colors.error else colors.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
             }
         }
     }

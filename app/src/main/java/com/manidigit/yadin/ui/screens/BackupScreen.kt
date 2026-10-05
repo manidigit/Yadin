@@ -1,5 +1,8 @@
 package com.manidigit.yadin.ui.screens
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,8 +29,10 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Button
@@ -37,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -52,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -72,9 +79,11 @@ fun BackupScreen(
     lastResult: String?,
     isError: Boolean,
     onExportBackup: (BackupType) -> Unit,
+    onExportBackupToUri: ((BackupType, android.net.Uri) -> Unit)? = null,
     onRestoreBackup: (String, Boolean) -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     val clipboardManager = LocalClipboardManager.current
@@ -83,6 +92,32 @@ fun BackupScreen(
     var restoreJsonText by remember { mutableStateOf("") }
     var isReplaceMode by remember { mutableStateOf(false) }
     var activeTab by remember { mutableStateOf(0) } // 0 = Export, 1 = Restore
+
+    val exportDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null && onExportBackupToUri != null) {
+            onExportBackupToUri(selectedBackupType, uri)
+        }
+    }
+
+    val importFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val text = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                    if (text.isNotBlank()) {
+                        restoreJsonText = text
+                        Toast.makeText(context, "فایل پشتیبان با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "خطا در خواندن فایل: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -350,8 +385,12 @@ fun BackupScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
+                // 1. SAF Storage Picker Export (User selects destination folder and name)
                 Button(
-                    onClick = { onExportBackup(selectedBackupType) },
+                    onClick = {
+                        val fileName = "yadin_backup_${selectedBackupType.name.lowercase()}_${System.currentTimeMillis()}.json"
+                        exportDocumentLauncher.launch(fileName)
+                    },
                     enabled = !isProcessing,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -362,26 +401,66 @@ fun BackupScreen(
                         contentColor = colors.onPrimary
                     )
                 ) {
-                    Icon(imageVector = Icons.Default.CloudDownload, contentDescription = null)
+                    Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("ایجاد و ذخیره فایل پشتیبان JSON", fontWeight = FontWeight.Bold)
+                    Text("انتخاب پوشه و ذخیره فایل پشتیبان در دستگاه", fontWeight = FontWeight.Bold)
+                }
+
+                // 2. Fallback quick save to internal storage
+                OutlinedButton(
+                    onClick = { onExportBackup(selectedBackupType) },
+                    enabled = !isProcessing,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(dimensions.cornerMedium)
+                ) {
+                    Icon(imageVector = Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("ذخیره سریع در حافظه داخلی برنامه", fontSize = 13.sp)
                 }
             } else {
                 // RESTORE TAB
                 Text(
-                    text = "بازگردانی اطلاعات از متن یا فایل JSON",
+                    text = "بازگردانی اطلاعات از فایل یا متن JSON",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
 
+                // 1. Prominent File Picker Button
+                Button(
+                    onClick = { importFileLauncher.launch("*/*") },
+                    enabled = !isProcessing,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(dimensions.cornerMedium),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.secondary,
+                        contentColor = colors.onSecondary
+                    )
+                ) {
+                    Icon(imageVector = Icons.Default.FileOpen, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("انتخاب و بارگذاری فایل پشتیبان (JSON) از دستگاه", fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "یا متن فایل JSON را مستقیماً در کادر زیر وارد کنید:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+
                 OutlinedTextField(
                     value = restoreJsonText,
                     onValueChange = { restoreJsonText = it },
-                    label = { Text("متن پشتیبان یا JSON را اینجا قرار دهید") },
+                    label = { Text("محتوای فایل پشتیبان JSON") },
                     placeholder = { Text("{\"format\":\"yadin-backup\", ...}") },
-                    minLines = 5,
-                    maxLines = 8,
+                    minLines = 4,
+                    maxLines = 7,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(dimensions.cornerSmall)
                 )
