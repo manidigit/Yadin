@@ -10,7 +10,8 @@ import androidx.compose.ui.unit.dp
 enum class AppTheme(val id: String, val titleFa: String, val descriptionFa: String) {
     GTP("gtp", "تم GTP", "طیف بنفش و ارغوانی نئونی، متراکم و شارپ با خطوط هندسی دقیق"),
     GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی آینده‌نگرانه، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم"),
-    CLAUDE("claude", "تم Claude (کلاد)", "طراحی مینیمال، متین و آکادمیک با طیف گرم سفالی، پس‌زمینه کاغذی عاجی، تایپوگرافی چشم‌نواز و کنتراست ارگونومیک")
+    CLAUDE("claude", "تم Claude (کلاد)", "طراحی مینیمال، متین و آکادمیک با طیف گرم سفالی، پس‌زمینه کاغذی عاجی، تایپوگرافی چشم‌نواز و کنتراست ارگونومیک"),
+    GOOGOLI("googoli", "تم گوگولی (Googoli)", "طراحی شاداب، دلنشین و بازی‌وار با رنگ‌های پاستلی جذاب (صورتی پاستلی، هلویی و نعنایی)، گوشه‌های حباب‌گون و استایل بازی‌گونه")
 }
 
 @Immutable
@@ -193,6 +194,64 @@ val ClaudeDarkColors = YadinColors(
     cardBorderBrush = Brush.linearGradient(listOf(Color(0xFF3E362E), Color(0xFF4C4238))),
     accentGlow = Color(0x35E08466),
     isGemini = false
+)
+
+val GoogoliLightColors = YadinColors(
+    primary = Color(0xFFFF5E7E),
+    onPrimary = Color(0xFFFFFFFF),
+    secondary = Color(0xFF38B2AC),
+    onSecondary = Color(0xFFFFFFFF),
+    background = Color(0xFFFFF7F9),
+    surface = Color(0xFFFFFFFF),
+    surfaceVariant = Color(0xFFFFEDF2),
+    onSurface = Color(0xFF2D1F2D),
+    onSurfaceVariant = Color(0xFF785E75),
+    card = Color(0xFFFFFFFF),
+    outline = Color(0xFFFFD4E0),
+    success = Color(0xFF38B2AC),
+    warning = Color(0xFFFF9F43),
+    error = Color(0xFFFF4757),
+    info = Color(0xFF54A0FF),
+    heroGradient = Brush.linearGradient(listOf(Color(0xFFFF5E7E), Color(0xFFFF9F43), Color(0xFFA55EEA))),
+    cardBorderBrush = Brush.linearGradient(listOf(Color(0xFFFFD4E0), Color(0xFFE8D7F9))),
+    accentGlow = Color(0x35FF5E7E),
+    isGemini = false
+)
+
+val GoogoliDarkColors = YadinColors(
+    primary = Color(0xFFFF7597),
+    onPrimary = Color(0xFF1E1019),
+    secondary = Color(0xFF4FD1C5),
+    onSecondary = Color(0xFF0C1A17),
+    background = Color(0xFF19121E),
+    surface = Color(0xFF241A2B),
+    surfaceVariant = Color(0xFF33233D),
+    onSurface = Color(0xFFFFF0F5),
+    onSurfaceVariant = Color(0xFFC7B3CF),
+    card = Color(0xFF241A2B),
+    outline = Color(0xFF523B61),
+    success = Color(0xFF4FD1C5),
+    warning = Color(0xFFFFB067),
+    error = Color(0xFFFF6B81),
+    info = Color(0xFF70A1FF),
+    heroGradient = Brush.linearGradient(listOf(Color(0xFFFF7597), Color(0xFFFFB067), Color(0xFFBE82FF))),
+    cardBorderBrush = Brush.linearGradient(listOf(Color(0xFF523B61), Color(0xFF6B487A))),
+    accentGlow = Color(0x45FF7597),
+    isGemini = false
+)
+
+val GoogoliDimensions = YadinDimensions(
+    screenPadding = 16.dp,
+    contentGap = 12.dp,
+    sectionGap = 16.dp,
+    statCardHeight = 116.dp,
+    navHeight = 72.dp,
+    cornerSmall = 12.dp,
+    cornerMedium = 20.dp,
+    cornerLarge = 28.dp,
+    cornerPill = 36.dp,
+    cardElevation = 3.dp,
+    cardBorderAlpha = 0.75f
 )
 
 val ClaudeDimensions = YadinDimensions(

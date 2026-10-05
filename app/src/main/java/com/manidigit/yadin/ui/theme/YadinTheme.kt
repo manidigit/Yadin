@@ -73,17 +73,20 @@ fun YadinTheme(
 ) {
     val cleanTheme = themeId.lowercase()
     val colors = when {
+        cleanTheme == "googoli" && isDark -> GoogoliDarkColors
+        cleanTheme == "googoli" && !isDark -> GoogoliLightColors
         cleanTheme == "claude" && isDark -> ClaudeDarkColors
         cleanTheme == "claude" && !isDark -> ClaudeLightColors
         cleanTheme == "gemini" && isDark -> GeminiDarkColors
         cleanTheme == "gemini" && !isDark -> GeminiLightColors
         cleanTheme == "gtp" && isDark -> GtpDarkColors
         cleanTheme == "gtp" && !isDark -> GtpLightColors
-        isDark -> ClaudeDarkColors
-        else -> ClaudeLightColors
+        isDark -> GoogoliDarkColors
+        else -> GoogoliLightColors
     }
 
     val dimensions = when (cleanTheme) {
+        "googoli" -> GoogoliDimensions
         "claude" -> ClaudeDimensions
         "gemini" -> GeminiDimensions
         else -> GtpDimensions

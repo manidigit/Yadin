@@ -246,6 +246,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val next = when (themeId.value.lowercase()) {
                 "gtp" -> "gemini"
                 "gemini" -> "claude"
+                "claude" -> "googoli"
                 else -> "gtp"
             }
             settingsRepo.setThemeId(next)

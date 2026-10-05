@@ -79,6 +79,7 @@ fun SettingsScreen(
     var themeMenuExpanded by remember { mutableStateOf(false) }
 
     val currentThemeTitle = when (currentThemeId.lowercase()) {
+        "googoli" -> "تم گوگولی (Googoli)"
         "claude" -> "تم Claude (کلاد)"
         "gemini" -> "تم Gemini"
         else -> "تم GTP"
@@ -184,6 +185,7 @@ fun SettingsScreen(
                         modifier = Modifier.background(colors.surface)
                     ) {
                         listOf(
+                            Triple("googoli", "تم گوگولی (Googoli)", Color(0xFFFF5E7E)),
                             Triple("claude", "تم Claude (کلاد)", Color(0xFFC15F3D)),
                             Triple("gemini", "تم Gemini", Color(0xFF1A73E8)),
                             Triple("gtp", "تم GTP", Color(0xFF7C3AED))

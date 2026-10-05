@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
@@ -86,6 +87,27 @@ fun HomeScreen(
     onOpenAbout: () -> Unit
 ) {
     when (themeId.lowercase()) {
+        "googoli" -> {
+            GoogoliHomeContent(
+                dueCount = dueCount,
+                statistics = statistics,
+                difficultyCounts = difficultyCounts,
+                isDark = isDark,
+                activePair = activePair,
+                onToggleTheme = onToggleTheme,
+                onToggleDarkMode = onToggleDarkMode,
+                onOpenReviewSetup = onOpenReviewSetup,
+                onStartReview = onStartReview,
+                onDifficultyFilterClick = onDifficultyFilterClick,
+                onOpenLibrary = onOpenLibrary,
+                onOpenAddWord = onOpenAddWord,
+                onOpenImport = onOpenImport,
+                onOpenProgress = onOpenProgress,
+                onOpenSettings = onOpenSettings,
+                onOpenBackup = onOpenBackup,
+                onOpenAbout = onOpenAbout
+            )
+        }
         "claude" -> {
             ClaudeHomeContent(
                 dueCount = dueCount,
@@ -588,6 +610,479 @@ private fun ClaudeActionTile(
                     tint = color,
                     modifier = Modifier.size(18.dp)
                 )
+            }
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    fontSize = 10.sp
+                )
+            }
+        }
+    }
+}
+
+/**
+ * -------------------------------------------------------------
+ * GOOGOLI THEME LAYOUT (Cute, Playful, Pastel, Delightful & Sweet)
+ * -------------------------------------------------------------
+ */
+@Composable
+private fun GoogoliHomeContent(
+    dueCount: Int,
+    statistics: StatisticsSummary,
+    difficultyCounts: Map<VocabularyDifficulty, Int>,
+    isDark: Boolean,
+    activePair: String,
+    onToggleTheme: () -> Unit,
+    onToggleDarkMode: () -> Unit,
+    onOpenReviewSetup: (ReviewType) -> Unit,
+    onStartReview: (ReviewType, ReviewMode) -> Unit,
+    onDifficultyFilterClick: (VocabularyDifficulty) -> Unit,
+    onOpenLibrary: () -> Unit,
+    onOpenAddWord: () -> Unit,
+    onOpenImport: () -> Unit,
+    onOpenProgress: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenBackup: () -> Unit,
+    onOpenAbout: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+            .padding(horizontal = dimensions.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // 1. Cute Playful Header
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(colors.heroGradient),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "سلام قشنگم! ✨",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(colors.primary.copy(alpha = 0.18f))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "گوگولی 🌸",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                            }
+                        }
+                        Text(
+                            text = if (activePair == "es-fa") "🇪🇸 اسپانیایی ⇄ فارسی 🇮🇷" else activePair,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Controls: Streak + Theme Switcher + Dark Mode
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    StreakChip(streakDays = statistics.currentStreakDays)
+
+                    // Theme Pill
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(dimensions.cornerPill))
+                            .background(colors.surfaceVariant)
+                            .clickable { onToggleTheme() }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = "تغییر پوسته",
+                                tint = colors.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "گوگولی",
+                                color = colors.primary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    // Dark/Light Mode
+                    IconButton(
+                        onClick = onToggleDarkMode,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = "حالت شب/روز",
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // 2. Sweet Hero Review Card (کارت جادویی یادگیری)
+        item {
+            val isDue = dueCount > 0
+
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface,
+                shape = RoundedCornerShape(22.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.primary.copy(alpha = 0.16f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (isDue) "🎯" else "🥳",
+                                    fontSize = 18.sp
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = if (isDue) "وقت مرور و یادگیریه! 🎈" else "عالی هستی! امروز تموم شد 🎉",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface
+                                )
+                                Text(
+                                    text = if (isDue) "$dueCount تا واژه آماده داری که ببری حافظه دائم" else "هیچ واژه سررسیدی نمونده؛ یه تمرین آزاد بزنیم؟",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        if (isDue) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(dimensions.cornerPill))
+                                    .background(colors.primary.copy(alpha = 0.18f))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "$dueCount کلمه",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = colors.primary
+                                )
+                            }
+                        }
+                    }
+
+                    // Action buttons
+                    if (isDue) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { onStartReview(ReviewType.DAILY, ReviewMode.FLASHCARD) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(46.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.primary,
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text("🎴 فلش‌کارت", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = { onStartReview(ReviewType.DAILY, ReviewMode.QUIZ) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(46.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.surfaceVariant,
+                                    contentColor = colors.onSurface
+                                )
+                            ) {
+                                Text("✨ آزمون ۴ گزینه", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = { onOpenReviewSetup(ReviewType.RANDOM) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.primary,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text("🎲 شروع تمرین تصادفی شاداب", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. حباب‌های مراحل یادگیری (Googoli Learning Bubbles)
+        item {
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface,
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "مراحل تثبیت واژه‌ها 🌸",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = "لمس برای تمرین",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        GoogoliStageBubble(
+                            emoji = "🌸",
+                            title = "روزانه",
+                            count = statistics.dailyStageCount,
+                            color = colors.primary,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.DAILY) }
+                        )
+                        GoogoliStageBubble(
+                            emoji = "🌼",
+                            title = "هفتگی",
+                            count = statistics.weeklyStageCount,
+                            color = colors.info,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.WEEKLY) }
+                        )
+                        GoogoliStageBubble(
+                            emoji = "🌺",
+                            title = "ماهانه",
+                            count = statistics.monthlyStageCount,
+                            color = colors.warning,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.MONTHLY) }
+                        )
+                        GoogoliStageBubble(
+                            emoji = "🏆",
+                            title = "تثبیت‌شده",
+                            count = statistics.learnedStageCount,
+                            color = colors.secondary,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.LEARNED) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // 4. طیف دشواری واژگان
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "درجه سختی کلمه‌ها 🍭",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                DifficultyCounterRow(
+                    counts = difficultyCounts,
+                    onSelectDifficulty = onDifficultyFilterClick
+                )
+            }
+        }
+
+        // 5. دسترسی‌های سریع گوگولی (Quick Actions)
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                GoogoliActionTile(
+                    emoji = "➕",
+                    title = "افزودن واژه جدید",
+                    subtitle = "کارت شاداب با تلفظ",
+                    color = colors.primary,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenAddWord
+                )
+                GoogoliActionTile(
+                    emoji = "📚",
+                    title = "کتابخانه واژگان",
+                    subtitle = "دیدن و جستجوی همه لغات",
+                    color = colors.secondary,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenLibrary
+                )
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(14.dp))
+        }
+    }
+}
+
+@Composable
+private fun GoogoliStageBubble(
+    emoji: String,
+    title: String,
+    count: Int,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.surfaceVariant)
+            .clickable { onClick() }
+            .padding(vertical = 8.dp, horizontal = 2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(text = emoji, fontSize = 14.sp)
+            Text(
+                text = "$count",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+            Text(
+                text = title,
+                fontSize = 10.sp,
+                color = colors.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoogoliActionTile(
+    emoji: String,
+    title: String,
+    subtitle: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    YadinCard(
+        modifier = modifier,
+        onClick = onClick,
+        backgroundColor = colors.surface,
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = emoji, fontSize = 18.sp)
             }
             Column {
                 Text(

@@ -11,7 +11,7 @@ jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
     - name: Checkout repository
@@ -28,7 +28,7 @@ jobs:
       with:
         gradle-version: '8.9'
 
-    - name: Grant execute permission for gradlew
+    - name: Grant execute permissions
       run: chmod +x gradlew
 
     - name: Materialize debug keystore
@@ -41,11 +41,8 @@ jobs:
           fi
         fi
 
-    - name: Run Unit Tests
-      run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
-
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug --no-daemon --stacktrace
+    - name: Run Tests & Build Debug APK
+      run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4

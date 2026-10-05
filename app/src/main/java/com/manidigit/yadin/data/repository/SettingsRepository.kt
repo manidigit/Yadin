@@ -27,6 +27,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     suspend fun setThemeId(themeId: String) {
         val sanitized = when (themeId.lowercase()) {
+            "googoli" -> "googoli"
             "gemini" -> "gemini"
             "claude" -> "claude"
             else -> "gtp"
