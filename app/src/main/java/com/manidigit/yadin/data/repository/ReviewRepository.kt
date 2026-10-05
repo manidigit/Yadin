@@ -31,6 +31,16 @@ data class SubmitResult(
     val isCorrect: Boolean
 )
 
+data class ReviewFilters(
+    val reviewType: ReviewType = ReviewType.DAILY,
+    val mode: ReviewMode = ReviewMode.FLASHCARD,
+    val direction: CardDirection = CardDirection.NORMAL,
+    val quizLevel: QuizLevel? = null,
+    val difficulties: Set<VocabularyDifficulty> = emptySet(),
+    val categoryIds: Set<String> = emptySet(),
+    val maxCards: Int = 20
+)
+
 class ReviewRepository(
     private val conceptDao: ConceptDao,
     private val learningDao: LearningDao,
@@ -38,28 +48,40 @@ class ReviewRepository(
     private val achievementDao: AchievementDao
 ) {
 
-    suspend fun createSession(
-        reviewType: ReviewType,
-        mode: ReviewMode,
-        direction: CardDirection,
-        quizLevel: QuizLevel? = null,
-        limit: Int = 20
-    ): ReviewSession {
+    suspend fun countCandidates(filters: ReviewFilters): Int {
         val today = ClockAndDayMath.todayDayString()
-        val conceptIds: List<String> = when (reviewType) {
-            ReviewType.DAILY -> {
-                val due = learningDao.getDueConceptIds(direction, today, limit)
-                if (due.size < limit) {
-                    val fallback = learningDao.getConceptIdsByStage(Stage.DAILY, direction, limit - due.size)
-                    (due + fallback).distinct()
-                } else {
-                    due
-                }
-            }
-            ReviewType.WEEKLY -> learningDao.getConceptIdsByStage(Stage.WEEKLY, direction, limit)
-            ReviewType.MONTHLY -> learningDao.getConceptIdsByStage(Stage.MONTHLY, direction, limit)
-            ReviewType.LEARNED -> learningDao.getConceptIdsByStage(Stage.LEARNED, direction, limit)
-            ReviewType.RANDOM -> learningDao.getRandomConceptIds(limit)
+        val count = learningDao.countFilteredCandidates(
+            direction = filters.direction,
+            reviewType = filters.reviewType.name,
+            todayDayString = today,
+            hasDifficultyFilter = if (filters.difficulties.isNotEmpty()) 1 else 0,
+            difficulties = filters.difficulties.map { it.name },
+            hasCategoryFilter = if (filters.categoryIds.isNotEmpty()) 1 else 0,
+            categoryIds = filters.categoryIds.toList()
+        )
+        return if (count == 0 && filters.reviewType == ReviewType.DAILY && filters.difficulties.isEmpty() && filters.categoryIds.isEmpty()) {
+            learningDao.getConceptIdsByStage(Stage.DAILY, filters.direction, 50).size
+        } else {
+            count
+        }
+    }
+
+    suspend fun createFilteredSession(filters: ReviewFilters): ReviewSession {
+        val today = ClockAndDayMath.todayDayString()
+        var conceptIds = learningDao.getFilteredCandidateConceptIds(
+            direction = filters.direction,
+            reviewType = filters.reviewType.name,
+            todayDayString = today,
+            hasDifficultyFilter = if (filters.difficulties.isNotEmpty()) 1 else 0,
+            difficulties = filters.difficulties.map { it.name },
+            hasCategoryFilter = if (filters.categoryIds.isNotEmpty()) 1 else 0,
+            categoryIds = filters.categoryIds.toList(),
+            limit = filters.maxCards
+        )
+
+        if (conceptIds.size < filters.maxCards && filters.reviewType == ReviewType.DAILY && filters.difficulties.isEmpty() && filters.categoryIds.isEmpty()) {
+            val fallback = learningDao.getConceptIdsByStage(Stage.DAILY, filters.direction, filters.maxCards - conceptIds.size)
+            conceptIds = (conceptIds + fallback).distinct()
         }
 
         val sessionId = UUID.randomUUID().toString()
@@ -69,10 +91,10 @@ class ReviewRepository(
             id = sessionId,
             startedAt = now,
             endedAt = null,
-            reviewType = reviewType,
-            mode = mode,
-            direction = direction,
-            quizLevel = quizLevel,
+            reviewType = filters.reviewType,
+            mode = filters.mode,
+            direction = filters.direction,
+            quizLevel = filters.quizLevel,
             status = SessionStatus.ACTIVE,
             currentPosition = 0,
             totalItems = conceptIds.size
@@ -84,7 +106,7 @@ class ReviewRepository(
                 sessionId = sessionId,
                 position = index,
                 conceptId = cid,
-                direction = direction,
+                direction = filters.direction,
                 state = SessionItemState.PENDING
             )
         }
@@ -103,6 +125,24 @@ class ReviewRepository(
             status = sessionEntity.status,
             currentPosition = 0,
             totalItems = conceptIds.size
+        )
+    }
+
+    suspend fun createSession(
+        reviewType: ReviewType,
+        mode: ReviewMode,
+        direction: CardDirection,
+        quizLevel: QuizLevel? = null,
+        limit: Int = 20
+    ): ReviewSession {
+        return createFilteredSession(
+            ReviewFilters(
+                reviewType = reviewType,
+                mode = mode,
+                direction = direction,
+                quizLevel = quizLevel,
+                maxCards = limit
+            )
         )
     }
 

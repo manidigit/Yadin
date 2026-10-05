@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.WordDetail
+import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
@@ -144,32 +145,13 @@ fun AddEditWordScreen(
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             )
 
-            // Category Picker
-            Text(
-                text = "دسته‌بندی موضوعی:",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.onSurface
+            // Category Dropdown with associated icon (per user request)
+            ExposedCategoryDropdown(
+                categories = categories,
+                selectedCategoryId = selectedCategoryId,
+                onSelectCategory = { selectedCategoryId = it },
+                label = "دسته‌بندی موضوعی واژه"
             )
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                item {
-                    CategoryPill(
-                        label = "بدون دسته",
-                        isSelected = selectedCategoryId == null,
-                        onClick = { selectedCategoryId = null }
-                    )
-                }
-                items(categories) { cat ->
-                    CategoryPill(
-                        label = cat.name,
-                        isSelected = selectedCategoryId == cat.id,
-                        onClick = { selectedCategoryId = cat.id }
-                    )
-                }
-            }
 
             // Note Input
             OutlinedTextField(

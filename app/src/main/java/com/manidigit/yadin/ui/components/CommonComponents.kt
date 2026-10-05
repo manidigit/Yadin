@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,10 +63,12 @@ fun YadinCard(
     val dimensions = LocalYadinDimensions.current
     val resolvedShape = shape ?: RoundedCornerShape(dimensions.cornerMedium)
     val cardColor = backgroundColor ?: colors.card
-    val resolvedBorder = borderStroke ?: BorderStroke(
-        width = 1.dp,
-        color = colors.outline.copy(alpha = dimensions.cardBorderAlpha)
-    )
+
+    val resolvedBorder = borderStroke ?: if (colors.isGemini && colors.cardBorderBrush != null) {
+        BorderStroke(1.2.dp, colors.cardBorderBrush)
+    } else {
+        BorderStroke(1.dp, colors.outline.copy(alpha = dimensions.cardBorderAlpha))
+    }
 
     Surface(
         modifier = modifier
@@ -87,8 +88,73 @@ fun YadinCard(
 }
 
 @Composable
+fun DifficultyCounterRow(
+    counts: Map<VocabularyDifficulty, Int>,
+    onSelectDifficulty: ((VocabularyDifficulty) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val items = listOf(
+            Triple(VocabularyDifficulty.EASY, "آسان", colors.success),
+            Triple(VocabularyDifficulty.MEDIUM, "متوسط", colors.info),
+            Triple(VocabularyDifficulty.HARD, "سخت", colors.warning),
+            Triple(VocabularyDifficulty.VERY_HARD, "خیلی سخت", colors.error)
+        )
+
+        items.forEach { (diff, label, color) ->
+            val count = counts[diff] ?: 0
+            val shape = RoundedCornerShape(dimensions.cornerSmall)
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(shape)
+                    .background(color.copy(alpha = if (colors.isGemini) 0.16f else 0.10f))
+                    .border(
+                        width = 1.dp,
+                        color = color.copy(alpha = if (colors.isGemini) 0.50f else 0.30f),
+                        shape = shape
+                    )
+                    .then(
+                        if (onSelectDifficulty != null) {
+                            Modifier.clickable { onSelectDifficulty(diff) }
+                        } else Modifier
+                    )
+                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Text(
+                        text = "$count",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = color
+                    )
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontSize = 11.sp,
+                        color = colors.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
     val (title, color) = when (stage) {
         Stage.DAILY -> "روزانه" to colors.primary
         Stage.WEEKLY -> "هفتگی" to colors.info
@@ -96,11 +162,13 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
         Stage.LEARNED -> "یادگرفته" to colors.success
     }
 
+    val shape = RoundedCornerShape(if (colors.isGemini) 12.dp else 6.dp)
+
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(shape)
             .background(color.copy(alpha = 0.15f))
-            .border(0.8.dp, color.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            .border(0.8.dp, color.copy(alpha = 0.45f), shape)
             .padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Text(
@@ -115,6 +183,7 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
 @Composable
 fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
     val (title, color) = when (difficulty) {
         VocabularyDifficulty.EASY -> "ساده" to colors.success
         VocabularyDifficulty.MEDIUM -> "متوسط" to colors.info
@@ -122,11 +191,13 @@ fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modif
         VocabularyDifficulty.VERY_HARD -> "خیلی سخت" to colors.error
     }
 
+    val shape = RoundedCornerShape(if (colors.isGemini) 12.dp else 6.dp)
+
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(shape)
             .background(color.copy(alpha = 0.15f))
-            .border(0.8.dp, color.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+            .border(0.8.dp, color.copy(alpha = 0.40f), shape)
             .padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Text(
@@ -141,11 +212,14 @@ fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modif
 @Composable
 fun StreakChip(streakDays: Int, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+    val shape = RoundedCornerShape(dimensions.cornerPill)
+
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(shape)
             .background(colors.warning.copy(alpha = 0.18f))
-            .border(1.dp, colors.warning.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+            .border(1.dp, colors.warning.copy(alpha = 0.45f), shape)
             .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)

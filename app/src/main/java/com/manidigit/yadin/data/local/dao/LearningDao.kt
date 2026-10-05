@@ -22,6 +22,11 @@ data class DifficultyCount(
     val count: Int
 )
 
+data class ProgressCalculationRaw(
+    val totalScore: Double?,
+    val totalActive: Int
+)
+
 @Dao
 interface LearningDao {
 
@@ -127,6 +132,71 @@ interface LearningDao {
     suspend fun getStageBreakdown(direction: CardDirection): List<StageCount>
 
     @Query("""
+        SELECT ls.conceptId FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
+        WHERE c.active = 1
+        AND ls.direction = :direction
+        AND (
+            (:reviewType = 'DAILY' AND (ls.stage = 'DAILY' OR (ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString))) OR
+            (:reviewType = 'WEEKLY' AND (ls.stage = 'WEEKLY' OR (ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString))) OR
+            (:reviewType = 'MONTHLY' AND (ls.stage = 'MONTHLY' OR (ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString))) OR
+            (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED') OR
+            (:reviewType = 'RANDOM' AND 1 = 1)
+        )
+        AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
+        AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
+        ORDER BY 
+            CASE WHEN :reviewType = 'RANDOM' THEN RANDOM() ELSE ls.nextReviewDay END ASC
+        LIMIT :limit
+    """)
+    suspend fun getFilteredCandidateConceptIds(
+        direction: CardDirection,
+        reviewType: String,
+        todayDayString: String,
+        hasDifficultyFilter: Int,
+        difficulties: List<String>,
+        hasCategoryFilter: Int,
+        categoryIds: List<String>,
+        limit: Int
+    ): List<String>
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId) FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
+        WHERE c.active = 1
+        AND ls.direction = :direction
+        AND (
+            (:reviewType = 'DAILY' AND (ls.stage = 'DAILY' OR (ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString))) OR
+            (:reviewType = 'WEEKLY' AND (ls.stage = 'WEEKLY' OR (ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString))) OR
+            (:reviewType = 'MONTHLY' AND (ls.stage = 'MONTHLY' OR (ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString))) OR
+            (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED') OR
+            (:reviewType = 'RANDOM' AND 1 = 1)
+        )
+        AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
+        AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
+    """)
+    suspend fun countFilteredCandidates(
+        direction: CardDirection,
+        reviewType: String,
+        todayDayString: String,
+        hasDifficultyFilter: Int,
+        difficulties: List<String>,
+        hasCategoryFilter: Int,
+        categoryIds: List<String>
+    ): Int
+
+    @Query("""
+        SELECT ds.current AS current, COUNT(*) AS count
+        FROM difficulty_states ds
+        INNER JOIN concepts c ON ds.conceptId = c.id
+        WHERE c.active = 1 AND ds.direction = :direction
+        GROUP BY ds.current
+    """)
+    fun getDifficultyBreakdownFlow(direction: CardDirection): Flow<List<DifficultyCount>>
+
+    @Query("""
         SELECT ds.current AS current, COUNT(*) AS count
         FROM difficulty_states ds
         INNER JOIN concepts c ON ds.conceptId = c.id
@@ -134,4 +204,32 @@ interface LearningDao {
         GROUP BY ds.current
     """)
     suspend fun getDifficultyBreakdown(direction: CardDirection): List<DifficultyCount>
+
+    @Query("""
+        SELECT 
+            SUM(
+                CASE 
+                    WHEN ls.lastReviewedDay IS NULL THEN 0.0
+                    WHEN ls.stage = 'LEARNED' THEN 100.0
+                    WHEN ls.stage = 'MONTHLY' THEN 80.0
+                    WHEN ls.stage = 'WEEKLY' THEN 60.0
+                    WHEN ls.stage = 'DAILY' THEN 35.0
+                    ELSE 0.0
+                END
+            ) AS totalScore,
+            COUNT(DISTINCT c.id) AS totalActive
+        FROM concepts c
+        INNER JOIN learning_states ls ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction
+    """)
+    fun getProgressScoreFlow(direction: CardDirection): Flow<ProgressCalculationRaw>
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId)
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction
+        AND ls.stage != 'LEARNED' AND ls.lastReviewedDay IS NOT NULL
+    """)
+    fun getPracticedWordsCountFlow(direction: CardDirection): Flow<Int>
 }

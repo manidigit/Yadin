@@ -336,6 +336,16 @@ class VocabularyRepository(
         return reviewSessionDao.getRecentDailyStats(days)
     }
 
+    fun getDifficultyBreakdownFlow(direction: CardDirection = CardDirection.NORMAL): Flow<Map<VocabularyDifficulty, Int>> {
+        return learningDao.getDifficultyBreakdownFlow(direction).map { list ->
+            val map = list.associate { it.current to it.count }.toMutableMap()
+            VocabularyDifficulty.values().forEach { diff ->
+                if (!map.containsKey(diff)) map[diff] = 0
+            }
+            map
+        }
+    }
+
     fun getStatisticsSummary(direction: CardDirection = CardDirection.NORMAL): Flow<StatisticsSummary> {
         val today = ClockAndDayMath.todayDayString()
         return combine(
@@ -355,6 +365,9 @@ class VocabularyRepository(
             val reviewedToday = args[5]
             val totalReviews = args[6]
             val totalWords = daily + weekly + monthly + learned
+
+            val diffBreakdown = learningDao.getDifficultyBreakdown(direction).associate { it.current to it.count }
+
             StatisticsSummary(
                 totalWords = totalWords,
                 activeWords = totalWords,
@@ -366,10 +379,10 @@ class VocabularyRepository(
                 reviewedTodayCount = reviewedToday,
                 currentStreakDays = calculateStreakDays(reviewSessionDao.getDistinctReviewedDays(), today),
                 totalReviewsCount = totalReviews,
-                easyCount = 0,
-                mediumCount = 0,
-                hardCount = 0,
-                veryHardCount = 0
+                easyCount = diffBreakdown[VocabularyDifficulty.EASY] ?: 0,
+                mediumCount = diffBreakdown[VocabularyDifficulty.MEDIUM] ?: 0,
+                hardCount = diffBreakdown[VocabularyDifficulty.HARD] ?: 0,
+                veryHardCount = diffBreakdown[VocabularyDifficulty.VERY_HARD] ?: 0
             )
         }
     }
@@ -453,5 +466,24 @@ class VocabularyRepository(
             }
             onProgress(index + 1, total)
         }
+    }
+
+    fun getProgressScoreFlow(direction: CardDirection): Flow<Double> {
+        return learningDao.getProgressScoreFlow(direction).map { raw ->
+            if (raw.totalActive <= 0 || raw.totalScore == null) {
+                0.0
+            } else {
+                val score = raw.totalScore / raw.totalActive.toDouble()
+                Math.round(score * 10.0) / 10.0
+            }
+        }
+    }
+
+    fun getRecentDailyStatsFlow(): Flow<List<DayCountRaw>> {
+        return reviewSessionDao.getRecentDailyStatsFlow(14)
+    }
+
+    fun getPracticedWordsCountFlow(direction: CardDirection): Flow<Int> {
+        return learningDao.getPracticedWordsCountFlow(direction)
     }
 }

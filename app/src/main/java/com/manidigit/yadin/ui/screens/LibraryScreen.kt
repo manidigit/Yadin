@@ -42,6 +42,7 @@ import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.ui.components.DifficultyBadge
+import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.YadinCard
@@ -159,7 +160,19 @@ fun LibraryScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Dropdown Menu for Categories with Associated Icons (per user request)
+            if (categories.isNotEmpty()) {
+                ExposedCategoryDropdown(
+                    categories = categories,
+                    selectedCategoryId = selectedCategory,
+                    onSelectCategory = { onCategoryFilterChange(it) },
+                    label = "دسته‌بندی موضوعی کلمات"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Word List
             if (words.isEmpty()) {

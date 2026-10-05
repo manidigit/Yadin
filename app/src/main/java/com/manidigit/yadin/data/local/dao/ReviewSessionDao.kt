@@ -75,4 +75,17 @@ interface ReviewSessionDao {
         LIMIT :limit
     """)
     suspend fun getRecentDailyStats(limit: Int = 14): List<DayCountRaw>
+
+    @Query("""
+        SELECT 
+            reviewedDay,
+            COUNT(*) AS totalCount,
+            SUM(CASE WHEN isCorrect = 1 THEN 1 ELSE 0 END) AS correctCount
+        FROM review_history
+        WHERE reviewedDay IS NOT NULL
+        GROUP BY reviewedDay
+        ORDER BY reviewedDay DESC
+        LIMIT :limit
+    """)
+    fun getRecentDailyStatsFlow(limit: Int = 14): Flow<List<DayCountRaw>>
 }

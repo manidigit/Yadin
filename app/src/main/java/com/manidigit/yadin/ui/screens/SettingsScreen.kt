@@ -1,5 +1,6 @@
 package com.manidigit.yadin.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,9 +22,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
@@ -37,12 +41,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.ui.components.YadinCard
-import com.manidigit.yadin.ui.theme.AppTheme
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
@@ -52,7 +56,9 @@ fun SettingsScreen(
     isDark: Boolean,
     onSelectTheme: (String) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
+    onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
+    onOpenAbout: () -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -105,9 +111,10 @@ fun SettingsScreen(
         // Card 1: GTP
         ThemeChoiceCard(
             title = "تم GTP",
-            description = "طیف بنفش و ارغوانی نئونی، مدرن، متراکم و شارپ با خطوط هندسی دقیق.",
+            description = "طیف بنفش و ارغوانی نئونی، متراکم، شارپ با خطوط هندسی دقیق و گوشه‌های تیز.",
             primaryPreview = Color(0xFF7C3AED),
             secondaryPreview = Color(0xFF06B6D4),
+            isGeminiCard = false,
             isSelected = currentThemeId == "gtp",
             onClick = { onSelectTheme("gtp") }
         )
@@ -115,14 +122,15 @@ fun SettingsScreen(
         // Card 2: Gemini
         ThemeChoiceCard(
             title = "تم Gemini",
-            description = "طراحی آینده‌نگرانه هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای ستاره‌ای و گوشه‌های نرم شیشه‌ای.",
+            description = "طراحی آینده‌نگرانه هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای ستاره‌ای، گوشه‌های نرم شیشه‌ای و هاله‌های نورانی.",
             primaryPreview = Color(0xFF1A73E8),
             secondaryPreview = Color(0xFF00B4D8),
+            isGeminiCard = true,
             isSelected = currentThemeId == "gemini",
             onClick = { onSelectTheme("gemini") }
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Dark Mode Toggle
         YadinCard(
@@ -163,7 +171,7 @@ fun SettingsScreen(
                             color = colors.onSurface
                         )
                         Text(
-                            text = if (isDark) "فعال (کنتراست مناسب محیط تاریک)" else "غیرفعال (حالت روشن)",
+                            text = if (isDark) "فعال (محیط تیره با کنتراست بالا)" else "غیرفعال (محیط روشن)",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant
                         )
@@ -224,6 +232,94 @@ fun SettingsScreen(
             }
         }
 
+        // Backup & Restore Button
+        YadinCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface,
+            onClick = onOpenBackup
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(colors.info.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudDownload,
+                        contentDescription = null,
+                        tint = colors.info,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "پشتیبان‌گیری و بازیابی داده‌ها",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onSurface
+                    )
+                    Text(
+                        text = "صادرات و بازگردانی فایل پشتیبان واژگان و پیشرفت (JSON)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        // About Us Button
+        YadinCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface,
+            onClick = onOpenAbout
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(colors.primary.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "درباره ما و مشخصات یادین",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onSurface
+                    )
+                    Text(
+                        text = "اطلاعات سازنده (maniDigit)، اهداف و نسخه نرم‌افزار",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         // Help & Guide Button
         YadinCard(
             modifier = Modifier.fillMaxWidth(),
@@ -260,7 +356,7 @@ fun SettingsScreen(
                         color = colors.onSurface
                     )
                     Text(
-                        text = "آشنایی با الگوریتم انتقال مرحله، سختی واژه و آزمون",
+                        text = "آموزش گام‌به‌گام مراحل یادگیری، سختی واژه و آزمون",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -278,22 +374,37 @@ fun ThemeChoiceCard(
     description: String,
     primaryPreview: Color,
     secondaryPreview: Color,
+    isGeminiCard: Boolean,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
+    val shape = if (isGeminiCard) RoundedCornerShape(24.dp) else RoundedCornerShape(8.dp)
+
+    val borderStroke = if (isGeminiCard) {
+        BorderStroke(
+            width = if (isSelected) 2.5.dp else 1.2.dp,
+            brush = Brush.linearGradient(
+                listOf(
+                    primaryPreview,
+                    secondaryPreview,
+                    Color(0xFFC084FC)
+                )
+            )
+        )
+    } else {
+        BorderStroke(
+            width = if (isSelected) 2.dp else 1.dp,
+            color = if (isSelected) primaryPreview else colors.outline.copy(alpha = 0.5f)
+        )
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(dimensions.cornerMedium))
-            .background(if (isSelected) colors.primary.copy(alpha = 0.12f) else colors.surface)
-            .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(dimensions.cornerMedium)
-            )
+            .clip(shape)
+            .background(if (isSelected) primaryPreview.copy(alpha = 0.14f) else colors.surface)
+            .border(borderStroke, shape)
             .clickable { onClick() }
             .padding(16.dp)
     ) {
@@ -307,19 +418,20 @@ fun ThemeChoiceCard(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                // Color dots
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clip(CircleShape)
-                            .background(primaryPreview)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clip(CircleShape)
-                            .background(secondaryPreview)
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(if (isGeminiCard) CircleShape else RoundedCornerShape(6.dp))
+                        .background(
+                            Brush.linearGradient(listOf(primaryPreview, secondaryPreview))
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (isGeminiCard) Icons.Default.AutoAwesome else Icons.Default.Bolt,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
@@ -344,7 +456,7 @@ fun ThemeChoiceCard(
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(colors.primary),
+                        .background(primaryPreview),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

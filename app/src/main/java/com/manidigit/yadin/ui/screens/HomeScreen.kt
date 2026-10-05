@@ -21,16 +21,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -54,6 +60,8 @@ import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.StatisticsSummary
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.ui.components.DifficultyCounterRow
 import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.StreakChip
 import com.manidigit.yadin.ui.components.YadinCard
@@ -64,18 +72,23 @@ import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 fun HomeScreen(
     dueCount: Int,
     statistics: StatisticsSummary,
+    difficultyCounts: Map<VocabularyDifficulty, Int>,
     themeId: String,
     isDark: Boolean,
     activePair: String,
     onToggleTheme: () -> Unit,
     onToggleDarkMode: () -> Unit,
+    onOpenReviewSetup: (ReviewType) -> Unit,
     onStartReview: (ReviewType, ReviewMode) -> Unit,
+    onDifficultyFilterClick: (VocabularyDifficulty) -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenAddWord: () -> Unit,
     onOpenImport: () -> Unit,
     onOpenProgress: () -> Unit,
     onOpenSettings: () -> Unit,
-    onOpenHelp: () -> Unit
+    onOpenBackup: () -> Unit,
+    onOpenHelp: () -> Unit,
+    onOpenAbout: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
@@ -88,9 +101,9 @@ fun HomeScreen(
             .padding(horizontal = dimensions.screenPadding),
         verticalArrangement = Arrangement.spacedBy(dimensions.sectionGap)
     ) {
+        // 1. Top Header: App Title, Theme Switcher, Dark mode, About Us icon
         item {
             Spacer(modifier = Modifier.height(12.dp))
-            // Header: App Title, Theme switcher, Dark mode toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -102,25 +115,43 @@ fun HomeScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
+                            .size(if (isGemini) 46.dp else 40.dp)
+                            .clip(if (isGemini) RoundedCornerShape(16.dp) else CircleShape)
                             .background(colors.heroGradient),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.AutoAwesome,
+                            imageVector = if (isGemini) Icons.Default.AutoAwesome else Icons.Default.Bolt,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                     Column {
-                        Text(
-                            text = "یادین",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "یادین",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(colors.primary.copy(alpha = 0.15f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = if (isGemini) "Gemini" else "GTP",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                            }
+                        }
                         Text(
                             text = if (activePair == "es-fa") "اسپانیایی ⇄ فارسی" else activePair,
                             style = MaterialTheme.typography.bodySmall,
@@ -135,12 +166,12 @@ fun HomeScreen(
                 ) {
                     StreakChip(streakDays = statistics.currentStreakDays)
 
-                    // Theme Toggle Pill Button (GTP ⇄ Gemini)
+                    // Theme Toggle Pill (GTP ⇄ Gemini)
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(dimensions.cornerPill))
                             .background(colors.surfaceVariant)
-                            .border(1.dp, colors.outline.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                            .border(1.dp, colors.outline.copy(alpha = 0.45f), RoundedCornerShape(dimensions.cornerPill))
                             .clickable { onToggleTheme() }
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
@@ -151,7 +182,7 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Palette,
-                                contentDescription = "تغییر تم",
+                                contentDescription = "تغییر پوسته",
                                 tint = colors.primary,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -159,7 +190,7 @@ fun HomeScreen(
                                 text = if (isGemini) "Gemini" else "GTP",
                                 color = colors.primary,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                fontSize = 11.sp
                             )
                         }
                     }
@@ -179,11 +210,27 @@ fun HomeScreen(
                             modifier = Modifier.size(18.dp)
                         )
                     }
+
+                    // About Us Button
+                    IconButton(
+                        onClick = onOpenAbout,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "درباره ما",
+                            tint = colors.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }
 
-        // Hero Card: Due Cards For Review
+        // 2. Hero Card: Due Cards For Review
         item {
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -218,17 +265,17 @@ fun HomeScreen(
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = "$dueCount واژه",
+                                text = "$dueCount واژه سررسید",
                                 color = colors.primary,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 13.sp
                             )
                         }
                     }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = { onStartReview(ReviewType.DAILY, ReviewMode.FLASHCARD) },
@@ -242,8 +289,8 @@ fun HomeScreen(
                             )
                         ) {
                             Icon(Icons.Default.Style, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("فلش‌کارت", fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("فلش‌کارت", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         Button(
@@ -258,23 +305,64 @@ fun HomeScreen(
                             )
                         ) {
                             Icon(Icons.Default.Quiz, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("آزمون ۴ گزینه‌ای", fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("آزمون ۴ گزینه", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        IconButton(
+                            onClick = { onOpenReviewSetup(ReviewType.DAILY) },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(dimensions.cornerMedium))
+                                .background(colors.surfaceVariant)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Tune,
+                                contentDescription = "تنظیم و فیلتر پیشرفته مرور",
+                                tint = colors.onSurface
+                            )
                         }
                     }
                 }
             }
         }
 
-        // Learning Stages Overview (Daily, Weekly, Monthly, Learned)
+        // 3. Difficulty Breakdown Counters (شمارنده‌های سطوح سختی کلمات)
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "شمارنده سختی کلمات (آستانه ۳ پاسخ)",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = "فیلتر بر اساس سختی",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.primary,
+                    modifier = Modifier.clickable { onOpenReviewSetup(ReviewType.DAILY) }
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            DifficultyCounterRow(
+                counts = difficultyCounts,
+                onSelectDifficulty = onDifficultyFilterClick
+            )
+        }
+
+        // 4. Learning Stages Funnel (مراحل یادگیری لایتنر)
         item {
             Text(
-                text = "وضعیت مراحل یادگیری واژگان",
+                text = "مراحل یادگیری لایتنر",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -284,33 +372,33 @@ fun HomeScreen(
                     count = statistics.dailyStageCount,
                     color = colors.primary,
                     modifier = Modifier.weight(1f),
-                    onClick = { onStartReview(ReviewType.DAILY, ReviewMode.FLASHCARD) }
+                    onClick = { onOpenReviewSetup(ReviewType.DAILY) }
                 )
                 StageMetricCard(
                     title = "هفتگی",
                     count = statistics.weeklyStageCount,
                     color = colors.info,
                     modifier = Modifier.weight(1f),
-                    onClick = { onStartReview(ReviewType.WEEKLY, ReviewMode.FLASHCARD) }
+                    onClick = { onOpenReviewSetup(ReviewType.WEEKLY) }
                 )
                 StageMetricCard(
                     title = "ماهانه",
                     count = statistics.monthlyStageCount,
                     color = colors.warning,
                     modifier = Modifier.weight(1f),
-                    onClick = { onStartReview(ReviewType.MONTHLY, ReviewMode.FLASHCARD) }
+                    onClick = { onOpenReviewSetup(ReviewType.MONTHLY) }
                 )
                 StageMetricCard(
                     title = "یادگرفته",
                     count = statistics.learnedStageCount,
                     color = colors.success,
                     modifier = Modifier.weight(1f),
-                    onClick = { onStartReview(ReviewType.LEARNED, ReviewMode.FLASHCARD) }
+                    onClick = { onOpenReviewSetup(ReviewType.LEARNED) }
                 )
             }
         }
 
-        // Quick Navigation Grid
+        // 5. Quick Actions Grid
         item {
             Text(
                 text = "دسترسی سریع",
@@ -333,12 +421,12 @@ fun HomeScreen(
                         onClick = onOpenLibrary
                     )
                     ActionTile(
-                        title = "افزودن واژه جدید",
-                        subtitle = "ایجاد کارت دستی",
-                        icon = Icons.Default.Add,
+                        title = "مرور واژگان",
+                        subtitle = "تمرین و آزمون هوشمند",
+                        icon = Icons.Default.Tune,
                         accentColor = colors.secondary,
                         modifier = Modifier.weight(1f),
-                        onClick = onOpenAddWord
+                        onClick = { onOpenReviewSetup(ReviewType.DAILY) }
                     )
                 }
 
@@ -346,6 +434,14 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    ActionTile(
+                        title = "افزودن واژه جدید",
+                        subtitle = "ایجاد کارت دستی",
+                        icon = Icons.Default.Add,
+                        accentColor = colors.success,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenAddWord
+                    )
                     ActionTile(
                         title = "ورود متنی واژگان",
                         subtitle = "پارسر و درون‌ریزی فایل",
@@ -354,13 +450,27 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         onClick = onOpenImport
                     )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     ActionTile(
                         title = "پیشرفت و آمار",
-                        subtitle = "رگبار و دستاوردها",
+                        subtitle = "فرمول ۶.۱۸ و نمودار",
                         icon = Icons.Default.BarChart,
                         accentColor = colors.warning,
                         modifier = Modifier.weight(1f),
                         onClick = onOpenProgress
+                    )
+                    ActionTile(
+                        title = "پشتیبان و بازیابی",
+                        subtitle = "صادرات و بازگردانی JSON",
+                        icon = Icons.Default.CloudDownload,
+                        accentColor = colors.info,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenBackup
                     )
                 }
 
@@ -369,20 +479,20 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     ActionTile(
+                        title = "درباره ما",
+                        subtitle = "مشخصات یادین و سازنده",
+                        icon = Icons.Default.Info,
+                        accentColor = colors.primary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenAbout
+                    )
+                    ActionTile(
                         title = "تنظیمات برنامه",
-                        subtitle = "تم، دارک‌مود، زبان",
+                        subtitle = "پوسته GTP و Gemini",
                         icon = Icons.Default.Settings,
                         accentColor = colors.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                         onClick = onOpenSettings
-                    )
-                    ActionTile(
-                        title = "آموزش و راهنما",
-                        subtitle = "قوانین لایتنر یادین",
-                        icon = Icons.Default.HelpOutline,
-                        accentColor = colors.success,
-                        modifier = Modifier.weight(1f),
-                        onClick = onOpenHelp
                     )
                 }
             }

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.manidigit.yadin.ui.screens.AboutScreen
 import com.manidigit.yadin.ui.screens.AddEditWordScreen
 import com.manidigit.yadin.ui.screens.FlashcardScreen
 import com.manidigit.yadin.ui.screens.HelpScreen
@@ -91,6 +92,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
         is Screen.Home -> {
             val dueCount by viewModel.dueCount.collectAsStateWithLifecycle()
             val statistics by viewModel.statistics.collectAsStateWithLifecycle()
+            val difficultyCounts by viewModel.difficultyCounts.collectAsStateWithLifecycle()
             val themeId by viewModel.themeId.collectAsStateWithLifecycle()
             val isDark by viewModel.isDark.collectAsStateWithLifecycle()
             val activePair by viewModel.activePair.collectAsStateWithLifecycle()
@@ -98,28 +100,46 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             HomeScreen(
                 dueCount = dueCount,
                 statistics = statistics,
+                difficultyCounts = difficultyCounts,
                 themeId = themeId,
                 isDark = isDark,
                 activePair = activePair,
                 onToggleTheme = { viewModel.toggleTheme() },
                 onToggleDarkMode = { viewModel.toggleDarkMode() },
+                onOpenReviewSetup = { type ->
+                    viewModel.navigateTo(Screen.ReviewSetup(type))
+                },
                 onStartReview = { type, mode ->
                     viewModel.startSession(type, mode)
+                },
+                onDifficultyFilterClick = { diff ->
+                    viewModel.navigateTo(Screen.ReviewSetup())
                 },
                 onOpenLibrary = { viewModel.navigateTo(Screen.Library) },
                 onOpenAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
                 onOpenImport = { viewModel.navigateTo(Screen.ImportPreview) },
                 onOpenProgress = { viewModel.navigateTo(Screen.ProgressStats) },
                 onOpenSettings = { viewModel.navigateTo(Screen.Settings) },
-                onOpenHelp = { viewModel.navigateTo(Screen.Help) }
+                onOpenHelp = { viewModel.navigateTo(Screen.Help) },
+                onOpenAbout = { viewModel.navigateTo(Screen.About) }
             )
         }
 
         is Screen.ReviewSetup -> {
+            val categories by viewModel.categories.collectAsStateWithLifecycle()
+            val difficultyCounts by viewModel.difficultyCounts.collectAsStateWithLifecycle()
+            val candidateCount by viewModel.setupCandidateCount.collectAsStateWithLifecycle()
+
             ReviewSetupScreen(
                 initialType = screen.initialType,
-                onStart = { type, mode, dir, lvl, lim ->
-                    viewModel.startSession(type, mode, dir, lvl, lim)
+                categories = categories,
+                difficultyCounts = difficultyCounts,
+                candidateCount = candidateCount,
+                onFilterChanged = { filters ->
+                    viewModel.updateSetupFilters(filters)
+                },
+                onStartReview = { filters ->
+                    viewModel.startFilteredSession(filters)
                 },
                 onBack = { viewModel.navigateTo(Screen.Home) }
             )
@@ -262,12 +282,17 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },
+                onOpenAbout = { viewModel.navigateTo(Screen.About) },
                 onBack = { viewModel.navigateTo(Screen.Home) }
             )
         }
 
         is Screen.Help -> {
             HelpScreen(onBack = { viewModel.navigateTo(Screen.Home) })
+        }
+
+        is Screen.About -> {
+            AboutScreen(onBack = { viewModel.navigateTo(Screen.Home) })
         }
     }
 }

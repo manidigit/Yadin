@@ -1,6 +1,8 @@
 package com.manidigit.yadin.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,19 +13,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -35,17 +38,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.model.AchievementId
+import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.StatisticsSummary
+import com.manidigit.yadin.ui.components.DailyReviewChart
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
 @Composable
 fun ProgressScreen(
+    progressPercent: Double,
     statistics: StatisticsSummary,
+    dailyStats: List<DayCountRaw>,
+    practicedCount: Int,
+    activeDirection: CardDirection,
+    onDirectionChanged: (CardDirection) -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -58,6 +70,7 @@ fun ProgressScreen(
             .padding(dimensions.screenPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // 1. Top Header
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -78,69 +91,250 @@ fun ProgressScreen(
                     )
                 }
 
-                Text(
-                    text = "آمار و دستاوردها",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
+                Column {
+                    Text(
+                        text = "پیشرفت و آمار یادگیری",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                    Text(
+                        text = "محاسبه بر اساس فرمول استاندارد ۶.۱۸ سند یادین",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
             }
         }
 
-        // Streak Card
+        // 2. Direction Toggle Bar [ عادی | برعکس ] (spec 7.13)
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(dimensions.cornerPill))
+                    .background(colors.surfaceVariant)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(dimensions.cornerPill))
+                        .background(if (activeDirection == CardDirection.NORMAL) colors.primary else Color.Transparent)
+                        .clickable { onDirectionChanged(CardDirection.NORMAL) }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "جهت عادی (اسپانیایی ← فارسی)",
+                        color = if (activeDirection == CardDirection.NORMAL) colors.onPrimary else colors.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(dimensions.cornerPill))
+                        .background(if (activeDirection == CardDirection.REVERSE) colors.primary else Color.Transparent)
+                        .clickable { onDirectionChanged(CardDirection.REVERSE) }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "جهت برعکس (فارسی ← اسپانیایی)",
+                        color = if (activeDirection == CardDirection.REVERSE) colors.onPrimary else colors.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        // 3. Formula Progress Hero Card (Section 6.18)
         item {
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
                 backgroundColor = colors.surface
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Box(
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "درصد پیشرفت کلی (فرمول نهایی)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                            Text(
+                                text = "مجموع امتیاز کارت‌ها ÷ تعداد کل واژگان فعال",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        Text(
+                            text = "$progressPercent%",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                            color = colors.primary
+                        )
+                    }
+
+                    LinearProgressIndicator(
+                        progress = { (progressPercent / 100.0).toFloat().coerceIn(0f, 1f) },
                         modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(colors.warning.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp)),
+                        color = colors.primary,
+                        trackColor = colors.primary.copy(alpha = 0.2f)
+                    )
+
+                    // Scoring Formula Badges Explanation
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        FormulaScorePill("یادگرفته: ۱۰۰+", colors.success, Modifier.weight(1f))
+                        FormulaScorePill("ماهانه: ۸۰+", colors.warning, Modifier.weight(1f))
+                        FormulaScorePill("هفتگی: ۶۰+", colors.info, Modifier.weight(1f))
+                        FormulaScorePill("روزانه: ۳۵+", colors.primary, Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        // 4. Quick Metrics Summary Cards (Streak, Practiced, Accuracy)
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Streak Card
+                YadinCard(
+                    modifier = Modifier.weight(1f),
+                    backgroundColor = colors.surface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocalFireDepartment,
                             contentDescription = null,
                             tint = colors.warning,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(28.dp)
                         )
-                    }
-
-                    Column {
                         Text(
-                            text = "${statistics.currentStreakDays} روز متوالی تمرین",
+                            text = "${statistics.currentStreakDays} روز",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
                         Text(
-                            text = "تداوم مرور کلید ماندگاری در حافظه بلندمدت است",
+                            text = "رگبار متوالی",
                             style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                // Practiced Words Card
+                YadinCard(
+                    modifier = Modifier.weight(1f),
+                    backgroundColor = colors.surface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.TrendingUp,
+                            contentDescription = null,
+                            tint = colors.info,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text(
+                            text = "$practicedCount",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = "واژه تمرین‌شده",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                // Accuracy Card
+                val totalReviewed = statistics.totalReviewsCount
+                val accuracy = if (totalReviewed > 0) {
+                    ((statistics.totalCorrectReviewsCount.toFloat() / totalReviewed) * 100).toInt()
+                } else 0
+
+                YadinCard(
+                    modifier = Modifier.weight(1f),
+                    backgroundColor = colors.surface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Speed,
+                            contentDescription = null,
+                            tint = colors.success,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text(
+                            text = "$accuracy%",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.success
+                        )
+                        Text(
+                            text = "دقت آزمون‌ها",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp
                         )
                     }
                 }
             }
         }
 
-        // Stage Funnel Breakdown
+        // 5. Daily/Weekly Activity Chart (نمودار آمار تعداد کلمات تمرین شده)
+        item {
+            DailyReviewChart(dailyStats = dailyStats)
+        }
+
+        // 6. Spaced Repetition Distribution (توزیع مراحل تکرار فاصله‌دار)
         item {
             Text(
-                text = "هرم توزیع مراحل یادگیری",
+                text = "هرم توزیع مراحل یادگیری (لایتنر)",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -159,13 +353,13 @@ fun ProgressScreen(
                         color = colors.primary
                     )
                     FunnelRow(
-                        title = "مرحله هفتگی (مرور هر ۷ روز)",
+                        title = "مرحله هفتگی (تثبیت ۷ روزه)",
                         count = statistics.weeklyStageCount,
                         total = total,
                         color = colors.info
                     )
                     FunnelRow(
-                        title = "مرحله ماهانه (مرور هر ۳۰ روز)",
+                        title = "مرحله ماهانه (حافظه ۳۰ روزه)",
                         count = statistics.monthlyStageCount,
                         total = total,
                         color = colors.warning
@@ -180,10 +374,31 @@ fun ProgressScreen(
             }
         }
 
-        // Achievements List
+        // 7. Word Difficulty Spectrum Counters (طیف سطح دشواری واژگان)
         item {
             Text(
-                text = "نشان‌ها و دستاوردها",
+                text = "شمارنده طیف سختی کلمات",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = colors.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                DifficultyMetricBox("آسان", statistics.easyCount, colors.success, Modifier.weight(1f))
+                DifficultyMetricBox("متوسط", statistics.mediumCount, colors.info, Modifier.weight(1f))
+                DifficultyMetricBox("سخت", statistics.hardCount, colors.warning, Modifier.weight(1f))
+                DifficultyMetricBox("خیلی سخت", statistics.veryHardCount, colors.error, Modifier.weight(1f))
+            }
+        }
+
+        // 8. Gamification Achievements Gallery
+        item {
+            Text(
+                text = "نشان‌ها و دستاوردهای یادگیری",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -262,30 +477,60 @@ fun ProgressScreen(
 }
 
 @Composable
-fun FunnelRow(
+private fun FormulaScorePill(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(color.copy(alpha = 0.14f))
+            .padding(vertical = 4.dp, horizontal = 2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = color,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun DifficultyMetricBox(
     title: String,
     count: Int,
-    total: Int,
-    color: Color
+    color: Color,
+    modifier: Modifier = Modifier
 ) {
-    val fraction = (count.toFloat() / total).coerceIn(0f, 1f)
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
 
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+    YadinCard(
+        modifier = modifier,
+        backgroundColor = colors.surface
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-            Text("$count واژه", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall,
+                color = color,
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp
+            )
+            Text(
+                text = "$count",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black,
+                color = colors.onSurface
+            )
         }
-        LinearProgressIndicator(
-            progress = { fraction },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp)),
-            color = color,
-            trackColor = color.copy(alpha = 0.15f)
-        )
     }
 }

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.manidigit.yadin.data.local.database.YadinDatabase
+import com.manidigit.yadin.data.repository.ReviewFilters
 import com.manidigit.yadin.data.repository.ReviewRepository
 import com.manidigit.yadin.data.repository.SeedImporter
 import com.manidigit.yadin.data.repository.SettingsRepository
@@ -22,6 +23,7 @@ import com.manidigit.yadin.domain.model.ReviewSession
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.StatisticsSummary
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.WordDetail
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,6 +47,7 @@ sealed class Screen {
     object ProgressStats : Screen()
     object Settings : Screen()
     object Help : Screen()
+    object About : Screen()
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -95,6 +98,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val categories: StateFlow<List<Category>> = vocabularyRepo.getAllCategoriesFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val difficultyCounts: StateFlow<Map<VocabularyDifficulty, Int>> = vocabularyRepo.getDifficultyBreakdownFlow(CardDirection.NORMAL)
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            mapOf(
+                VocabularyDifficulty.EASY to 0,
+                VocabularyDifficulty.MEDIUM to 0,
+                VocabularyDifficulty.HARD to 0,
+                VocabularyDifficulty.VERY_HARD to 0
+            )
+        )
+
+    private val _setupCandidateCount = MutableStateFlow(0)
+    val setupCandidateCount: StateFlow<Int> = _setupCandidateCount.asStateFlow()
 
     // Active Review Session State
     private val _activeSession = MutableStateFlow<ReviewSession?>(null)
@@ -196,15 +214,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Review Session Flow
-    fun startSession(
-        type: ReviewType,
-        mode: ReviewMode,
-        direction: CardDirection = CardDirection.NORMAL,
-        quizLevel: QuizLevel = QuizLevel.MEDIUM,
-        limit: Int = 20
-    ) {
+    fun updateSetupFilters(filters: ReviewFilters) {
         viewModelScope.launch {
-            val session = reviewRepo.createSession(type, mode, direction, quizLevel, limit)
+            _setupCandidateCount.value = reviewRepo.countCandidates(filters)
+        }
+    }
+
+    fun startFilteredSession(filters: ReviewFilters) {
+        viewModelScope.launch {
+            val session = reviewRepo.createFilteredSession(filters)
             _activeSession.value = session
             _currentCardIndex.value = 0
             _isCardFlipped.value = false
@@ -212,7 +230,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _sessionCorrectCount.value = 0
             _sessionWrongCount.value = 0
 
-            if (mode == ReviewMode.FLASHCARD) {
+            if (filters.mode == ReviewMode.FLASHCARD) {
                 val cards = reviewRepo.fetchCardsForSession(session.id)
                 _sessionCards.value = cards
                 _currentScreen.value = Screen.Flashcard
@@ -222,6 +240,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _currentScreen.value = Screen.Quiz
             }
         }
+    }
+
+    fun startSession(
+        type: ReviewType,
+        mode: ReviewMode,
+        direction: CardDirection = CardDirection.NORMAL,
+        quizLevel: QuizLevel = QuizLevel.MEDIUM,
+        limit: Int = 20
+    ) {
+        startFilteredSession(
+            ReviewFilters(
+                reviewType = type,
+                mode = mode,
+                direction = direction,
+                quizLevel = quizLevel,
+                maxCards = limit
+            )
+        )
     }
 
     fun flipCard() {

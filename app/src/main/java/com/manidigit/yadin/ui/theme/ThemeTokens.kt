@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class AppTheme(val id: String, val titleFa: String, val descriptionFa: String) {
-    GTP("gtp", "تم GTP", "طیف بنفش و ارغوانی نئونی، متراکم و شارپ با کنتراست بالا"),
+    GTP("gtp", "تم GTP", "طیف بنفش و ارغوانی نئونی، متراکم و شارپ با خطوط هندسی دقیق"),
     GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی آینده‌نگرانه، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم")
 }
 
@@ -30,7 +30,9 @@ data class YadinColors(
     val error: Color,
     val info: Color,
     val heroGradient: Brush,
-    val accentGlow: Color
+    val cardBorderBrush: Brush?,
+    val accentGlow: Color,
+    val isGemini: Boolean
 )
 
 @Immutable
@@ -43,6 +45,7 @@ data class YadinDimensions(
     val cornerSmall: Dp,
     val cornerMedium: Dp,
     val cornerLarge: Dp,
+    val cornerPill: Dp,
     val cardElevation: Dp,
     val cardBorderAlpha: Float
 )
@@ -64,7 +67,9 @@ val GtpLightColors = YadinColors(
     error = Color(0xFFD92D48),
     info = Color(0xFF536DFE),
     heroGradient = Brush.linearGradient(listOf(Color(0xFF7C3AED), Color(0xFF06B6D4))),
-    accentGlow = Color(0x337C3AED)
+    cardBorderBrush = null,
+    accentGlow = Color(0x337C3AED),
+    isGemini = false
 )
 
 val GtpDarkColors = YadinColors(
@@ -84,7 +89,9 @@ val GtpDarkColors = YadinColors(
     error = Color(0xFFFF8A9A),
     info = Color(0xFF7C8CFF),
     heroGradient = Brush.linearGradient(listOf(Color(0xFFA78BFA), Color(0xFF22D3EE))),
-    accentGlow = Color(0x44A78BFA)
+    cardBorderBrush = null,
+    accentGlow = Color(0x44A78BFA),
+    isGemini = false
 )
 
 val GeminiLightColors = YadinColors(
@@ -92,39 +99,55 @@ val GeminiLightColors = YadinColors(
     onPrimary = Color(0xFFFFFFFF),
     secondary = Color(0xFF00B4D8),
     onSecondary = Color(0xFFFFFFFF),
-    background = Color(0xFFF8FAFD),
+    background = Color(0xFFF5F8FF),
     surface = Color(0xFFFFFFFF),
-    surfaceVariant = Color(0xFFEDF2F9),
+    surfaceVariant = Color(0xFFE8F1FC),
     onSurface = Color(0xFF1E293B),
-    onSurfaceVariant = Color(0xFF64748B),
+    onSurfaceVariant = Color(0xFF5A6F8C),
     card = Color(0xFFFFFFFF),
     outline = Color(0xFFCBD5E1),
-    success = Color(0xFF138A5B),
+    success = Color(0xFF0D9488),
     warning = Color(0xFFF59E0B),
-    error = Color(0xFFD92D48),
-    info = Color(0xFF536DFE),
-    heroGradient = Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF00B4D8), Color(0xFF7B2CBF))),
-    accentGlow = Color(0x2E1A73E8)
+    error = Color(0xFFEF4444),
+    info = Color(0xFF3B82F6),
+    heroGradient = Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF00B4D8), Color(0xFF9333EA))),
+    cardBorderBrush = Brush.linearGradient(
+        listOf(
+            Color(0xFF1A73E8).copy(alpha = 0.5f),
+            Color(0xFF00B4D8).copy(alpha = 0.6f),
+            Color(0xFF9333EA).copy(alpha = 0.35f)
+        )
+    ),
+    accentGlow = Color(0x281A73E8),
+    isGemini = true
 )
 
 val GeminiDarkColors = YadinColors(
     primary = Color(0xFF8AB4F8),
-    onPrimary = Color(0xFF0B0F19),
+    onPrimary = Color(0xFF060B14),
     secondary = Color(0xFF70D6FF),
-    onSecondary = Color(0xFF0B0F19),
-    background = Color(0xFF0B0F19),
-    surface = Color(0xFF111827),
-    surfaceVariant = Color(0xFF1F2937),
+    onSecondary = Color(0xFF060B14),
+    background = Color(0xFF060B14),
+    surface = Color(0xFF0E1726),
+    surfaceVariant = Color(0xFF182337),
     onSurface = Color(0xFFF1F5F9),
     onSurfaceVariant = Color(0xFF94A3B8),
-    card = Color(0xFF161F30),
-    outline = Color(0xFF334155),
-    success = Color(0xFF52D49A),
+    card = Color(0xFF0E1726),
+    outline = Color(0xFF2E3E5B),
+    success = Color(0xFF2DD4BF),
     warning = Color(0xFFFBBF24),
-    error = Color(0xFFFF8A9A),
-    info = Color(0xFF7C8CFF),
-    heroGradient = Brush.linearGradient(listOf(Color(0xFF8AB4F8), Color(0xFF70D6FF), Color(0xFFC77DFF))),
-    accentGlow = Color(0x408AB4F8)
+    error = Color(0xFFF87171),
+    info = Color(0xFF60A5FA),
+    heroGradient = Brush.linearGradient(listOf(Color(0xFF8AB4F8), Color(0xFF70D6FF), Color(0xFFC084FC))),
+    cardBorderBrush = Brush.linearGradient(
+        listOf(
+            Color(0xFF8AB4F8).copy(alpha = 0.65f),
+            Color(0xFF70D6FF).copy(alpha = 0.7f),
+            Color(0xFFC084FC).copy(alpha = 0.45f)
+        )
+    ),
+    accentGlow = Color(0x408AB4F8),
+    isGemini = true
 )
 
 val GtpDimensions = YadinDimensions(
@@ -134,10 +157,11 @@ val GtpDimensions = YadinDimensions(
     statCardHeight = 118.dp,
     navHeight = 70.dp,
     cornerSmall = 6.dp,
-    cornerMedium = 12.dp,
-    cornerLarge = 18.dp,
-    cardElevation = 5.dp,
-    cardBorderAlpha = 0.70f
+    cornerMedium = 10.dp,
+    cornerLarge = 14.dp,
+    cornerPill = 16.dp,
+    cardElevation = 4.dp,
+    cardBorderAlpha = 0.85f
 )
 
 val GeminiDimensions = YadinDimensions(
@@ -146,11 +170,12 @@ val GeminiDimensions = YadinDimensions(
     sectionGap = 16.dp,
     statCardHeight = 124.dp,
     navHeight = 76.dp,
-    cornerSmall = 12.dp,
-    cornerMedium = 20.dp,
-    cornerLarge = 28.dp,
-    cardElevation = 3.dp,
-    cardBorderAlpha = 0.35f
+    cornerSmall = 16.dp,
+    cornerMedium = 24.dp,
+    cornerLarge = 32.dp,
+    cornerPill = 40.dp,
+    cardElevation = 6.dp,
+    cardBorderAlpha = 0.45f
 )
 
 val LocalYadinColors = staticCompositionLocalOf { GtpDarkColors }
