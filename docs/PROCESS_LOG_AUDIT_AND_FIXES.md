@@ -89,14 +89,103 @@
 
 ---
 
-### ۲.۶. راه‌اندازی تست‌های خودکار (Automated Unit Tests)
+### ۲.۶. راه‌اندازی تست‌های خودکار اولیه (Automated Unit Tests)
 * **فایل‌های ایجاد شده:**
   * `app/src/test/java/com/manidigit/yadin/domain/algorithm/LearningTransitionTest.kt`
   * `app/src/test/java/com/manidigit/yadin/domain/algorithm/DifficultyCalculatorTest.kt`
   * `app/src/test/java/com/manidigit/yadin/domain/time/StreakCalculationTest.kt`
   * `app/src/test/java/com/manidigit/yadin/domain/algorithm/VocabularyParserTest.kt`
 * **نتیجه اجرا:**
-  تمام ۲۰ تست الگوریتمی با دستور `./gradlew testDebugUnitTest` با موفقیت ۱۰۰٪ پاس شدند.
+  تمام تست‌های الگوریتمی اولیه با دستور `./gradlew testDebugUnitTest` با موفقیت ۱۰۰٪ پاس شدند.
+
+---
+
+### ۲.۷. تثبیت دو تم رسمی (GTP و Gemini) و معماری چیدمان وابسته به تم (Theme-Bound Layout Architecture)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/theme/Theme.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/HomeScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+* **شرح تصمیم و اقدام:**
+  1. کلیه پوسته‌های غیررسمی حذف و تنها دو تم استاندارد `gtp` (GTP Cyber) و `gemini` (Gemini Future AI) تثبیت شدند.
+  2. چیدمان داشبورد به‌صورت هوشمند به تم مقید شد:
+     - در تم **GTP**: داشبورد متراکم، پر از جزئیات، با تمام ۸ کاشی عملیات و هدر بنفش سایبری دقیقاً مشابه حالت قبل بدون دستکاری حفظ شد.
+     - در تم **Gemini**: بهینه‌سازی و خلوت‌سازی انجام شد؛ کاشی‌های تکراری که در نوار پایین (Bottom Bar) وجود داشتند (کتابخانه، پیشرفت، تنظیمات) حذف شدند و تمرکز بر کارت مرور سررسید، قیف لایتنر و کارت‌های ایجاد واژه قرار گرفت.
+  3. نوار پایین (Bottom Navigation Bar) به عنوان لنگرگاه ثابت ناوبری در هر دو تم حفظ و تقویت شد.
+
+---
+
+### ۲.۸. حل مشکل Keystore در گیت‌هاب اکشنز (Materialize Debug Keystore in CI)
+* **فایل‌های درگیر:**
+  * `.github/workflows/android-ci.yml`
+* **ریشه مشکل:**
+  در اجرای اکشن گیت‌هاب (Job ID `111689500446`)، مرحله تست‌ها پاس شد اما مرحله `assembleDebug` به دلیل نبودن فایل باینری `debug.keystore` در مخزن گیت متوقف می‌شد.
+* **اقدام اصلاحی:**
+  مشابه الگوی استاندارد FlashLearn، مرحله `Materialize debug keystore` در ورک‌فلو اضافه شد تا در صورت نبود کلید، بلافاصله آن را با ابزار استاندارد `keytool` در صدم ثانیه تولید کند. تست اجرای بیلد در گیت‌هاب با موفقیت تثبیت شد.
+
+---
+
+### ۲.۹. تصحیح کوئری‌های شمارش دیتابیس و انطباق آماری (Active Concept Join)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/LearningDao.kt`
+* **ریشه مشکل:**
+  کوئری‌های `getCountByStageFlow` و `getCountByDifficultyFlow` جدول `learning_states` را بدون فیلتر `c.active = 1` می‌شمردند در حالی که سایر بخش‌ها واژه‌های فعال را مد نظر قرار می‌دادند.
+* **اقدام اصلاحی:**
+  هر دو کوئری به جدول `concepts` با شرط `c.active = 1` الحاق شدند تا انطباق صددرصدی میان مجموع مراحل لایتنر، سطوح سختی و کل کلمات فعال برقرار باشد:
+  $$\sum \text{مراحل لایتنر} = \sum \text{سطوح دشواری} = \text{تعداد کل کلمات فعال}$$
+
+---
+
+### ۲.۱۰. پیاده‌سازی کامل موتور دستاوردها (Achievement Engine - تمام ۸ دستاورد)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/LearningDao.kt`
+* **ریشه مشکل:**
+  تنها دستاوردهای ۳ روزه، ۷ روزه و ۳۰ روزه رگبار چک می‌شدند و ۵ دستاورد دیگر هیچ تریگری در کد نداشتند.
+* **اقدام اصلاحی:**
+  پایش کامل و تریگر لحظه‌ای برای هر ۸ دستاورد اضافه شد:
+  1. `STREAK_3_DAYS`, `STREAK_7_DAYS`, `STREAK_30_DAYS`: بر اساس روزهای متوالی مرور.
+  2. `FIRST_TEN_WORDS`: یادگیری و تمرین ۱۰ واژه اول (`practicedCount >= 10`).
+  3. `VOCABULARY_BUILDER`: تمرین ۵۰ واژه (`practicedCount >= 50`).
+  4. `LONG_TERM_MEMORY`: رساندن حداقل ۲۰ واژه به جعبه تثبیت‌شده (`LEARNED >= 20`).
+  5. `HARD_MASTER`: تسلط بر ۵ واژه که سابقه سختی حداکثری (`VERY_HARD`) داشته‌اند.
+  6. `QUIZ_ACE`: کسب نمره ۱۰۰٪ در آزمون‌های ۵ سؤالی یا بیشتر.
+
+---
+
+### ۲.۱۱. ایجاد تراکنش‌های اتمیک در لایه داده واژگان (Atomic Transactions)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+* **اقدام اصلاحی:**
+  اتصال مستقیم شیء `YadinDatabase` به مخزن واژگان و محصور کردن کلیه متدهای تغییر داده (`addWord`, `updateWord`, `deleteWord`, `importParsedEntries`) درون بلوک‌های `database.withTransaction { ... }` جهت تضمین خاصیت Atomicity و جلوگیری از خطاهای دیتابیس در ایمپورت‌های حجیم.
+
+---
+
+### ۲.۱۲. ارتقای بکاپ/ریستور به حفظ جزئیات کامل نشست‌ها (`review_session_items` و `currentPosition`)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/repository/BackupRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/ReviewSessionDao.kt`
+* **اقدام اصلاحی:**
+  1. صادر و وارد کردن کامل جدول `review_session_items` جهت بازگردانی بدون نقص نشست‌های جاری.
+  2. ذخیره و بازیابی دقیق فیلد `currentPosition` به جای جایگزینی اشتباه با `totalItems`.
+
+---
+
+### ۲.۱۳. افزودن سوئیت تست‌های جدید (Quiz Distractor, Queue Logic, Achievement Engine)
+* **فایل‌های ایجاد شده:**
+  * `app/src/test/java/com/manidigit/yadin/domain/algorithm/QuizDistractorScoringTest.kt`
+  * `app/src/test/java/com/manidigit/yadin/domain/algorithm/ReviewQueueLogicTest.kt`
+  * `app/src/test/java/com/manidigit/yadin/domain/algorithm/AchievementEngineLogicTest.kt`
+* **پوشش تست‌ها:**
+  صحت‌سنجی نمره‌دهی گزینه‌های انحرافی بر اساس سطح کوییز، بررسی ریاضی قفل هم‌روز و شروط لایتنر، و ارزیابی تریگرهای تمامی دستاوردها.
+
+---
+
+### ۲.۱۴. تبیین معماری در برابر نقدهای غیرمنطبق ChatGPT
+* **عدم ایجاد جدول مستقل برای Relations و Variants:**  
+  بر خلاف پیشنهاد چت‌جی‌پی‌تی مبنی بر ایجاد جدول‌های مجزا، در سند رسمی پروژه (`docs/Yadin-Specification1-1.md` بخش ۱۳ تصمیم A6 و بخش ۱۴.۴ بند ۵) صراحتاً ثبت شده که متادیتای پارسر برای سبکی و سرعت دیتابیس موبایل در فیلد یادداشت واژه نگهداری می‌شود و نباید جدول مستقل داشته باشد.
+* **تزریق وابستگی (Constructor Injection vs Hilt):**  
+  مطابق دستورالعمل‌های رسمی Android AI Studio، استفاده از Constructor Injection صریح، سبک و بدون سربار کدهای اضافه کامپایل، اولویت معماری این پروژه است.
 
 ---
 
