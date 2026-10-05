@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileUpload
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -150,8 +152,7 @@ fun HomeScreen(
 
 /**
  * -------------------------------------------------------------
- * CLAUDE THEME LAYOUT (Editorial, Warm, Structured, Academic)
- * Inspired by humanist typography, paper textures, and clear sections
+ * CLAUDE THEME LAYOUT (Minimal, Editorial, Calm & Non-Redundant)
  * -------------------------------------------------------------
  */
 @Composable
@@ -184,7 +185,7 @@ private fun ClaudeHomeContent(
             .padding(horizontal = dimensions.screenPadding),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // 1. Warm Editorial Header with Persian greeting & Theme/Dark controls
+        // 1. Clean Editorial Header
         item {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
@@ -218,7 +219,7 @@ private fun ClaudeHomeContent(
                         }
                     }
                     Text(
-                        text = "یادگیری آفلاین واژگان با تکرار فاصله‌دار",
+                        text = if (activePair == "es-fa") "🇪🇸 اسپانیایی ⇄ فارسی 🇮🇷" else activePair,
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -278,52 +279,9 @@ private fun ClaudeHomeContent(
             }
         }
 
-        // 2. Language Pair & Word Count Card
+        // 2. Focused Hero Review Card (کارت اصلی مرور)
         item {
-            YadinCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = colors.surface
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (activePair == "es-fa") "🇪🇸 اسپانیایی ⇄ فارسی 🇮🇷" else activePair,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface
-                    )
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(dimensions.cornerPill))
-                            .background(colors.primary.copy(alpha = 0.12f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "${statistics.totalWords} واژه در دیتابیس",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.primary
-                        )
-                    }
-                }
-            }
-        }
-
-        // 3. Learning Progress Hero Card (پیشرفت یادگیری)
-        item {
-            val practicedCount = statistics.dailyStageCount + statistics.weeklyStageCount + statistics.monthlyStageCount + statistics.learnedStageCount
-            val unpracticedCount = maxOf(0, statistics.totalWords - practicedCount)
-            val progressScore = if (statistics.totalWords > 0) {
-                (statistics.learnedStageCount.toFloat() / statistics.totalWords * 100).toInt()
-            } else 0
-            val retentionScore = if (practicedCount > 0) {
-                ((statistics.learnedStageCount * 1.0f + statistics.monthlyStageCount * 0.8f + statistics.weeklyStageCount * 0.5f + statistics.dailyStageCount * 0.2f) / practicedCount * 100).toInt().coerceIn(0, 100)
-            } else 100
+            val isDue = dueCount > 0
 
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -350,527 +308,253 @@ private fun ClaudeHomeContent(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.School,
+                                    imageVector = if (isDue) Icons.Default.AutoAwesome else Icons.Default.CheckCircle,
                                     contentDescription = null,
                                     tint = colors.primary,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
-                            Text(
-                                text = "پیشرفت یادگیری و تسلط",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
-                            )
+                            Column {
+                                Text(
+                                    text = if (isDue) "مرور سررسید امروز" else "واژه‌های امروز تکمیل شد 🎉",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface
+                                )
+                                Text(
+                                    text = if (isDue) "$dueCount واژه آماده مرور در صف لایتنر" else "همه واژه‌ها مرور شده‌اند، آماده تمرین آزاد هستید",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.onSurfaceVariant
+                                )
+                            }
                         }
 
-                        Text(
-                            text = "$progressScore%",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = colors.primary
-                        )
+                        if (isDue) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(dimensions.cornerPill))
+                                    .background(colors.primary.copy(alpha = 0.15f))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "$dueCount واژه",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = colors.primary
+                                )
+                            }
+                        }
                     }
 
-                    // Progress Bar
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(colors.surfaceVariant)
-                    ) {
-                        Box(
+                    // Action buttons
+                    if (isDue) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { onStartReview(ReviewType.DAILY, ReviewMode.FLASHCARD) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.primary,
+                                    contentColor = colors.onPrimary
+                                )
+                            ) {
+                                Icon(Icons.Default.Style, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("فلش‌کارت", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = { onStartReview(ReviewType.DAILY, ReviewMode.QUIZ) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.surfaceVariant,
+                                    contentColor = colors.onSurface
+                                )
+                            ) {
+                                Icon(Icons.Default.Quiz, contentDescription = null, tint = colors.primary, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("آزمون ۴ گزینه", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = { onOpenReviewSetup(ReviewType.RANDOM) },
                             modifier = Modifier
-                                .fillMaxWidth(fraction = (progressScore / 100f).coerceIn(0.03f, 1f))
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(colors.heroGradient)
-                        )
+                                .fillMaxWidth()
+                                .height(44.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.primary,
+                                contentColor = colors.onPrimary
+                            )
+                        ) {
+                            Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("شروع تمرین تصادفی آزاد", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
+                }
+            }
+        }
 
-                    // Sub stats row
+        // 3. مراحل یادگیری لایتنر (Learning Stages - Single Clean Card)
+        item {
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "تسلط دائم: ${statistics.learnedStageCount} از ${statistics.totalWords} واژه",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 12.sp
+                            text = "مراحل تثبیت در لایتنر",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
                         )
                         Text(
-                            text = "حفظ ماندگار: $retentionScore%",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.secondary,
-                            fontSize = 12.sp
+                            text = "لمس برای مرور",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.onSurfaceVariant
                         )
                     }
-                }
-            }
-        }
 
-        // 4. خلاصه آماری واژگان (4 Cards Grid)
-        item {
-            val practicedCount = statistics.dailyStageCount + statistics.weeklyStageCount + statistics.monthlyStageCount + statistics.learnedStageCount
-            val unpracticedCount = maxOf(0, statistics.totalWords - practicedCount)
-
-            Text(
-                text = "خلاصه آماری واژگان",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ClaudeStatCard(
-                    title = "کل واژگان",
-                    count = statistics.totalWords.toString(),
-                    subtitle = "بانک جامع واژه‌ها",
-                    color = colors.primary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenLibrary
-                )
-                ClaudeStatCard(
-                    title = "تمرین‌شده",
-                    count = practicedCount.toString(),
-                    subtitle = "در جریان یادگیری",
-                    color = colors.info,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenProgress
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ClaudeStatCard(
-                    title = "یادگرفته‌شده",
-                    count = statistics.learnedStageCount.toString(),
-                    subtitle = "تثبیت دائم حافظه",
-                    color = colors.success,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenProgress
-                )
-                ClaudeStatCard(
-                    title = "تمرین‌نشده",
-                    count = unpracticedCount.toString(),
-                    subtitle = "واژگان جدید",
-                    color = colors.warning,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onOpenReviewSetup(ReviewType.RANDOM) }
-                )
-            }
-        }
-
-        // 5. مرورهای آماده بر اساس تکرار فاصله‌دار (Scheduled Reviews Queue)
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "مرورهای زمان‌بندی‌شده (تکرار فاصله‌دار)",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
-                if (dueCount > 0) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(dimensions.cornerPill))
-                            .background(colors.primary.copy(alpha = 0.15f))
-                            .padding(horizontal = 9.dp, vertical = 3.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = "$dueCount واژه سررسید",
+                        ClaudeStagePill(
+                            title = "روزانه",
+                            count = statistics.dailyStageCount,
                             color = colors.primary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.DAILY) }
+                        )
+                        ClaudeStagePill(
+                            title = "هفتگی",
+                            count = statistics.weeklyStageCount,
+                            color = colors.info,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.WEEKLY) }
+                        )
+                        ClaudeStagePill(
+                            title = "ماهانه",
+                            count = statistics.monthlyStageCount,
+                            color = colors.warning,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.MONTHLY) }
+                        )
+                        ClaudeStagePill(
+                            title = "تثبیت‌شده",
+                            count = statistics.learnedStageCount,
+                            color = colors.success,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenReviewSetup(ReviewType.LEARNED) }
                         )
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Daily Leitner Box
-            ClaudeReviewStageCard(
-                title = "مرور روزانه",
-                badgeText = "$dueCount آماده از ${statistics.dailyStageCount} کلمه",
-                isDue = dueCount > 0,
-                accentColor = colors.primary,
-                onFlashcardClick = { onStartReview(ReviewType.DAILY, ReviewMode.FLASHCARD) },
-                onQuizClick = { onStartReview(ReviewType.DAILY, ReviewMode.QUIZ) }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Weekly Box
-            ClaudeReviewStageCard(
-                title = "مرور هفتگی",
-                badgeText = "۰ آماده از ${statistics.weeklyStageCount} کلمه",
-                isDue = false,
-                accentColor = colors.info,
-                onFlashcardClick = { onStartReview(ReviewType.WEEKLY, ReviewMode.FLASHCARD) },
-                onQuizClick = { onStartReview(ReviewType.WEEKLY, ReviewMode.QUIZ) }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Monthly Box
-            ClaudeReviewStageCard(
-                title = "مرور ماهانه",
-                badgeText = "۰ آماده از ${statistics.monthlyStageCount} کلمه",
-                isDue = false,
-                accentColor = colors.secondary,
-                onFlashcardClick = { onStartReview(ReviewType.MONTHLY, ReviewMode.FLASHCARD) },
-                onQuizClick = { onStartReview(ReviewType.MONTHLY, ReviewMode.QUIZ) }
-            )
         }
 
-        // 6. Difficulty Profile
+        // 4. طیف دشواری واژگان
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "سطوح دشواری واژگان",
+                    text = "طیف دشواری واژگان",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
-                Text(
-                    text = "فیلتر بر اساس سختی",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant,
-                    fontSize = 11.sp
+                DifficultyCounterRow(
+                    counts = difficultyCounts,
+                    onSelectDifficulty = onDifficultyFilterClick
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            DifficultyCounterRow(
-                counts = difficultyCounts,
-                onSelectDifficulty = onDifficultyFilterClick
-            )
         }
 
-        // 7. Operations & Tools Hub (لغات تکی, لغات گروهی, ریستور بکاپ, کتابخانه)
+        // 5. دسترسی‌های سریع (Quick Actions - 2 clean buttons)
         item {
-            Text(
-                text = "مرکز افزودن و ابزارها",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface
-            )
-            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                ClaudeActionCard(
-                    title = "لغات تکی",
-                    subtitle = "افزودن واژه با تلفظ و معنی",
+                ClaudeActionTile(
+                    title = "افزودن واژه",
+                    subtitle = "کارت جدید با ترجمه",
                     icon = Icons.Default.Add,
                     color = colors.primary,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenAddWord
                 )
-                ClaudeActionCard(
-                    title = "لغات گروهی",
-                    subtitle = "ورود متنی چندتایی با Paste",
-                    icon = Icons.Default.FileUpload,
-                    color = colors.secondary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenImport
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ClaudeActionCard(
-                    title = "پشتیبان‌گیری",
-                    subtitle = "خروجی و بازیابی JSON",
-                    icon = Icons.Default.CloudDownload,
-                    color = colors.info,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenBackup
-                )
-                ClaudeActionCard(
+                ClaudeActionTile(
                     title = "کتابخانه واژگان",
-                    subtitle = "جستجو و فیلتر دسته‌بندی‌ها",
+                    subtitle = "جستجو و فیلترها",
                     icon = Icons.Default.MenuBook,
-                    color = colors.warning,
+                    color = colors.secondary,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenLibrary
                 )
             }
         }
 
-        // 8. Custom Review Quick Setup Card
         item {
-            YadinCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = colors.surface,
-                onClick = { onOpenReviewSetup(ReviewType.RANDOM) }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(colors.primary.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Tune,
-                                contentDescription = null,
-                                tint = colors.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Column {
-                            Text(
-                                text = "آزمون و مرور سفارشی پیشرفته",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.onSurface
-                            )
-                            Text(
-                                text = "فیلتر بر اساس دسته‌بندی، تعداد و درجه سختی",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.onSurfaceVariant,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = Icons.Default.Quiz,
-                        contentDescription = "تنظیم مرور",
-                        tint = colors.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-
-        // 9. Bottom CTA Button (+ افزودن واژه)
-        item {
-            Button(
-                onClick = onOpenAddWord,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(dimensions.cornerMedium),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "افزودن واژه جدید",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-            }
-        }
-
-        // Bottom Spacer
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
     }
 }
 
 @Composable
-private fun ClaudeStatCard(
+private fun ClaudeStagePill(
     title: String,
-    count: String,
-    subtitle: String,
+    count: Int,
     color: Color,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-
-    YadinCard(
-        modifier = modifier,
-        onClick = onClick,
-        backgroundColor = colors.surface
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(colors.surfaceVariant)
+            .clickable { onClick() }
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant,
-                    fontSize = 12.sp
-                )
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(color)
-                )
-            }
             Text(
-                text = count,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold,
+                text = "$count",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
                 color = color
             )
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.onSurfaceVariant,
-                fontSize = 10.sp
+                text = title,
+                fontSize = 11.sp,
+                color = colors.onSurfaceVariant
             )
         }
     }
 }
 
 @Composable
-private fun ClaudeReviewStageCard(
-    title: String,
-    badgeText: String,
-    isDue: Boolean,
-    accentColor: Color,
-    onFlashcardClick: () -> Unit,
-    onQuizClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-
-    YadinCard(
-        modifier = Modifier.fillMaxWidth(),
-        backgroundColor = colors.surface
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(accentColor)
-                    )
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(dimensions.cornerPill))
-                        .background(if (isDue) accentColor.copy(alpha = 0.15f) else colors.surfaceVariant)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = badgeText,
-                        color = if (isDue) accentColor else colors.onSurfaceVariant,
-                        fontSize = 11.sp,
-                        fontWeight = if (isDue) FontWeight.Bold else FontWeight.Normal
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = onFlashcardClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(42.dp),
-                    shape = RoundedCornerShape(dimensions.cornerSmall),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = accentColor,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Style,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("فلش‌کارت", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-
-                Button(
-                    onClick = onQuizClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(42.dp),
-                    shape = RoundedCornerShape(dimensions.cornerSmall),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.surfaceVariant,
-                        contentColor = colors.onSurface
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Quiz,
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("آزمون ۴ گزینه", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClaudeActionCard(
+private fun ClaudeActionTile(
     title: String,
     subtitle: String,
     icon: ImageVector,
@@ -879,8 +563,6 @@ private fun ClaudeActionCard(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-
     YadinCard(
         modifier = modifier,
         onClick = onClick,
@@ -896,7 +578,7 @@ private fun ClaudeActionCard(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(RoundedCornerShape(dimensions.cornerSmall))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(color.copy(alpha = 0.14f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -904,10 +586,10 @@ private fun ClaudeActionCard(
                     imageVector = icon,
                     contentDescription = null,
                     tint = color,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
-            Column(modifier = Modifier.weight(1f)) {
+            Column {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
@@ -918,8 +600,7 @@ private fun ClaudeActionCard(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
-                    fontSize = 10.sp,
-                    maxLines = 1
+                    fontSize = 10.sp
                 )
             }
         }
