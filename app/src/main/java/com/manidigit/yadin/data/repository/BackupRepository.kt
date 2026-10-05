@@ -243,13 +243,21 @@ class BackupRepository(
         file
     }
 
+    private fun parseIsoDay(isoOrDay: String?): String? {
+        if (isoOrDay.isNullOrBlank()) return null
+        if (isoOrDay.length >= 10 && isoOrDay.contains("-")) {
+            return isoOrDay.take(10)
+        }
+        return null
+    }
+
     suspend fun restoreFromJson(
         jsonString: String,
         isReplace: Boolean = false,
         onProgress: (Float, String) -> Unit
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
-            onProgress(0.1f, "در حال اعتبارسنجی فایل پشتیبان...")
+            onProgress(0.05f, "در حال پردازش و استخراج محتوای پشتیبان...")
             val root = JSONObject(jsonString)
 
             val format = root.optString("format", "")
@@ -258,18 +266,283 @@ class BackupRepository(
                 return@withContext Result.failure(IllegalArgumentException("قالب فایل پشتیبان نامعتبر است"))
             }
 
-            val data = root.optJSONObject("data") ?: root.optJSONObject("payloads")?.optJSONObject("VOCABULARY")
-            if (data == null) {
+            // Consolidate data from both Yadin format ("data") and FlashLearn bundle format ("payloads")
+            val data = JSONObject()
+            
+            root.optJSONObject("data")?.let { direct ->
+                val keys = direct.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    data.put(k, direct.get(k))
+                }
+            }
+
+            root.optJSONObject("payloads")?.let { payloads ->
+                val pKeys = payloads.keys()
+                while (pKeys.hasNext()) {
+                    val pKey = pKeys.next()
+                    payloads.optJSONObject(pKey)?.let { pObj ->
+                        val keys = pObj.keys()
+                        while (keys.hasNext()) {
+                            val k = keys.next()
+                            data.put(k, pObj.get(k))
+                        }
+                    }
+                }
+            }
+
+            if (data.length() == 0) {
                 return@withContext Result.failure(IllegalArgumentException("اطلاعات پشتیبان خالی یا مخدوش است"))
             }
 
             val restoreContext = RestoreContext()
 
-            // Execute all restore database operations inside a single transaction!
+            // Step 1: Parse ALL entities in memory BEFORE opening SQLite transaction
+            // This prevents holding an exclusive write lock during long JSON iterations, eliminating UI freezes!
+            
+            // 1. Categories
+            val categoriesJson = data.optJSONArray("categories")
+            val categoriesList = mutableListOf<CategoryEntity>()
+            if (categoriesJson != null) {
+                onProgress(0.15f, "پردازش دسته‌بندی‌ها...")
+                for (i in 0 until categoriesJson.length()) {
+                    val co = categoriesJson.getJSONObject(i)
+                    categoriesList.add(
+                        CategoryEntity(
+                            id = co.getString("id"),
+                            name = co.getString("name"),
+                            sortOrder = co.optInt("sortOrder", 0),
+                            isDefault = co.optBoolean("isDefault", false)
+                        )
+                    )
+                }
+            }
+
+            // 2. Concepts & Contents
+            val conceptsJson = data.optJSONArray("concepts")
+            val contentsJson = data.optJSONArray("contents")
+            val conceptsList = mutableListOf<ConceptEntity>()
+            val contentsList = mutableListOf<ContentEntity>()
+
+            if (conceptsJson != null) {
+                onProgress(0.25f, "پردازش ساختار واژگان...")
+                for (i in 0 until conceptsJson.length()) {
+                    val co = conceptsJson.getJSONObject(i)
+                    val cid = co.getString("id")
+                    val entryTypeStr = co.optString("entryType", "WORD")
+                    val entryType = runCatching { EntryType.valueOf(entryTypeStr) }.getOrDefault(EntryType.WORD)
+                    conceptsList.add(
+                        ConceptEntity(
+                            id = cid,
+                            entryType = entryType,
+                            categoryId = co.optString("categoryId", "").ifEmpty { null },
+                            active = co.optBoolean("active", true),
+                            createdAt = co.optLong("createdAt", System.currentTimeMillis()),
+                            updatedAt = co.optLong("updatedAt", System.currentTimeMillis())
+                        )
+                    )
+                }
+            }
+
+            if (contentsJson != null) {
+                onProgress(0.35f, "پردازش معانی و ترجمه‌ها...")
+                for (i in 0 until contentsJson.length()) {
+                    val cto = contentsJson.getJSONObject(i)
+                    contentsList.add(
+                        ContentEntity(
+                            id = cto.optString("id", UUID.randomUUID().toString()),
+                            conceptId = restoreContext.remapConceptId(cto.getString("conceptId")),
+                            languageCode = cto.optString("languageCode", "es"),
+                            text = cto.getString("text"),
+                            canonicalKey = cto.optString("canonicalKey", cto.getString("text").lowercase()),
+                            note = cto.optString("note", "").ifEmpty { cto.optString("notes", "").ifEmpty { null } },
+                            pronunciation = cto.optString("pronunciation", "").ifEmpty { null },
+                            translationIndex = cto.optInt("translationIndex", 0)
+                        )
+                    )
+                }
+            }
+
+            // 3. Learning States (Handles both FlashLearn nextReviewAt/lastReviewedAt and Yadin nextReviewDay/lastReviewedDay)
+            val lsJson = data.optJSONArray("learningStates")
+            val learningStatesList = mutableListOf<LearningStateEntity>()
+            if (lsJson != null) {
+                onProgress(0.50f, "پردازش مراحل لایتنر واژگان...")
+                for (i in 0 until lsJson.length()) {
+                    val o = lsJson.getJSONObject(i)
+                    val dirStr = o.optString("direction", "NORMAL")
+                    val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
+                    val stageStr = o.optString("stage", "DAILY")
+                    val stage = runCatching { Stage.valueOf(stageStr) }.getOrDefault(Stage.DAILY)
+                    
+                    val nextDay = parseIsoDay(o.optString("nextReviewDay", "").ifEmpty { o.optString("nextReviewAt", "") })
+                    val lastDay = parseIsoDay(o.optString("lastReviewedDay", "").ifEmpty { o.optString("lastReviewedAt", "") })
+
+                    learningStatesList.add(
+                        LearningStateEntity(
+                            id = o.optString("id", UUID.randomUUID().toString()),
+                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            direction = dir,
+                            stage = stage,
+                            nextReviewDay = nextDay,
+                            lastReviewedDay = lastDay,
+                            updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
+                        )
+                    )
+                }
+            }
+
+            // 4. Difficulty States
+            val dsJson = data.optJSONArray("difficultyStates")
+            val difficultyStatesList = mutableListOf<DifficultyStateEntity>()
+            if (dsJson != null) {
+                onProgress(0.65f, "پردازش سطوح دشواری...")
+                for (i in 0 until dsJson.length()) {
+                    val o = dsJson.getJSONObject(i)
+                    val dirStr = o.optString("direction", "NORMAL")
+                    val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
+                    val curStr = o.optString("current", "MEDIUM")
+                    val current = runCatching { VocabularyDifficulty.valueOf(curStr) }.getOrDefault(VocabularyDifficulty.MEDIUM)
+                    difficultyStatesList.add(
+                        DifficultyStateEntity(
+                            id = o.optString("id", UUID.randomUUID().toString()),
+                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            direction = dir,
+                            current = current,
+                            consecutiveCorrect = o.optInt("consecutiveCorrect", 0),
+                            consecutiveWrong = o.optInt("consecutiveWrong", 0),
+                            hasReachedVeryHard = o.optBoolean("hasReachedVeryHard", false)
+                        )
+                    )
+                }
+            }
+
+            // 5. Review History
+            val histJson = data.optJSONArray("reviewHistory")
+            val historyList = mutableListOf<ReviewHistoryEntity>()
+            if (histJson != null) {
+                onProgress(0.75f, "پردازش تاریخچه مرور...")
+                for (i in 0 until histJson.length()) {
+                    val o = histJson.getJSONObject(i)
+                    val dirStr = o.optString("direction", "NORMAL")
+                    val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
+                    val rtStr = o.optString("reviewType", "DAILY")
+                    val rt = runCatching { ReviewType.valueOf(rtStr) }.getOrDefault(ReviewType.DAILY)
+                    val mStr = o.optString("mode", "FLASHCARD")
+                    val m = runCatching { ReviewMode.valueOf(mStr) }.getOrDefault(ReviewMode.FLASHCARD)
+                    val sbStr = o.optString("stageBefore", "DAILY")
+                    val sb = runCatching { Stage.valueOf(sbStr) }.getOrDefault(Stage.DAILY)
+                    val qlStr = o.optString("quizLevel", "")
+                    val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
+
+                    val revAt = o.optLong("reviewedAt", System.currentTimeMillis())
+                    val revDay = parseIsoDay(o.optString("reviewedDay", "")) ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(revAt))
+
+                    historyList.add(
+                        ReviewHistoryEntity(
+                            id = o.optString("id", UUID.randomUUID().toString()),
+                            sessionId = o.optString("sessionId", UUID.randomUUID().toString()),
+                            reviewAttemptId = UUID.randomUUID().toString(),
+                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            direction = dir,
+                            reviewedAt = revAt,
+                            reviewedDay = revDay,
+                            isCorrect = o.optBoolean("isCorrect", true),
+                            reviewType = rt,
+                            mode = m,
+                            stageBefore = sb,
+                            quizLevel = ql,
+                            optionsJson = null,
+                            selectedIndex = if (o.has("selectedIndex")) o.getInt("selectedIndex") else null,
+                            correctIndex = if (o.has("correctIndex")) o.getInt("correctIndex") else null
+                        )
+                    )
+                }
+            }
+
+            // 6. Review Sessions
+            val sessJson = data.optJSONArray("reviewSessions")
+            val sessionsList = mutableListOf<ReviewSessionEntity>()
+            if (sessJson != null) {
+                for (i in 0 until sessJson.length()) {
+                    val o = sessJson.getJSONObject(i)
+                    val rtStr = o.optString("reviewType", "DAILY")
+                    val rt = runCatching { ReviewType.valueOf(rtStr) }.getOrDefault(ReviewType.DAILY)
+                    val mStr = o.optString("mode", "FLASHCARD")
+                    val m = runCatching { ReviewMode.valueOf(mStr) }.getOrDefault(ReviewMode.FLASHCARD)
+                    val dirStr = o.optString("direction", "NORMAL")
+                    val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
+                    val stStr = o.optString("status", "COMPLETED")
+                    val st = runCatching { SessionStatus.valueOf(stStr) }.getOrDefault(SessionStatus.COMPLETED)
+                    val qlStr = o.optString("quizLevel", "")
+                    val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
+
+                    sessionsList.add(
+                        ReviewSessionEntity(
+                            id = o.getString("id"),
+                            startedAt = o.optLong("startedAt", System.currentTimeMillis()),
+                            endedAt = if (o.has("endedAt")) o.optLong("endedAt") else null,
+                            reviewType = rt,
+                            mode = m,
+                            direction = dir,
+                            quizLevel = ql,
+                            status = st,
+                            currentPosition = o.optInt("currentPosition", o.optInt("totalItems", 0)),
+                            totalItems = o.optInt("totalItems", 0)
+                        )
+                    )
+                }
+            }
+
+            val itemsJson = data.optJSONArray("reviewSessionItems")
+            val sessionItemsList = mutableListOf<ReviewSessionItemEntity>()
+            if (itemsJson != null) {
+                for (i in 0 until itemsJson.length()) {
+                    val o = itemsJson.getJSONObject(i)
+                    val dirStr = o.optString("direction", "NORMAL")
+                    val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
+                    val stStr = o.optString("state", "PENDING")
+                    val state = runCatching { SessionItemState.valueOf(stStr) }.getOrDefault(SessionItemState.PENDING)
+                    sessionItemsList.add(
+                        ReviewSessionItemEntity(
+                            id = o.getString("id"),
+                            sessionId = o.getString("sessionId"),
+                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            direction = dir,
+                            position = o.optInt("position", i),
+                            state = state
+                        )
+                    )
+                }
+            }
+
+            // 7. Achievements & Settings
+            val achJson = data.optJSONArray("achievements")
+            val achievementsList = mutableListOf<Pair<String, Pair<Long?, Int>>>()
+            if (achJson != null) {
+                for (i in 0 until achJson.length()) {
+                    val o = achJson.getJSONObject(i)
+                    val id = o.getString("id")
+                    val unlockedAt = if (o.has("unlockedAt") && !o.isNull("unlockedAt")) o.getLong("unlockedAt") else null
+                    val progress = o.optInt("progress", 0)
+                    achievementsList.add(id to Pair(unlockedAt, progress))
+                }
+            }
+
+            val setJson = data.optJSONArray("settings")
+            val settingsList = mutableListOf<SettingEntity>()
+            if (setJson != null) {
+                for (i in 0 until setJson.length()) {
+                    val o = setJson.getJSONObject(i)
+                    settingsList.add(SettingEntity(o.getString("key"), o.getString("value")))
+                }
+            }
+
+            // Step 2: High-speed Batch Chunked Database Inserts inside a single transaction
+            onProgress(0.85f, "در حال بروزرسانی دیتابیس...")
             database.withTransaction {
                 if (isReplace) {
-                    onProgress(0.15f, "پاک‌سازی داده‌های قبلی برای جایگزینی...")
-                    val hasVocab = data.has("concepts") || isFlashLearn
+                    val hasVocab = conceptsList.isNotEmpty()
                     if (hasVocab) {
                         conceptDao.clearContents()
                         conceptDao.clearConcepts()
@@ -282,251 +555,25 @@ class BackupRepository(
                     reviewSessionDao.clearSessionItems()
                 }
 
-                // 1. Categories
-                val categoriesJson = data.optJSONArray("categories")
-                if (categoriesJson != null) {
-                    onProgress(0.25f, "بازیابی دسته‌بندی‌ها...")
-                    val cats = mutableListOf<CategoryEntity>()
-                    for (i in 0 until categoriesJson.length()) {
-                        val co = categoriesJson.getJSONObject(i)
-                        cats.add(
-                            CategoryEntity(
-                                id = co.getString("id"),
-                                name = co.getString("name"),
-                                sortOrder = co.optInt("sortOrder", 0),
-                                isDefault = co.optBoolean("isDefault", false)
-                            )
-                        )
-                    }
-                    conceptDao.insertCategories(cats)
+                categoriesList.chunked(500).forEach { conceptDao.insertCategories(it) }
+                conceptsList.chunked(500).forEach { conceptDao.insertConcepts(it) }
+                contentsList.chunked(500).forEach { conceptDao.insertContents(it) }
+                learningStatesList.chunked(500).forEach { learningDao.insertLearningStates(it) }
+                difficultyStatesList.chunked(500).forEach { learningDao.insertDifficultyStates(it) }
+                historyList.chunked(500).forEach { reviewSessionDao.insertHistoryItems(it) }
+                sessionsList.chunked(500).forEach { reviewSessionDao.insertSessions(it) }
+                sessionItemsList.chunked(500).forEach { reviewSessionDao.insertSessionItems(it) }
+                
+                achievementsList.forEach { (id, pair) ->
+                    val (unlockedAt, progress) = pair
+                    if (unlockedAt != null) achievementDao.unlock(id, unlockedAt)
+                    if (progress > 0) achievementDao.updateProgress(id, progress)
                 }
 
-                // 2. Concepts & Contents
-                val conceptsJson = data.optJSONArray("concepts")
-                val contentsJson = data.optJSONArray("contents")
-
-                if (conceptsJson != null && contentsJson != null) {
-                    onProgress(0.40f, "بازیابی ساختار واژگان...")
-                    val concepts = mutableListOf<ConceptEntity>()
-                    for (i in 0 until conceptsJson.length()) {
-                        val co = conceptsJson.getJSONObject(i)
-                        val cid = co.getString("id")
-                        val entryTypeStr = co.optString("entryType", "WORD")
-                        val entryType = runCatching { EntryType.valueOf(entryTypeStr) }.getOrDefault(EntryType.WORD)
-                        concepts.add(
-                            ConceptEntity(
-                                id = cid,
-                                entryType = entryType,
-                                categoryId = co.optString("categoryId", "").ifEmpty { null },
-                                active = co.optBoolean("active", true),
-                                createdAt = co.optLong("createdAt", System.currentTimeMillis()),
-                                updatedAt = co.optLong("updatedAt", System.currentTimeMillis())
-                            )
-                        )
-                    }
-                    conceptDao.insertConcepts(concepts)
-
-                    onProgress(0.55f, "بازیابی معانی و ترجمه‌ها...")
-                    val contents = mutableListOf<ContentEntity>()
-                    for (i in 0 until contentsJson.length()) {
-                        val cto = contentsJson.getJSONObject(i)
-                        contents.add(
-                            ContentEntity(
-                                id = cto.optString("id", UUID.randomUUID().toString()),
-                                conceptId = restoreContext.remapConceptId(cto.getString("conceptId")),
-                                languageCode = cto.optString("languageCode", "es"),
-                                text = cto.getString("text"),
-                                canonicalKey = cto.optString("canonicalKey", cto.getString("text").lowercase()),
-                                note = cto.optString("note", "").ifEmpty { cto.optString("notes", "").ifEmpty { null } },
-                                pronunciation = cto.optString("pronunciation", "").ifEmpty { null },
-                                translationIndex = cto.optInt("translationIndex", 0)
-                            )
-                        )
-                    }
-                    conceptDao.insertContents(contents)
-                }
-
-                // 3. Learning States
-                val lsJson = data.optJSONArray("learningStates")
-                if (lsJson != null) {
-                    onProgress(0.70f, "بازیابی مراحل لایتنر واژگان...")
-                    val states = mutableListOf<LearningStateEntity>()
-                    for (i in 0 until lsJson.length()) {
-                        val o = lsJson.getJSONObject(i)
-                        val dirStr = o.optString("direction", "NORMAL")
-                        val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
-                        val stageStr = o.optString("stage", "DAILY")
-                        val stage = runCatching { Stage.valueOf(stageStr) }.getOrDefault(Stage.DAILY)
-                        states.add(
-                            LearningStateEntity(
-                                id = o.optString("id", UUID.randomUUID().toString()),
-                                conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
-                                direction = dir,
-                                stage = stage,
-                                nextReviewDay = o.optString("nextReviewDay", "").ifEmpty { null },
-                                lastReviewedDay = o.optString("lastReviewedDay", "").ifEmpty { null },
-                                updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
-                            )
-                        )
-                    }
-                    learningDao.insertLearningStates(states)
-                }
-
-                // 4. Difficulty States
-                val dsJson = data.optJSONArray("difficultyStates")
-                if (dsJson != null) {
-                    onProgress(0.80f, "بازیابی سطوح دشواری...")
-                    val states = mutableListOf<DifficultyStateEntity>()
-                    for (i in 0 until dsJson.length()) {
-                        val o = dsJson.getJSONObject(i)
-                        val dirStr = o.optString("direction", "NORMAL")
-                        val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
-                        val curStr = o.optString("current", "MEDIUM")
-                        val current = runCatching { VocabularyDifficulty.valueOf(curStr) }.getOrDefault(VocabularyDifficulty.MEDIUM)
-                        states.add(
-                            DifficultyStateEntity(
-                                id = o.optString("id", UUID.randomUUID().toString()),
-                                conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
-                                direction = dir,
-                                current = current,
-                                consecutiveCorrect = o.optInt("consecutiveCorrect", 0),
-                                consecutiveWrong = o.optInt("consecutiveWrong", 0),
-                                hasReachedVeryHard = o.optBoolean("hasReachedVeryHard", false)
-                            )
-                        )
-                    }
-                    learningDao.insertDifficultyStates(states)
-                }
-
-                // 5. Review History
-                val histJson = data.optJSONArray("reviewHistory")
-                if (histJson != null) {
-                    onProgress(0.88f, "بازیابی تاریخچه مرور...")
-                    val history = mutableListOf<ReviewHistoryEntity>()
-                    for (i in 0 until histJson.length()) {
-                        val o = histJson.getJSONObject(i)
-                        val dirStr = o.optString("direction", "NORMAL")
-                        val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
-                        val rtStr = o.optString("reviewType", "DAILY")
-                        val rt = runCatching { ReviewType.valueOf(rtStr) }.getOrDefault(ReviewType.DAILY)
-                        val mStr = o.optString("mode", "FLASHCARD")
-                        val m = runCatching { ReviewMode.valueOf(mStr) }.getOrDefault(ReviewMode.FLASHCARD)
-                        val sbStr = o.optString("stageBefore", "DAILY")
-                        val sb = runCatching { Stage.valueOf(sbStr) }.getOrDefault(Stage.DAILY)
-                        val qlStr = o.optString("quizLevel", "")
-                        val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
-
-                        history.add(
-                            ReviewHistoryEntity(
-                                id = o.optString("id", UUID.randomUUID().toString()),
-                                sessionId = o.optString("sessionId", UUID.randomUUID().toString()),
-                                reviewAttemptId = UUID.randomUUID().toString(),
-                                conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
-                                direction = dir,
-                                reviewedAt = o.optLong("reviewedAt", System.currentTimeMillis()),
-                                reviewedDay = o.optString("reviewedDay", "").ifEmpty { 
-                                    SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(o.optLong("reviewedAt", System.currentTimeMillis()))) 
-                                },
-                                isCorrect = o.optBoolean("isCorrect", true),
-                                reviewType = rt,
-                                mode = m,
-                                stageBefore = sb,
-                                quizLevel = ql,
-                                optionsJson = null,
-                                selectedIndex = if (o.has("selectedIndex")) o.getInt("selectedIndex") else null,
-                                correctIndex = if (o.has("correctIndex")) o.getInt("correctIndex") else null
-                            )
-                        )
-                    }
-                    reviewSessionDao.insertHistoryItems(history)
-                }
-
-                // 6. Review Sessions
-                val sessJson = data.optJSONArray("reviewSessions")
-                if (sessJson != null) {
-                    val sessions = mutableListOf<ReviewSessionEntity>()
-                    for (i in 0 until sessJson.length()) {
-                        val o = sessJson.getJSONObject(i)
-                        val rtStr = o.optString("reviewType", "DAILY")
-                        val rt = runCatching { ReviewType.valueOf(rtStr) }.getOrDefault(ReviewType.DAILY)
-                        val mStr = o.optString("mode", "FLASHCARD")
-                        val m = runCatching { ReviewMode.valueOf(mStr) }.getOrDefault(ReviewMode.FLASHCARD)
-                        val dirStr = o.optString("direction", "NORMAL")
-                        val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
-                        val stStr = o.optString("status", "COMPLETED")
-                        val st = runCatching { SessionStatus.valueOf(stStr) }.getOrDefault(SessionStatus.COMPLETED)
-                        val qlStr = o.optString("quizLevel", "")
-                        val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
-
-                        sessions.add(
-                            ReviewSessionEntity(
-                                id = o.getString("id"),
-                                startedAt = o.optLong("startedAt", System.currentTimeMillis()),
-                                endedAt = if (o.has("endedAt")) o.optLong("endedAt") else null,
-                                reviewType = rt,
-                                mode = m,
-                                direction = dir,
-                                quizLevel = ql,
-                                status = st,
-                                currentPosition = o.optInt("currentPosition", o.optInt("totalItems", 0)),
-                                totalItems = o.optInt("totalItems", 0)
-                            )
-                        )
-                    }
-                    reviewSessionDao.insertSessions(sessions)
-
-                    val itemsJson = data.optJSONArray("reviewSessionItems")
-                    if (itemsJson != null) {
-                        val sessionItems = mutableListOf<ReviewSessionItemEntity>()
-                        for (i in 0 until itemsJson.length()) {
-                            val o = itemsJson.getJSONObject(i)
-                            val dirStr = o.optString("direction", "NORMAL")
-                            val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
-                            val stStr = o.optString("state", "PENDING")
-                            val state = runCatching { SessionItemState.valueOf(stStr) }.getOrDefault(SessionItemState.PENDING)
-                            sessionItems.add(
-                                ReviewSessionItemEntity(
-                                    id = o.getString("id"),
-                                    sessionId = o.getString("sessionId"),
-                                    conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
-                                    direction = dir,
-                                    position = o.optInt("position", i),
-                                    state = state
-                                )
-                            )
-                        }
-                        reviewSessionDao.insertSessionItems(sessionItems)
-                    }
-                }
-
-                // 7. Achievements
-                val achJson = data.optJSONArray("achievements")
-                if (achJson != null) {
-                    for (i in 0 until achJson.length()) {
-                        val o = achJson.getJSONObject(i)
-                        val id = o.getString("id")
-                        val unlockedAt = if (o.has("unlockedAt") && !o.isNull("unlockedAt")) o.getLong("unlockedAt") else null
-                        val progress = o.optInt("progress", 0)
-                        if (unlockedAt != null) {
-                            achievementDao.unlock(id, unlockedAt)
-                        }
-                        if (progress > 0) {
-                            achievementDao.updateProgress(id, progress)
-                        }
-                    }
-                }
-
-                // 8. Settings
-                val setJson = data.optJSONArray("settings")
-                if (setJson != null) {
-                    for (i in 0 until setJson.length()) {
-                        val o = setJson.getJSONObject(i)
-                        settingsDao.setSetting(SettingEntity(o.getString("key"), o.getString("value")))
-                    }
-                }
+                settingsList.forEach { settingsDao.setSetting(it) }
             }
 
-            onProgress(1.0f, "بازیابی با موفقیت انجام شد")
+            onProgress(1.0f, "بازیابی داده‌ها با موفقیت انجام شد")
             Result.success("تمام داده‌ها با موفقیت بازیابی شدند")
         } catch (e: Exception) {
             e.printStackTrace()

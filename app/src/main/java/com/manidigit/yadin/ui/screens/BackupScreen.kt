@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
@@ -68,6 +70,7 @@ import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import java.util.Locale
 
 @Composable
 fun BackupScreen(
@@ -89,7 +92,10 @@ fun BackupScreen(
     val clipboardManager = LocalClipboardManager.current
 
     var selectedBackupType by remember { mutableStateOf(BackupType.FULL) }
-    var restoreJsonText by remember { mutableStateOf("") }
+    var loadedJsonContent by remember { mutableStateOf<String?>(null) }
+    var loadedFileName by remember { mutableStateOf<String?>(null) }
+    var loadedFileSize by remember { mutableStateOf<String?>(null) }
+    var manualJsonText by remember { mutableStateOf("") }
     var isReplaceMode by remember { mutableStateOf(false) }
     var activeTab by remember { mutableStateOf(0) } // 0 = Export, 1 = Restore
 
@@ -109,8 +115,12 @@ fun BackupScreen(
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val text = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                     if (text.isNotBlank()) {
-                        restoreJsonText = text
-                        Toast.makeText(context, "فایل پشتیبان با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
+                        loadedJsonContent = text
+                        loadedFileName = "فایل پشتیبان انتخاب‌شده"
+                        val sizeKb = text.length / 1024
+                        loadedFileSize = if (sizeKb > 1024) String.format(Locale.US, "%.1f مگابایت", sizeKb / 1024.0) else "$sizeKb کیلوبایت"
+                        manualJsonText = ""
+                        Toast.makeText(context, "فایل پشتیبان با موفقیت بارگذاری شد ($loadedFileSize)", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
@@ -448,43 +458,104 @@ fun BackupScreen(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = "یا متن فایل JSON را مستقیماً در کادر زیر وارد کنید:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
-                )
-
-                OutlinedTextField(
-                    value = restoreJsonText,
-                    onValueChange = { restoreJsonText = it },
-                    label = { Text("محتوای فایل پشتیبان JSON") },
-                    placeholder = { Text("{\"format\":\"yadin-backup\", ...}") },
-                    minLines = 4,
-                    maxLines = 7,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(dimensions.cornerSmall)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            val clipboardText = clipboardManager.getText()?.text ?: ""
-                            if (clipboardText.isNotEmpty()) {
-                                restoreJsonText = clipboardText
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.surfaceVariant,
-                            contentColor = colors.onSurface
-                        )
+                if (loadedJsonContent != null) {
+                    // Loaded File Status Card (Optimized: No heavy TextField layout for multi-megabyte JSONs!)
+                    YadinCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        backgroundColor = colors.success.copy(alpha = 0.12f),
+                        borderStroke = BorderStroke(1.5.dp, colors.success)
                     ) {
-                        Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("چسباندن از کلیپ‌بورد", fontSize = 12.sp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success)
+                                Column {
+                                    Text(
+                                        text = loadedFileName ?: "فایل پشتیبان آماده است",
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.onSurface,
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = "حجم: ${loadedFileSize ?: ""} • آماده بازیابی کامل",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.success
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = {
+                                    loadedJsonContent = null
+                                    loadedFileName = null
+                                    loadedFileSize = null
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "حذف فایل بارگذاری‌شده",
+                                    tint = colors.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Manual JSON Text Input / Clipboard
+                    Text(
+                        text = "یا متن فایل JSON را مستقیماً در کادر زیر وارد کنید:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = manualJsonText,
+                        onValueChange = { manualJsonText = it },
+                        label = { Text("محتوای فایل پشتیبان JSON") },
+                        placeholder = { Text("{\"format\":\"yadin-backup\", ...}") },
+                        minLines = 3,
+                        maxLines = 5,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(dimensions.cornerSmall)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                val clipboardText = clipboardManager.getText()?.text ?: ""
+                                if (clipboardText.isNotEmpty()) {
+                                    if (clipboardText.length > 50000) {
+                                        loadedJsonContent = clipboardText
+                                        loadedFileName = "متن پشتیبان از کلیپ‌بورد"
+                                        val sizeKb = clipboardText.length / 1024
+                                        loadedFileSize = if (sizeKb > 1024) String.format(Locale.US, "%.1f مگابایت", sizeKb / 1024.0) else "$sizeKb کیلوبایت"
+                                        manualJsonText = ""
+                                    } else {
+                                        manualJsonText = clipboardText
+                                        loadedJsonContent = null
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.surfaceVariant,
+                                contentColor = colors.onSurface
+                            )
+                        ) {
+                            Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("چسباندن از کلیپ‌بورد", fontSize = 12.sp)
+                        }
                     }
                 }
 
@@ -543,13 +614,16 @@ fun BackupScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
+                val restoreTarget = loadedJsonContent ?: manualJsonText
+                val canRestore = !isProcessing && restoreTarget.isNotBlank()
+
                 Button(
                     onClick = {
-                        if (restoreJsonText.isNotBlank()) {
-                            onRestoreBackup(restoreJsonText, isReplaceMode)
+                        if (canRestore) {
+                            onRestoreBackup(restoreTarget, isReplaceMode)
                         }
                     },
-                    enabled = !isProcessing && restoreJsonText.isNotBlank(),
+                    enabled = canRestore,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),

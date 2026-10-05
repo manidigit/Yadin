@@ -4,6 +4,7 @@ import com.manidigit.yadin.data.local.dao.AchievementDao
 import com.manidigit.yadin.data.local.dao.ConceptDao
 import com.manidigit.yadin.data.local.dao.LearningDao
 import com.manidigit.yadin.data.local.dao.ReviewSessionDao
+import com.manidigit.yadin.data.local.entity.ContentEntity
 import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
@@ -228,13 +229,35 @@ class ReviewRepository(
 
         // Distractor candidate entries
         val targetLang = if (session?.direction == CardDirection.REVERSE) "es" else "fa"
-        val allConcepts = conceptDao.searchConcepts("", 1000)
-        val allContents = conceptDao.getAllContents().filter { it.languageCode == targetLang && it.text.isNotBlank() }
-        val categoryMap = allConcepts.associate { it.id to it.categoryId }
-        val entryTypeMap = allConcepts.associate { it.id to it.entryType }
-        val diffMap = learningDao.getAllDifficultyStates()
-            .filter { it.direction == (session?.direction ?: CardDirection.NORMAL) }
-            .associate { it.conceptId to it.current }
+        val sessionConceptIds = cards.map { it.conceptId }.toSet()
+
+        // Fast random candidate sampling (250 items max) to ensure instant load time regardless of DB size
+        val randomCandidateContents = conceptDao.getRandomContents(targetLang, 250)
+        
+        // Also include session card target contents in pool
+        val sessionCardContents = mutableListOf<ContentEntity>()
+        for (cId in sessionConceptIds) {
+            sessionCardContents.addAll(conceptDao.getContentsForConcept(cId).filter { it.languageCode == targetLang && it.text.isNotBlank() })
+        }
+
+        val allContents = (randomCandidateContents + sessionCardContents).distinctBy { it.id }
+        val poolConceptIds = allContents.map { it.conceptId }.distinct()
+
+        val categoryMap = mutableMapOf<String, String?>()
+        val entryTypeMap = mutableMapOf<String, EntryType>()
+        val diffMap = mutableMapOf<String, VocabularyDifficulty>()
+
+        poolConceptIds.chunked(200).forEach { cIds ->
+            val concepts = conceptDao.searchConcepts("", 1000).filter { it.id in cIds }
+            concepts.forEach {
+                categoryMap[it.id] = it.categoryId
+                entryTypeMap[it.id] = it.entryType
+            }
+        }
+
+        learningDao.getAllDifficultyStates()
+            .filter { it.direction == (session?.direction ?: CardDirection.NORMAL) && it.conceptId in poolConceptIds }
+            .forEach { diffMap[it.conceptId] = it.current }
 
         data class DistractorPoolItem(
             val conceptId: String,
