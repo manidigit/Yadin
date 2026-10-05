@@ -406,8 +406,6 @@ fun ProgressScreen(
             )
         }
 
-        val practicedCount = statistics.dailyStageCount + statistics.weeklyStageCount + statistics.monthlyStageCount + statistics.learnedStageCount
-
         items(AchievementId.values()) { ach ->
             val isUnlocked = when (ach) {
                 AchievementId.FIRST_TEN_WORDS -> practicedCount >= 10

@@ -26,7 +26,11 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         .map { it?.toBooleanStrictOrNull() ?: false }
 
     suspend fun setThemeId(themeId: String) {
-        val sanitized = if (themeId == "gemini") "gemini" else "gtp"
+        val sanitized = when (themeId.lowercase()) {
+            "gemini" -> "gemini"
+            "claude" -> "claude"
+            else -> "gtp"
+        }
         settingsDao.setSetting(SettingEntity("themeId", sanitized))
     }
 

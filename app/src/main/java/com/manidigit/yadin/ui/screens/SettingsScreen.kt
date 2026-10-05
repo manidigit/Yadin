@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,23 +106,24 @@ fun SettingsScreen(
             )
         }
 
-        // Theme Selection Section (GTP vs Gemini)
+        // Theme Selection Section (GTP vs Gemini vs Claude)
         Text(
-            text = "انتخاب پوسته برنامه (تنها دو تم رسمی):",
+            text = "انتخاب پوسته برنامه:",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface
         )
 
-        // Card 1: GTP
+        // Card 1: Claude
         ThemeChoiceCard(
-            title = "تم GTP",
-            description = "طیف بنفش و ارغوانی نئونی، متراکم، شارپ با خطوط هندسی دقیق و گوشه‌های تیز.",
-            primaryPreview = Color(0xFF7C3AED),
-            secondaryPreview = Color(0xFF06B6D4),
-            isGeminiCard = false,
-            isSelected = currentThemeId == "gtp",
-            onClick = { onSelectTheme("gtp") }
+            title = "تم Claude (کلاد)",
+            description = "طراحی مینیمال، متین و آکادمیک با طیف گرم سفالی، پس‌زمینه کاغذی عاجی، تایپوگرافی چشم‌نواز و کنتراست ارگونومیک.",
+            primaryPreview = Color(0xFFC15F3D),
+            secondaryPreview = Color(0xFF4A7C59),
+            icon = Icons.Default.MenuBook,
+            themeStyle = "claude",
+            isSelected = currentThemeId == "claude",
+            onClick = { onSelectTheme("claude") }
         )
 
         // Card 2: Gemini
@@ -129,9 +132,22 @@ fun SettingsScreen(
             description = "طراحی آینده‌نگرانه هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای ستاره‌ای، گوشه‌های نرم شیشه‌ای و هاله‌های نورانی.",
             primaryPreview = Color(0xFF1A73E8),
             secondaryPreview = Color(0xFF00B4D8),
-            isGeminiCard = true,
+            icon = Icons.Default.AutoAwesome,
+            themeStyle = "gemini",
             isSelected = currentThemeId == "gemini",
             onClick = { onSelectTheme("gemini") }
+        )
+
+        // Card 3: GTP
+        ThemeChoiceCard(
+            title = "تم GTP",
+            description = "طیف بنفش و ارغوانی نئونی، متراکم، شارپ با خطوط هندسی دقیق و گوشه‌های تیز.",
+            primaryPreview = Color(0xFF7C3AED),
+            secondaryPreview = Color(0xFF06B6D4),
+            icon = Icons.Default.Bolt,
+            themeStyle = "gtp",
+            isSelected = currentThemeId == "gtp",
+            onClick = { onSelectTheme("gtp") }
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -523,15 +539,20 @@ fun ThemeChoiceCard(
     description: String,
     primaryPreview: Color,
     secondaryPreview: Color,
-    isGeminiCard: Boolean,
+    icon: ImageVector,
+    themeStyle: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val shape = if (isGeminiCard) RoundedCornerShape(24.dp) else RoundedCornerShape(8.dp)
+    val shape = when (themeStyle) {
+        "gemini" -> RoundedCornerShape(24.dp)
+        "claude" -> RoundedCornerShape(16.dp)
+        else -> RoundedCornerShape(8.dp)
+    }
 
-    val borderStroke = if (isGeminiCard) {
-        BorderStroke(
+    val borderStroke = when (themeStyle) {
+        "gemini" -> BorderStroke(
             width = if (isSelected) 2.5.dp else 1.2.dp,
             brush = Brush.linearGradient(
                 listOf(
@@ -541,8 +562,11 @@ fun ThemeChoiceCard(
                 )
             )
         )
-    } else {
-        BorderStroke(
+        "claude" -> BorderStroke(
+            width = if (isSelected) 2.dp else 1.dp,
+            brush = if (isSelected) Brush.linearGradient(listOf(primaryPreview, secondaryPreview)) else Brush.linearGradient(listOf(colors.outline.copy(alpha = 0.8f), colors.outline.copy(alpha = 0.5f)))
+        )
+        else -> BorderStroke(
             width = if (isSelected) 2.dp else 1.dp,
             color = if (isSelected) primaryPreview else colors.outline.copy(alpha = 0.5f)
         )
@@ -567,17 +591,23 @@ fun ThemeChoiceCard(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.weight(1f)
             ) {
+                val iconShape = when (themeStyle) {
+                    "gemini" -> CircleShape
+                    "claude" -> RoundedCornerShape(10.dp)
+                    else -> RoundedCornerShape(6.dp)
+                }
+
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(if (isGeminiCard) CircleShape else RoundedCornerShape(6.dp))
+                        .clip(iconShape)
                         .background(
                             Brush.linearGradient(listOf(primaryPreview, secondaryPreview))
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (isGeminiCard) Icons.Default.AutoAwesome else Icons.Default.Bolt,
+                        imageVector = icon,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(20.dp)

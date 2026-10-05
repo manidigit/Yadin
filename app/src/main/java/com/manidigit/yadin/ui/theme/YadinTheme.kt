@@ -71,15 +71,23 @@ fun YadinTheme(
     isDark: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val isGemini = themeId.equals("gemini", ignoreCase = true)
+    val cleanTheme = themeId.lowercase()
     val colors = when {
-        isGemini && isDark -> GeminiDarkColors
-        isGemini && !isDark -> GeminiLightColors
-        !isGemini && isDark -> GtpDarkColors
-        else -> GtpLightColors
+        cleanTheme == "claude" && isDark -> ClaudeDarkColors
+        cleanTheme == "claude" && !isDark -> ClaudeLightColors
+        cleanTheme == "gemini" && isDark -> GeminiDarkColors
+        cleanTheme == "gemini" && !isDark -> GeminiLightColors
+        cleanTheme == "gtp" && isDark -> GtpDarkColors
+        cleanTheme == "gtp" && !isDark -> GtpLightColors
+        isDark -> ClaudeDarkColors
+        else -> ClaudeLightColors
     }
 
-    val dimensions = if (isGemini) GeminiDimensions else GtpDimensions
+    val dimensions = when (cleanTheme) {
+        "claude" -> ClaudeDimensions
+        "gemini" -> GeminiDimensions
+        else -> GtpDimensions
+    }
 
     val materialColors = if (isDark) {
         darkColorScheme(

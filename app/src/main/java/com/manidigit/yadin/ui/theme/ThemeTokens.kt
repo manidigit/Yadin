@@ -9,7 +9,8 @@ import androidx.compose.ui.unit.dp
 
 enum class AppTheme(val id: String, val titleFa: String, val descriptionFa: String) {
     GTP("gtp", "تم GTP", "طیف بنفش و ارغوانی نئونی، متراکم و شارپ با خطوط هندسی دقیق"),
-    GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی آینده‌نگرانه، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم")
+    GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی آینده‌نگرانه، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم"),
+    CLAUDE("claude", "تم Claude (کلاد)", "طراحی مینیمال، متین و آکادمیک با طیف گرم سفالی، پس‌زمینه کاغذی عاجی، تایپوگرافی چشم‌نواز و کنتراست ارگونومیک")
 }
 
 @Immutable
@@ -148,6 +149,64 @@ val GeminiDarkColors = YadinColors(
     ),
     accentGlow = Color(0x408AB4F8),
     isGemini = true
+)
+
+val ClaudeLightColors = YadinColors(
+    primary = Color(0xFFC15F3D),
+    onPrimary = Color(0xFFFFFFFF),
+    secondary = Color(0xFF4A7C59),
+    onSecondary = Color(0xFFFFFFFF),
+    background = Color(0xFFFAF7F2),
+    surface = Color(0xFFFFFFFF),
+    surfaceVariant = Color(0xFFF1EBE1),
+    onSurface = Color(0xFF262320),
+    onSurfaceVariant = Color(0xFF6B6258),
+    card = Color(0xFFFFFFFF),
+    outline = Color(0xFFE2D9CC),
+    success = Color(0xFF2D7A58),
+    warning = Color(0xFFD97706),
+    error = Color(0xFFC93B2B),
+    info = Color(0xFF3F6CB0),
+    heroGradient = Brush.linearGradient(listOf(Color(0xFFC15F3D), Color(0xFFD97706), Color(0xFF8B4513))),
+    cardBorderBrush = Brush.linearGradient(listOf(Color(0xFFE2D9CC), Color(0xFFD5C7B5))),
+    accentGlow = Color(0x28C15F3D),
+    isGemini = false
+)
+
+val ClaudeDarkColors = YadinColors(
+    primary = Color(0xFFE08466),
+    onPrimary = Color(0xFF1E140E),
+    secondary = Color(0xFF7CB88F),
+    onSecondary = Color(0xFF0F1A12),
+    background = Color(0xFF161412),
+    surface = Color(0xFF221F1C),
+    surfaceVariant = Color(0xFF2F2A24),
+    onSurface = Color(0xFFF5EFEA),
+    onSurfaceVariant = Color(0xFFB8ADA3),
+    card = Color(0xFF221F1C),
+    outline = Color(0xFF3E362E),
+    success = Color(0xFF5AB984),
+    warning = Color(0xFFF59E0B),
+    error = Color(0xFFE06666),
+    info = Color(0xFF7AA2E3),
+    heroGradient = Brush.linearGradient(listOf(Color(0xFFE08466), Color(0xFFF59E0B), Color(0xFFB85D38))),
+    cardBorderBrush = Brush.linearGradient(listOf(Color(0xFF3E362E), Color(0xFF4C4238))),
+    accentGlow = Color(0x35E08466),
+    isGemini = false
+)
+
+val ClaudeDimensions = YadinDimensions(
+    screenPadding = 16.dp,
+    contentGap = 12.dp,
+    sectionGap = 16.dp,
+    statCardHeight = 114.dp,
+    navHeight = 72.dp,
+    cornerSmall = 10.dp,
+    cornerMedium = 16.dp,
+    cornerLarge = 22.dp,
+    cornerPill = 28.dp,
+    cardElevation = 2.dp,
+    cardBorderAlpha = 0.80f
 )
 
 val GtpDimensions = YadinDimensions(

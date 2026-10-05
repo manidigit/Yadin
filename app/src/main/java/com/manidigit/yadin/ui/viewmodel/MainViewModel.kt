@@ -243,7 +243,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleTheme() {
         viewModelScope.launch {
-            val next = if (themeId.value == "gemini") "gtp" else "gemini"
+            val next = when (themeId.value.lowercase()) {
+                "gtp" -> "gemini"
+                "gemini" -> "claude"
+                else -> "gtp"
+            }
             settingsRepo.setThemeId(next)
         }
     }
