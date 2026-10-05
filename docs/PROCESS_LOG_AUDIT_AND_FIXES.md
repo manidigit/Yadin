@@ -189,6 +189,24 @@
 
 ---
 
+### ۲.۱۵. حل باگ گزینه‌های شبه‌مترادف و متناقض در کوییز (Semantic Distractor Collision)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/QuizDistractorScorer.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/QuizScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+  * `app/src/test/java/com/manidigit/yadin/domain/algorithm/QuizDistractorScoringTest.kt`
+* **ریشه باگ:**
+  در سوالاتی مانند `usted durmió`، ترجمه صحیح «شما خوابیدید» است. در بانک داده گزینه‌هایی نظیر «شما (جمع) خوابیدید» (مربوط به `ustedes durmieron`) و «شماها خوابیدید» (مربوط به `vosotros dormisteis`) وجود داشتند. از آنجا که این گزینه‌ها شباهت لغوی، موضوعی و دشواری بسیار بالایی داشتند، موتور کوییز در سطوح MEDIUM و HARD آن‌ها را به عنوان گزینه‌های انحرافی برتر برمی‌گزید. در نتیجه کاربر با چند گزینه عملاً هم‌معنی در زبان فارسی روبرو می‌شد و با انتخاب یکی، سیستم آن را غلط و دیگری را درست نشان می‌داد.
+* **اقدام اصلاحی:**
+  1. افزودن متد `QuizDistractorScorer.normalizeCore` جهت حذف عبارات توضیحی داخل پرانتز (`(جمع)`، `(مفرد)`، `(مونث)`) و استانداردسازی ضمایر جمع محاوره‌ای («شماها» $\to$ «شما»).
+  2. ایجاد فیلتر برخورد معنایی `areSemanticallyColliding` جهت حذف هر گزینه‌ای که هسته معنایی آن با پاسخ صحیح یکی است.
+  3. اعمال فیلتر دوطرفه در زمان انتخاب گزینه‌های انحرافی تا هیچ دو گزینه‌ای با هسته معنایی یکسان وارد گزینه‌ها نشوند.
+  4. لایه محافظتی در زمان ارزیابی پاسخ کاربر در `MainViewModel` و نمایش بصری در `QuizScreen`.
+  5. افزودن تست واحد صریح در `QuizDistractorScoringTest` جهت اثبات شناسایی و حذف این برخوردها.
+
+---
+
 ### ۲.۷. آماده‌سازی برای بیلد گیت‌هاب (CI/CD & Gradle Wrapper)
 * **فایل‌های ایجاد شده:**
   * `gradlew`

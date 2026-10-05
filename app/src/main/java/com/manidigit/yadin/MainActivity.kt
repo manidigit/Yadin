@@ -244,11 +244,13 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val cards by viewModel.sessionCards.collectAsStateWithLifecycle()
             val currentIndex by viewModel.currentCardIndex.collectAsStateWithLifecycle()
             val isFlipped by viewModel.isCardFlipped.collectAsStateWithLifecycle()
+            val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
 
             FlashcardScreen(
                 cards = cards,
                 currentIndex = currentIndex,
                 isFlipped = isFlipped,
+                showCategory = showCategory,
                 onFlip = { viewModel.flipCard() },
                 onAnswer = { isCorrect -> viewModel.submitFlashcardAnswer(isCorrect) },
                 onExit = { viewModel.navigateTo(Screen.Home) }
@@ -259,11 +261,13 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val questions by viewModel.quizQuestions.collectAsStateWithLifecycle()
             val currentIndex by viewModel.currentCardIndex.collectAsStateWithLifecycle()
             val selectedOption by viewModel.quizSelectedOption.collectAsStateWithLifecycle()
+            val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
 
             QuizScreen(
                 questions = questions,
                 currentIndex = currentIndex,
                 selectedOption = selectedOption,
+                showCategory = showCategory,
                 onSelectOption = { optIdx -> viewModel.submitQuizAnswer(optIdx) },
                 onNextQuestion = { viewModel.nextQuizQuestion() },
                 onExit = { viewModel.navigateTo(Screen.Home) }
@@ -380,12 +384,18 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
         is Screen.Settings -> {
             val themeId by viewModel.themeId.collectAsStateWithLifecycle()
             val isDark by viewModel.isDark.collectAsStateWithLifecycle()
+            val diffThreshold by viewModel.difficultyThreshold.collectAsStateWithLifecycle()
+            val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
 
             SettingsScreen(
                 currentThemeId = themeId,
                 isDark = isDark,
+                difficultyThreshold = diffThreshold,
+                showCategoryInReview = showCategory,
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
+                onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
+                onToggleShowCategoryInReview = { viewModel.setShowCategoryInReview(it) },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },
                 onOpenAbout = { viewModel.navigateTo(Screen.About) },

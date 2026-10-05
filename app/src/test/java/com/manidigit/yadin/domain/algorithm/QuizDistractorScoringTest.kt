@@ -86,4 +86,50 @@ class QuizDistractorScoringTest {
         assertTrue(selected.contains("متعادل ۱"))
         assertTrue(selected.contains("متعادل ۲"))
     }
+
+    @Test
+    fun `areSemanticallyColliding correctly flags parenthetical and pronoun plural duplicates`() {
+        // Core case reported by user: "usted durmió"
+        val answer = "شما خوابیدید"
+        val duplicateParenthetical = "شما (جمع) خوابیدید"
+        val duplicateColloquial = "شماها خوابیدید"
+        val validDistractorDifferentTense = "شما می‌خوابیدید"
+        val validDistractorDifferentPerson = "ما خوابیدیم"
+
+        assertTrue(
+            "Parenthetical clarification '(جمع)' must collide with base answer",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateParenthetical, answer)
+        )
+
+        assertTrue(
+            "Colloquial plural 'شماها' must collide with 'شما'",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateColloquial, answer)
+        )
+
+        org.junit.Assert.assertFalse(
+            "Different tense 'می‌خوابیدید' should NOT collide with 'خوابیدید'",
+            QuizDistractorScorer.areSemanticallyColliding(validDistractorDifferentTense, answer)
+        )
+
+        // Second case reported by user: "ustedes enseñen"
+        val answerEnsenen = "شما (جمع) درس بدهید"
+        val duplicateEnsenen = "شما درس بدهید"
+        val duplicateEnsenenColloquial = "شماها درس بدهید"
+        val distractorDifferentTense = "شما (جمع) درس دادید"
+
+        assertTrue(
+            "'شما درس بدهید' must collide with 'شما (جمع) درس بدهید'",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateEnsenen, answerEnsenen)
+        )
+
+        assertTrue(
+            "'شماها درس بدهید' must collide with 'شما (جمع) درس بدهید'",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateEnsenenColloquial, answerEnsenen)
+        )
+
+        org.junit.Assert.assertFalse(
+            "Different tense 'درس دادید' should NOT collide with 'درس بدهید'",
+            QuizDistractorScorer.areSemanticallyColliding(distractorDifferentTense, answerEnsenen)
+        )
+    }
 }

@@ -85,6 +85,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val uiLanguage: StateFlow<String> = settingsRepo.uiLanguageFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, "fa")
 
+    val difficultyThreshold: StateFlow<Int> = settingsRepo.difficultyThresholdFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 3)
+
+    val showCategoryInReview: StateFlow<Boolean> = settingsRepo.showCategoryInReviewFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     // Navigation & Screen
     private val _currentScreen = MutableStateFlow<Screen>(Screen.Splash)
     val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
@@ -260,6 +266,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun setDifficultyThreshold(threshold: Int) {
+        viewModelScope.launch {
+            settingsRepo.setDifficultyThreshold(threshold)
+        }
+    }
+
+    fun setShowCategoryInReview(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.setShowCategoryInReview(show)
+        }
+    }
+
     // Review Session Flow
     fun updateSetupFilters(filters: ReviewFilters) {
         viewModelScope.launch {
@@ -324,7 +342,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 conceptId = currentCard.conceptId,
                 direction = currentCard.direction,
                 isCorrect = isCorrect,
-                mode = ReviewMode.FLASHCARD
+                mode = ReviewMode.FLASHCARD,
+                difficultyThreshold = difficultyThreshold.value
             )
 
             if (isCorrect) {
@@ -351,7 +370,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (idx >= questions.size) return
 
         val q = questions[idx]
-        val isCorrect = (optionIndex == q.correctIndex)
+        val selectedOption = q.options.getOrNull(optionIndex)
+        val correctOption = q.options.getOrNull(q.correctIndex)
+        val isCorrect = (optionIndex == q.correctIndex) || 
+            (selectedOption != null && correctOption != null && 
+             com.manidigit.yadin.domain.algorithm.QuizDistractorScorer.areSemanticallyColliding(selectedOption.text, correctOption.text))
         _quizSelectedOption.value = optionIndex
 
         if (isCorrect) {
@@ -368,7 +391,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 isCorrect = isCorrect,
                 mode = ReviewMode.QUIZ,
                 selectedIndex = optionIndex,
-                correctIndex = q.correctIndex
+                correctIndex = q.correctIndex,
+                difficultyThreshold = difficultyThreshold.value
             )
         }
     }

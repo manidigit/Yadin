@@ -9,6 +9,7 @@ import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
 import com.manidigit.yadin.domain.algorithm.DifficultyCalculator
 import com.manidigit.yadin.domain.algorithm.LearningTransition
+import com.manidigit.yadin.domain.algorithm.QuizDistractorScorer
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.QuizLevel
@@ -225,8 +226,9 @@ class ReviewRepository(
         if (cards.isEmpty()) return emptyList()
 
         // Distractor candidate entries
+        val targetLang = if (session?.direction == CardDirection.REVERSE) "es" else "fa"
         val allConcepts = conceptDao.searchConcepts("", 500)
-        val allContents = conceptDao.getAllContents().filter { it.languageCode == "fa" && it.text.isNotBlank() }
+        val allContents = conceptDao.getAllContents().filter { it.languageCode == targetLang && it.text.isNotBlank() }
         val categoryMap = allConcepts.associate { it.id to it.categoryId }
         val entryTypeMap = allConcepts.associate { it.id to it.entryType }
         val diffMap = learningDao.getAllDifficultyStates()
@@ -255,12 +257,11 @@ class ReviewRepository(
 
         for (card in cards) {
             val correctAnswer = card.targetTranslations.firstOrNull()?.trim() ?: ""
-            val normCorrect = normalizeQuiz(correctAnswer)
+            val allCorrect = card.targetTranslations.map { it.trim() }
 
             val candidatePool = pool.filter { item ->
                 item.conceptId != card.conceptId &&
-                normalizeQuiz(item.text) != normCorrect &&
-                card.targetTranslations.none { normalizeQuiz(it) == normalizeQuiz(item.text) }
+                !allCorrect.any { correct -> QuizDistractorScorer.areSemanticallyColliding(item.text, correct) }
             }
 
             data class ScoredCandidate(
@@ -282,30 +283,32 @@ class ReviewRepository(
             // EASY: lower confusability, clear differences
             // MEDIUM: moderate confusability, balanced plausibility
             // HARD: highest confusability, closest semantic/lexical similarity
-            val chosenDistractors = when (quizLevel) {
-                QuizLevel.EASY -> {
-                    scoredCandidates
-                        .sortedBy { it.confusabilityScore }
-                        .map { it.text }
-                        .take(3)
+            val sortedCandidates = when (quizLevel) {
+                QuizLevel.EASY -> scoredCandidates.sortedBy { it.confusabilityScore }
+                QuizLevel.MEDIUM -> scoredCandidates.sortedBy { kotlin.math.abs(it.confusabilityScore - 0.5) }
+                QuizLevel.HARD -> scoredCandidates.sortedByDescending { it.confusabilityScore }
+            }
+
+            val chosenDistractors = mutableListOf<String>()
+            for (cand in sortedCandidates) {
+                if (chosenDistractors.size >= 3) break
+                val collides = chosenDistractors.any { chosen ->
+                    QuizDistractorScorer.areSemanticallyColliding(cand.text, chosen)
                 }
-                QuizLevel.MEDIUM -> {
-                    scoredCandidates
-                        .sortedBy { kotlin.math.abs(it.confusabilityScore - 0.5) }
-                        .map { it.text }
-                        .take(3)
+                if (!collides) {
+                    chosenDistractors.add(cand.text)
                 }
-                QuizLevel.HARD -> {
-                    scoredCandidates
-                        .sortedByDescending { it.confusabilityScore }
-                        .map { it.text }
-                        .take(3)
-                }
-            }.let { list ->
-                if (list.size < 3) {
-                    (list + candidatePool.map { it.text }).distinctBy(::normalizeQuiz).take(3)
-                } else {
-                    list
+            }
+
+            if (chosenDistractors.size < 3) {
+                for (cand in candidatePool) {
+                    if (chosenDistractors.size >= 3) break
+                    val collides = chosenDistractors.any { chosen ->
+                        QuizDistractorScorer.areSemanticallyColliding(cand.text, chosen)
+                    }
+                    if (!collides) {
+                        chosenDistractors.add(cand.text)
+                    }
                 }
             }
 
@@ -338,7 +341,8 @@ class ReviewRepository(
         mode: ReviewMode,
         selectedIndex: Int? = null,
         correctIndex: Int? = null,
-        optionsJson: String? = null
+        optionsJson: String? = null,
+        difficultyThreshold: Int = 3
     ): SubmitResult {
         val today = ClockAndDayMath.todayDayString()
         val now = System.currentTimeMillis()
@@ -375,7 +379,8 @@ class ReviewRepository(
             consecutiveCorrect = consecutiveCorrect,
             consecutiveWrong = consecutiveWrong,
             hasReachedVeryHard = hasReachedVeryHard,
-            isCorrect = isCorrect
+            isCorrect = isCorrect,
+            threshold = difficultyThreshold
         )
 
         val updatedDiff = (currentDiff ?: com.manidigit.yadin.data.local.entity.DifficultyStateEntity(

@@ -55,6 +55,7 @@ fun FlashcardScreen(
     cards: List<ReviewCard>,
     currentIndex: Int,
     isFlipped: Boolean,
+    showCategory: Boolean = false,
     onFlip: () -> Unit,
     onAnswer: (Boolean) -> Unit,
     onExit: () -> Unit
@@ -168,7 +169,7 @@ fun FlashcardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (card.categoryName != null) {
+                            if (showCategory && card.categoryName != null) {
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))

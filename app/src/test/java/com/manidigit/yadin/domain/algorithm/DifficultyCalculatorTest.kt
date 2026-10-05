@@ -72,4 +72,29 @@ class DifficultyCalculatorTest {
         assertEquals(VocabularyDifficulty.VERY_HARD, state.newDifficulty)
         assertTrue(state.hasReachedVeryHard)
     }
+
+    @Test
+    fun customThreshold_twoConsecutiveCorrect_triggersTransition() {
+        val step1 = DifficultyCalculator.updateDifficulty(
+            current = VocabularyDifficulty.HARD,
+            consecutiveCorrect = 0,
+            consecutiveWrong = 0,
+            hasReachedVeryHard = false,
+            isCorrect = true,
+            threshold = 2
+        )
+        assertEquals(VocabularyDifficulty.HARD, step1.newDifficulty)
+        assertEquals(1, step1.consecutiveCorrect)
+
+        val step2 = DifficultyCalculator.updateDifficulty(
+            current = step1.newDifficulty,
+            consecutiveCorrect = step1.consecutiveCorrect,
+            consecutiveWrong = step1.consecutiveWrong,
+            hasReachedVeryHard = false,
+            isCorrect = true,
+            threshold = 2
+        )
+        assertEquals(VocabularyDifficulty.MEDIUM, step2.newDifficulty)
+        assertEquals(0, step2.consecutiveCorrect)
+    }
 }

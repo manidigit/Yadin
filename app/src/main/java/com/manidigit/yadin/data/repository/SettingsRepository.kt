@@ -19,6 +19,12 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     val activePairFlow: Flow<String> = settingsDao.getSettingFlow("activePair")
         .map { it ?: "es-fa" }
 
+    val difficultyThresholdFlow: Flow<Int> = settingsDao.getSettingFlow("difficultyThreshold")
+        .map { it?.toIntOrNull()?.coerceIn(1, 5) ?: 3 }
+
+    val showCategoryInReviewFlow: Flow<Boolean> = settingsDao.getSettingFlow("showCategoryInReview")
+        .map { it?.toBooleanStrictOrNull() ?: false }
+
     suspend fun setThemeId(themeId: String) {
         val sanitized = if (themeId == "gemini") "gemini" else "gtp"
         settingsDao.setSetting(SettingEntity("themeId", sanitized))
@@ -34,5 +40,14 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     suspend fun setActivePair(pair: String) {
         settingsDao.setSetting(SettingEntity("activePair", pair))
+    }
+
+    suspend fun setDifficultyThreshold(threshold: Int) {
+        val clamped = threshold.coerceIn(1, 5)
+        settingsDao.setSetting(SettingEntity("difficultyThreshold", clamped.toString()))
+    }
+
+    suspend fun setShowCategoryInReview(show: Boolean) {
+        settingsDao.setSetting(SettingEntity("showCategoryInReview", show.toString()))
     }
 }

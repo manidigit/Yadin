@@ -21,6 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -28,9 +31,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import com.manidigit.yadin.domain.algorithm.QuizDistractorScorer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,12 +60,14 @@ fun QuizScreen(
     questions: List<QuizQuestion>,
     currentIndex: Int,
     selectedOption: Int?,
+    showCategory: Boolean = false,
     onSelectOption: (Int) -> Unit,
     onNextQuestion: () -> Unit,
     onExit: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    var showHelpDialog by remember { mutableStateOf(false) }
 
     if (questions.isEmpty() || currentIndex >= questions.size) {
         Box(
@@ -147,7 +157,8 @@ fun QuizScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (q.categoryName != null) {
+                    // Optional Category Badge
+                    if (showCategory && q.categoryName != null) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
@@ -163,7 +174,30 @@ fun QuizScreen(
                     } else {
                         Spacer(modifier = Modifier.size(1.dp))
                     }
-                    SpeakButton(text = q.promptText, languageCode = "es")
+
+                    // Action Controls: Speech + Help/Note Button
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Help / Note Button
+                        IconButton(
+                            onClick = { showHelpDialog = true },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(colors.surfaceVariant)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HelpOutline,
+                                contentDescription = "راهنما و یادداشت واژه",
+                                tint = colors.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        SpeakButton(text = q.promptText, languageCode = "es")
+                    }
                 }
 
                 Text(
@@ -183,13 +217,15 @@ fun QuizScreen(
         }
 
         // 4 Options Grid/List
+        val correctOptionText = q.options.getOrNull(q.correctIndex)?.text ?: ""
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             q.options.forEachIndexed { index, option ->
                 val isSelected = (selectedOption == index)
-                val isCorrect = (index == q.correctIndex)
+                val isCorrect = (index == q.correctIndex) || 
+                    (correctOptionText.isNotEmpty() && QuizDistractorScorer.areSemanticallyColliding(option.text, correctOptionText))
 
                 val optionBorderColor = when {
                     !hasAnswered -> colors.outline.copy(alpha = dimensions.cardBorderAlpha)
@@ -273,5 +309,94 @@ fun QuizScreen(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+
+    if (showHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showHelpDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showHelpDialog = false }) {
+                    Text(
+                        text = "بستن",
+                        color = colors.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lightbulb,
+                        contentDescription = null,
+                        tint = colors.warning
+                    )
+                    Text(
+                        text = "راهنما و توضیحات واژه",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = q.promptText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.primary
+                    )
+
+                    if (!q.note.isNullOrBlank()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "یادداشت و نکات گرامری:",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onSurfaceVariant
+                            )
+                            Text(
+                                text = q.note,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.onSurface
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "یادداشت اختصاصی برای این واژه ثبت نشده است.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+
+                    if (q.categoryName != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "دسته‌بندی موضوعی:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSurfaceVariant
+                            )
+                            Text(
+                                text = q.categoryName,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.secondary
+                            )
+                        }
+                    }
+                }
+            },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }

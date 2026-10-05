@@ -6,6 +6,8 @@ import com.manidigit.yadin.domain.model.VocabularyDifficulty
 object QuizDistractorScorer {
 
     private val QUIZ_TOKEN_SPLIT = Regex("[\\s,/،\\-]+")
+    private val PARENTHESIS_REGEX = Regex("\\s*\\([^)]*\\)|\\s*\\[[^]]*\\]")
+    private val WHITESPACE_REGEX = Regex("\\s+")
 
     fun normalizeQuiz(text: String): String {
         return text.trim().lowercase()
@@ -17,6 +19,41 @@ object QuizDistractorScorer {
             .replace('ó', 'o')
             .replace('ú', 'u')
             .replace('ñ', 'n')
+    }
+
+    /**
+     * Strips parenthetical clarifications like "(جمع)", "(مفرد)", "(مؤنث)" and
+     * normalizes colloquial pronoun variants like "شماها" -> "شما" so that
+     * false distractors with identical core meaning are properly identified.
+     */
+    fun normalizeCore(text: String): String {
+        var t = normalizeQuiz(text)
+        t = t.replace(PARENTHESIS_REGEX, " ")
+        t = t.replace('\u200c', ' ') // Half-space to standard space
+        val tokens = t.split(WHITESPACE_REGEX).filter { it.isNotBlank() }.map { token ->
+            when (token) {
+                "شماها" -> "شما"
+                "آنها", "آن‌ها", "اونها" -> "آنها"
+                "اینها", "این‌ها" -> "اینها"
+                "ماها" -> "ما"
+                else -> token
+            }
+        }
+        return tokens.joinToString(" ").trim()
+    }
+
+    /**
+     * Returns true if two text options share the same core meaning or only differ
+     * by parenthetical labels or trivial suffix variations.
+     */
+    fun areSemanticallyColliding(textA: String, textB: String): Boolean {
+        val normA = normalizeQuiz(textA)
+        val normB = normalizeQuiz(textB)
+        if (normA == normB) return true
+
+        val coreA = normalizeCore(textA)
+        val coreB = normalizeCore(textB)
+        return coreA.isNotEmpty() && coreA == coreB
     }
 
     fun levenshteinSimilarity(a: String, b: String): Double {

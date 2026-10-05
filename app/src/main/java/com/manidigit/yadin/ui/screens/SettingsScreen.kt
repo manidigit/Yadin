@@ -54,8 +54,12 @@ import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 fun SettingsScreen(
     currentThemeId: String,
     isDark: Boolean,
+    difficultyThreshold: Int = 3,
+    showCategoryInReview: Boolean = false,
     onSelectTheme: (String) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
+    onSetDifficultyThreshold: (Int) -> Unit = {},
+    onToggleShowCategoryInReview: (Boolean) -> Unit = {},
     onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -181,6 +185,152 @@ fun SettingsScreen(
                 Switch(
                     checked = isDark,
                     onCheckedChange = onToggleDarkMode,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = colors.onPrimary,
+                        checkedTrackColor = colors.primary
+                    )
+                )
+            }
+        }
+
+        // Section Title: Learning & Review Settings
+        Text(
+            text = "تنظیمات یادگیری و آزمون:",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = colors.onSurface
+        )
+
+        // 1. Difficulty Transition Threshold Card
+        YadinCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(colors.warning.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Bolt,
+                            contentDescription = null,
+                            tint = colors.warning,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "تعداد پاسخ متوالی برای تغییر سطح سختی",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = "تعداد پاسخ درست برای ساده‌تر شدن، یا غلط برای سخت‌تر شدن کلمه",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Threshold Selector Buttons (2, 3, 4, 5)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(2, 3, 4, 5).forEach { thresholdValue ->
+                        val isSelected = (difficultyThreshold == thresholdValue)
+                        val label = when (thresholdValue) {
+                            3 -> "۳ بار (پیش‌فرض)"
+                            else -> "$thresholdValue بار"
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isSelected) colors.primary else colors.surfaceVariant
+                                )
+                                .clickable { onSetDifficultyThreshold(thresholdValue) }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Show Category in Review/Quiz Toggle
+        YadinCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(colors.secondary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.HelpOutline,
+                            contentDescription = null,
+                            tint = colors.secondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Column(modifier = Modifier.padding(end = 8.dp)) {
+                        Text(
+                            text = "نمایش دسته‌بندی در مرور و آزمون",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = if (showCategoryInReview) "فعال (دسته‌بندی در بالای کارت نمایش داده می‌شود)" else "غیرفعال (پیش‌فرض، جلوگیری از لو رفتن موضوع واژه)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Switch(
+                    checked = showCategoryInReview,
+                    onCheckedChange = onToggleShowCategoryInReview,
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = colors.onPrimary,
                         checkedTrackColor = colors.primary
