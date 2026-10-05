@@ -10,6 +10,7 @@ import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
 import com.manidigit.yadin.domain.algorithm.DifficultyCalculator
 import com.manidigit.yadin.domain.algorithm.LearningTransition
 import com.manidigit.yadin.domain.model.CardDirection
+import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.QuizOption
 import com.manidigit.yadin.domain.model.QuizQuestion
@@ -22,6 +23,8 @@ import com.manidigit.yadin.domain.model.SessionStatus
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.time.ClockAndDayMath
+import java.text.Normalizer
+import java.util.Locale
 import java.util.UUID
 
 data class SubmitResult(
@@ -41,6 +44,48 @@ data class ReviewFilters(
     val maxCards: Int = 20
 )
 
+private val QUIZ_TOKEN_SPLIT = Regex("[^\\p{L}\\p{N}]+")
+
+private fun normalizeQuiz(text: String): String =
+    Normalizer.normalize(text.trim(), Normalizer.Form.NFC).lowercase(Locale.ROOT)
+
+private fun levenshteinSimilarity(a: String, b: String): Double {
+    if (a == b) return 1.0
+    if (a.isEmpty() || b.isEmpty()) return 0.0
+    var previous = IntArray(b.length + 1) { it }
+    var current = IntArray(b.length + 1)
+    for (i in a.indices) {
+        current[0] = i + 1
+        for (j in b.indices) {
+            val sub = previous[j] + if (a[i] == b[j]) 0 else 1
+            current[j + 1] = minOf(previous[j + 1] + 1, current[j] + 1, sub)
+        }
+        val tmp = previous
+        previous = current
+        current = tmp
+    }
+    val distance = previous[b.length]
+    return 1.0 - (distance.toDouble() / maxOf(a.length, b.length).toDouble()).coerceIn(0.0, 1.0)
+}
+
+private fun quizLexicalSimilarity(a: String, b: String): Double {
+    val normA = normalizeQuiz(a)
+    val normB = normalizeQuiz(b)
+    if (normA == normB) return 1.0
+    val tokensA = normA.split(QUIZ_TOKEN_SPLIT).filter { it.isNotBlank() }.toSet()
+    val tokensB = normB.split(QUIZ_TOKEN_SPLIT).filter { it.isNotBlank() }.toSet()
+    val tokenSim = if (tokensA.isEmpty() && tokensB.isEmpty()) 1.0
+    else if (tokensA.isEmpty() || tokensB.isEmpty()) 0.0
+    else tokensA.intersect(tokensB).size.toDouble() / tokensA.union(tokensB).size.toDouble()
+
+    val levSim = levenshteinSimilarity(normA, normB)
+    return (tokenSim * 0.5 + levSim * 0.5).coerceIn(0.0, 1.0)
+}
+
+private fun diffDistance(d1: VocabularyDifficulty, d2: VocabularyDifficulty): Int {
+    return kotlin.math.abs(d1.ordinal - d2.ordinal)
+}
+
 class ReviewRepository(
     private val conceptDao: ConceptDao,
     private val learningDao: LearningDao,
@@ -50,7 +95,7 @@ class ReviewRepository(
 
     suspend fun countCandidates(filters: ReviewFilters): Int {
         val today = ClockAndDayMath.todayDayString()
-        val count = learningDao.countFilteredCandidates(
+        return learningDao.countFilteredCandidates(
             direction = filters.direction,
             reviewType = filters.reviewType.name,
             todayDayString = today,
@@ -59,16 +104,11 @@ class ReviewRepository(
             hasCategoryFilter = if (filters.categoryIds.isNotEmpty()) 1 else 0,
             categoryIds = filters.categoryIds.toList()
         )
-        return if (count == 0 && filters.reviewType == ReviewType.DAILY && filters.difficulties.isEmpty() && filters.categoryIds.isEmpty()) {
-            learningDao.getConceptIdsByStage(Stage.DAILY, filters.direction, 50).size
-        } else {
-            count
-        }
     }
 
     suspend fun createFilteredSession(filters: ReviewFilters): ReviewSession {
         val today = ClockAndDayMath.todayDayString()
-        var conceptIds = learningDao.getFilteredCandidateConceptIds(
+        val conceptIds = learningDao.getFilteredCandidateConceptIds(
             direction = filters.direction,
             reviewType = filters.reviewType.name,
             todayDayString = today,
@@ -78,11 +118,6 @@ class ReviewRepository(
             categoryIds = filters.categoryIds.toList(),
             limit = filters.maxCards
         )
-
-        if (conceptIds.size < filters.maxCards && filters.reviewType == ReviewType.DAILY && filters.difficulties.isEmpty() && filters.categoryIds.isEmpty()) {
-            val fallback = learningDao.getConceptIdsByStage(Stage.DAILY, filters.direction, filters.maxCards - conceptIds.size)
-            conceptIds = (conceptIds + fallback).distinct()
-        }
 
         val sessionId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
@@ -184,22 +219,97 @@ class ReviewRepository(
     }
 
     suspend fun generateQuizQuestions(sessionId: String): List<QuizQuestion> {
+        val session = reviewSessionDao.getSessionById(sessionId)
+        val quizLevel = session?.quizLevel ?: QuizLevel.MEDIUM
         val cards = fetchCardsForSession(sessionId)
         if (cards.isEmpty()) return emptyList()
 
-        val allDistractorContents = conceptDao.getRandomContents("fa", 100)
-        val allDistractorTexts = allDistractorContents.map { it.text }.distinct()
+        // Distractor candidate entries
+        val allConcepts = conceptDao.searchConcepts("", 500)
+        val allContents = conceptDao.getAllContents().filter { it.languageCode == "fa" && it.text.isNotBlank() }
+        val categoryMap = allConcepts.associate { it.id to it.categoryId }
+        val entryTypeMap = allConcepts.associate { it.id to it.entryType }
+        val diffMap = learningDao.getAllDifficultyStates()
+            .filter { it.direction == (session?.direction ?: CardDirection.NORMAL) }
+            .associate { it.conceptId to it.current }
+
+        data class DistractorPoolItem(
+            val conceptId: String,
+            val text: String,
+            val categoryId: String?,
+            val entryType: EntryType,
+            val difficulty: VocabularyDifficulty
+        )
+
+        val pool = allContents.map { content ->
+            DistractorPoolItem(
+                conceptId = content.conceptId,
+                text = content.text.trim(),
+                categoryId = categoryMap[content.conceptId],
+                entryType = entryTypeMap[content.conceptId] ?: EntryType.WORD,
+                difficulty = diffMap[content.conceptId] ?: VocabularyDifficulty.MEDIUM
+            )
+        }.distinctBy { normalizeQuiz(it.text) }
 
         val questions = mutableListOf<QuizQuestion>()
 
         for (card in cards) {
-            val correctAnswer = card.targetTranslations.firstOrNull() ?: ""
-            // Pick 3 distractors different from the correct answer
-            val candidates = allDistractorTexts.filter { it != correctAnswer && it !in card.targetTranslations }
-                .shuffled()
-                .take(3)
+            val correctAnswer = card.targetTranslations.firstOrNull()?.trim() ?: ""
+            val normCorrect = normalizeQuiz(correctAnswer)
 
-            val optionsList = (candidates.map { QuizOption(it, "") } + QuizOption(correctAnswer, card.conceptId)).shuffled()
+            val candidatePool = pool.filter { item ->
+                item.conceptId != card.conceptId &&
+                normalizeQuiz(item.text) != normCorrect &&
+                card.targetTranslations.none { normalizeQuiz(it) == normalizeQuiz(item.text) }
+            }
+
+            data class ScoredCandidate(
+                val text: String,
+                val confusabilityScore: Double
+            )
+
+            val scoredCandidates = candidatePool.map { cand ->
+                val lexSim = quizLexicalSimilarity(correctAnswer, cand.text)
+                val catMatch = if (cand.categoryId != null && cand.categoryId == categoryMap[card.conceptId]) 1.0 else 0.0
+                val diffDist = diffDistance(card.difficulty, cand.difficulty)
+                val diffBonus = (3 - diffDist).coerceAtLeast(0) / 3.0
+
+                val confusability = (lexSim * 0.4 + catMatch * 0.35 + diffBonus * 0.25).coerceIn(0.0, 1.0)
+                ScoredCandidate(cand.text, confusability)
+            }
+
+            // Select 3 distractors based on QuizLevel:
+            // EASY: lower confusability, clear differences
+            // MEDIUM: moderate confusability, balanced plausibility
+            // HARD: highest confusability, closest semantic/lexical similarity
+            val chosenDistractors = when (quizLevel) {
+                QuizLevel.EASY -> {
+                    scoredCandidates
+                        .sortedBy { it.confusabilityScore }
+                        .map { it.text }
+                        .take(3)
+                }
+                QuizLevel.MEDIUM -> {
+                    scoredCandidates
+                        .sortedBy { kotlin.math.abs(it.confusabilityScore - 0.5) }
+                        .map { it.text }
+                        .take(3)
+                }
+                QuizLevel.HARD -> {
+                    scoredCandidates
+                        .sortedByDescending { it.confusabilityScore }
+                        .map { it.text }
+                        .take(3)
+                }
+            }.let { list ->
+                if (list.size < 3) {
+                    (list + candidatePool.map { it.text }).distinctBy(::normalizeQuiz).take(3)
+                } else {
+                    list
+                }
+            }
+
+            val optionsList = (chosenDistractors.map { QuizOption(it, "") } + QuizOption(correctAnswer, card.conceptId)).shuffled()
             val correctIdx = optionsList.indexOfFirst { it.text == correctAnswer }.coerceAtLeast(0)
 
             questions.add(
@@ -320,16 +430,23 @@ class ReviewRepository(
     }
 
     private suspend fun checkAchievements(isCorrect: Boolean) {
-        val totalReviews = reviewSessionDao.getDistinctReviewedDays().size
-        if (totalReviews >= 3) {
+        val today = ClockAndDayMath.todayDayString()
+        val distinctDays = reviewSessionDao.getDistinctReviewedDays()
+        val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
+
+        if (streak >= 3) {
             achievementDao.unlock("STREAK_3_DAYS")
         }
-        if (totalReviews >= 7) {
+        if (streak >= 7) {
             achievementDao.unlock("STREAK_7_DAYS")
         }
-        if (totalReviews >= 30) {
+        if (streak >= 30) {
             achievementDao.unlock("STREAK_30_DAYS")
         }
+
+        achievementDao.updateProgress("STREAK_3_DAYS", streak.coerceAtMost(3))
+        achievementDao.updateProgress("STREAK_7_DAYS", streak.coerceAtMost(7))
+        achievementDao.updateProgress("STREAK_30_DAYS", streak.coerceAtMost(30))
     }
 
     suspend fun completeSession(sessionId: String) {

@@ -285,8 +285,9 @@ fun ProgressScreen(
 
                 // Accuracy Card
                 val totalReviewed = statistics.totalReviewsCount
+                val totalCorrect = dailyStats.sumOf { it.correctCount }
                 val accuracy = if (totalReviewed > 0) {
-                    ((statistics.totalCorrectReviewsCount.toFloat() / totalReviewed) * 100).toInt()
+                    ((totalCorrect.toFloat() / totalReviewed) * 100).toInt().coerceIn(0, 100)
                 } else 0
 
                 YadinCard(
@@ -532,5 +533,34 @@ private fun DifficultyMetricBox(
                 color = colors.onSurface
             )
         }
+    }
+}
+
+@Composable
+fun FunnelRow(
+    title: String,
+    count: Int,
+    total: Int,
+    color: Color
+) {
+    val fraction = (count.toFloat() / total).coerceIn(0f, 1f)
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+            Text("$count واژه", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
+        }
+        LinearProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = color,
+            trackColor = color.copy(alpha = 0.15f)
+        )
     }
 }

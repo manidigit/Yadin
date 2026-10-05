@@ -128,4 +128,16 @@ interface ConceptDao {
 
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandomContents(languageCode: String, limit: Int): List<ContentEntity>
+
+    @Query("SELECT * FROM contents")
+    suspend fun getAllContents(): List<ContentEntity>
+
+    @Query("DELETE FROM contents")
+    suspend fun clearContents()
+
+    @Query("DELETE FROM concepts")
+    suspend fun clearConcepts()
+
+    @Query("DELETE FROM categories WHERE isDefault = 0")
+    suspend fun clearCustomCategories()
 }

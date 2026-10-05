@@ -388,24 +388,29 @@ class VocabularyRepository(
     }
 
     private fun calculateStreakDays(days: List<String>, today: String): Int {
-        if (days.isEmpty()) return 0
-        val sortedDays = days.distinct().sortedDescending()
-        var streak = 0
-        var expectedDay = if (sortedDays.first() == today) today else ClockAndDayMath.addDays(today, -1)
-        if (sortedDays.first() != today && sortedDays.first() != expectedDay) {
-            return 0
-        }
-        for (day in sortedDays) {
-            if (day == expectedDay) {
-                streak++
-                expectedDay = ClockAndDayMath.addDays(expectedDay, -1)
-            } else if (day > expectedDay) {
-                continue
-            } else {
-                break
+        return ClockAndDayMath.calculateStreakDays(days, today)
+    }
+
+    private fun formatEnrichedNote(entry: ParsedEntry): String? {
+        val parts = mutableListOf<String>()
+        entry.note?.takeIf { it.isNotBlank() }?.let { parts.add(it.trim()) }
+        entry.grammarNotes?.takeIf { it.isNotBlank() }?.let { parts.add("نکات گرامری: ${it.trim()}") }
+        if (entry.variants.isNotEmpty()) {
+            val vText = entry.variants.joinToString("، ") { 
+                if (it.translationText.isNullOrBlank()) it.sourceText else "${it.sourceText} (${it.translationText})" 
             }
+            parts.add("اشکال و گونه‌ها: $vText")
         }
-        return streak
+        if (entry.breakdowns.isNotEmpty()) {
+            val bText = entry.breakdowns.joinToString(" + ") { "${it.sourcePart}: ${it.translationPart}" }
+            parts.add("تحلیل اجزاء: $bText")
+        }
+        if (entry.relations.isNotEmpty()) {
+            val rText = entry.relations.joinToString("، ") { "${it.relationType.name}: ${it.relatedSourceText}" }
+            parts.add("روابط واژگانی: $rText")
+        }
+        entry.possibleCorrection?.takeIf { it.isNotBlank() }?.let { parts.add("اصلاح پیشنهادی: ${it.trim()}") }
+        return parts.joinToString("\n").ifBlank { null }
     }
 
     suspend fun importParsedEntries(
@@ -418,6 +423,7 @@ class VocabularyRepository(
             val cleanSource = entry.sourceText.trim()
             val canonical = TextUtilities.toCanonicalKey(cleanSource)
             val existingContent = conceptDao.findContentByCanonicalKey("es", canonical)
+            val enrichedNote = formatEnrichedNote(entry)
 
             if (existingContent != null) {
                 when (policy) {
@@ -428,7 +434,7 @@ class VocabularyRepository(
                             sourceText = cleanSource,
                             translations = entry.translations,
                             categoryId = null,
-                            note = entry.note,
+                            note = enrichedNote,
                             pronunciation = null
                         )
                     }
@@ -436,13 +442,15 @@ class VocabularyRepository(
                         val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
                         val existingTranslations = currentContents.filter { it.languageCode == "fa" }.map { it.text }
                         val merged = (existingTranslations + entry.translations).distinct()
+                        val currentEs = currentContents.firstOrNull { it.languageCode == "es" }
+                        val mergedNote = listOfNotNull(currentEs?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
                         updateWord(
                             conceptId = existingContent.conceptId,
                             sourceText = cleanSource,
                             translations = merged,
                             categoryId = null,
-                            note = entry.note ?: currentContents.firstOrNull { it.languageCode == "es" }?.note,
-                            pronunciation = currentContents.firstOrNull { it.languageCode == "es" }?.pronunciation
+                            note = mergedNote,
+                            pronunciation = currentEs?.pronunciation
                         )
                     }
                     DuplicatePolicy.KEEP_SEPARATE -> {
@@ -450,7 +458,7 @@ class VocabularyRepository(
                             sourceText = cleanSource,
                             translations = entry.translations,
                             categoryId = null,
-                            note = entry.note,
+                            note = enrichedNote,
                             pronunciation = null
                         )
                     }
@@ -460,7 +468,7 @@ class VocabularyRepository(
                     sourceText = cleanSource,
                     translations = entry.translations,
                     categoryId = null,
-                    note = entry.note,
+                    note = enrichedNote,
                     pronunciation = null
                 )
             }

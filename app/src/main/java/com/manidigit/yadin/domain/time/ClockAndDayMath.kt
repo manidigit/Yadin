@@ -36,4 +36,25 @@ object ClockAndDayMath {
         val diffMillis = date2.time - date1.time
         return (diffMillis / (24 * 60 * 60 * 1000)).toInt()
     }
+
+    fun calculateStreakDays(days: List<String>, today: String = todayDayString()): Int {
+        if (days.isEmpty()) return 0
+        val sortedDays = days.distinct().sortedDescending()
+        var streak = 0
+        var expectedDay = if (sortedDays.first() == today) today else addDays(today, -1)
+        if (sortedDays.first() != today && sortedDays.first() != expectedDay) {
+            return 0
+        }
+        for (day in sortedDays) {
+            if (day == expectedDay) {
+                streak++
+                expectedDay = addDays(expectedDay, -1)
+            } else if (day > expectedDay) {
+                continue
+            } else {
+                break
+            }
+        }
+        return streak
+    }
 }

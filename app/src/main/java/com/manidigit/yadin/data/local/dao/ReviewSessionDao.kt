@@ -88,4 +88,25 @@ interface ReviewSessionDao {
         LIMIT :limit
     """)
     fun getRecentDailyStatsFlow(limit: Int = 14): Flow<List<DayCountRaw>>
+
+    @Query("SELECT * FROM review_history")
+    suspend fun getAllHistory(): List<ReviewHistoryEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertHistoryItems(items: List<ReviewHistoryEntity>)
+
+    @Query("SELECT * FROM review_sessions")
+    suspend fun getAllSessions(): List<ReviewSessionEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSessions(sessions: List<ReviewSessionEntity>)
+
+    @Query("DELETE FROM review_history")
+    suspend fun clearHistory()
+
+    @Query("DELETE FROM review_sessions")
+    suspend fun clearSessions()
+
+    @Query("DELETE FROM review_session_items")
+    suspend fun clearSessionItems()
 }

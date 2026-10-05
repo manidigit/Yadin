@@ -44,6 +44,12 @@ interface AchievementDao {
 
     @Query("UPDATE achievements SET progress = :progress WHERE id = :id")
     suspend fun updateProgress(id: String, progress: Int)
+
+    @Query("SELECT * FROM achievements")
+    suspend fun getAllAchievements(): List<AchievementEntity>
+
+    @Query("DELETE FROM achievements")
+    suspend fun clearAchievements()
 }
 
 @Dao

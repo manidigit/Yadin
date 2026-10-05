@@ -3,7 +3,10 @@ package com.manidigit.yadin.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.data.local.database.YadinDatabase
+import com.manidigit.yadin.data.repository.BackupRepository
+import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.data.repository.ReviewFilters
 import com.manidigit.yadin.data.repository.ReviewRepository
 import com.manidigit.yadin.data.repository.SeedImporter
@@ -30,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -46,6 +50,7 @@ sealed class Screen {
     object ImportPreview : Screen()
     object ProgressStats : Screen()
     object Settings : Screen()
+    object Backup : Screen()
     object Help : Screen()
     object About : Screen()
 }
@@ -57,6 +62,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val vocabularyRepo = VocabularyRepository(db.conceptDao(), db.learningDao(), db.reviewSessionDao())
     val reviewRepo = ReviewRepository(db.conceptDao(), db.learningDao(), db.reviewSessionDao(), db.achievementDao())
     private val seedImporter = SeedImporter(application, db.conceptDao(), db.learningDao(), db.achievementDao())
+    val backupRepo = BackupRepository(
+        application,
+        db,
+        db.conceptDao(),
+        db.learningDao(),
+        db.reviewSessionDao(),
+        db.settingsDao(),
+        db.achievementDao()
+    )
 
     // Settings
     val themeId: StateFlow<String> = settingsRepo.themeIdFlow
@@ -113,6 +127,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _setupCandidateCount = MutableStateFlow(0)
     val setupCandidateCount: StateFlow<Int> = _setupCandidateCount.asStateFlow()
+
+    // Progress State (Section 6.18 & Activity Chart)
+    private val _progressDirection = MutableStateFlow(CardDirection.NORMAL)
+    val progressDirection: StateFlow<CardDirection> = _progressDirection.asStateFlow()
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val progressScorePercent: StateFlow<Double> = _progressDirection
+        .flatMapLatest { dir -> vocabularyRepo.getProgressScoreFlow(dir) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    val dailyStats: StateFlow<List<DayCountRaw>> = vocabularyRepo.getRecentDailyStatsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val practicedWordsCount: StateFlow<Int> = _progressDirection
+        .flatMapLatest { dir -> vocabularyRepo.getPracticedWordsCountFlow(dir) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    // Backup State
+    private val _isBackupProcessing = MutableStateFlow(false)
+    val isBackupProcessing: StateFlow<Boolean> = _isBackupProcessing.asStateFlow()
+
+    private val _backupProgress = MutableStateFlow(0f)
+    val backupProgress: StateFlow<Float> = _backupProgress.asStateFlow()
+
+    private val _backupProgressMessage = MutableStateFlow("")
+    val backupProgressMessage: StateFlow<String> = _backupProgressMessage.asStateFlow()
+
+    private val _backupLastResult = MutableStateFlow<String?>(null)
+    val backupLastResult: StateFlow<String?> = _backupLastResult.asStateFlow()
+
+    private val _isBackupError = MutableStateFlow(false)
+    val isBackupError: StateFlow<Boolean> = _isBackupError.asStateFlow()
 
     // Active Review Session State
     private val _activeSession = MutableStateFlow<ReviewSession?>(null)
@@ -451,6 +498,58 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _parseResult.value = null
             loadRecentWords()
             onComplete()
+        }
+    }
+
+    // Progress Direction
+    fun setProgressDirection(direction: CardDirection) {
+        _progressDirection.value = direction
+    }
+
+    // Backup & Restore
+    fun exportBackup(type: BackupType) {
+        viewModelScope.launch {
+            _isBackupProcessing.value = true
+            _isBackupError.value = false
+            _backupProgress.value = 0f
+            _backupProgressMessage.value = "در حال ایجاد فایل پشتیبان..."
+            try {
+                val json = backupRepo.createBackupJson(type) { p, msg ->
+                    _backupProgress.value = p
+                    _backupProgressMessage.value = msg
+                }
+                val fileName = "yadin-backup-${System.currentTimeMillis()}.json"
+                val file = backupRepo.saveBackupToFile(json, fileName)
+                _backupLastResult.value = "فایل با موفقیت ذخیره شد: ${file.name}"
+                _isBackupError.value = false
+            } catch (e: Exception) {
+                _backupLastResult.value = "خطا در تهیه پشتیبان: ${e.message}"
+                _isBackupError.value = true
+            } finally {
+                _isBackupProcessing.value = false
+            }
+        }
+    }
+
+    fun restoreBackup(jsonString: String, isReplace: Boolean) {
+        viewModelScope.launch {
+            _isBackupProcessing.value = true
+            _isBackupError.value = false
+            _backupProgress.value = 0f
+            _backupProgressMessage.value = "در حال اعتبارسنجی و بازیابی..."
+            val result = backupRepo.restoreFromJson(jsonString, isReplace) { p, msg ->
+                _backupProgress.value = p
+                _backupProgressMessage.value = msg
+            }
+            if (result.isSuccess) {
+                _backupLastResult.value = result.getOrNull() ?: "با موفقیت انجام شد"
+                _isBackupError.value = false
+                loadRecentWords()
+            } else {
+                _backupLastResult.value = "خطا در بازیابی: ${result.exceptionOrNull()?.message}"
+                _isBackupError.value = true
+            }
+            _isBackupProcessing.value = false
         }
     }
 }
