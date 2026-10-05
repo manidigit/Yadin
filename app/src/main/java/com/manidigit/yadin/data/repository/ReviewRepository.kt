@@ -24,6 +24,8 @@ import com.manidigit.yadin.domain.model.SessionStatus
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.time.ClockAndDayMath
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.Normalizer
 import java.util.Locale
 import java.util.UUID
@@ -218,15 +220,15 @@ class ReviewRepository(
         return cards
     }
 
-    suspend fun generateQuizQuestions(sessionId: String): List<QuizQuestion> {
+    suspend fun generateQuizQuestions(sessionId: String): List<QuizQuestion> = withContext(Dispatchers.Default) {
         val session = reviewSessionDao.getSessionById(sessionId)
         val quizLevel = session?.quizLevel ?: QuizLevel.MEDIUM
         val cards = fetchCardsForSession(sessionId)
-        if (cards.isEmpty()) return emptyList()
+        if (cards.isEmpty()) return@withContext emptyList()
 
         // Distractor candidate entries
         val targetLang = if (session?.direction == CardDirection.REVERSE) "es" else "fa"
-        val allConcepts = conceptDao.searchConcepts("", 500)
+        val allConcepts = conceptDao.searchConcepts("", 1000)
         val allContents = conceptDao.getAllContents().filter { it.languageCode == targetLang && it.text.isNotBlank() }
         val categoryMap = allConcepts.associate { it.id to it.categoryId }
         val entryTypeMap = allConcepts.associate { it.id to it.entryType }
@@ -239,84 +241,98 @@ class ReviewRepository(
             val text: String,
             val categoryId: String?,
             val entryType: EntryType,
-            val difficulty: VocabularyDifficulty
+            val difficulty: VocabularyDifficulty,
+            val semantic: QuizDistractorScorer.PrecomputedSemantic
         )
 
-        // Group translations for each concept so full meanings appear in one option
+        // Precompute semantics ONCE for all unique concept translation entries in pool
         val pool = allContents.groupBy { it.conceptId }.mapNotNull { (cId, contentsList) ->
             val combinedText = contentsList.map { it.text.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("، ")
             if (combinedText.isBlank()) null else {
+                val semantic = QuizDistractorScorer.precomputeSemantic(combinedText)
                 DistractorPoolItem(
                     conceptId = cId,
                     text = combinedText,
                     categoryId = categoryMap[cId],
                     entryType = entryTypeMap[cId] ?: EntryType.WORD,
-                    difficulty = diffMap[cId] ?: VocabularyDifficulty.MEDIUM
+                    difficulty = diffMap[cId] ?: VocabularyDifficulty.MEDIUM,
+                    semantic = semantic
                 )
             }
-        }.distinctBy { normalizeQuiz(it.text) }
+        }.distinctBy { it.semantic.compact }
 
         val questions = mutableListOf<QuizQuestion>()
 
         for (card in cards) {
             val correctAnswer = card.targetTranslations.map { it.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("، ")
-            val allCorrectParts = card.targetTranslations.map { it.trim() }
+            val correctSemantic = QuizDistractorScorer.precomputeSemantic(correctAnswer)
+            val partsSemantics = (card.targetTranslations.map { it.trim() }.filter { it.isNotEmpty() } + QuizDistractorScorer.extractSegments(correctAnswer))
+                .distinct()
+                .map { QuizDistractorScorer.precomputeSemantic(it) }
 
-            val candidatePool = pool.filter { item ->
+            // Ultra-fast filter using precomputed semantics (0 regex/stemming calls inside loop)
+            val nonCollidingPool = pool.filter { item ->
                 item.conceptId != card.conceptId &&
-                !QuizDistractorScorer.areSemanticallyColliding(item.text, correctAnswer) &&
-                !allCorrectParts.any { correct -> QuizDistractorScorer.areSemanticallyColliding(item.text, correct) }
+                !QuizDistractorScorer.arePrecomputedColliding(item.semantic, correctSemantic) &&
+                !partsSemantics.any { part -> QuizDistractorScorer.arePrecomputedColliding(item.semantic, part) }
+            }
+
+            // If pool is large, take a balanced sample to keep Levenshtein scoring instant (< 0.1ms per card)
+            val candidatesToScore = if (nonCollidingPool.size > 40) {
+                val cardCat = categoryMap[card.conceptId]
+                val sameCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId == cardCat } else emptyList()
+                val otherCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId != cardCat } else nonCollidingPool
+                (sameCat.shuffled().take(15) + otherCat.shuffled().take(35)).distinctBy { it.conceptId }.take(40)
+            } else {
+                nonCollidingPool
             }
 
             data class ScoredCandidate(
-                val text: String,
+                val poolItem: DistractorPoolItem,
                 val confusabilityScore: Double
             )
 
-            val scoredCandidates = candidatePool.map { cand ->
+            val scoredCandidates = candidatesToScore.map { cand ->
                 val lexSim = quizLexicalSimilarity(correctAnswer, cand.text)
                 val catMatch = if (cand.categoryId != null && cand.categoryId == categoryMap[card.conceptId]) 1.0 else 0.0
                 val diffDist = diffDistance(card.difficulty, cand.difficulty)
                 val diffBonus = (3 - diffDist).coerceAtLeast(0) / 3.0
 
                 val confusability = (lexSim * 0.4 + catMatch * 0.35 + diffBonus * 0.25).coerceIn(0.0, 1.0)
-                ScoredCandidate(cand.text, confusability)
+                ScoredCandidate(cand, confusability)
             }
 
-            // Select 3 distractors based on QuizLevel:
-            // EASY: lower confusability, clear differences
-            // MEDIUM: moderate confusability, balanced plausibility
-            // HARD: highest confusability, closest semantic/lexical similarity
             val sortedCandidates = when (quizLevel) {
                 QuizLevel.EASY -> scoredCandidates.sortedBy { it.confusabilityScore }
                 QuizLevel.MEDIUM -> scoredCandidates.sortedBy { kotlin.math.abs(it.confusabilityScore - 0.5) }
                 QuizLevel.HARD -> scoredCandidates.sortedByDescending { it.confusabilityScore }
             }
 
-            val chosenDistractors = mutableListOf<String>()
+            val chosenDistractors = mutableListOf<DistractorPoolItem>()
             for (cand in sortedCandidates) {
                 if (chosenDistractors.size >= 3) break
-                val collides = chosenDistractors.any { chosen ->
-                    QuizDistractorScorer.areSemanticallyColliding(cand.text, chosen)
+                val collidesWithChosen = chosenDistractors.any { chosen ->
+                    QuizDistractorScorer.arePrecomputedColliding(cand.poolItem.semantic, chosen.semantic)
                 }
-                if (!collides) {
-                    chosenDistractors.add(cand.text)
+                if (!collidesWithChosen) {
+                    chosenDistractors.add(cand.poolItem)
                 }
             }
 
             if (chosenDistractors.size < 3) {
-                for (cand in candidatePool) {
+                for (cand in nonCollidingPool) {
                     if (chosenDistractors.size >= 3) break
-                    val collides = chosenDistractors.any { chosen ->
-                        QuizDistractorScorer.areSemanticallyColliding(cand.text, chosen)
+                    val collidesWithChosen = chosenDistractors.any { chosen ->
+                        QuizDistractorScorer.arePrecomputedColliding(cand.semantic, chosen.semantic)
                     }
-                    if (!collides) {
-                        chosenDistractors.add(cand.text)
+                    if (!collidesWithChosen) {
+                        chosenDistractors.add(cand)
                     }
                 }
             }
 
-            val optionsList = (chosenDistractors.map { QuizOption(it, "") } + QuizOption(correctAnswer, card.conceptId)).shuffled()
+            val chosenTexts = chosenDistractors.map { it.text }
+            val optionsList = (chosenTexts.map { QuizOption(it, "") } + QuizOption(correctAnswer, card.conceptId)).shuffled()
             val correctIdx = optionsList.indexOfFirst { it.text == correctAnswer }.coerceAtLeast(0)
 
             questions.add(
@@ -334,7 +350,7 @@ class ReviewRepository(
                 )
             )
         }
-        return questions
+        questions
     }
 
     suspend fun submitAnswer(

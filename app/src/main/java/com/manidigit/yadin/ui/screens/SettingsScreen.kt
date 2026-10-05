@@ -246,17 +246,14 @@ fun SettingsScreen(
                     }
                 }
 
-                // Threshold Selector Buttons (2, 3, 4, 5)
+                // Threshold Selector Buttons (1, 2, 3, 4, 5)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    listOf(2, 3, 4, 5).forEach { thresholdValue ->
+                    listOf(1, 2, 3, 4, 5).forEach { thresholdValue ->
                         val isSelected = (difficultyThreshold == thresholdValue)
-                        val label = when (thresholdValue) {
-                            3 -> "۳ بار (پیش‌فرض)"
-                            else -> "$thresholdValue بار"
-                        }
+                        val label = if (thresholdValue == 3) "۳ (پیش‌فرض)" else "$thresholdValue بار"
 
                         Box(
                             modifier = Modifier
@@ -266,14 +263,16 @@ fun SettingsScreen(
                                     if (isSelected) colors.primary else colors.surfaceVariant
                                 )
                                 .clickable { onSetDifficultyThreshold(thresholdValue) }
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = 10.dp, horizontal = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+                                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                maxLines = 2
                             )
                         }
                     }

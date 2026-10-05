@@ -97,4 +97,29 @@ class DifficultyCalculatorTest {
         assertEquals(VocabularyDifficulty.MEDIUM, step2.newDifficulty)
         assertEquals(0, step2.consecutiveCorrect)
     }
+
+    @Test
+    fun customThreshold_oneConsecutiveCorrect_triggersImmediateTransition() {
+        val resultCorrect = DifficultyCalculator.updateDifficulty(
+            current = VocabularyDifficulty.MEDIUM,
+            consecutiveCorrect = 0,
+            consecutiveWrong = 0,
+            hasReachedVeryHard = false,
+            isCorrect = true,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.EASY, resultCorrect.newDifficulty)
+        assertEquals(0, resultCorrect.consecutiveCorrect)
+
+        val resultWrong = DifficultyCalculator.updateDifficulty(
+            current = VocabularyDifficulty.MEDIUM,
+            consecutiveCorrect = 0,
+            consecutiveWrong = 0,
+            hasReachedVeryHard = false,
+            isCorrect = false,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.HARD, resultWrong.newDifficulty)
+        assertEquals(0, resultWrong.consecutiveWrong)
+    }
 }

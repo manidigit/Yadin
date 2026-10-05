@@ -374,7 +374,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val correctOption = q.options.getOrNull(q.correctIndex)
         val isCorrect = (optionIndex == q.correctIndex) || 
             (selectedOption != null && correctOption != null && 
-             com.manidigit.yadin.domain.algorithm.QuizDistractorScorer.areSemanticallyColliding(selectedOption.text, correctOption.text))
+             com.manidigit.yadin.domain.algorithm.QuizDistractorScorer.areSemanticallyColliding(selectedOption.text, correctOption.text)) ||
+            (selectedOption != null && com.manidigit.yadin.domain.algorithm.QuizDistractorScorer.areSemanticallyColliding(selectedOption.text, q.correctAnswer))
         _quizSelectedOption.value = optionIndex
 
         if (isCorrect) {

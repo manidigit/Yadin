@@ -132,4 +132,66 @@ class QuizDistractorScoringTest {
             QuizDistractorScorer.areSemanticallyColliding(distractorDifferentTense, answerEnsenen)
         )
     }
+
+    @Test
+    fun `areSemanticallyColliding correctly flags all reported medium mode duplicate option cases`() {
+        // Screenshot 1: "Media jornada"
+        val answerMediaJornada = "پاره‌وقت، نیمه‌وقت"
+        val duplicateSwappedOrder = "نیمه‌وقت، پاره‌وقت"
+        assertTrue(
+            "Permuted synonym order 'نیمه‌وقت، پاره‌وقت' must collide with 'پاره‌وقت، نیمه‌وقت'",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateSwappedOrder, answerMediaJornada)
+        )
+
+        // Screenshot 2: "¡Relájate!"
+        val answerRelajate = "آرام باش!، ریلکس کن!"
+        val duplicateFemaleVariant = "آرام باش (برای مؤنث)"
+        assertTrue(
+            "'آرام باش (برای مؤنث)' must collide with 'آرام باش!، ریلکس کن!'",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateFemaleVariant, answerRelajate)
+        )
+
+        // Screenshot 3: "Llevo unos días fatal"
+        val answerLlevo = "چند روز است که حالم خیلی بد است، چند روزی است که حالم بسیار بد است"
+        val duplicateSubset1 = "حالم خیلی بد است"
+        val duplicateSubset2 = "حالم بسیار بد است، احساس افتضاحی دارم"
+        assertTrue(
+            "'حالم خیلی بد است' must collide with longer containing answer",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateSubset1, answerLlevo)
+        )
+        assertTrue(
+            "'حالم بسیار بد است، احساس افتضاحی دارم' must collide with answer containing 'حالم بسیار بد است'",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateSubset2, answerLlevo)
+        )
+
+        // Screenshot 4: "¡Qué barbaridad!"
+        val answerBarbaridad = "چه فاجعه‌ای!، چه عجیب!، عجب چیزی!"
+        val duplicateBarbaridadVariant = "چه فاجعه و وحشتی!"
+        assertTrue(
+            "'چه فاجعه و وحشتی!' must collide with 'چه فاجعه‌ای!، چه عجیب!، عجب چیزی!'",
+            QuizDistractorScorer.areSemanticallyColliding(duplicateBarbaridadVariant, answerBarbaridad)
+        )
+    }
+
+    @Test
+    fun benchmarkPrecomputedCollisions_100QuestionsPerformance() {
+        val poolTexts = (1..500).map { "واژه تست شماره $it، ترجمه آزمایشی $it" }
+        val startPrecompute = System.currentTimeMillis()
+        val precomputedPool = poolTexts.map { QuizDistractorScorer.precomputeSemantic(it) }
+        val precomputeTime = System.currentTimeMillis() - startPrecompute
+
+        val questionTargets = (1..100).map { QuizDistractorScorer.precomputeSemantic("واژه تست شماره $it، ترجمه آزمایشی $it") }
+        val startMatching = System.currentTimeMillis()
+        var collisionsFound = 0
+        for (q in questionTargets) {
+            val nonColliding = precomputedPool.filter { !QuizDistractorScorer.arePrecomputedColliding(it, q) }
+            collisionsFound += (500 - nonColliding.size)
+        }
+        val matchingTime = System.currentTimeMillis() - startMatching
+
+        // 100 questions against 500 pool items (50,000 comparisons) should complete in well under 1000ms
+        assertTrue("Precomputation time ($precomputeTime ms) must be fast", precomputeTime < 500)
+        assertTrue("100 questions collision checks ($matchingTime ms) must be ultra fast", matchingTime < 500)
+        assertTrue("Collisions should be found accurately", collisionsFound >= 100)
+    }
 }

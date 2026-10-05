@@ -5,6 +5,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +34,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,6 +80,14 @@ fun FlashcardScreen(
 
     val card = cards[currentIndex]
     val progress = (currentIndex + 1).toFloat() / cards.size
+
+    val frontScrollState = rememberScrollState()
+    val backScrollState = rememberScrollState()
+
+    LaunchedEffect(currentIndex) {
+        frontScrollState.scrollTo(0)
+        backScrollState.scrollTo(0)
+    }
 
     val rotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
@@ -141,7 +152,7 @@ fun FlashcardScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(vertical = 16.dp),
+                .padding(vertical = 12.dp),
             contentAlignment = Alignment.Center
         ) {
             YadinCard(
@@ -160,7 +171,7 @@ fun FlashcardScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(24.dp),
+                            .padding(18.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -190,11 +201,21 @@ fun FlashcardScreen(
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .verticalScroll(frontScrollState)
                         ) {
+                            val promptStyle = when {
+                                card.sourceText.length > 90 -> MaterialTheme.typography.titleMedium
+                                card.sourceText.length > 45 -> MaterialTheme.typography.titleLarge
+                                card.sourceText.length > 25 -> MaterialTheme.typography.headlineSmall
+                                else -> MaterialTheme.typography.headlineLarge
+                            }
+
                             Text(
                                 text = card.sourceText,
-                                style = MaterialTheme.typography.headlineLarge,
+                                style = promptStyle,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface,
                                 textAlign = TextAlign.Center
@@ -231,7 +252,7 @@ fun FlashcardScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer { rotationY = 180f }
-                            .padding(24.dp),
+                            .padding(18.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -239,12 +260,16 @@ fun FlashcardScreen(
                             text = card.sourceText,
                             style = MaterialTheme.typography.titleMedium,
                             color = colors.primary,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center
                         )
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .verticalScroll(backScrollState)
                         ) {
                             Text(
                                 text = "ترجمه فارسی:",
@@ -256,6 +281,11 @@ fun FlashcardScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 card.targetTranslations.forEach { trans ->
+                                    val translationStyle = if (trans.length > 50) {
+                                        MaterialTheme.typography.titleMedium
+                                    } else {
+                                        MaterialTheme.typography.titleLarge
+                                    }
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(10.dp))
@@ -264,16 +294,17 @@ fun FlashcardScreen(
                                     ) {
                                         Text(
                                             text = trans,
-                                            style = MaterialTheme.typography.titleLarge,
+                                            style = translationStyle,
                                             fontWeight = FontWeight.Bold,
-                                            color = colors.onSurface
+                                            color = colors.onSurface,
+                                            textAlign = TextAlign.Center
                                         )
                                     }
                                 }
                             }
 
                             if (!card.note.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = card.note,
                                     style = MaterialTheme.typography.bodyMedium,
