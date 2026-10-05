@@ -327,36 +327,37 @@ fun FlashcardScreen(
         // Bottom Action Buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
                 onClick = { onAnswer(false) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(dimensions.cornerMedium),
+                    .height(46.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.error.copy(alpha = 0.15f),
                     contentColor = colors.error
                 )
             ) {
-                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("نادرست", fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("نادرست", fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
 
             IconButton(
                 onClick = onFlip,
                 modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(colors.surfaceVariant)
             ) {
                 Icon(
                     imageVector = Icons.Default.Flip,
                     contentDescription = "چرخش کارت",
-                    tint = colors.onSurface
+                    tint = colors.onSurface,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -364,16 +365,16 @@ fun FlashcardScreen(
                 onClick = { onAnswer(true) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(dimensions.cornerMedium),
+                    .height(46.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.success,
                     contentColor = Color.White
                 )
             ) {
-                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("به‌خاطر داشتم", fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("به‌خاطر داشتم", fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }

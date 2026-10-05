@@ -339,8 +339,8 @@ fun QuizScreen(
             enabled = hasAnswered,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(dimensions.cornerMedium),
+                .height(46.dp),
+            shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colors.secondary,
                 contentColor = colors.onSecondary,
@@ -358,15 +358,16 @@ fun QuizScreen(
                         currentIndex + 1 < questions.size -> "سؤال بعدی"
                         else -> "مشاهده نتیجه آزمون"
                     },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
                 )
                 if (hasAnswered) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

@@ -2,6 +2,7 @@ package com.manidigit.yadin.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,7 +30,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,6 +38,15 @@ import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+
+enum class ChartTimeframe(val title: String) {
+    WEEKLY("هفتگی"),
+    MONTHLY("ماهانه")
+}
 
 @Composable
 fun DailyReviewChart(
@@ -42,34 +55,75 @@ fun DailyReviewChart(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    var selectedTimeframe by remember { mutableStateOf(ChartTimeframe.WEEKLY) }
 
-    // Ensure we have at least 7 days represented (today down to today-6)
     val today = ClockAndDayMath.todayDayString()
-    val past7Days = (6 downTo 0).map { ClockAndDayMath.addDays(today, -it) }
     val statMap = dailyStats.associateBy { it.reviewedDay }
 
-    val chartItems = past7Days.map { day ->
-        val raw = statMap[day]
-        DayChartModel(
-            dayString = day,
-            shortLabel = day.takeLast(5).replace("-", "/"), // e.g. 10/05
-            totalCount = raw?.totalCount ?: 0,
-            correctCount = raw?.correctCount ?: 0,
-            isToday = (day == today)
-        )
+    val chartItems = if (selectedTimeframe == ChartTimeframe.WEEKLY) {
+        // 7 days: from (today - 6) up to today
+        (6 downTo 0).map { offset ->
+            val day = ClockAndDayMath.addDays(today, -offset)
+            val raw = statMap[day]
+            val persianDayName = getPersianDayOfWeek(day)
+            DayChartModel(
+                dayString = day,
+                shortLabel = persianDayName,
+                totalCount = raw?.totalCount ?: 0,
+                correctCount = raw?.correctCount ?: 0,
+                isToday = (day == today)
+            )
+        }
+    } else {
+        // 30 days: aggregated into 6 periods of 5 days or 15 points
+        // Group last 30 days into 6 slices of 5 days
+        (5 downTo 0).map { sliceIndex ->
+            val sliceEndOffset = sliceIndex * 5
+            val sliceStartOffset = sliceEndOffset + 4
+            val startDay = ClockAndDayMath.addDays(today, -sliceStartOffset)
+            val endDay = ClockAndDayMath.addDays(today, -sliceEndOffset)
+            
+            var sliceTotal = 0
+            var sliceCorrect = 0
+            for (off in sliceStartOffset downTo sliceEndOffset) {
+                val d = ClockAndDayMath.addDays(today, -off)
+                statMap[d]?.let {
+                    sliceTotal += it.totalCount
+                    sliceCorrect += it.correctCount
+                }
+            }
+
+            val label = if (sliceIndex == 0) "۵ روز اخیر" else "${sliceEndOffset + 1}-${sliceStartOffset + 1} روز پیش"
+            DayChartModel(
+                dayString = endDay,
+                shortLabel = label,
+                totalCount = sliceTotal,
+                correctCount = sliceCorrect,
+                isToday = (sliceIndex == 0)
+            )
+        }
     }
 
-    val maxCount = (chartItems.maxOfOrNull { it.totalCount } ?: 1).coerceAtLeast(10)
-    val totalReviewsInWeek = chartItems.sumOf { it.totalCount }
+    val maxVal = chartItems.maxOfOrNull { it.totalCount } ?: 0
+    val maxCount = when {
+        maxVal <= 5 -> 10
+        maxVal <= 10 -> 15
+        maxVal <= 20 -> 25
+        maxVal <= 50 -> 60
+        else -> ((maxVal + 9) / 10) * 10
+    }
+
+    val totalReviews = chartItems.sumOf { it.totalCount }
 
     YadinCard(
         modifier = modifier.fillMaxWidth(),
         backgroundColor = colors.surface
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Header Row with Timeframe Selector (هفتگی / ماهانه)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -77,39 +131,53 @@ fun DailyReviewChart(
             ) {
                 Column {
                     Text(
-                        text = "نمودار حجم مرور و تمرین واژگان (۷ روز اخیر)",
+                        text = "حجم مرور و تمرین واژگان",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "مجموع: $totalReviewsInWeek کلمه تمرین‌شده در این هفته",
+                        text = "مجموع: $totalReviews واژه در دوره انتخاب‌شده",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
                 }
 
-                Box(
+                // Segmented Toggle for Weekly vs Monthly
+                Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(dimensions.cornerPill))
-                        .background(colors.primary.copy(alpha = 0.15f))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.surfaceVariant)
+                        .padding(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    Text(
-                        text = "امروز: ${chartItems.lastOrNull()?.totalCount ?: 0}",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.primary
-                    )
+                    ChartTimeframe.values().forEach { tf ->
+                        val isSelected = (selectedTimeframe == tf)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isSelected) colors.primary else Color.Transparent)
+                                .clickable { selectedTimeframe = tf }
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = tf.title,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 
-            // Custom Canvas Chart
+            // Custom Canvas Chart with Y-Axis and X-Axis
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(170.dp)
-                    .padding(top = 10.dp, bottom = 4.dp)
+                    .height(180.dp)
+                    .padding(top = 8.dp, bottom = 4.dp)
             ) {
                 val primaryColor = colors.primary
                 val secondaryColor = colors.secondary
@@ -119,27 +187,49 @@ fun DailyReviewChart(
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val canvasWidth = size.width
                     val canvasHeight = size.height
+                    
+                    val yAxisWidth = 34.dp.toPx()
                     val bottomLabelSpace = 24.dp.toPx()
                     val chartHeight = canvasHeight - bottomLabelSpace
+                    val chartWidth = canvasWidth - yAxisWidth
+
+                    // Draw Y-Axis lines and numbers (0, mid, max)
+                    val steps = 3
+                    for (i in 0..steps) {
+                        val frac = i.toFloat() / steps
+                        val y = chartHeight - (frac * (chartHeight * 0.85f))
+                        val value = (frac * maxCount).toInt()
+
+                        // Grid line
+                        drawLine(
+                            color = surfaceVariantColor.copy(alpha = if (i == 0) 0.8f else 0.4f),
+                            start = Offset(yAxisWidth, y),
+                            end = Offset(canvasWidth, y),
+                            strokeWidth = if (i == 0) 1.5f else 1f
+                        )
+
+                        // Y-axis value label
+                        drawContext.canvas.nativeCanvas.apply {
+                            val axisPaint = android.graphics.Paint().apply {
+                                color = android.graphics.Color.GRAY
+                                textSize = 9.sp.toPx()
+                                textAlign = android.graphics.Paint.Align.LEFT
+                                isAntiAlias = true
+                            }
+                            drawText("$value", 4.dp.toPx(), y + 3.dp.toPx(), axisPaint)
+                        }
+                    }
 
                     val barCount = chartItems.size
-                    val slotWidth = canvasWidth / barCount
-                    val barWidth = slotWidth * 0.48f
-
-                    // Draw baseline
-                    drawLine(
-                        color = surfaceVariantColor,
-                        start = Offset(0f, chartHeight),
-                        end = Offset(canvasWidth, chartHeight),
-                        strokeWidth = 2f
-                    )
+                    val slotWidth = chartWidth / barCount
+                    val barWidth = (slotWidth * 0.45f).coerceIn(12.dp.toPx(), 28.dp.toPx())
 
                     chartItems.forEachIndexed { index, item ->
-                        val centerX = (index * slotWidth) + (slotWidth / 2f)
+                        val centerX = yAxisWidth + (index * slotWidth) + (slotWidth / 2f)
                         val barHeight = if (item.totalCount > 0) {
-                            (item.totalCount.toFloat() / maxCount) * (chartHeight * 0.82f)
+                            (item.totalCount.toFloat() / maxCount) * (chartHeight * 0.85f)
                         } else {
-                            4.dp.toPx() // Minimum dot for zero
+                            3.dp.toPx() // Minimum indicator
                         }
 
                         val barTop = chartHeight - barHeight
@@ -150,7 +240,7 @@ fun DailyReviewChart(
                         } else if (item.totalCount > 0) {
                             secondaryColor.copy(alpha = 0.85f)
                         } else {
-                            surfaceVariantColor
+                            surfaceVariantColor.copy(alpha = 0.6f)
                         }
 
                         // Draw Bar
@@ -165,13 +255,13 @@ fun DailyReviewChart(
                         if (item.totalCount > 0) {
                             drawContext.canvas.nativeCanvas.apply {
                                 val paint = android.graphics.Paint().apply {
-                                    color = if (item.isToday) android.graphics.Color.WHITE else android.graphics.Color.GRAY
+                                    color = if (item.isToday) android.graphics.Color.WHITE else android.graphics.Color.LTGRAY
                                     textSize = 10.sp.toPx()
                                     textAlign = android.graphics.Paint.Align.CENTER
                                     isAntiAlias = true
                                     isFakeBoldText = item.isToday
                                 }
-                                drawText("${item.totalCount}", centerX, barTop - 6.dp.toPx(), paint)
+                                drawText("${item.totalCount}", centerX, barTop - 5.dp.toPx(), paint)
                             }
                         }
 
@@ -184,7 +274,7 @@ fun DailyReviewChart(
                                 isAntiAlias = true
                                 isFakeBoldText = item.isToday
                             }
-                            drawText(item.shortLabel, centerX, canvasHeight - 2.dp.toPx(), labelPaint)
+                            drawText(item.shortLabel, centerX, canvasHeight - 3.dp.toPx(), labelPaint)
                         }
                     }
                 }
@@ -200,19 +290,40 @@ fun DailyReviewChart(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(colors.primary))
-                    Text("امروز", fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(colors.primary))
+                    Text("امروز / دوره جاری", fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
-                Spacer(modifier = Modifier.width(20.dp))
+                Spacer(modifier = Modifier.width(16.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(colors.secondary))
-                    Text("روزهای گذشته", fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(colors.secondary))
+                    Text("روزهای قبل", fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
             }
         }
+    }
+}
+
+private fun getPersianDayOfWeek(dateString: String): String {
+    return try {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val date = sdf.parse(dateString) ?: return dateString.takeLast(5)
+        val cal = Calendar.getInstance()
+        cal.time = date
+        when (cal.get(Calendar.DAY_OF_WEEK)) {
+            Calendar.SATURDAY -> "شنبه"
+            Calendar.SUNDAY -> "یکشنبه"
+            Calendar.MONDAY -> "دوشنبه"
+            Calendar.TUESDAY -> "سه‌شنبه"
+            Calendar.WEDNESDAY -> "چهارشنبه"
+            Calendar.THURSDAY -> "پنج‌شنبه"
+            Calendar.FRIDAY -> "جمعه"
+            else -> dateString.takeLast(5)
+        }
+    } catch (_: Exception) {
+        dateString.takeLast(5)
     }
 }
 

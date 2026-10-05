@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
@@ -32,6 +33,8 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +42,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +76,13 @@ fun SettingsScreen(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    var themeMenuExpanded by remember { mutableStateOf(false) }
+
+    val currentThemeTitle = when (currentThemeId.lowercase()) {
+        "claude" -> "تم Claude (کلاد)"
+        "gemini" -> "تم Gemini"
+        else -> "تم GTP"
+    }
 
     Column(
         modifier = Modifier
@@ -76,7 +90,7 @@ fun SettingsScreen(
             .background(colors.background)
             .padding(dimensions.screenPadding)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Header
         Row(
@@ -106,53 +120,14 @@ fun SettingsScreen(
             )
         }
 
-        // Theme Selection Section (GTP vs Gemini vs Claude)
+        // Section: Appearance & Theme Hub (Dropdown + Compact Dark Mode button)
         Text(
-            text = "انتخاب پوسته برنامه:",
-            style = MaterialTheme.typography.titleMedium,
+            text = "ظاهر و پوسته برنامه:",
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface
         )
 
-        // Card 1: Claude
-        ThemeChoiceCard(
-            title = "تم Claude (کلاد)",
-            description = "طراحی مینیمال، متین و آکادمیک با طیف گرم سفالی، پس‌زمینه کاغذی عاجی، تایپوگرافی چشم‌نواز و کنتراست ارگونومیک.",
-            primaryPreview = Color(0xFFC15F3D),
-            secondaryPreview = Color(0xFF4A7C59),
-            icon = Icons.Default.MenuBook,
-            themeStyle = "claude",
-            isSelected = currentThemeId == "claude",
-            onClick = { onSelectTheme("claude") }
-        )
-
-        // Card 2: Gemini
-        ThemeChoiceCard(
-            title = "تم Gemini",
-            description = "طراحی آینده‌نگرانه هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای ستاره‌ای، گوشه‌های نرم شیشه‌ای و هاله‌های نورانی.",
-            primaryPreview = Color(0xFF1A73E8),
-            secondaryPreview = Color(0xFF00B4D8),
-            icon = Icons.Default.AutoAwesome,
-            themeStyle = "gemini",
-            isSelected = currentThemeId == "gemini",
-            onClick = { onSelectTheme("gemini") }
-        )
-
-        // Card 3: GTP
-        ThemeChoiceCard(
-            title = "تم GTP",
-            description = "طیف بنفش و ارغوانی نئونی، متراکم، شارپ با خطوط هندسی دقیق و گوشه‌های تیز.",
-            primaryPreview = Color(0xFF7C3AED),
-            secondaryPreview = Color(0xFF06B6D4),
-            icon = Icons.Default.Bolt,
-            themeStyle = "gtp",
-            isSelected = currentThemeId == "gtp",
-            onClick = { onSelectTheme("gtp") }
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Dark Mode Toggle
         YadinCard(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = colors.surface
@@ -160,64 +135,116 @@ fun SettingsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
+                // Dropdown Menu for Theme
+                Box(modifier = Modifier.weight(1f)) {
+                    Row(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(colors.primary.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.surfaceVariant)
+                            .clickable { themeMenuExpanded = true }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
+                            imageVector = Icons.Default.Palette,
                             contentDescription = null,
                             tint = colors.primary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "پوسته فعال",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSurfaceVariant,
+                                fontSize = 10.sp
+                            )
+                            Text(
+                                text = currentThemeTitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "انتخاب پوسته",
+                            tint = colors.onSurfaceVariant
                         )
                     }
 
-                    Column {
-                        Text(
-                            text = "حالت تیره (Dark Mode)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = if (isDark) "فعال (محیط تیره با کنتراست بالا)" else "غیرفعال (محیط روشن)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
-                        )
+                    DropdownMenu(
+                        expanded = themeMenuExpanded,
+                        onDismissRequest = { themeMenuExpanded = false },
+                        modifier = Modifier.background(colors.surface)
+                    ) {
+                        listOf(
+                            Triple("claude", "تم Claude (کلاد)", Color(0xFFC15F3D)),
+                            Triple("gemini", "تم Gemini", Color(0xFF1A73E8)),
+                            Triple("gtp", "تم GTP", Color(0xFF7C3AED))
+                        ).forEach { (id, title, color) ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clip(CircleShape)
+                                                .background(color)
+                                        )
+                                        Text(
+                                            text = title,
+                                            fontWeight = if (currentThemeId == id) FontWeight.Bold else FontWeight.Normal,
+                                            color = colors.onSurface
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    onSelectTheme(id)
+                                    themeMenuExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
 
-                Switch(
-                    checked = isDark,
-                    onCheckedChange = onToggleDarkMode,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = colors.onPrimary,
-                        checkedTrackColor = colors.primary
+                Spacer(modifier = Modifier.width(10.dp))
+
+                // Compact Dark/Light Mode Button
+                IconButton(
+                    onClick = { onToggleDarkMode(!isDark) },
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.surfaceVariant)
+                ) {
+                    Icon(
+                        imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                        contentDescription = "تغییر حالت شب و روز",
+                        tint = if (isDark) colors.warning else colors.primary,
+                        modifier = Modifier.size(22.dp)
                     )
-                )
+                }
             }
         }
 
         // Section Title: Learning & Review Settings
         Text(
             text = "تنظیمات یادگیری و آزمون:",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface
         )
 
-        // 1. Difficulty Transition Threshold Card
+        // Difficulty Transition Threshold Card
         YadinCard(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = colors.surface
@@ -225,16 +252,16 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(34.dp)
                             .clip(CircleShape)
                             .background(colors.warning.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
@@ -243,21 +270,22 @@ fun SettingsScreen(
                             imageVector = Icons.Default.Bolt,
                             contentDescription = null,
                             tint = colors.warning,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 
                     Column {
                         Text(
-                            text = "تعداد پاسخ متوالی برای تغییر سطح سختی",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "پاسخ متوالی برای تغییر سطح سختی",
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = colors.onSurface
                         )
                         Text(
-                            text = "تعداد پاسخ درست برای ساده‌تر شدن، یا غلط برای سخت‌تر شدن کلمه",
+                            text = "تعداد پاسخ متوالی جهت ساده‌تر شدن یا سخت‌تر شدن کلمه",
                             style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp
                         )
                     }
                 }
@@ -279,7 +307,7 @@ fun SettingsScreen(
                                     if (isSelected) colors.primary else colors.surfaceVariant
                                 )
                                 .clickable { onSetDifficultyThreshold(thresholdValue) }
-                                .padding(vertical = 10.dp, horizontal = 2.dp),
+                                .padding(vertical = 8.dp, horizontal = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -288,69 +316,12 @@ fun SettingsScreen(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                maxLines = 2
+                                maxLines = 2,
+                                fontSize = 11.sp
                             )
                         }
                     }
                 }
-            }
-        }
-
-        // 2. Show Category in Review/Quiz Toggle
-        YadinCard(
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = colors.surface
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(colors.secondary.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.HelpOutline,
-                            contentDescription = null,
-                            tint = colors.secondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Column(modifier = Modifier.padding(end = 8.dp)) {
-                        Text(
-                            text = "نمایش دسته‌بندی در مرور و آزمون",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = if (showCategoryInReview) "فعال (دسته‌بندی در بالای کارت نمایش داده می‌شود)" else "غیرفعال (پیش‌فرض، جلوگیری از لو رفتن موضوع واژه)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Switch(
-                    checked = showCategoryInReview,
-                    onCheckedChange = onToggleShowCategoryInReview,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = colors.onPrimary,
-                        checkedTrackColor = colors.primary
-                    )
-                )
             }
         }
 
@@ -530,122 +501,5 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-    }
-}
-
-@Composable
-fun ThemeChoiceCard(
-    title: String,
-    description: String,
-    primaryPreview: Color,
-    secondaryPreview: Color,
-    icon: ImageVector,
-    themeStyle: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-    val shape = when (themeStyle) {
-        "gemini" -> RoundedCornerShape(24.dp)
-        "claude" -> RoundedCornerShape(16.dp)
-        else -> RoundedCornerShape(8.dp)
-    }
-
-    val borderStroke = when (themeStyle) {
-        "gemini" -> BorderStroke(
-            width = if (isSelected) 2.5.dp else 1.2.dp,
-            brush = Brush.linearGradient(
-                listOf(
-                    primaryPreview,
-                    secondaryPreview,
-                    Color(0xFFC084FC)
-                )
-            )
-        )
-        "claude" -> BorderStroke(
-            width = if (isSelected) 2.dp else 1.dp,
-            brush = if (isSelected) Brush.linearGradient(listOf(primaryPreview, secondaryPreview)) else Brush.linearGradient(listOf(colors.outline.copy(alpha = 0.8f), colors.outline.copy(alpha = 0.5f)))
-        )
-        else -> BorderStroke(
-            width = if (isSelected) 2.dp else 1.dp,
-            color = if (isSelected) primaryPreview else colors.outline.copy(alpha = 0.5f)
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(if (isSelected) primaryPreview.copy(alpha = 0.14f) else colors.surface)
-            .border(borderStroke, shape)
-            .clickable { onClick() }
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                val iconShape = when (themeStyle) {
-                    "gemini" -> CircleShape
-                    "claude" -> RoundedCornerShape(10.dp)
-                    else -> RoundedCornerShape(6.dp)
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(iconShape)
-                        .background(
-                            Brush.linearGradient(listOf(primaryPreview, secondaryPreview))
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-
-            if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(primaryPreview),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "انتخاب شده",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
     }
 }

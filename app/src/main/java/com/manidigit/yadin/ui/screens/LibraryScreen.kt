@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -96,15 +97,22 @@ fun LibraryScreen(
                     )
                 }
 
-                Text(
-                    text = "کتابخانه واژگان",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
+                Column {
+                    Text(
+                        text = "کتابخانه واژگان",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                    Text(
+                        text = "${words.size} واژه و عبارت با پرچم زبان و ترجمه",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Search Bar
             OutlinedTextField(
@@ -130,7 +138,7 @@ fun LibraryScreen(
 
             // Filter Chips (Stage)
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 item {
@@ -157,9 +165,9 @@ fun LibraryScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Dropdown Menu for Categories with Associated Icons (per user request)
+            // Dropdown Menu for Categories
             if (categories.isNotEmpty()) {
                 ExposedCategoryDropdown(
                     categories = categories,
@@ -180,8 +188,8 @@ fun LibraryScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "هیچ واژه‌ای یافت نشد",
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = "هیچ واژه‌ای با این مشخصات یافت نشد",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant
                     )
                 }
@@ -199,7 +207,7 @@ fun LibraryScreen(
                         )
                     }
                     item {
-                        Spacer(modifier = Modifier.height(80.dp))
+                        Spacer(modifier = Modifier.height(76.dp))
                     }
                 }
             }
@@ -210,7 +218,7 @@ fun LibraryScreen(
             onClick = onAddWord,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(24.dp),
+                .padding(20.dp),
             containerColor = colors.primary,
             contentColor = colors.onPrimary,
             shape = CircleShape
@@ -227,21 +235,34 @@ fun FilterChip(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(if (isSelected) colors.primary else colors.surfaceVariant)
             .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 10.dp, vertical = 5.dp)
     ) {
         Text(
             text = label,
             color = if (isSelected) colors.onPrimary else colors.onSurface,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
+    }
+}
+
+private fun getLanguageFlag(langCode: String?): String {
+    return when (langCode?.lowercase()) {
+        "es", "spa", "spanish" -> "🇪🇸"
+        "fa", "fas", "per", "persian" -> "🇮🇷"
+        "en", "eng", "english" -> "🇬🇧"
+        "fr", "fra", "french" -> "🇫🇷"
+        "de", "deu", "german" -> "🇩🇪"
+        "it", "ita", "italian" -> "🇮🇹"
+        "ar", "ara", "arabic" -> "🇸🇦"
+        "ru", "rus", "russian" -> "🇷🇺"
+        else -> "🇪🇸"
     }
 }
 
@@ -253,6 +274,9 @@ fun WordItemCard(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
+    val sourceFlag = getLanguageFlag(word.sourceContent.languageCode)
+    val targetFlag = "🇮🇷"
+
     YadinCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
@@ -261,25 +285,37 @@ fun WordItemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
+                // Source Row with Flag & Word & Badges
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = word.sourceContent.text,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
                     Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        // Country flag before source word
+                        Text(
+                            text = sourceFlag,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = word.sourceContent.text,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         word.normalLearning?.stage?.let { StageBadge(stage = it) }
@@ -289,14 +325,26 @@ fun WordItemCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
+                // Target Translation with Iranian Flag
                 val trans = word.targetContents.joinToString("، ") { it.text }
-                Text(
-                    text = trans.ifEmpty { "بدون ترجمه" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.primary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = targetFlag,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        text = trans.ifEmpty { "بدون ترجمه" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
 
                 if (!word.sourceContent.note.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = word.sourceContent.note,
                         style = MaterialTheme.typography.bodySmall,
@@ -307,8 +355,10 @@ fun WordItemCard(
                 }
             }
 
+            Spacer(modifier = Modifier.width(6.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SpeakButton(text = word.sourceContent.text, languageCode = "es")
+                SpeakButton(text = word.sourceContent.text, languageCode = word.sourceContent.languageCode ?: "es")
             }
         }
     }
