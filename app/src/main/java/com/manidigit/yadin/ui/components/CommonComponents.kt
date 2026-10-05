@@ -173,7 +173,9 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
             text = title,
             color = color,
             fontSize = 11.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }
@@ -202,7 +204,9 @@ fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modif
             text = title,
             color = color,
             fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }

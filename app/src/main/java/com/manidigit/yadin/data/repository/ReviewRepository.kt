@@ -201,7 +201,7 @@ class ReviewRepository(
             val diff = learningDao.getDifficultyState(item.conceptId, item.direction)?.current ?: VocabularyDifficulty.MEDIUM
             val category = concept.categoryId?.let { conceptDao.getCategoryById(it)?.name }
 
-            val prompt = if (item.direction == CardDirection.NORMAL) sourceContent.text else targetTranslations.first()
+            val prompt = if (item.direction == CardDirection.NORMAL) sourceContent.text else targetTranslations.joinToString("، ")
             val answers = if (item.direction == CardDirection.NORMAL) targetTranslations else listOf(sourceContent.text)
 
             cards.add(
@@ -234,13 +234,8 @@ class ReviewRepository(
         // Fast random candidate sampling (250 items max) to ensure instant load time regardless of DB size
         val randomCandidateContents = conceptDao.getRandomContents(targetLang, 250)
         
-        // Also include session card target contents in pool
-        val sessionCardContents = mutableListOf<ContentEntity>()
-        for (cId in sessionConceptIds) {
-            sessionCardContents.addAll(conceptDao.getContentsForConcept(cId).filter { it.languageCode == targetLang && it.text.isNotBlank() })
-        }
-
-        val allContents = (randomCandidateContents + sessionCardContents).distinctBy { it.id }
+        val candidateConceptIds = (randomCandidateContents.map { it.conceptId } + sessionConceptIds).distinct()
+        val allContents = conceptDao.getContentsForConcepts(candidateConceptIds).filter { it.languageCode == targetLang && it.text.isNotBlank() }
         val poolConceptIds = allContents.map { it.conceptId }.distinct()
 
         val categoryMap = mutableMapOf<String, String?>()

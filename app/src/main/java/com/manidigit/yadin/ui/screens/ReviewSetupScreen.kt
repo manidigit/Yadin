@@ -68,7 +68,7 @@ import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ReviewSetupScreen(
-    initialType: ReviewType = ReviewType.DAILY,
+    initialType: ReviewType = ReviewType.RANDOM,
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,

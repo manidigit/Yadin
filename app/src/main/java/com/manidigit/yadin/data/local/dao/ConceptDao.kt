@@ -59,6 +59,9 @@ interface ConceptDao {
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId ORDER BY translationIndex ASC")
     suspend fun getContentsForConcept(conceptId: String): List<ContentEntity>
 
+    @Query("SELECT * FROM contents WHERE conceptId IN (:conceptIds) ORDER BY translationIndex ASC")
+    suspend fun getContentsForConcepts(conceptIds: List<String>): List<ContentEntity>
+
     @Query("SELECT * FROM contents WHERE conceptId = :conceptId ORDER BY translationIndex ASC")
     fun getContentsForConceptFlow(conceptId: String): Flow<List<ContentEntity>>
 

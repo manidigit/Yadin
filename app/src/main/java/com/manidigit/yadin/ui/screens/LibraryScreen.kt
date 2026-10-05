@@ -267,17 +267,24 @@ fun WordItemCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = word.sourceContent.text,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
+                        color = colors.onSurface,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
-                    word.normalLearning?.stage?.let { StageBadge(stage = it) }
-                    word.normalDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        word.normalLearning?.stage?.let { StageBadge(stage = it) }
+                        word.normalDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
