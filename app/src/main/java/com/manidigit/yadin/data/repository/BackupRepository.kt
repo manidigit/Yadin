@@ -16,12 +16,14 @@ import com.manidigit.yadin.data.local.entity.DifficultyStateEntity
 import com.manidigit.yadin.data.local.entity.LearningStateEntity
 import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
+import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
 import com.manidigit.yadin.data.local.entity.SettingEntity
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
+import com.manidigit.yadin.domain.model.SessionItemState
 import com.manidigit.yadin.domain.model.SessionStatus
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
@@ -186,10 +188,25 @@ class BackupRepository(
                 o.put("direction", s.direction.name)
                 o.put("quizLevel", s.quizLevel?.name)
                 o.put("status", s.status.name)
+                o.put("currentPosition", s.currentPosition)
                 o.put("totalItems", s.totalItems)
                 sessArray.put(o)
             }
             data.put("reviewSessions", sessArray)
+
+            val sessionItems = reviewSessionDao.getAllSessionItems()
+            val sessItemsArray = JSONArray()
+            sessionItems.forEach { si ->
+                val o = JSONObject()
+                o.put("id", si.id)
+                o.put("sessionId", si.sessionId)
+                o.put("conceptId", si.conceptId)
+                o.put("direction", si.direction.name)
+                o.put("position", si.position)
+                o.put("state", si.state.name)
+                sessItemsArray.put(o)
+            }
+            data.put("reviewSessionItems", sessItemsArray)
 
             val achievements = achievementDao.getAllAchievements()
             val achArray = JSONArray()
@@ -453,12 +470,35 @@ class BackupRepository(
                                 direction = dir,
                                 quizLevel = ql,
                                 status = st,
-                                currentPosition = o.optInt("totalItems", 0),
+                                currentPosition = o.optInt("currentPosition", o.optInt("totalItems", 0)),
                                 totalItems = o.optInt("totalItems", 0)
                             )
                         )
                     }
                     reviewSessionDao.insertSessions(sessions)
+
+                    val itemsJson = data.optJSONArray("reviewSessionItems")
+                    if (itemsJson != null) {
+                        val sessionItems = mutableListOf<ReviewSessionItemEntity>()
+                        for (i in 0 until itemsJson.length()) {
+                            val o = itemsJson.getJSONObject(i)
+                            val dirStr = o.optString("direction", "NORMAL")
+                            val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
+                            val stStr = o.optString("state", "PENDING")
+                            val state = runCatching { SessionItemState.valueOf(stStr) }.getOrDefault(SessionItemState.PENDING)
+                            sessionItems.add(
+                                ReviewSessionItemEntity(
+                                    id = o.getString("id"),
+                                    sessionId = o.getString("sessionId"),
+                                    conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                                    direction = dir,
+                                    position = o.optInt("position", i),
+                                    state = state
+                                )
+                            )
+                        }
+                        reviewSessionDao.insertSessionItems(sessionItems)
+                    }
                 }
 
                 // 7. Achievements

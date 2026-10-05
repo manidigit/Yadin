@@ -419,7 +419,7 @@ class ReviewRepository(
         }
 
         // Check achievements trigger
-        checkAchievements(isCorrect)
+        checkAchievements(sessionId, isCorrect)
 
         return SubmitResult(
             newStage = transition.newStage,
@@ -429,11 +429,12 @@ class ReviewRepository(
         )
     }
 
-    private suspend fun checkAchievements(isCorrect: Boolean) {
+    private suspend fun checkAchievements(sessionId: String, isCorrect: Boolean) {
         val today = ClockAndDayMath.todayDayString()
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
         val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
 
+        // 1. STREAK achievements
         if (streak >= 3) {
             achievementDao.unlock("STREAK_3_DAYS")
         }
@@ -443,10 +444,45 @@ class ReviewRepository(
         if (streak >= 30) {
             achievementDao.unlock("STREAK_30_DAYS")
         }
-
         achievementDao.updateProgress("STREAK_3_DAYS", streak.coerceAtMost(3))
         achievementDao.updateProgress("STREAK_7_DAYS", streak.coerceAtMost(7))
         achievementDao.updateProgress("STREAK_30_DAYS", streak.coerceAtMost(30))
+
+        // 2. Practiced words achievements (FIRST_TEN_WORDS & VOCABULARY_BUILDER)
+        val practicedCount = learningDao.getTotalPracticedWordsCount()
+        if (practicedCount >= 10) {
+            achievementDao.unlock("FIRST_TEN_WORDS")
+        }
+        achievementDao.updateProgress("FIRST_TEN_WORDS", practicedCount.coerceAtMost(10))
+
+        if (practicedCount >= 50) {
+            achievementDao.unlock("VOCABULARY_BUILDER")
+        }
+        achievementDao.updateProgress("VOCABULARY_BUILDER", practicedCount.coerceAtMost(50))
+
+        // 3. Long-term memory (LONG_TERM_MEMORY: 20 words in LEARNED stage)
+        val learnedCount = learningDao.getTotalLearnedWordsCount()
+        if (learnedCount >= 20) {
+            achievementDao.unlock("LONG_TERM_MEMORY")
+        }
+        achievementDao.updateProgress("LONG_TERM_MEMORY", learnedCount.coerceAtMost(20))
+
+        // 4. Hard Master (HARD_MASTER: 5 very hard words conquered)
+        val hardMastered = learningDao.getMasteredHardWordsCount()
+        if (hardMastered >= 5) {
+            achievementDao.unlock("HARD_MASTER")
+        }
+        achievementDao.updateProgress("HARD_MASTER", hardMastered.coerceAtMost(5))
+
+        // 5. Quiz Ace (QUIZ_ACE: 100% correct in a quiz session of 5+ questions)
+        val session = reviewSessionDao.getSessionById(sessionId)
+        if (session != null && session.mode == ReviewMode.QUIZ) {
+            val history = reviewSessionDao.getHistoryForSession(sessionId)
+            if (history.size >= 5 && history.all { it.isCorrect }) {
+                achievementDao.unlock("QUIZ_ACE")
+                achievementDao.updateProgress("QUIZ_ACE", 1)
+            }
+        }
     }
 
     suspend fun completeSession(sessionId: String) {
@@ -457,5 +493,13 @@ class ReviewRepository(
                 endedAt = System.currentTimeMillis()
             )
         )
+        // Re-check quiz ace on session completion
+        if (session.mode == ReviewMode.QUIZ) {
+            val history = reviewSessionDao.getHistoryForSession(sessionId)
+            if (history.size >= 5 && history.all { it.isCorrect }) {
+                achievementDao.unlock("QUIZ_ACE")
+                achievementDao.updateProgress("QUIZ_ACE", 1)
+            }
+        }
     }
 }

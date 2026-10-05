@@ -98,6 +98,9 @@ interface ReviewSessionDao {
     @Query("SELECT * FROM review_sessions")
     suspend fun getAllSessions(): List<ReviewSessionEntity>
 
+    @Query("SELECT * FROM review_session_items")
+    suspend fun getAllSessionItems(): List<ReviewSessionItemEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSessions(sessions: List<ReviewSessionEntity>)
 

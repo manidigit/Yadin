@@ -138,10 +138,20 @@ interface LearningDao {
     """)
     suspend fun getRandomConceptIds(limit: Int): List<String>
 
-    @Query("SELECT COUNT(*) FROM learning_states WHERE direction = :direction AND stage = :stage")
+    @Query("""
+        SELECT COUNT(*) 
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction AND ls.stage = :stage
+    """)
     fun getCountByStageFlow(direction: CardDirection, stage: Stage): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM difficulty_states WHERE direction = :direction AND current = :difficulty")
+    @Query("""
+        SELECT COUNT(*) 
+        FROM difficulty_states ds
+        INNER JOIN concepts c ON ds.conceptId = c.id
+        WHERE c.active = 1 AND ds.direction = :direction AND ds.current = :difficulty
+    """)
     fun getCountByDifficultyFlow(direction: CardDirection, difficulty: VocabularyDifficulty): Flow<Int>
 
     @Query("""
@@ -254,4 +264,28 @@ interface LearningDao {
         AND ls.stage != 'LEARNED' AND ls.lastReviewedDay IS NOT NULL
     """)
     fun getPracticedWordsCountFlow(direction: CardDirection): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId)
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.lastReviewedDay IS NOT NULL
+    """)
+    suspend fun getTotalPracticedWordsCount(): Int
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId)
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.stage = 'LEARNED'
+    """)
+    suspend fun getTotalLearnedWordsCount(): Int
+
+    @Query("""
+        SELECT COUNT(DISTINCT ds.conceptId)
+        FROM difficulty_states ds
+        INNER JOIN concepts c ON ds.conceptId = c.id
+        WHERE c.active = 1 AND ds.hasReachedVeryHard = 1 AND (ds.current = 'EASY' OR ds.current = 'MEDIUM')
+    """)
+    suspend fun getMasteredHardWordsCount(): Int
 }

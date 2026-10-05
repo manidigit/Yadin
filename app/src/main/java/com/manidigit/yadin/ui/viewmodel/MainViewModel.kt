@@ -59,7 +59,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = YadinDatabase.getInstance(application)
     private val settingsRepo = SettingsRepository(db.settingsDao())
-    val vocabularyRepo = VocabularyRepository(db.conceptDao(), db.learningDao(), db.reviewSessionDao())
+    val vocabularyRepo = VocabularyRepository(db, db.conceptDao(), db.learningDao(), db.reviewSessionDao())
     val reviewRepo = ReviewRepository(db.conceptDao(), db.learningDao(), db.reviewSessionDao(), db.achievementDao())
     private val seedImporter = SeedImporter(application, db.conceptDao(), db.learningDao(), db.achievementDao())
     val backupRepo = BackupRepository(

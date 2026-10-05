@@ -28,9 +28,12 @@ import com.manidigit.yadin.domain.time.ClockAndDayMath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import androidx.room.withTransaction
+import com.manidigit.yadin.data.local.database.YadinDatabase
 import java.util.UUID
 
 class VocabularyRepository(
+    private val database: YadinDatabase,
     private val conceptDao: ConceptDao,
     private val learningDao: LearningDao,
     private val reviewSessionDao: ReviewSessionDao
@@ -194,88 +197,90 @@ class VocabularyRepository(
         val conceptId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
-        val concept = ConceptEntity(
-            id = conceptId,
-            entryType = entryType,
-            categoryId = categoryId,
-            favorite = false,
-            active = true,
-            createdAt = now,
-            updatedAt = now
-        )
-
-        val contents = mutableListOf<ContentEntity>()
-        contents.add(
-            ContentEntity(
-                id = UUID.randomUUID().toString(),
-                conceptId = conceptId,
-                languageCode = sourceLang,
-                text = cleanSource,
-                canonicalKey = TextUtilities.toCanonicalKey(cleanSource),
-                note = note?.trim()?.ifEmpty { null },
-                pronunciation = pronunciation?.trim()?.ifEmpty { null },
-                translationIndex = 0
+        return database.withTransaction {
+            val concept = ConceptEntity(
+                id = conceptId,
+                entryType = entryType,
+                categoryId = categoryId,
+                favorite = false,
+                active = true,
+                createdAt = now,
+                updatedAt = now
             )
-        )
 
-        cleanTranslations.forEachIndexed { idx, trans ->
+            val contents = mutableListOf<ContentEntity>()
             contents.add(
                 ContentEntity(
                     id = UUID.randomUUID().toString(),
                     conceptId = conceptId,
-                    languageCode = targetLang,
-                    text = trans,
-                    canonicalKey = TextUtilities.toCanonicalKey(trans),
-                    note = null,
-                    pronunciation = null,
-                    translationIndex = idx
+                    languageCode = sourceLang,
+                    text = cleanSource,
+                    canonicalKey = TextUtilities.toCanonicalKey(cleanSource),
+                    note = note?.trim()?.ifEmpty { null },
+                    pronunciation = pronunciation?.trim()?.ifEmpty { null },
+                    translationIndex = 0
                 )
             )
+
+            cleanTranslations.forEachIndexed { idx, trans ->
+                contents.add(
+                    ContentEntity(
+                        id = UUID.randomUUID().toString(),
+                        conceptId = conceptId,
+                        languageCode = targetLang,
+                        text = trans,
+                        canonicalKey = TextUtilities.toCanonicalKey(trans),
+                        note = null,
+                        pronunciation = null,
+                        translationIndex = idx
+                    )
+                )
+            }
+
+            // Default learning and difficulty states for both directions
+            val normalLearning = LearningStateEntity(
+                id = UUID.randomUUID().toString(),
+                conceptId = conceptId,
+                direction = CardDirection.NORMAL,
+                stage = Stage.DAILY,
+                nextReviewDay = null,
+                lastReviewedDay = null,
+                createdAt = now,
+                updatedAt = now
+            )
+            val reverseLearning = LearningStateEntity(
+                id = UUID.randomUUID().toString(),
+                conceptId = conceptId,
+                direction = CardDirection.REVERSE,
+                stage = Stage.DAILY,
+                nextReviewDay = null,
+                lastReviewedDay = null,
+                createdAt = now,
+                updatedAt = now
+            )
+            val normalDiff = DifficultyStateEntity(
+                id = UUID.randomUUID().toString(),
+                conceptId = conceptId,
+                direction = CardDirection.NORMAL,
+                current = VocabularyDifficulty.MEDIUM
+            )
+            val reverseDiff = DifficultyStateEntity(
+                id = UUID.randomUUID().toString(),
+                conceptId = conceptId,
+                direction = CardDirection.REVERSE,
+                current = VocabularyDifficulty.MEDIUM
+            )
+
+            conceptDao.insertConcept(concept)
+            conceptDao.insertContents(contents)
+            if (categoryId != null) {
+                conceptDao.insertConceptCategory(ConceptCategoryEntity(conceptId, categoryId))
+            }
+            learningDao.insertLearningStates(listOf(normalLearning, reverseLearning))
+            learningDao.insertDifficultyStates(listOf(normalDiff, reverseDiff))
+
+            Result.success(conceptId)
         }
-
-        // Default learning and difficulty states for both directions
-        val normalLearning = LearningStateEntity(
-            id = UUID.randomUUID().toString(),
-            conceptId = conceptId,
-            direction = CardDirection.NORMAL,
-            stage = Stage.DAILY,
-            nextReviewDay = null,
-            lastReviewedDay = null,
-            createdAt = now,
-            updatedAt = now
-        )
-        val reverseLearning = LearningStateEntity(
-            id = UUID.randomUUID().toString(),
-            conceptId = conceptId,
-            direction = CardDirection.REVERSE,
-            stage = Stage.DAILY,
-            nextReviewDay = null,
-            lastReviewedDay = null,
-            createdAt = now,
-            updatedAt = now
-        )
-        val normalDiff = DifficultyStateEntity(
-            id = UUID.randomUUID().toString(),
-            conceptId = conceptId,
-            direction = CardDirection.NORMAL,
-            current = VocabularyDifficulty.MEDIUM
-        )
-        val reverseDiff = DifficultyStateEntity(
-            id = UUID.randomUUID().toString(),
-            conceptId = conceptId,
-            direction = CardDirection.REVERSE,
-            current = VocabularyDifficulty.MEDIUM
-        )
-
-        conceptDao.insertConcept(concept)
-        conceptDao.insertContents(contents)
-        if (categoryId != null) {
-            conceptDao.insertConceptCategory(ConceptCategoryEntity(conceptId, categoryId))
-        }
-        learningDao.insertLearningStates(listOf(normalLearning, reverseLearning))
-        learningDao.insertDifficultyStates(listOf(normalDiff, reverseDiff))
-
-        return Result.success(conceptId)
     }
 
     suspend fun updateWord(
@@ -286,42 +291,44 @@ class VocabularyRepository(
         note: String?,
         pronunciation: String?
     ): Result<Unit> {
-        val existing = conceptDao.getConceptById(conceptId)
-            ?: return Result.failure(IllegalArgumentException("مفهوم یافت نشد"))
-        val now = System.currentTimeMillis()
-        conceptDao.updateConcept(existing.copy(categoryId = categoryId, updatedAt = now))
+        return database.withTransaction {
+            val existing = conceptDao.getConceptById(conceptId)
+                ?: return@withTransaction Result.failure(IllegalArgumentException("مفهوم یافت نشد"))
+            val now = System.currentTimeMillis()
+            conceptDao.updateConcept(existing.copy(categoryId = categoryId, updatedAt = now))
 
-        // Recreate contents
-        conceptDao.deleteContentsForConcept(conceptId)
-        val contents = mutableListOf<ContentEntity>()
-        contents.add(
-            ContentEntity(
-                id = UUID.randomUUID().toString(),
-                conceptId = conceptId,
-                languageCode = "es",
-                text = sourceText.trim(),
-                canonicalKey = TextUtilities.toCanonicalKey(sourceText.trim()),
-                note = note?.trim()?.ifEmpty { null },
-                pronunciation = pronunciation?.trim()?.ifEmpty { null },
-                translationIndex = 0
-            )
-        )
-        translations.filter { it.isNotBlank() }.forEachIndexed { idx, trans ->
+            // Recreate contents
+            conceptDao.deleteContentsForConcept(conceptId)
+            val contents = mutableListOf<ContentEntity>()
             contents.add(
                 ContentEntity(
                     id = UUID.randomUUID().toString(),
                     conceptId = conceptId,
-                    languageCode = "fa",
-                    text = trans.trim(),
-                    canonicalKey = TextUtilities.toCanonicalKey(trans.trim()),
-                    note = null,
-                    pronunciation = null,
-                    translationIndex = idx
+                    languageCode = "es",
+                    text = sourceText.trim(),
+                    canonicalKey = TextUtilities.toCanonicalKey(sourceText.trim()),
+                    note = note?.trim()?.ifEmpty { null },
+                    pronunciation = pronunciation?.trim()?.ifEmpty { null },
+                    translationIndex = 0
                 )
             )
+            translations.filter { it.isNotBlank() }.forEachIndexed { idx, trans ->
+                contents.add(
+                    ContentEntity(
+                        id = UUID.randomUUID().toString(),
+                        conceptId = conceptId,
+                        languageCode = "fa",
+                        text = trans.trim(),
+                        canonicalKey = TextUtilities.toCanonicalKey(trans.trim()),
+                        note = null,
+                        pronunciation = null,
+                        translationIndex = idx
+                    )
+                )
+            }
+            conceptDao.insertContents(contents)
+            Result.success(Unit)
         }
-        conceptDao.insertContents(contents)
-        return Result.success(Unit)
     }
 
     suspend fun setFavorite(conceptId: String, favorite: Boolean) {
@@ -329,7 +336,9 @@ class VocabularyRepository(
     }
 
     suspend fun deleteWord(conceptId: String) {
-        conceptDao.softDeleteConcept(conceptId)
+        database.withTransaction {
+            conceptDao.softDeleteConcept(conceptId)
+        }
     }
 
     suspend fun getRecentDailyStats(days: Int = 14): List<DayCountRaw> {
@@ -419,60 +428,62 @@ class VocabularyRepository(
         onProgress: (Int, Int) -> Unit
     ) {
         val total = entries.size
-        entries.forEachIndexed { index, entry ->
-            val cleanSource = entry.sourceText.trim()
-            val canonical = TextUtilities.toCanonicalKey(cleanSource)
-            val existingContent = conceptDao.findContentByCanonicalKey("es", canonical)
-            val enrichedNote = formatEnrichedNote(entry)
+        database.withTransaction {
+            entries.forEachIndexed { index, entry ->
+                val cleanSource = entry.sourceText.trim()
+                val canonical = TextUtilities.toCanonicalKey(cleanSource)
+                val existingContent = conceptDao.findContentByCanonicalKey("es", canonical)
+                val enrichedNote = formatEnrichedNote(entry)
 
-            if (existingContent != null) {
-                when (policy) {
-                    DuplicatePolicy.SKIP -> { /* Skip */ }
-                    DuplicatePolicy.REPLACE -> {
-                        updateWord(
-                            conceptId = existingContent.conceptId,
-                            sourceText = cleanSource,
-                            translations = entry.translations,
-                            categoryId = null,
-                            note = enrichedNote,
-                            pronunciation = null
-                        )
+                if (existingContent != null) {
+                    when (policy) {
+                        DuplicatePolicy.SKIP -> { /* Skip */ }
+                        DuplicatePolicy.REPLACE -> {
+                            updateWord(
+                                conceptId = existingContent.conceptId,
+                                sourceText = cleanSource,
+                                translations = entry.translations,
+                                categoryId = null,
+                                note = enrichedNote,
+                                pronunciation = null
+                            )
+                        }
+                        DuplicatePolicy.MERGE -> {
+                            val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
+                            val existingTranslations = currentContents.filter { it.languageCode == "fa" }.map { it.text }
+                            val merged = (existingTranslations + entry.translations).distinct()
+                            val currentEs = currentContents.firstOrNull { it.languageCode == "es" }
+                            val mergedNote = listOfNotNull(currentEs?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
+                            updateWord(
+                                conceptId = existingContent.conceptId,
+                                sourceText = cleanSource,
+                                translations = merged,
+                                categoryId = null,
+                                note = mergedNote,
+                                pronunciation = currentEs?.pronunciation
+                            )
+                        }
+                        DuplicatePolicy.KEEP_SEPARATE -> {
+                            addWord(
+                                sourceText = cleanSource,
+                                translations = entry.translations,
+                                categoryId = null,
+                                note = enrichedNote,
+                                pronunciation = null
+                            )
+                        }
                     }
-                    DuplicatePolicy.MERGE -> {
-                        val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
-                        val existingTranslations = currentContents.filter { it.languageCode == "fa" }.map { it.text }
-                        val merged = (existingTranslations + entry.translations).distinct()
-                        val currentEs = currentContents.firstOrNull { it.languageCode == "es" }
-                        val mergedNote = listOfNotNull(currentEs?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
-                        updateWord(
-                            conceptId = existingContent.conceptId,
-                            sourceText = cleanSource,
-                            translations = merged,
-                            categoryId = null,
-                            note = mergedNote,
-                            pronunciation = currentEs?.pronunciation
-                        )
-                    }
-                    DuplicatePolicy.KEEP_SEPARATE -> {
-                        addWord(
-                            sourceText = cleanSource,
-                            translations = entry.translations,
-                            categoryId = null,
-                            note = enrichedNote,
-                            pronunciation = null
-                        )
-                    }
+                } else {
+                    addWord(
+                        sourceText = cleanSource,
+                        translations = entry.translations,
+                        categoryId = null,
+                        note = enrichedNote,
+                        pronunciation = null
+                    )
                 }
-            } else {
-                addWord(
-                    sourceText = cleanSource,
-                    translations = entry.translations,
-                    categoryId = null,
-                    note = enrichedNote,
-                    pronunciation = null
-                )
+                onProgress(index + 1, total)
             }
-            onProgress(index + 1, total)
         }
     }
 
