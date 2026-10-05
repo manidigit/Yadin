@@ -4,6 +4,11 @@
 
 ---
 
+## [نسخه ۱.۲.۱] - ۲۰۲۶-۱۰-۰۵
+### اصلاحات و ارتقای پایداری (Stability & Versioning)
+- **افزایش شماره نسخه به `versionCode = 3` و `versionName = "1.2.1"`:**
+  - تضمین ارتقای مستقیم و بدون خطای Package Installer در اندروید برای نسخه‌های بعدی به همراه تثبیت کلید امضای یکتای `debug.keystore`.
+
 ## [نسخه ۱.۲.۰] - ۲۰۲۶-۱۰-۰۵
 ### اصلاحات منطقی و ارتقای معماری (Deep Correctness & Architecture)
 - **بهینه‌سازی خیره‌کننده سرعت بارگذاری آزمون (Ultra-Fast Precomputed Quiz Generation):**
