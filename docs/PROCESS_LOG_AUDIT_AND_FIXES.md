@@ -255,6 +255,25 @@
 
 ---
 
+### ۲.۲۰. اصلاح چیدمان کتابخانه، واقعی‌سازی دستاوردها و نمایش کامل ترجمه‌ها در آزمون (`LibraryScreen` & `ReviewRepository`)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/LibraryScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/components/CommonComponents.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ProgressScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ReviewSetupScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/ConceptDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/build.gradle.kts`
+  * `docs/CHANGELOG.md`
+* **ریشه‌یابی و اصلاحات انجام‌شده:**
+  1. **رفع بهم‌ریختگی کارت لغات در کتابخانه:** هنگام وجود متن‌های طولانی اسپانیایی، نشان‌های وضعیت (`StageBadge` و `DifficultyBadge`) به لبه راست فشرده شده و کاراکترهای آن عمودی می‌شدند. با اعمال `Modifier.weight(1f, fill = false)` روی عنوان و تنظیم `maxLines = 1` و `softWrap = false` روی نشان‌ها، چیدمان افقی تضمین گردید.
+  2. **واقعی‌سازی فرمول آنلاک دستاوردها:** در `ProgressScreen` شرط آنلاک نشان‌های «۱۰ لغت اول» و «واژه‌ساز» به اشتباه با `statistics.totalWords` (کل واژگان دیتابیس = بیش از ۱۰۰۰ لغت) مقایسه می‌شد که باعث آنلاک آنی در نصب تازه می‌شد. فرمول به `practicedCount` (لغات واقعی تمرین‌شده) تغییر یافت.
+  3. **پیش‌فرض حالت مرور تصادفی:** حالت پیش‌فرض مرور در `ReviewSetupScreen` و `MainViewModel` به `ReviewType.RANDOM` تغییر یافت.
+  4. **نمایش کامل تمام ترجمه‌های یک واژه در گزینه‌های آزمون:** با اضافه شدن کوئری `getContentsForConcepts` در `ConceptDao` و مجتمع‌سازی تمام ترجمه‌های هر مفهوم در `ReviewRepository` با ویرگول فارسی («، »)، کلیه معانی چندگانه یک واژه به صورت یکجا در گزینه آزمون به کاربر ارائه می‌شوند.
+
+---
+
 ### ۲.۱۹. بهینه‌سازی بازیابی فایل‌های پشتیبان سنگین و رفع قفل شدن رابط کاربری (`BackupScreen`)
 * **فایل‌های درگیر:**
   * `app/src/main/java/com/manidigit/yadin/ui/screens/BackupScreen.kt`
