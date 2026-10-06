@@ -142,7 +142,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     )
 
                     Text(
-                        text = "نسخه ۱.۱ (Build 682) • پلتفرم FlashLearn",
+                        text = "نسخه ${com.manidigit.yadin.BuildConfig.VERSION_NAME} (کد ساخت ${com.manidigit.yadin.BuildConfig.VERSION_CODE})",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.primary,
                         fontWeight = FontWeight.SemiBold
@@ -176,7 +176,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
                     TechRow("سازنده / صاحب پروژه", "maniDigit")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("نسخه برنامه (Version Code)", "682 (v1.1-Production)")
+                    TechRow("نسخه برنامه (Version)", "${com.manidigit.yadin.BuildConfig.VERSION_NAME} (کد ساخت ${com.manidigit.yadin.BuildConfig.VERSION_CODE})")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
                     TechRow("موتور تکرار فاصله‌دار", "Daily → Weekly → Monthly → Learned")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))

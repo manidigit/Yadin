@@ -198,6 +198,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _quizSelectedOption = MutableStateFlow<Int?>(null)
     val quizSelectedOption: StateFlow<Int?> = _quizSelectedOption.asStateFlow()
 
+    private val _quizUserAnswers = MutableStateFlow<Map<Int, Int>>(emptyMap())
+    val quizUserAnswers: StateFlow<Map<Int, Int>> = _quizUserAnswers.asStateFlow()
+
     private val _sessionCorrectCount = MutableStateFlow(0)
     val sessionCorrectCount: StateFlow<Int> = _sessionCorrectCount.asStateFlow()
 
@@ -316,6 +319,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _currentCardIndex.value = 0
             _isCardFlipped.value = false
             _quizSelectedOption.value = null
+            _quizUserAnswers.value = emptyMap()
             _sessionCorrectCount.value = 0
             _sessionWrongCount.value = 0
 
@@ -387,10 +391,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun submitQuizAnswer(optionIndex: Int) {
-        if (_quizSelectedOption.value != null) return // Already answered
+        val idx = _currentCardIndex.value
+        if (_quizUserAnswers.value.containsKey(idx)) return // Already answered this question
+
         val session = _activeSession.value ?: return
         val questions = _quizQuestions.value
-        val idx = _currentCardIndex.value
         if (idx >= questions.size) return
 
         val q = questions[idx]
@@ -400,7 +405,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             (selectedOption != null && correctOption != null && 
              com.manidigit.yadin.domain.algorithm.QuizDistractorScorer.areSemanticallyColliding(selectedOption.text, correctOption.text)) ||
             (selectedOption != null && com.manidigit.yadin.domain.algorithm.QuizDistractorScorer.areSemanticallyColliding(selectedOption.text, q.correctAnswer))
+        
         _quizSelectedOption.value = optionIndex
+        _quizUserAnswers.value = _quizUserAnswers.value + (idx to optionIndex)
 
         if (isCorrect) {
             _sessionCorrectCount.value += 1
@@ -428,8 +435,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val session = _activeSession.value
 
         if (idx + 1 < questions.size) {
-            _currentCardIndex.value = idx + 1
-            _quizSelectedOption.value = null
+            val nextIdx = idx + 1
+            _currentCardIndex.value = nextIdx
+            _quizSelectedOption.value = _quizUserAnswers.value[nextIdx]
         } else {
             session?.let {
                 viewModelScope.launch {
@@ -437,6 +445,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             _currentScreen.value = Screen.SessionSummary
+        }
+    }
+
+    fun previousQuizQuestion() {
+        val idx = _currentCardIndex.value
+        if (idx > 0) {
+            val prevIdx = idx - 1
+            _currentCardIndex.value = prevIdx
+            _quizSelectedOption.value = _quizUserAnswers.value[prevIdx]
+        }
+    }
+
+    fun goToQuizQuestion(targetIndex: Int) {
+        val questions = _quizQuestions.value
+        if (targetIndex in questions.indices) {
+            _currentCardIndex.value = targetIndex
+            _quizSelectedOption.value = _quizUserAnswers.value[targetIndex]
         }
     }
 

@@ -273,15 +273,19 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val questions by viewModel.quizQuestions.collectAsStateWithLifecycle()
             val currentIndex by viewModel.currentCardIndex.collectAsStateWithLifecycle()
             val selectedOption by viewModel.quizSelectedOption.collectAsStateWithLifecycle()
+            val userAnswers by viewModel.quizUserAnswers.collectAsStateWithLifecycle()
             val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
 
             QuizScreen(
                 questions = questions,
                 currentIndex = currentIndex,
                 selectedOption = selectedOption,
+                userAnswers = userAnswers,
                 showCategory = showCategory,
                 onSelectOption = { optIdx -> viewModel.submitQuizAnswer(optIdx) },
+                onPreviousQuestion = { viewModel.previousQuizQuestion() },
                 onNextQuestion = { viewModel.nextQuizQuestion() },
+                onGoToQuestion = { targetIdx -> viewModel.goToQuizQuestion(targetIdx) },
                 onExit = { viewModel.navigateTo(Screen.Home) }
             )
         }
