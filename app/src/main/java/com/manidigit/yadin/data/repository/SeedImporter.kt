@@ -33,8 +33,12 @@ class SeedImporter(
         conceptDao.getTotalConceptCount() == 0
     }
 
+    suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
+        conceptDao.getTotalConceptCount() < 6400
+    }
+
     suspend fun importSeedIfNeeded(onProgress: (Float, String) -> Unit) = withContext(Dispatchers.IO) {
-        if (!isDatabaseEmpty()) {
+        if (!shouldImportSeed()) {
             ensureDefaultAchievements()
             return@withContext
         }
@@ -42,6 +46,7 @@ class SeedImporter(
         onProgress(0.05f, "در حال خواندن بانک واژگان اولیه...")
 
         try {
+            val existingConceptIds = conceptDao.getAllConcepts().map { it.id }.toSet()
             val assetStream = context.assets.open("seed/vocabulary_seed.json")
             val reader = JsonReader(InputStreamReader(assetStream, "UTF-8"))
 
@@ -187,11 +192,17 @@ class SeedImporter(
             }
 
             onProgress(0.85f, "در حال تنظیم مراحل یادگیری...")
-            // Create initial learning states and difficulty states for all concepts
+            // Create initial learning states and difficulty states for new concepts
+            val conceptsNeedingStates = if (existingConceptIds.isEmpty()) {
+                concepts
+            } else {
+                concepts.filter { it.id !in existingConceptIds }
+            }
+
             val learningBatch = mutableListOf<LearningStateEntity>()
             val diffBatch = mutableListOf<DifficultyStateEntity>()
 
-            concepts.forEach { concept ->
+            conceptsNeedingStates.forEach { concept ->
                 learningBatch.add(
                     LearningStateEntity(
                         id = UUID.randomUUID().toString(),
@@ -234,11 +245,15 @@ class SeedImporter(
                 )
             }
 
-            learningBatch.chunked(1000).forEach {
-                learningDao.insertLearningStates(it)
+            if (learningBatch.isNotEmpty()) {
+                learningBatch.chunked(1000).forEach {
+                    learningDao.insertLearningStates(it)
+                }
             }
-            diffBatch.chunked(1000).forEach {
-                learningDao.insertDifficultyStates(it)
+            if (diffBatch.isNotEmpty()) {
+                diffBatch.chunked(1000).forEach {
+                    learningDao.insertDifficultyStates(it)
+                }
             }
 
             onProgress(0.95f, "در حال آماده‌سازی دستاوردها...")

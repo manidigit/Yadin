@@ -236,7 +236,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun initializeDatabase() {
         viewModelScope.launch {
-            if (seedImporter.isDatabaseEmpty()) {
+            if (seedImporter.shouldImportSeed()) {
                 _isSeeding.value = true
                 seedImporter.importSeedIfNeeded { progress, msg ->
                     _seedProgress.value = progress
