@@ -289,6 +289,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun setAppLanguageDirection(direction: CardDirection) {
+        viewModelScope.launch {
+            settingsRepo.setAppLanguageDirection(direction)
+            _progressDirection.value = direction
+        }
+    }
+
     fun setShowCategoryInReview(show: Boolean) {
         viewModelScope.launch {
             settingsRepo.setShowCategoryInReview(show)
@@ -494,14 +501,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         translations: List<String>,
         categoryId: String?,
         note: String?,
-        pronunciation: String?,
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
             if (conceptId != null) {
-                vocabularyRepo.updateWord(conceptId, sourceText, translations, categoryId, note, pronunciation)
+                vocabularyRepo.updateWord(conceptId, sourceText, translations, categoryId, note)
             } else {
-                vocabularyRepo.addWord(sourceText, translations, categoryId, note, pronunciation)
+                vocabularyRepo.addWord(sourceText, translations, categoryId, note)
             }
             performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value)
             onSuccess()
@@ -514,12 +520,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _parseResult.value = result
     }
 
-    fun executeImport(policy: DuplicatePolicy, onComplete: () -> Unit) {
+    fun executeImport(policy: DuplicatePolicy, categoryId: String? = null, onComplete: () -> Unit) {
         val result = _parseResult.value ?: return
         viewModelScope.launch {
             _isImporting.value = true
             _importProgress.value = 0f
-            vocabularyRepo.importParsedEntries(result.entries, policy) { done, total ->
+            vocabularyRepo.importParsedEntries(result.entries, policy, categoryId) { done, total ->
                 if (total > 0) {
                     _importProgress.value = done.toFloat() / total
                 }

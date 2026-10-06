@@ -48,7 +48,7 @@ import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.DuplicatePolicy
 import com.manidigit.yadin.domain.model.ParseResult
 import com.manidigit.yadin.domain.model.ParsedEntry
-import com.manidigit.yadin.ui.components.CategoryDropdown
+import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -173,7 +173,7 @@ fun ImportScreen(
                 }
 
                 // Category selection for imported words
-                CategoryDropdown(
+                ExposedCategoryDropdown(
                     categories = categories,
                     selectedCategoryId = selectedCategoryId,
                     onSelectCategory = { selectedCategoryId = it },

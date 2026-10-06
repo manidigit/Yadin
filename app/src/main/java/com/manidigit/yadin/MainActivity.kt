@@ -334,13 +334,15 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
         is Screen.EditWordScreen -> {
             val wordDetail by viewModel.selectedWordDetail.collectAsStateWithLifecycle()
             val categories by viewModel.categories.collectAsStateWithLifecycle()
+            val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
             val targetWord = if (screen.conceptId != null) wordDetail else null
 
             AddEditWordScreen(
                 initialWord = targetWord,
                 categories = categories,
-                onSave = { src, trans, cat, note, pron ->
-                    viewModel.saveWord(screen.conceptId, src, trans, cat, note, pron) {
+                languageDirection = appLanguageDirection,
+                onSave = { src, trans, cat, note ->
+                    viewModel.saveWord(screen.conceptId, src, trans, cat, note) {
                         viewModel.navigateTo(Screen.Library)
                     }
                 },
@@ -356,16 +358,18 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
 
         is Screen.ImportPreview -> {
             val parseResult by viewModel.parseResult.collectAsStateWithLifecycle()
+            val categories by viewModel.categories.collectAsStateWithLifecycle()
             val isImporting by viewModel.isImporting.collectAsStateWithLifecycle()
             val importProgress by viewModel.importProgress.collectAsStateWithLifecycle()
 
             ImportScreen(
                 parseResult = parseResult,
+                categories = categories,
                 isImporting = isImporting,
                 importProgress = importProgress,
                 onParseText = { text -> viewModel.parseInputText(text) },
-                onConfirmImport = { policy ->
-                    viewModel.executeImport(policy) {
+                onConfirmImport = { policy, categoryId ->
+                    viewModel.executeImport(policy, categoryId) {
                         viewModel.navigateTo(Screen.Library)
                     }
                 },
@@ -395,17 +399,17 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val themeId by viewModel.themeId.collectAsStateWithLifecycle()
             val isDark by viewModel.isDark.collectAsStateWithLifecycle()
             val diffThreshold by viewModel.difficultyThreshold.collectAsStateWithLifecycle()
-            val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
+            val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
 
             SettingsScreen(
                 currentThemeId = themeId,
                 isDark = isDark,
                 difficultyThreshold = diffThreshold,
-                showCategoryInReview = showCategory,
+                languageDirection = appLanguageDirection,
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                 onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
-                onToggleShowCategoryInReview = { viewModel.setShowCategoryInReview(it) },
+                onSetLanguageDirection = { viewModel.setAppLanguageDirection(it) },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },
                 onOpenAbout = { viewModel.navigateTo(Screen.About) },
