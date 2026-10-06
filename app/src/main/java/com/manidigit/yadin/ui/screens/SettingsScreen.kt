@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -65,11 +66,11 @@ fun SettingsScreen(
     currentThemeId: String,
     isDark: Boolean,
     difficultyThreshold: Int = 3,
-    showCategoryInReview: Boolean = false,
+    languageDirection: CardDirection = CardDirection.NORMAL,
     onSelectTheme: (String) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onSetDifficultyThreshold: (Int) -> Unit = {},
-    onToggleShowCategoryInReview: (Boolean) -> Unit = {},
+    onSetLanguageDirection: (CardDirection) -> Unit = {},
     onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -328,20 +329,19 @@ fun SettingsScreen(
             }
         }
 
-        // Show Category in Review Toggle Card
+        // Language Direction Selector Card
         YadinCard(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = colors.surface
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -353,7 +353,7 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Category,
+                            imageVector = Icons.Default.Translate,
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(18.dp)
@@ -362,13 +362,13 @@ fun SettingsScreen(
 
                     Column {
                         Text(
-                            text = "نمایش دسته‌بندی در مرور و آزمون",
+                            text = "جهت زبان یادگیری برنامه",
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
                         Text(
-                            text = "نمایش برچسب موضوع روی کارت‌ها به عنوان راهنمای کمکی",
+                            text = "تغییر جهت یادگیری در مرور، آزمون، افزودن کلمات و آمار پیشرفت",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant,
                             fontSize = 11.sp
@@ -376,57 +376,24 @@ fun SettingsScreen(
                     }
                 }
 
-                Switch(
-                    checked = showCategoryInReview,
-                    onCheckedChange = onToggleShowCategoryInReview,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = colors.onPrimary,
-                        checkedTrackColor = colors.primary,
-                        uncheckedThumbColor = colors.onSurfaceVariant,
-                        uncheckedTrackColor = colors.surfaceVariant
-                    )
-                )
-            }
-        }
-
-        // Active Language Pair
-        YadinCard(
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = colors.surface
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.secondary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Translate,
-                        contentDescription = null,
-                        tint = colors.secondary,
-                        modifier = Modifier.size(20.dp)
+                    val isNormal = (languageDirection == CardDirection.NORMAL)
+                    LanguageDirectionPill(
+                        title = "🇪🇸 اسپانیایی ← 🇮🇷 فارسی",
+                        subtitle = "مبدأ: اسپانیایی / مقصد: فارسی",
+                        isSelected = isNormal,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSetLanguageDirection(CardDirection.NORMAL) }
                     )
-                }
-
-                Column {
-                    Text(
-                        text = "جفت‌زبان فعال",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = "اسپانیایی به فارسی (es-fa) با بیش از ۶,۰۰۰ واژه",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
+                    LanguageDirectionPill(
+                        title = "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
+                        subtitle = "مبدأ: فارسی / مقصد: اسپانیایی",
+                        isSelected = !isNormal,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSetLanguageDirection(CardDirection.REVERSE) }
                     )
                 }
             }
@@ -565,5 +532,51 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun LanguageDirectionPill(
+    title: String,
+    subtitle: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(dimensions.cornerSmall))
+            .background(if (isSelected) colors.primary.copy(alpha = 0.15f) else colors.surfaceVariant.copy(alpha = 0.5f))
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(dimensions.cornerSmall)
+            )
+            .clickable { onClick() }
+            .padding(10.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) colors.primary else colors.onSurface,
+                fontSize = 12.sp
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isSelected) colors.primary.copy(alpha = 0.8f) else colors.onSurfaceVariant,
+                fontSize = 9.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
     }
 }

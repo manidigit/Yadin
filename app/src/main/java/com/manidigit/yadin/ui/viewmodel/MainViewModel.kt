@@ -94,6 +94,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val showCategoryInReview: StateFlow<Boolean> = settingsRepo.showCategoryInReviewFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val appLanguageDirection: StateFlow<CardDirection> = settingsRepo.appLanguageDirectionFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, CardDirection.NORMAL)
+
     // Navigation & Screen
     private val _currentScreen = MutableStateFlow<Screen>(Screen.Splash)
     val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
@@ -108,11 +111,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _seedMessage = MutableStateFlow("در حال بررسی بانک واژگان...")
     val seedMessage: StateFlow<String> = _seedMessage.asStateFlow()
 
-    // Statistics & Dashboard
-    val dueCount: StateFlow<Int> = vocabularyRepo.getDueCountFlow(CardDirection.NORMAL)
+    // Statistics & Dashboard (Driven by active language direction)
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val dueCount: StateFlow<Int> = appLanguageDirection
+        .flatMapLatest { dir -> vocabularyRepo.getDueCountFlow(dir) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
-    val statistics: StateFlow<StatisticsSummary> = vocabularyRepo.getStatisticsSummary(CardDirection.NORMAL)
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val statistics: StateFlow<StatisticsSummary> = appLanguageDirection
+        .flatMapLatest { dir -> vocabularyRepo.getStatisticsSummary(dir) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
@@ -122,7 +129,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val categories: StateFlow<List<Category>> = vocabularyRepo.getAllCategoriesFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val difficultyCounts: StateFlow<Map<VocabularyDifficulty, Int>> = vocabularyRepo.getDifficultyBreakdownFlow(CardDirection.NORMAL)
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val difficultyCounts: StateFlow<Map<VocabularyDifficulty, Int>> = appLanguageDirection
+        .flatMapLatest { dir -> vocabularyRepo.getDifficultyBreakdownFlow(dir) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
@@ -142,7 +151,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val progressDirection: StateFlow<CardDirection> = _progressDirection.asStateFlow()
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val progressScorePercent: StateFlow<Double> = _progressDirection
+    val progressScorePercent: StateFlow<Double> = appLanguageDirection
         .flatMapLatest { dir -> vocabularyRepo.getProgressScoreFlow(dir) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
@@ -150,7 +159,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val practicedWordsCount: StateFlow<Int> = _progressDirection
+    val practicedWordsCount: StateFlow<Int> = appLanguageDirection
         .flatMapLatest { dir -> vocabularyRepo.getPracticedWordsCountFlow(dir) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 

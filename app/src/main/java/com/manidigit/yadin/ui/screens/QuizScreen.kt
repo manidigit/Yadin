@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Check
@@ -33,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import com.manidigit.yadin.domain.algorithm.QuizDistractorScorer
@@ -65,9 +68,12 @@ fun QuizScreen(
     questions: List<QuizQuestion>,
     currentIndex: Int,
     selectedOption: Int?,
+    userAnswers: Map<Int, Int> = emptyMap(),
     showCategory: Boolean = false,
     onSelectOption: (Int) -> Unit,
+    onPreviousQuestion: () -> Unit = {},
     onNextQuestion: () -> Unit,
+    onGoToQuestion: (Int) -> Unit = {},
     onExit: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -152,6 +158,55 @@ fun QuizScreen(
                 color = colors.secondary,
                 trackColor = colors.surfaceVariant
             )
+
+            // Question review & navigation strip
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(questions.size) { idx ->
+                    val isCurrent = (idx == currentIndex)
+                    val answeredOption = userAnswers[idx]
+                    val isAnswered = (answeredOption != null)
+                    val isCorrect = if (isAnswered) answeredOption == questions[idx].correctIndex else null
+
+                    val bgColor = when {
+                        isCurrent -> colors.primary
+                        isCorrect == true -> colors.success.copy(alpha = 0.2f)
+                        isCorrect == false -> colors.error.copy(alpha = 0.2f)
+                        else -> colors.surfaceVariant
+                    }
+                    val textColor = when {
+                        isCurrent -> colors.onPrimary
+                        isCorrect == true -> colors.success
+                        isCorrect == false -> colors.error
+                        else -> colors.onSurfaceVariant
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(bgColor)
+                            .border(
+                                width = if (isCurrent) 2.dp else if (isAnswered) 1.dp else 0.dp,
+                                color = if (isCurrent) colors.primary else if (isAnswered) textColor.copy(alpha = 0.5f) else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable { onGoToQuestion(idx) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${idx + 1}",
+                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 11.sp,
+                            color = textColor
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -336,42 +391,79 @@ fun QuizScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Next Button (Always Visible & Pinned at Bottom)
-        Button(
-            onClick = onNextQuestion,
-            enabled = hasAnswered,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(46.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.secondary,
-                contentColor = colors.onSecondary,
-                disabledContainerColor = colors.surfaceVariant,
-                disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.6f)
-            )
+        // Navigation Buttons (Always Visible & Pinned at Bottom)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = when {
-                        !hasAnswered -> "لطفاً یکی از گزینه‌ها را انتخاب کنید"
-                        currentIndex + 1 < questions.size -> "سؤال بعدی"
-                        else -> "مشاهده نتیجه آزمون"
-                    },
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
+            if (currentIndex > 0) {
+                OutlinedButton(
+                    onClick = onPreviousQuestion,
+                    modifier = Modifier
+                        .weight(0.35f)
+                        .height(46.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colors.onSurface
+                    ),
+                    border = BorderStroke(1.dp, colors.outline.copy(alpha = 0.4f))
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "سؤال قبلی",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "قبلی",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+
+            Button(
+                onClick = onNextQuestion,
+                enabled = hasAnswered,
+                modifier = Modifier
+                    .weight(if (currentIndex > 0) 0.65f else 1f)
+                    .height(46.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.secondary,
+                    contentColor = colors.onSecondary,
+                    disabledContainerColor = colors.surfaceVariant,
+                    disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.6f)
                 )
-                if (hasAnswered) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = when {
+                            !hasAnswered -> "انتخاب گزینه"
+                            currentIndex + 1 < questions.size -> "سؤال بعدی"
+                            else -> "مشاهده نتیجه آزمون"
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
                     )
+                    if (hasAnswered) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }

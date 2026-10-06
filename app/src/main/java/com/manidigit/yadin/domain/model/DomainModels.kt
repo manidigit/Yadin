@@ -16,7 +16,6 @@ data class Content(
     val text: String,
     val canonicalKey: String,
     val note: String?,
-    val pronunciation: String?,
     val translationIndex: Int
 )
 
@@ -114,7 +113,6 @@ data class ReviewCard(
     val sourceText: String,
     val targetTranslations: List<String>,
     val note: String?,
-    val pronunciation: String?,
     val categoryName: String?,
     val stage: Stage,
     val difficulty: VocabularyDifficulty

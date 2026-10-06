@@ -2,6 +2,7 @@ package com.manidigit.yadin.data.repository
 
 import com.manidigit.yadin.data.local.dao.SettingsDao
 import com.manidigit.yadin.data.local.entity.SettingEntity
+import com.manidigit.yadin.domain.model.CardDirection
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -18,6 +19,9 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     val activePairFlow: Flow<String> = settingsDao.getSettingFlow("activePair")
         .map { it ?: "es-fa" }
+
+    val appLanguageDirectionFlow: Flow<CardDirection> = settingsDao.getSettingFlow("appLanguageDirection")
+        .map { if (it == "REVERSE") CardDirection.REVERSE else CardDirection.NORMAL }
 
     val difficultyThresholdFlow: Flow<Int> = settingsDao.getSettingFlow("difficultyThreshold")
         .map { it?.toIntOrNull()?.coerceIn(1, 5) ?: 3 }
@@ -44,6 +48,12 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     }
 
     suspend fun setActivePair(pair: String) {
+        settingsDao.setSetting(SettingEntity("activePair", pair))
+    }
+
+    suspend fun setAppLanguageDirection(direction: CardDirection) {
+        settingsDao.setSetting(SettingEntity("appLanguageDirection", direction.name))
+        val pair = if (direction == CardDirection.NORMAL) "es-fa" else "fa-es"
         settingsDao.setSetting(SettingEntity("activePair", pair))
     }
 

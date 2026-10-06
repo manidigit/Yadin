@@ -47,7 +47,6 @@ data class ContentEntity(
     val text: String,
     val canonicalKey: String,
     val note: String? = null,
-    val pronunciation: String? = null,
     val translationIndex: Int = 0
 )
 

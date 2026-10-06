@@ -135,7 +135,6 @@ class VocabularyRepository(
                 text = sourceContentEntity.text,
                 canonicalKey = sourceContentEntity.canonicalKey,
                 note = sourceContentEntity.note,
-                pronunciation = sourceContentEntity.pronunciation,
                 translationIndex = sourceContentEntity.translationIndex
             ),
             targetContents = targetContentEntities.map {
@@ -146,7 +145,6 @@ class VocabularyRepository(
                     text = it.text,
                     canonicalKey = it.canonicalKey,
                     note = it.note,
-                    pronunciation = it.pronunciation,
                     translationIndex = it.translationIndex
                 )
             },
@@ -179,7 +177,6 @@ class VocabularyRepository(
         translations: List<String>,
         categoryId: String? = null,
         note: String? = null,
-        pronunciation: String? = null,
         sourceLang: String = "es",
         targetLang: String = "fa",
         entryType: EntryType = EntryType.WORD
@@ -215,7 +212,6 @@ class VocabularyRepository(
                     text = cleanSource,
                     canonicalKey = TextUtilities.toCanonicalKey(cleanSource),
                     note = note?.trim()?.ifEmpty { null },
-                    pronunciation = pronunciation?.trim()?.ifEmpty { null },
                     translationIndex = 0
                 )
             )
@@ -229,7 +225,6 @@ class VocabularyRepository(
                         text = trans,
                         canonicalKey = TextUtilities.toCanonicalKey(trans),
                         note = null,
-                        pronunciation = null,
                         translationIndex = idx
                     )
                 )
@@ -286,8 +281,7 @@ class VocabularyRepository(
         sourceText: String,
         translations: List<String>,
         categoryId: String?,
-        note: String?,
-        pronunciation: String?
+        note: String?
     ): Result<Unit> {
         return database.withTransaction {
             val existing = conceptDao.getConceptById(conceptId)
@@ -306,7 +300,6 @@ class VocabularyRepository(
                     text = sourceText.trim(),
                     canonicalKey = TextUtilities.toCanonicalKey(sourceText.trim()),
                     note = note?.trim()?.ifEmpty { null },
-                    pronunciation = pronunciation?.trim()?.ifEmpty { null },
                     translationIndex = 0
                 )
             )
@@ -319,7 +312,6 @@ class VocabularyRepository(
                         text = trans.trim(),
                         canonicalKey = TextUtilities.toCanonicalKey(trans.trim()),
                         note = null,
-                        pronunciation = null,
                         translationIndex = idx
                     )
                 )
@@ -422,6 +414,7 @@ class VocabularyRepository(
     suspend fun importParsedEntries(
         entries: List<ParsedEntry>,
         policy: DuplicatePolicy,
+        targetCategoryId: String? = null,
         onProgress: (Int, Int) -> Unit
     ) {
         val total = entries.size
@@ -433,6 +426,8 @@ class VocabularyRepository(
                 val enrichedNote = formatEnrichedNote(entry)
 
                 if (existingContent != null) {
+                    val existingConcept = conceptDao.getConceptById(existingContent.conceptId)
+                    val effectiveCat = targetCategoryId ?: existingConcept?.categoryId
                     when (policy) {
                         DuplicatePolicy.SKIP -> { /* Skip */ }
                         DuplicatePolicy.REPLACE -> {
@@ -440,9 +435,8 @@ class VocabularyRepository(
                                 conceptId = existingContent.conceptId,
                                 sourceText = cleanSource,
                                 translations = entry.translations,
-                                categoryId = null,
-                                note = enrichedNote,
-                                pronunciation = null
+                                categoryId = effectiveCat,
+                                note = enrichedNote
                             )
                         }
                         DuplicatePolicy.MERGE -> {
@@ -455,18 +449,16 @@ class VocabularyRepository(
                                 conceptId = existingContent.conceptId,
                                 sourceText = cleanSource,
                                 translations = merged,
-                                categoryId = null,
-                                note = mergedNote,
-                                pronunciation = currentEs?.pronunciation
+                                categoryId = effectiveCat,
+                                note = mergedNote
                             )
                         }
                         DuplicatePolicy.KEEP_SEPARATE -> {
                             addWord(
                                 sourceText = cleanSource,
                                 translations = entry.translations,
-                                categoryId = null,
-                                note = enrichedNote,
-                                pronunciation = null
+                                categoryId = targetCategoryId,
+                                note = enrichedNote
                             )
                         }
                     }
@@ -474,9 +466,8 @@ class VocabularyRepository(
                     addWord(
                         sourceText = cleanSource,
                         translations = entry.translations,
-                        categoryId = null,
-                        note = enrichedNote,
-                        pronunciation = null
+                        categoryId = targetCategoryId,
+                        note = enrichedNote
                     )
                 }
                 onProgress(index + 1, total)

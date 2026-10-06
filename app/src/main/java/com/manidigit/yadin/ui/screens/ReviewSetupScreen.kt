@@ -72,6 +72,7 @@ fun ReviewSetupScreen(
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,
+    appLanguageDirection: CardDirection = CardDirection.NORMAL,
     onFilterChanged: (ReviewFilters) -> Unit,
     onStartReview: (ReviewFilters) -> Unit,
     onBack: () -> Unit
@@ -81,7 +82,6 @@ fun ReviewSetupScreen(
 
     var selectedType by remember { mutableStateOf(initialType) }
     var selectedMode by remember { mutableStateOf(ReviewMode.QUIZ) }
-    var selectedDirection by remember { mutableStateOf(CardDirection.NORMAL) }
     var selectedQuizLevel by remember { mutableStateOf(QuizLevel.MEDIUM) }
     var selectedDifficulties by remember { mutableStateOf(initialDifficulties) }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
@@ -90,7 +90,7 @@ fun ReviewSetupScreen(
     fun buildFilters() = ReviewFilters(
         reviewType = selectedType,
         mode = selectedMode,
-        direction = selectedDirection,
+        direction = appLanguageDirection,
         quizLevel = if (selectedMode == ReviewMode.QUIZ) selectedQuizLevel else null,
         difficulties = selectedDifficulties,
         categoryIds = if (selectedCategoryId != null) setOf(selectedCategoryId!!) else emptySet(),
@@ -100,7 +100,7 @@ fun ReviewSetupScreen(
     LaunchedEffect(
         selectedType,
         selectedMode,
-        selectedDirection,
+        appLanguageDirection,
         selectedQuizLevel,
         selectedDifficulties,
         selectedCategoryId,
@@ -157,7 +157,7 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 1: حالت و جهت تمرین (Mode & Direction)
+            // Card 1: حالت تمرین (Mode)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -168,7 +168,7 @@ fun ReviewSetupScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "حالت تمرین و جهت کارت",
+                            text = "حالت تمرین",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -192,25 +192,6 @@ fun ReviewSetupScreen(
                                 isSelected = selectedMode == ReviewMode.FLASHCARD,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.FLASHCARD }
-                            )
-                        }
-
-                        // Direction selector
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            DirectionPill(
-                                title = "🇪🇸 اسپانیایی ← 🇮🇷 فارسی",
-                                isSelected = selectedDirection == CardDirection.NORMAL,
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedDirection = CardDirection.NORMAL }
-                            )
-                            DirectionPill(
-                                title = "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
-                                isSelected = selectedDirection == CardDirection.REVERSE,
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedDirection = CardDirection.REVERSE }
                             )
                         }
                     }
@@ -528,36 +509,6 @@ fun ModeSelectButton(
                 color = if (isSelected) colors.onPrimary else colors.onSurface
             )
         }
-    }
-}
-
-@Composable
-fun DirectionPill(
-    title: String,
-    isSelected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isSelected) colors.secondary.copy(alpha = 0.2f) else colors.surfaceVariant)
-            .border(
-                width = if (isSelected) 1.dp else 0.dp,
-                color = if (isSelected) colors.secondary else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .clickable { onClick() }
-            .padding(vertical = 8.dp, horizontal = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = title,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) colors.secondary else colors.onSurfaceVariant
-        )
     }
 }
 

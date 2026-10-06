@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
@@ -51,7 +52,8 @@ import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 fun AddEditWordScreen(
     initialWord: WordDetail? = null,
     categories: List<Category>,
-    onSave: (sourceText: String, translations: List<String>, categoryId: String?, note: String?, pronunciation: String?) -> Unit,
+    languageDirection: CardDirection = CardDirection.NORMAL,
+    onSave: (sourceText: String, translations: List<String>, categoryId: String?, note: String?) -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -61,7 +63,6 @@ fun AddEditWordScreen(
     var translationsText by remember {
         mutableStateOf(initialWord?.targetContents?.joinToString("، ") { it.text } ?: "")
     }
-    var pronunciation by remember { mutableStateOf(initialWord?.sourceContent?.pronunciation ?: "") }
     var note by remember { mutableStateOf(initialWord?.sourceContent?.note ?: "") }
     var selectedCategoryId by remember { mutableStateOf(initialWord?.concept?.categoryId) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -107,6 +108,12 @@ fun AddEditWordScreen(
                 )
             }
 
+            val isNormal = (languageDirection == CardDirection.NORMAL)
+            val sourceLabel = if (isNormal) "واژه یا عبارت مبدأ (اسپانیایی 🇪🇸)" else "واژه یا عبارت مبدأ (فارسی 🇮🇷)"
+            val sourcePlaceholder = if (isNormal) "مثال: buenos días" else "مثال: صبح بخیر"
+            val targetLabel = if (isNormal) "ترجمه‌های فارسی 🇮🇷 (با ویرگول جدا کنید)" else "ترجمه‌های اسپانیایی 🇪🇸 (با ویرگول جدا کنید)"
+            val targetPlaceholder = if (isNormal) "مثال: صبح بخیر، روز خوش" else "مثال: buenos días"
+
             // Source Input
             OutlinedTextField(
                 value = sourceText,
@@ -115,8 +122,8 @@ fun AddEditWordScreen(
                     errorMessage = null
                 },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("واژه به زبان مبدأ (اسپانیایی)") },
-                placeholder = { Text("مثال: buenos días") },
+                label = { Text(sourceLabel) },
+                placeholder = { Text(sourcePlaceholder) },
                 singleLine = true,
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             )
@@ -129,19 +136,8 @@ fun AddEditWordScreen(
                     errorMessage = null
                 },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("ترجمه‌های فارسی (با ویرگول جدا کنید)") },
-                placeholder = { Text("مثال: صبح بخیر، روز خوش") },
-                shape = RoundedCornerShape(dimensions.cornerMedium)
-            )
-
-            // Pronunciation Input
-            OutlinedTextField(
-                value = pronunciation,
-                onValueChange = { pronunciation = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("تلفظ صوتی / فونتیک (اختیاری)") },
-                placeholder = { Text("مثال: bwe-nos di-as") },
-                singleLine = true,
+                label = { Text(targetLabel) },
+                placeholder = { Text(targetPlaceholder) },
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             )
 
@@ -191,8 +187,7 @@ fun AddEditWordScreen(
                         cleanSrc,
                         translationsList,
                         selectedCategoryId,
-                        note.trim().ifEmpty { null },
-                        pronunciation.trim().ifEmpty { null }
+                        note.trim().ifEmpty { null }
                     )
                 }
             },

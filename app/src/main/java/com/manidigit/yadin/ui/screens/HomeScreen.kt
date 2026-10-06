@@ -1084,7 +1084,7 @@ private fun GoogoliHomeContent(
                     GoogoliActionTile(
                         emoji = "➕",
                         title = "افزودن واژه جدید",
-                        subtitle = "کارت شاداب با تلفظ",
+                        subtitle = "کارت شاداب با صوت",
                         color = colors.primary,
                         modifier = Modifier.weight(1f),
                         onClick = onOpenAddWord
@@ -1588,7 +1588,7 @@ private fun GeminiHomeContent(
             ) {
                 ActionTile(
                     title = "افزودن واژه جدید",
-                    subtitle = "کارت تکی با ترجمه و تلفظ",
+                    subtitle = "کارت تکی با ترجمه و صوت",
                     icon = Icons.Default.Add,
                     accentColor = colors.success,
                     modifier = Modifier.weight(1f),

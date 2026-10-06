@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.manidigit.yadin.data.local.dao.AchievementDao
 import com.manidigit.yadin.data.local.dao.ConceptDao
 import com.manidigit.yadin.data.local.dao.ImportReviewDao
@@ -43,7 +45,7 @@ import com.manidigit.yadin.data.local.entity.TagEntity
         AchievementEntity::class,
         ImportReviewItemEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -60,6 +62,15 @@ abstract class YadinDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: YadinDatabase? = null
 
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE contents DROP COLUMN pronunciation")
+                } catch (_: Exception) {
+                }
+            }
+        }
+
         fun getInstance(context: Context): YadinDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -67,6 +78,7 @@ abstract class YadinDatabase : RoomDatabase() {
                     YadinDatabase::class.java,
                     "yadin_database.db"
                 )
+                    .addMigrations(MIGRATION_1_2)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

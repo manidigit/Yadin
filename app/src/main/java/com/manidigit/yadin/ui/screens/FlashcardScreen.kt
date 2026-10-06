@@ -225,13 +225,6 @@ fun FlashcardScreen(
                                 color = colors.onSurface,
                                 textAlign = TextAlign.Center
                             )
-                            if (card.pronunciation != null) {
-                                Text(
-                                    text = "[ ${card.pronunciation} ]",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.primary
-                                )
-                            }
                         }
 
                         Row(

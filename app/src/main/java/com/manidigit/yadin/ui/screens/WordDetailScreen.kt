@@ -139,14 +139,6 @@ fun WordDetailScreen(
                         SpeakButton(text = word.sourceContent.text, languageCode = "es")
                     }
 
-                    if (word.sourceContent.pronunciation != null) {
-                        Text(
-                            text = "[ ${word.sourceContent.pronunciation} ]",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.primary
-                        )
-                    }
-
                     if (word.categories.isNotEmpty()) {
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             word.categories.forEach { cat ->

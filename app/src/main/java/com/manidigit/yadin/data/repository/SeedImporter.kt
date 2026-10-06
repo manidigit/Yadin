@@ -146,7 +146,7 @@ class SeedImporter(
                                                 if (canonical.isEmpty()) {
                                                     canonical = TextUtilities.toCanonicalKey(text)
                                                 }
-                                                contents.add(ContentEntity(id, conceptId, lang, text, canonical, notes, null, transIdx))
+                                                contents.add(ContentEntity(id, conceptId, lang, text, canonical, notes, transIdx))
                                             }
                                         }
                                         reader.endArray()

@@ -211,7 +211,6 @@ class ReviewRepository(
                     sourceText = prompt,
                     targetTranslations = answers,
                     note = sourceContent.note,
-                    pronunciation = sourceContent.pronunciation,
                     categoryName = category,
                     stage = stage,
                     difficulty = diff

@@ -113,7 +113,6 @@ class BackupRepository(
                     cto.put("text", ct.text)
                     cto.put("canonicalKey", ct.canonicalKey)
                     cto.put("note", ct.note)
-                    cto.put("pronunciation", ct.pronunciation)
                     cto.put("translationIndex", ct.translationIndex)
                     contentsArray.put(cto)
                 }
@@ -357,7 +356,6 @@ class BackupRepository(
                             text = cto.getString("text"),
                             canonicalKey = cto.optString("canonicalKey", cto.getString("text").lowercase()),
                             note = cto.optString("note", "").ifEmpty { cto.optString("notes", "").ifEmpty { null } },
-                            pronunciation = cto.optString("pronunciation", "").ifEmpty { null },
                             translationIndex = cto.optInt("translationIndex", 0)
                         )
                     )

@@ -44,9 +44,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.DuplicatePolicy
 import com.manidigit.yadin.domain.model.ParseResult
 import com.manidigit.yadin.domain.model.ParsedEntry
+import com.manidigit.yadin.ui.components.CategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -54,10 +56,11 @@ import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 @Composable
 fun ImportScreen(
     parseResult: ParseResult?,
+    categories: List<Category> = emptyList(),
     isImporting: Boolean,
     importProgress: Float,
     onParseText: (String) -> Unit,
-    onConfirmImport: (DuplicatePolicy) -> Unit,
+    onConfirmImport: (DuplicatePolicy, String?) -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -75,6 +78,7 @@ fun ImportScreen(
         )
     }
     var selectedPolicy by remember { mutableStateOf(DuplicatePolicy.MERGE) }
+    var selectedCategoryId by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -168,6 +172,14 @@ fun ImportScreen(
                     )
                 }
 
+                // Category selection for imported words
+                CategoryDropdown(
+                    categories = categories,
+                    selectedCategoryId = selectedCategoryId,
+                    onSelectCategory = { selectedCategoryId = it },
+                    label = "دسته‌بندی موضوعی واژگان واردشده (اختیاری)"
+                )
+
                 // Duplicate policy selection
                 Text(
                     text = "سیاست برخورد با واژگان تکراری:",
@@ -230,7 +242,7 @@ fun ImportScreen(
                     }
                 } else {
                     Button(
-                        onClick = { onConfirmImport(selectedPolicy) },
+                        onClick = { onConfirmImport(selectedPolicy, selectedCategoryId) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
