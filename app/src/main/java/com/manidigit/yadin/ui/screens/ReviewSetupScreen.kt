@@ -20,7 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.FilterList
@@ -68,6 +68,7 @@ private data class DiffItem(val diff: VocabularyDifficulty, val label: String, v
 @Composable
 fun ReviewSetupScreen(
     initialType: ReviewType = ReviewType.RANDOM,
+    initialDifficulties: Set<VocabularyDifficulty> = emptySet(),
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,
@@ -82,7 +83,7 @@ fun ReviewSetupScreen(
     var selectedMode by remember { mutableStateOf(ReviewMode.QUIZ) }
     var selectedDirection by remember { mutableStateOf(CardDirection.NORMAL) }
     var selectedQuizLevel by remember { mutableStateOf(QuizLevel.MEDIUM) }
-    var selectedDifficulties by remember { mutableStateOf<Set<VocabularyDifficulty>>(emptySet()) }
+    var selectedDifficulties by remember { mutableStateOf(initialDifficulties) }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
     var selectedMaxCards by remember { mutableStateOf(20) }
 
@@ -134,7 +135,7 @@ fun ReviewSetupScreen(
                             .background(colors.surfaceVariant)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "بازگشت",
                             tint = colors.onSurface
                         )

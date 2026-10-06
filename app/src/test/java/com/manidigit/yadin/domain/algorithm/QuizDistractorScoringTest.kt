@@ -111,6 +111,11 @@ class QuizDistractorScoringTest {
             QuizDistractorScorer.areSemanticallyColliding(validDistractorDifferentTense, answer)
         )
 
+        org.junit.Assert.assertFalse(
+            "Different person 'ما خوابیدیم' should NOT collide with 'شما خوابیدید'",
+            QuizDistractorScorer.areSemanticallyColliding(validDistractorDifferentPerson, answer)
+        )
+
         // Second case reported by user: "ustedes enseñen"
         val answerEnsenen = "شما (جمع) درس بدهید"
         val duplicateEnsenen = "شما درس بدهید"

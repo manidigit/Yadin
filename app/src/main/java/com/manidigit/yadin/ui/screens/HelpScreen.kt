@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -59,7 +59,7 @@ fun HelpScreen(onBack: () -> Unit) {
                     .background(colors.surfaceVariant)
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "بازگشت",
                     tint = colors.onSurface
                 )
@@ -120,7 +120,6 @@ fun HelpStepCard(
     description: String
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
 
     YadinCard(
         modifier = Modifier.fillMaxWidth(),

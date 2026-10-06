@@ -1,28 +1,26 @@
 package com.manidigit.yadin.domain.time
 
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 object ClockAndDayMath {
 
-    private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
-        timeZone = TimeZone.getDefault()
-    }
+    private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     fun now(): Long = System.currentTimeMillis()
 
     fun todayDayString(): String {
-        return DATE_FORMAT.format(Date(now()))
+        return LocalDate.now().format(DATE_FORMATTER)
     }
 
     fun addDays(dayString: String, daysToAdd: Int): String {
-        val cal = Calendar.getInstance()
-        cal.time = DATE_FORMAT.parse(dayString) ?: Date()
-        cal.add(Calendar.DAY_OF_YEAR, daysToAdd)
-        return DATE_FORMAT.format(cal.time)
+        return try {
+            val date = LocalDate.parse(dayString, DATE_FORMATTER)
+            date.plusDays(daysToAdd.toLong()).format(DATE_FORMATTER)
+        } catch (_: Exception) {
+            dayString
+        }
     }
 
     fun isDue(nextReviewDay: String?, today: String = todayDayString()): Boolean {
@@ -31,10 +29,13 @@ object ClockAndDayMath {
     }
 
     fun daysBetween(day1: String, day2: String): Int {
-        val date1 = DATE_FORMAT.parse(day1) ?: return 0
-        val date2 = DATE_FORMAT.parse(day2) ?: return 0
-        val diffMillis = date2.time - date1.time
-        return (diffMillis / (24 * 60 * 60 * 1000)).toInt()
+        return try {
+            val d1 = LocalDate.parse(day1, DATE_FORMATTER)
+            val d2 = LocalDate.parse(day2, DATE_FORMATTER)
+            ChronoUnit.DAYS.between(d1, d2).toInt()
+        } catch (_: Exception) {
+            0
+        }
     }
 
     fun calculateStreakDays(days: List<String>, today: String = todayDayString()): Int {
@@ -58,3 +59,4 @@ object ClockAndDayMath {
         return streak
     }
 }
+

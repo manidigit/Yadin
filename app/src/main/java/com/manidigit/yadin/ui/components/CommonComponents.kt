@@ -1,6 +1,5 @@
 package com.manidigit.yadin.ui.components
 
-import android.speech.tts.TextToSpeech
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -19,11 +18,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.VolumeUp
+import com.manidigit.yadin.ui.util.TtsManager
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -152,7 +152,6 @@ fun DifficultyCounterRow(
 @Composable
 fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
     val (title, color) = when (stage) {
         Stage.DAILY -> "روزانه" to colors.primary
         Stage.WEEKLY -> "هفتگی" to colors.info
@@ -183,7 +182,6 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
 @Composable
 fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
     val (title, color) = when (difficulty) {
         VocabularyDifficulty.EASY -> "ساده" to colors.success
         VocabularyDifficulty.MEDIUM -> "متوسط" to colors.info
@@ -318,19 +316,12 @@ fun SpeakButton(
 
     IconButton(
         onClick = {
-            var tts: TextToSpeech? = null
-            tts = TextToSpeech(context) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    val loc = if (languageCode == "es") Locale("es", "ES") else Locale.US
-                    tts?.language = loc
-                    tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_utterance")
-                }
-            }
+            TtsManager.speak(context, text, languageCode)
         },
         modifier = modifier
     ) {
         Icon(
-            imageVector = Icons.Default.VolumeUp,
+            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
             contentDescription = "پخش تلفظ صوتی",
             tint = colors.primary
         )

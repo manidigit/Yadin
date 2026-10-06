@@ -40,7 +40,10 @@ import kotlinx.coroutines.launch
 sealed class Screen {
     object Splash : Screen()
     object Home : Screen()
-    data class ReviewSetup(val initialType: ReviewType = ReviewType.RANDOM) : Screen()
+    data class ReviewSetup(
+        val initialType: ReviewType = ReviewType.RANDOM,
+        val initialDifficulties: Set<VocabularyDifficulty> = emptySet()
+    ) : Screen()
     object Flashcard : Screen()
     object Quiz : Screen()
     object SessionSummary : Screen()

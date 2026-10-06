@@ -89,10 +89,11 @@ class BackupRepository(
             }
             data.put("categories", catArray)
 
-            // Concepts and contents
+            // Concepts and contents (Batch loaded - 0 N+1 queries)
             val conceptsArray = JSONArray()
             val contentsArray = JSONArray()
-            val allConcepts = conceptDao.searchConcepts("", 50000)
+            val allConcepts = conceptDao.getAllConcepts()
+            val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
             allConcepts.forEach { c ->
                 val co = JSONObject()
                 co.put("id", c.id)
@@ -103,7 +104,7 @@ class BackupRepository(
                 co.put("updatedAt", c.updatedAt)
                 conceptsArray.put(co)
 
-                val contents = conceptDao.getContentsForConcept(c.id)
+                val contents = allContentsByConcept[c.id] ?: emptyList()
                 contents.forEach { ct ->
                     val cto = JSONObject()
                     cto.put("id", ct.id)

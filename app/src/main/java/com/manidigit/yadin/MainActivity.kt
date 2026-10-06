@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.ui.screens.AboutScreen
 import com.manidigit.yadin.ui.screens.AddEditWordScreen
 import com.manidigit.yadin.ui.screens.BackupScreen
@@ -98,6 +99,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        com.manidigit.yadin.ui.util.TtsManager.shutdown()
+    }
 }
 
 @Composable
@@ -111,7 +117,7 @@ fun YadinBottomBar(
     val items = listOf(
         Triple(Screen.Home, "خانه", Icons.Default.Home),
         Triple(Screen.ReviewSetup(), "مرور", Icons.Default.History),
-        Triple(Screen.Library, "کتابخانه", Icons.Default.MenuBook),
+        Triple(Screen.Library, "کتابخانه", Icons.AutoMirrored.Filled.MenuBook),
         Triple(Screen.ProgressStats, "پیشرفت", Icons.Default.BarChart),
         Triple(Screen.Settings, "تنظیمات", Icons.Default.Settings)
     )
@@ -207,7 +213,12 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                     viewModel.startSession(type, mode)
                 },
                 onDifficultyFilterClick = { diff ->
-                    viewModel.navigateTo(Screen.ReviewSetup())
+                    viewModel.navigateTo(
+                        Screen.ReviewSetup(
+                            initialType = ReviewType.RANDOM,
+                            initialDifficulties = setOf(diff)
+                        )
+                    )
                 },
                 onOpenLibrary = { viewModel.navigateTo(Screen.Library) },
                 onOpenAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
@@ -227,6 +238,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
 
             ReviewSetupScreen(
                 initialType = screen.initialType,
+                initialDifficulties = screen.initialDifficulties,
                 categories = categories,
                 difficultyCounts = difficultyCounts,
                 candidateCount = candidateCount,

@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.ReviewCard
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
@@ -196,7 +197,11 @@ fun FlashcardScreen(
                             } else {
                                 Spacer(modifier = Modifier.size(1.dp))
                             }
-                            SpeakButton(text = card.sourceText, languageCode = "es")
+                            if (card.direction == CardDirection.NORMAL) {
+                                SpeakButton(text = card.sourceText, languageCode = "es")
+                            } else {
+                                Spacer(modifier = Modifier.size(1.dp))
+                            }
                         }
 
                         Column(
@@ -272,7 +277,7 @@ fun FlashcardScreen(
                                 .verticalScroll(backScrollState)
                         ) {
                             Text(
-                                text = "ترجمه فارسی:",
+                                text = if (card.direction == CardDirection.NORMAL) "ترجمه فارسی:" else "واژه اسپانیایی:",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant
                             )
@@ -286,19 +291,27 @@ fun FlashcardScreen(
                                     } else {
                                         MaterialTheme.typography.titleLarge
                                     }
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(colors.surfaceVariant)
-                                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Text(
-                                            text = trans,
-                                            style = translationStyle,
-                                            fontWeight = FontWeight.Bold,
-                                            color = colors.onSurface,
-                                            textAlign = TextAlign.Center
-                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(colors.surfaceVariant)
+                                                .padding(horizontal = 14.dp, vertical = 6.dp)
+                                        ) {
+                                            Text(
+                                                text = trans,
+                                                style = translationStyle,
+                                                fontWeight = FontWeight.Bold,
+                                                color = colors.onSurface,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                        if (card.direction == CardDirection.REVERSE) {
+                                            SpeakButton(text = trans, languageCode = "es")
+                                        }
                                     }
                                 }
                             }

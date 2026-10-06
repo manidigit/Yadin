@@ -241,18 +241,19 @@ class ReviewRepository(
         val categoryMap = mutableMapOf<String, String?>()
         val entryTypeMap = mutableMapOf<String, EntryType>()
         val diffMap = mutableMapOf<String, VocabularyDifficulty>()
+        val targetDirection = session?.direction ?: CardDirection.NORMAL
 
-        poolConceptIds.chunked(200).forEach { cIds ->
-            val concepts = conceptDao.searchConcepts("", 1000).filter { it.id in cIds }
+        poolConceptIds.chunked(300).forEach { cIds ->
+            val concepts = conceptDao.getConceptsByIds(cIds)
             concepts.forEach {
                 categoryMap[it.id] = it.categoryId
                 entryTypeMap[it.id] = it.entryType
             }
+            val diffStates = learningDao.getDifficultyStatesForConcepts(cIds, targetDirection)
+            diffStates.forEach {
+                diffMap[it.conceptId] = it.current
+            }
         }
-
-        learningDao.getAllDifficultyStates()
-            .filter { it.direction == (session?.direction ?: CardDirection.NORMAL) && it.conceptId in poolConceptIds }
-            .forEach { diffMap[it.conceptId] = it.current }
 
         data class DistractorPoolItem(
             val conceptId: String,
@@ -462,7 +463,7 @@ class ReviewRepository(
         }
 
         // Check achievements trigger
-        checkAchievements(sessionId, isCorrect)
+        checkAchievements(sessionId)
 
         return SubmitResult(
             newStage = transition.newStage,
@@ -472,7 +473,7 @@ class ReviewRepository(
         )
     }
 
-    private suspend fun checkAchievements(sessionId: String, isCorrect: Boolean) {
+    private suspend fun checkAchievements(sessionId: String) {
         val today = ClockAndDayMath.todayDayString()
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
         val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)

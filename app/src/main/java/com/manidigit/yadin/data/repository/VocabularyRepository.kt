@@ -358,18 +358,21 @@ class VocabularyRepository(
             learningDao.getCountByStageFlow(direction, Stage.LEARNED),
             learningDao.getDueCountFlow(direction, today),
             reviewSessionDao.getReviewCountForDayFlow(today),
-            reviewSessionDao.getTotalReviewsCountFlow()
-        ) { args: Array<Int> ->
-            val daily = args[0]
-            val weekly = args[1]
-            val monthly = args[2]
-            val learned = args[3]
-            val dueToday = args[4]
-            val reviewedToday = args[5]
-            val totalReviews = args[6]
+            reviewSessionDao.getTotalReviewsCountFlow(),
+            learningDao.getDifficultyBreakdownFlow(direction)
+        ) { args ->
+            val daily = args[0] as Int
+            val weekly = args[1] as Int
+            val monthly = args[2] as Int
+            val learned = args[3] as Int
+            val dueToday = args[4] as Int
+            val reviewedToday = args[5] as Int
+            val totalReviews = args[6] as Int
+            @Suppress("UNCHECKED_CAST")
+            val diffList = args[7] as List<com.manidigit.yadin.data.local.dao.DifficultyCount>
             val totalWords = daily + weekly + monthly + learned
 
-            val diffBreakdown = learningDao.getDifficultyBreakdown(direction).associate { it.current to it.count }
+            val diffBreakdown = diffList.associate { it.current to it.count }
 
             StatisticsSummary(
                 totalWords = totalWords,

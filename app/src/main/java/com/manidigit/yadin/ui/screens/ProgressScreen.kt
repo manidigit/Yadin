@@ -19,7 +19,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Info
@@ -85,7 +86,7 @@ fun ProgressScreen(
                         .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "بازگشت",
                         tint = colors.onSurface
                     )
@@ -263,7 +264,7 @@ fun ProgressScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            imageVector = Icons.Default.TrendingUp,
+                            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                             contentDescription = null,
                             tint = colors.info,
                             modifier = Modifier.size(28.dp)
@@ -508,7 +509,6 @@ private fun DifficultyMetricBox(
     modifier: Modifier = Modifier
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
 
     YadinCard(
         modifier = modifier,
@@ -543,7 +543,7 @@ fun FunnelRow(
     total: Int,
     color: Color
 ) {
-    val fraction = (count.toFloat() / total).coerceIn(0f, 1f)
+    val fraction = if (total > 0) (count.toFloat() / total).coerceIn(0f, 1f) else 0f
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(

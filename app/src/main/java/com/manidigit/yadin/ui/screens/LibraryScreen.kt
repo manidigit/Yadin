@@ -19,8 +19,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
@@ -91,7 +91,7 @@ fun LibraryScreen(
                         .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "بازگشت",
                         tint = colors.onSurface
                     )
@@ -272,7 +272,6 @@ fun WordItemCard(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
 
     val sourceFlag = getLanguageFlag(word.sourceContent.languageCode)
     val targetFlag = "🇮🇷"
@@ -358,7 +357,7 @@ fun WordItemCard(
             Spacer(modifier = Modifier.width(6.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SpeakButton(text = word.sourceContent.text, languageCode = word.sourceContent.languageCode ?: "es")
+                SpeakButton(text = word.sourceContent.text, languageCode = word.sourceContent.languageCode)
             }
         }
     }

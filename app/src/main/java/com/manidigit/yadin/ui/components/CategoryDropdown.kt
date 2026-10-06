@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Description
@@ -60,7 +60,7 @@ fun getCategoryIcon(categoryName: String?): ImageVector {
     return when {
         lower.contains("سفر") || lower.contains("گردش") || lower.contains("flight") || lower.contains("travel") -> Icons.Default.Flight
         lower.contains("غذا") || lower.contains("خوراک") || lower.contains("نوشیدنی") || lower.contains("food") -> Icons.Default.Restaurant
-        lower.contains("مکالمه") || lower.contains("احوال") || lower.contains("گفتگو") || lower.contains("chat") -> Icons.Default.Chat
+        lower.contains("مکالمه") || lower.contains("احوال") || lower.contains("گفتگو") || lower.contains("chat") -> Icons.AutoMirrored.Filled.Chat
         lower.contains("اصطلاح") || lower.contains("ضرب") || lower.contains("idiom") -> Icons.Default.Lightbulb
         lower.contains("گرامر") || lower.contains("قواعد") || lower.contains("دستور") || lower.contains("grammar") -> Icons.Default.Description
         lower.contains("فعل") || lower.contains("افعال") || lower.contains("verb") -> Icons.Default.Bolt

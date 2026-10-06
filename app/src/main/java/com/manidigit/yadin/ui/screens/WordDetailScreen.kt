@@ -17,7 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
@@ -92,7 +92,7 @@ fun WordDetailScreen(
                         .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "بازگشت",
                         tint = colors.onSurface
                     )
@@ -183,7 +183,7 @@ fun WordDetailScreen(
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
-                    word.targetContents.forEachIndexed { idx, content ->
+                    word.targetContents.forEach { content ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)

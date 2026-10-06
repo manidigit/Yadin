@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.QuizQuestion
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
@@ -220,7 +221,9 @@ fun QuizScreen(
                                 )
                             }
 
-                            SpeakButton(text = q.promptText, languageCode = "es")
+                            if (q.direction == CardDirection.NORMAL) {
+                                SpeakButton(text = q.promptText, languageCode = "es")
+                            }
                         }
                     }
 

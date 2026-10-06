@@ -60,6 +60,9 @@ interface LearningDao {
     @Query("SELECT * FROM difficulty_states WHERE conceptId = :conceptId")
     suspend fun getDifficultyStatesForConcept(conceptId: String): List<DifficultyStateEntity>
 
+    @Query("SELECT * FROM difficulty_states WHERE conceptId IN (:conceptIds) AND direction = :direction")
+    suspend fun getDifficultyStatesForConcepts(conceptIds: List<String>, direction: CardDirection): List<DifficultyStateEntity>
+
     @Query("SELECT * FROM learning_states")
     suspend fun getAllLearningStates(): List<LearningStateEntity>
 

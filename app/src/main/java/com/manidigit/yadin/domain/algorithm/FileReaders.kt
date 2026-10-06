@@ -231,6 +231,15 @@ object FileReaders {
                         rawLines = listOf(item.toString())
                     )
                 )
+            } else {
+                warnings.add(
+                    ParseWarning(
+                        type = ParseWarningType.UNKNOWN_FORMAT,
+                        lineNumber = i + 1,
+                        rawText = item.toString().take(100),
+                        message = "آیتم به دلیل نبود واژه مبدا یا ترجمه نادیده گرفته شد"
+                    )
+                )
             }
         }
     }

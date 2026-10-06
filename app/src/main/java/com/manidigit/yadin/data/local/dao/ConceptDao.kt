@@ -44,6 +44,12 @@ interface ConceptDao {
     @Query("SELECT COUNT(*) FROM concepts")
     suspend fun getTotalConceptCount(): Int
 
+    @Query("SELECT * FROM concepts")
+    suspend fun getAllConcepts(): List<ConceptEntity>
+
+    @Query("SELECT * FROM concepts WHERE id IN (:conceptIds)")
+    suspend fun getConceptsByIds(conceptIds: List<String>): List<ConceptEntity>
+
     @Query("SELECT * FROM concepts WHERE active = 1 ORDER BY createdAt DESC")
     fun getAllActiveConceptsFlow(): Flow<List<ConceptEntity>>
 

@@ -31,17 +31,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.theme.LocalYadinColors
-import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 enum class ChartTimeframe(val title: String) {
     WEEKLY("هفتگی"),
@@ -54,7 +52,6 @@ fun DailyReviewChart(
     modifier: Modifier = Modifier
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
     var selectedTimeframe by remember { mutableStateOf(ChartTimeframe.WEEKLY) }
 
     val today = ClockAndDayMath.todayDayString()
@@ -75,12 +72,10 @@ fun DailyReviewChart(
             )
         }
     } else {
-        // 30 days: aggregated into 6 periods of 5 days or 15 points
-        // Group last 30 days into 6 slices of 5 days
+        // 30 days: aggregated into 6 periods of 5 days
         (5 downTo 0).map { sliceIndex ->
             val sliceEndOffset = sliceIndex * 5
             val sliceStartOffset = sliceEndOffset + 4
-            val startDay = ClockAndDayMath.addDays(today, -sliceStartOffset)
             val endDay = ClockAndDayMath.addDays(today, -sliceEndOffset)
             
             var sliceTotal = 0
@@ -182,7 +177,8 @@ fun DailyReviewChart(
                 val primaryColor = colors.primary
                 val secondaryColor = colors.secondary
                 val surfaceVariantColor = colors.surfaceVariant
-                val onSurfaceVariantColor = colors.onSurfaceVariant
+                val textColorPrimary = colors.onSurface.toArgb()
+                val textColorVariant = colors.onSurfaceVariant.toArgb()
 
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val canvasWidth = size.width
@@ -211,7 +207,7 @@ fun DailyReviewChart(
                         // Y-axis value label
                         drawContext.canvas.nativeCanvas.apply {
                             val axisPaint = android.graphics.Paint().apply {
-                                color = android.graphics.Color.GRAY
+                                color = textColorVariant
                                 textSize = 9.sp.toPx()
                                 textAlign = android.graphics.Paint.Align.LEFT
                                 isAntiAlias = true
@@ -255,7 +251,7 @@ fun DailyReviewChart(
                         if (item.totalCount > 0) {
                             drawContext.canvas.nativeCanvas.apply {
                                 val paint = android.graphics.Paint().apply {
-                                    color = if (item.isToday) android.graphics.Color.WHITE else android.graphics.Color.LTGRAY
+                                    color = if (item.isToday) textColorPrimary else textColorVariant
                                     textSize = 10.sp.toPx()
                                     textAlign = android.graphics.Paint.Align.CENTER
                                     isAntiAlias = true
@@ -268,7 +264,7 @@ fun DailyReviewChart(
                         // Draw X-axis Day label
                         drawContext.canvas.nativeCanvas.apply {
                             val labelPaint = android.graphics.Paint().apply {
-                                color = if (item.isToday) android.graphics.Color.WHITE else android.graphics.Color.GRAY
+                                color = if (item.isToday) textColorPrimary else textColorVariant
                                 textSize = 9.sp.toPx()
                                 textAlign = android.graphics.Paint.Align.CENTER
                                 isAntiAlias = true
@@ -308,18 +304,15 @@ fun DailyReviewChart(
 
 private fun getPersianDayOfWeek(dateString: String): String {
     return try {
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val date = sdf.parse(dateString) ?: return dateString.takeLast(5)
-        val cal = Calendar.getInstance()
-        cal.time = date
-        when (cal.get(Calendar.DAY_OF_WEEK)) {
-            Calendar.SATURDAY -> "شنبه"
-            Calendar.SUNDAY -> "یکشنبه"
-            Calendar.MONDAY -> "دوشنبه"
-            Calendar.TUESDAY -> "سه‌شنبه"
-            Calendar.WEDNESDAY -> "چهارشنبه"
-            Calendar.THURSDAY -> "پنج‌شنبه"
-            Calendar.FRIDAY -> "جمعه"
+        val date = LocalDate.parse(dateString)
+        when (date.dayOfWeek) {
+            DayOfWeek.SATURDAY -> "شنبه"
+            DayOfWeek.SUNDAY -> "یکشنبه"
+            DayOfWeek.MONDAY -> "دوشنبه"
+            DayOfWeek.TUESDAY -> "سه‌شنبه"
+            DayOfWeek.WEDNESDAY -> "چهارشنبه"
+            DayOfWeek.THURSDAY -> "پنج‌شنبه"
+            DayOfWeek.FRIDAY -> "جمعه"
             else -> dateString.takeLast(5)
         }
     } catch (_: Exception) {
@@ -334,3 +327,4 @@ data class DayChartModel(
     val correctCount: Int,
     val isToday: Boolean
 )
+

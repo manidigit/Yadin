@@ -181,7 +181,7 @@ object VocabularyParser {
                 LineType.RELATION, LineType.DERIVATIVE -> {
                     currentRawLines.add(trimmed)
                     val content = stripMarker(trimmed)
-                    currentNotes.add(trimmed)
+                    currentNotes.add(content)
                 }
                 LineType.ENTRY_HEADER -> {
                     currentRawLines.add(trimmed)

@@ -24,7 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
@@ -156,7 +156,7 @@ fun BackupScreen(
                         .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "بازگشت",
                         tint = colors.onSurface
                     )
@@ -664,7 +664,7 @@ fun BackupScreen(
 
 @Composable
 private fun BackupTypeOption(
-    type: BackupType,
+    @Suppress("UNUSED_PARAMETER") type: BackupType,
     title: String,
     description: String,
     isSelected: Boolean,

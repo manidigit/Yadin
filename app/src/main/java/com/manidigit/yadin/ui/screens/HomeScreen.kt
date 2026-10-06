@@ -29,7 +29,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.School
@@ -144,6 +145,7 @@ fun HomeScreen(
                 onDifficultyFilterClick = onDifficultyFilterClick,
                 onOpenAddWord = onOpenAddWord,
                 onOpenImport = onOpenImport,
+                onOpenHelp = onOpenHelp,
                 onOpenAbout = onOpenAbout
             )
         }
@@ -166,6 +168,7 @@ fun HomeScreen(
                 onOpenProgress = onOpenProgress,
                 onOpenSettings = onOpenSettings,
                 onOpenBackup = onOpenBackup,
+                onOpenHelp = onOpenHelp,
                 onOpenAbout = onOpenAbout
             )
         }
@@ -268,7 +271,7 @@ private fun ClaudeHomeContent(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.MenuBook,
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
                                 contentDescription = "تغییر پوسته",
                                 tint = colors.primary,
                                 modifier = Modifier.size(14.dp)
@@ -293,6 +296,38 @@ private fun ClaudeHomeContent(
                         Icon(
                             imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
                             contentDescription = "حالت شب/روز",
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // Settings
+                    IconButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "تنظیمات",
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // About
+                    IconButton(
+                        onClick = onOpenAbout,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "درباره ما",
                             tint = colors.onSurface,
                             modifier = Modifier.size(18.dp)
                         )
@@ -508,28 +543,52 @@ private fun ClaudeHomeContent(
             }
         }
 
-        // 5. دسترسی‌های سریع (Quick Actions - 2 clean buttons)
+        // 5. دسترسی‌های سریع (Quick Actions)
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ClaudeActionTile(
-                    title = "افزودن واژه",
-                    subtitle = "کارت جدید با ترجمه",
-                    icon = Icons.Default.Add,
-                    color = colors.primary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenAddWord
-                )
-                ClaudeActionTile(
-                    title = "کتابخانه واژگان",
-                    subtitle = "جستجو و فیلترها",
-                    icon = Icons.Default.MenuBook,
-                    color = colors.secondary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenLibrary
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ClaudeActionTile(
+                        title = "افزودن واژه",
+                        subtitle = "کارت جدید با ترجمه",
+                        icon = Icons.Default.Add,
+                        color = colors.primary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenAddWord
+                    )
+                    ClaudeActionTile(
+                        title = "کتابخانه واژگان",
+                        subtitle = "جستجو و فیلترها",
+                        icon = Icons.AutoMirrored.Filled.MenuBook,
+                        color = colors.secondary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenLibrary
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ClaudeActionTile(
+                        title = "ورود متنی واژگان",
+                        subtitle = "درون‌ریزی فایل",
+                        icon = Icons.Default.FileUpload,
+                        color = colors.warning,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenImport
+                    )
+                    ClaudeActionTile(
+                        title = "پیشرفت و آمار",
+                        subtitle = "تحلیل یادگیری و پشتیبان",
+                        icon = Icons.Default.BarChart,
+                        color = colors.info,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenProgress
+                    )
+                }
             }
         }
 
@@ -774,6 +833,38 @@ private fun GoogoliHomeContent(
                             modifier = Modifier.size(18.dp)
                         )
                     }
+
+                    // Settings
+                    IconButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "تنظیمات",
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // About
+                    IconButton(
+                        onClick = onOpenAbout,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "درباره ما",
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }
@@ -985,26 +1076,50 @@ private fun GoogoliHomeContent(
 
         // 5. دسترسی‌های سریع گوگولی (Quick Actions)
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                GoogoliActionTile(
-                    emoji = "➕",
-                    title = "افزودن واژه جدید",
-                    subtitle = "کارت شاداب با تلفظ",
-                    color = colors.primary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenAddWord
-                )
-                GoogoliActionTile(
-                    emoji = "📚",
-                    title = "کتابخانه واژگان",
-                    subtitle = "دیدن و جستجوی همه لغات",
-                    color = colors.secondary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenLibrary
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    GoogoliActionTile(
+                        emoji = "➕",
+                        title = "افزودن واژه جدید",
+                        subtitle = "کارت شاداب با تلفظ",
+                        color = colors.primary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenAddWord
+                    )
+                    GoogoliActionTile(
+                        emoji = "📚",
+                        title = "کتابخانه واژگان",
+                        subtitle = "دیدن و جستجوی همه لغات",
+                        color = colors.secondary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenLibrary
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    GoogoliActionTile(
+                        emoji = "📥",
+                        title = "ورود متنی واژگان",
+                        subtitle = "درون‌ریزی فایل",
+                        color = colors.warning,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenImport
+                    )
+                    GoogoliActionTile(
+                        emoji = "📊",
+                        title = "پیشرفت و آمار",
+                        subtitle = "تحلیل روند یادگیری",
+                        color = colors.info,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenProgress
+                    )
+                }
             }
         }
 
@@ -1122,6 +1237,7 @@ private fun GeminiHomeContent(
     onDifficultyFilterClick: (VocabularyDifficulty) -> Unit,
     onOpenAddWord: () -> Unit,
     onOpenImport: () -> Unit,
+    onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -1238,6 +1354,38 @@ private fun GeminiHomeContent(
                         Icon(
                             imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
                             contentDescription = "حالت شب/روز",
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // Help Button
+                    IconButton(
+                        onClick = onOpenHelp,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = "راهنما",
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // About Us
+                    IconButton(
+                        onClick = onOpenAbout,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "درباره ما",
                             tint = colors.onSurface,
                             modifier = Modifier.size(18.dp)
                         )
@@ -1486,6 +1634,7 @@ private fun GtpHomeContent(
     onOpenProgress: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenBackup: () -> Unit,
+    onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -1604,6 +1753,22 @@ private fun GtpHomeContent(
                             imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
                             contentDescription = "حالت شب/روز",
                             tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // Help Button
+                    IconButton(
+                        onClick = onOpenHelp,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = "راهنما",
+                            tint = colors.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -1812,7 +1977,7 @@ private fun GtpHomeContent(
                     ActionTile(
                         title = "کتابخانه واژگان",
                         subtitle = "${statistics.totalWords} واژه فعال",
-                        icon = Icons.Default.MenuBook,
+                        icon = Icons.AutoMirrored.Filled.MenuBook,
                         accentColor = colors.primary,
                         modifier = Modifier.weight(1f),
                         onClick = onOpenLibrary
@@ -1953,7 +2118,6 @@ fun StageMetricCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val dimensions = LocalYadinDimensions.current
     val colors = LocalYadinColors.current
 
     YadinCard(
