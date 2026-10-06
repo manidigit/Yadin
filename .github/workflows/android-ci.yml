@@ -22,27 +22,24 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: gradle
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.9'
-
-    - name: Grant execute permissions
+    - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
     - name: Materialize debug keystore
       run: |
         if [ ! -f debug.keystore ]; then
           if [ -f debug.keystore.base64 ]; then
-            base64 -d debug.keystore.base64 > debug.keystore
+            base64 --decode debug.keystore.base64 > debug.keystore 2>/dev/null || base64 -d debug.keystore.base64 > debug.keystore
           else
             keytool -genkeypair -v -keystore debug.keystore -storetype JKS -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
           fi
         fi
+        cp debug.keystore app/debug.keystore 2>/dev/null || true
 
-    - name: Run Tests & Build Debug APK
-      run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
+    - name: Build and Test with Gradle
+      run: ./gradlew testDebugUnitTest assembleDebug --no-daemon --stacktrace
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
