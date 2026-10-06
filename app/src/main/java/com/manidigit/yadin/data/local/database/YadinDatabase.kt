@@ -104,7 +104,7 @@ abstract class YadinDatabase : RoomDatabase() {
                     "yadin_database.db"
                 )
                     .addMigrations(MIGRATION_1_2)
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                 INSTANCE = instance
                 instance

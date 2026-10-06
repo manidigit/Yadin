@@ -39,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +59,27 @@ fun AboutScreen(onBack: () -> Unit) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     val context = LocalContext.current
+
+    val (currentVersionName, currentVersionCode) = remember(context) {
+        try {
+            val pInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+            val vName = pInfo.versionName ?: com.manidigit.yadin.BuildConfig.VERSION_NAME
+            val vCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                pInfo.longVersionCode.toString()
+            } else {
+                @Suppress("DEPRECATION")
+                pInfo.versionCode.toString()
+            }
+            Pair(vName, vCode)
+        } catch (_: Exception) {
+            Pair(com.manidigit.yadin.BuildConfig.VERSION_NAME, com.manidigit.yadin.BuildConfig.VERSION_CODE.toString())
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -142,7 +164,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     )
 
                     Text(
-                        text = "نسخه ${com.manidigit.yadin.BuildConfig.VERSION_NAME} (کد ساخت ${com.manidigit.yadin.BuildConfig.VERSION_CODE})",
+                        text = "نسخه $currentVersionName (کد ساخت $currentVersionCode)",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.primary,
                         fontWeight = FontWeight.SemiBold
@@ -176,7 +198,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
                     TechRow("سازنده / صاحب پروژه", "maniDigit")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("نسخه برنامه (Version)", "${com.manidigit.yadin.BuildConfig.VERSION_NAME} (کد ساخت ${com.manidigit.yadin.BuildConfig.VERSION_CODE})")
+                    TechRow("نسخه برنامه (Version)", "$currentVersionName (کد ساخت $currentVersionCode)")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
                     TechRow("موتور تکرار فاصله‌دار", "Daily → Weekly → Monthly → Learned")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
