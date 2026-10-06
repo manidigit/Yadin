@@ -65,7 +65,32 @@ abstract class YadinDatabase : RoomDatabase() {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 try {
-                    db.execSQL("ALTER TABLE contents DROP COLUMN pronunciation")
+                    db.execSQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS `contents_new` (
+                            `id` TEXT NOT NULL,
+                            `conceptId` TEXT NOT NULL,
+                            `languageCode` TEXT NOT NULL,
+                            `text` TEXT NOT NULL,
+                            `canonicalKey` TEXT NOT NULL,
+                            `note` TEXT,
+                            `translationIndex` INTEGER NOT NULL,
+                            PRIMARY KEY(`id`)
+                        )
+                        """.trimIndent()
+                    )
+                    db.execSQL(
+                        """
+                        INSERT INTO `contents_new` (`id`, `conceptId`, `languageCode`, `text`, `canonicalKey`, `note`, `translationIndex`)
+                        SELECT `id`, `conceptId`, `languageCode`, `text`, `canonicalKey`, `note`, `translationIndex` FROM `contents`
+                        """.trimIndent()
+                    )
+                    db.execSQL("DROP TABLE `contents`")
+                    db.execSQL("ALTER TABLE `contents_new` RENAME TO `contents`")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_conceptId` ON `contents` (`conceptId`)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_languageCode` ON `contents` (`languageCode`)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_canonicalKey` ON `contents` (`canonicalKey`)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_contents_languageCode_canonicalKey` ON `contents` (`languageCode`, `canonicalKey`)")
                 } catch (_: Exception) {
                 }
             }
