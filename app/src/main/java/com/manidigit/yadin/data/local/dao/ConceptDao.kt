@@ -10,6 +10,7 @@ import com.manidigit.yadin.data.local.entity.CategoryEntity
 import com.manidigit.yadin.data.local.entity.ConceptCategoryEntity
 import com.manidigit.yadin.data.local.entity.ConceptEntity
 import com.manidigit.yadin.data.local.entity.ContentEntity
+import com.manidigit.yadin.domain.model.CardDirection
 import kotlinx.coroutines.flow.Flow
 
 data class ConceptWithContents(
@@ -106,6 +107,25 @@ interface ConceptDao {
 
     @Query("DELETE FROM concepts WHERE id = :conceptId")
     suspend fun deleteConceptPermanently(conceptId: String)
+
+    @Query("""
+        SELECT DISTINCT c.* FROM concepts c
+        INNER JOIN contents cnt ON c.id = cnt.conceptId
+        LEFT JOIN learning_states ls ON (c.id = ls.conceptId AND ls.direction = :direction)
+        WHERE c.active = 1
+        AND (:query = '' OR cnt.text LIKE '%' || :query || '%' OR cnt.canonicalKey LIKE '%' || :query || '%' OR cnt.note LIKE '%' || :query || '%')
+        AND (:categoryId IS NULL OR c.categoryId = :categoryId)
+        AND (:stage IS NULL OR ls.stage = :stage)
+        ORDER BY c.updatedAt DESC
+        LIMIT :limit
+    """)
+    suspend fun searchConceptsFiltered(
+        query: String,
+        categoryId: String?,
+        stage: String?,
+        direction: CardDirection,
+        limit: Int = 300
+    ): List<ConceptEntity>
 
     @Query("""
         SELECT DISTINCT c.* FROM concepts c

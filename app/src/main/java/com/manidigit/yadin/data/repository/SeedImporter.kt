@@ -34,7 +34,7 @@ class SeedImporter(
     }
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
-        conceptDao.getTotalConceptCount() < 6400
+        conceptDao.getTotalConceptCount() == 0
     }
 
     suspend fun importSeedIfNeeded(onProgress: (Float, String) -> Unit) = withContext(Dispatchers.IO) {

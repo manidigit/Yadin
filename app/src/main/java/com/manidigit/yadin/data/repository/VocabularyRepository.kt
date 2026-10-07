@@ -171,6 +171,23 @@ class VocabularyRepository(
         )
     }
 
+    suspend fun searchFiltered(
+        query: String = "",
+        categoryId: String? = null,
+        stage: Stage? = null,
+        direction: CardDirection = CardDirection.NORMAL,
+        limit: Int = 300
+    ): List<WordDetail> {
+        val entities = conceptDao.searchConceptsFiltered(
+            query = query.trim(),
+            categoryId = categoryId,
+            stage = stage?.name,
+            direction = direction,
+            limit = limit
+        )
+        return entities.mapNotNull { getWordDetail(it.id) }
+    }
+
     suspend fun search(query: String, limit: Int = 100): List<WordDetail> {
         val normalized = query.trim()
         val entities = if (normalized.isEmpty()) {

@@ -109,8 +109,7 @@ interface LearningDao {
         INNER JOIN concepts c ON ls.conceptId = c.id
         WHERE c.active = 1
         AND ls.direction = :direction
-        AND ls.lastReviewedDay IS NOT NULL
-        AND ls.lastReviewedDay != :todayDayString
+        AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)
         AND ls.stage != 'LEARNED'
         AND (
             (ls.stage = 'DAILY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
@@ -148,7 +147,6 @@ interface LearningDao {
         FROM learning_states ls
         INNER JOIN concepts c ON ls.conceptId = c.id
         WHERE c.active = 1 AND ls.direction = :direction AND ls.stage = :stage
-        AND (:stage = 'LEARNED' OR ls.lastReviewedDay IS NOT NULL)
     """)
     fun getCountByStageFlow(direction: CardDirection, stage: Stage): Flow<Int>
 

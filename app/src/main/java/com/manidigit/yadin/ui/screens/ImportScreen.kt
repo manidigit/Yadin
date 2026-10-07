@@ -420,18 +420,24 @@ fun ImportScreen(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     PolicyChip(
-                        label = "ادغام ترجمه‌ها (MERGE)",
+                        label = "ادغام (MERGE)",
                         isSelected = selectedPolicy == DuplicatePolicy.MERGE,
                         modifier = Modifier.weight(1f),
                         onClick = { selectedPolicy = DuplicatePolicy.MERGE }
                     )
                     PolicyChip(
+                        label = "مدخل جدید (SEPARATE)",
+                        isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
+                        modifier = Modifier.weight(1.1f),
+                        onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
+                    )
+                    PolicyChip(
                         label = "صرف‌نظر (SKIP)",
                         isSelected = selectedPolicy == DuplicatePolicy.SKIP,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(0.9f),
                         onClick = { selectedPolicy = DuplicatePolicy.SKIP }
                     )
                     PolicyChip(

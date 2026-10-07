@@ -516,19 +516,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun performSearch(query: String, categoryId: String?, stage: Stage?) {
         viewModelScope.launch {
-            var results = if (query.trim().isEmpty()) {
-                vocabularyRepo.getRecentWords(80)
-            } else {
-                vocabularyRepo.search(query.trim(), 100)
-            }
-
-            if (categoryId != null) {
-                results = results.filter { it.concept.categoryId == categoryId }
-            }
-            if (stage != null) {
-                results = results.filter { it.normalLearning?.stage == stage }
-            }
-
+            val direction = appLanguageDirection.value
+            val results = vocabularyRepo.searchFiltered(
+                query = query,
+                categoryId = categoryId,
+                stage = stage,
+                direction = direction,
+                limit = 300
+            )
             _searchResults.value = results
         }
     }
