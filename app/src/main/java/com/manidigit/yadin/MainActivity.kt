@@ -372,12 +372,22 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 isImporting = isImporting,
                 importProgress = importProgress,
                 onParseText = { text -> viewModel.parseInputText(text) },
+                onResetParse = { viewModel.clearParseResult() },
+                onAddNewCategory = { name, onCreated ->
+                    viewModel.createCategory(name, onCreated)
+                },
                 onConfirmImport = { policy, categoryId ->
                     viewModel.executeImport(policy, categoryId) {
                         viewModel.navigateTo(Screen.Library)
                     }
                 },
-                onBack = { viewModel.navigateTo(Screen.Home) }
+                onBack = {
+                    if (parseResult != null) {
+                        viewModel.clearParseResult()
+                    } else {
+                        viewModel.navigateTo(Screen.Home)
+                    }
+                }
             )
         }
 

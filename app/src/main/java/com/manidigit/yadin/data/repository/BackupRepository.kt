@@ -27,6 +27,7 @@ import com.manidigit.yadin.domain.model.SessionItemState
 import com.manidigit.yadin.domain.model.SessionStatus
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.domain.time.ClockAndDayMath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -40,7 +41,9 @@ import java.util.UUID
 enum class BackupType {
     VOCABULARY,
     PROGRESS,
-    FULL
+    FULL,
+    VOCABULARY_EXCEL,
+    PROGRESS_EXCEL
 }
 
 class RestoreContext {
@@ -233,6 +236,209 @@ class BackupRepository(
         onProgress(1.0f, "تهیه پشتیبان با موفقیت انجام شد")
 
         root.toString(2)
+    }
+
+    suspend fun createBackupString(
+        type: BackupType = BackupType.FULL,
+        onProgress: (Float, String) -> Unit
+    ): String = withContext(Dispatchers.IO) {
+        when (type) {
+            BackupType.VOCABULARY_EXCEL -> createVocabularyExcelCsv(onProgress)
+            BackupType.PROGRESS_EXCEL -> createProgressExcelCsv(onProgress)
+            else -> createBackupJson(type, onProgress)
+        }
+    }
+
+    suspend fun createVocabularyExcelCsv(
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ): String = withContext(Dispatchers.IO) {
+        onProgress(0.1f, "در حال بارگذاری واژگان و دسته‌بندی‌ها...")
+        val categories = conceptDao.getAllCategories().associateBy { it.id }
+        val allConcepts = conceptDao.getAllConcepts().filter { it.active }
+        val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
+        val learningMap = learningDao.getAllLearningStates().associateBy { it.conceptId }
+        val diffMap = learningDao.getAllDifficultyStates().associateBy { it.conceptId }
+
+        onProgress(0.5f, "در حال ساخت سطرهای اکسل...")
+        val sb = StringBuilder()
+        // Prepend UTF-8 BOM so Microsoft Excel seamlessly opens Persian & Spanish characters without corruption
+        sb.append("\uFEFF")
+
+        // Header
+        sb.append(
+            listOf(
+                "ردیف",
+                "واژه یا عبارت (اسپانیایی)",
+                "ترجمه‌های فارسی",
+                "دسته‌بندی",
+                "مرحله لایتنر",
+                "سطح دشواری",
+                "توضیحات و یادداشت",
+                "شناسه واژه"
+            ).joinToString(",") { escapeCsv(it) }
+        ).append("\n")
+
+        allConcepts.forEachIndexed { index, concept ->
+            val contents = allContentsByConcept[concept.id] ?: emptyList()
+            val esText = contents.firstOrNull { it.languageCode == "es" }?.text ?: ""
+            val faTranslations = contents.filter { it.languageCode == "fa" }.map { it.text }.joinToString(" ، ")
+            val catName = categories[concept.categoryId]?.name ?: "عمومی"
+            val stage = learningMap[concept.id]?.stage?.let {
+                when (it) {
+                    Stage.DAILY -> "روزانه (Daily)"
+                    Stage.WEEKLY -> "هفتگی (Weekly)"
+                    Stage.MONTHLY -> "ماهانه (Monthly)"
+                    Stage.LEARNED -> "تثبیت‌شده (Learned)"
+                }
+            } ?: "آماده یادگیری"
+            val difficulty = diffMap[concept.id]?.current?.let {
+                when (it) {
+                    VocabularyDifficulty.EASY -> "آسان"
+                    VocabularyDifficulty.MEDIUM -> "متوسط"
+                    VocabularyDifficulty.HARD -> "سخت"
+                    VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
+                }
+            } ?: "متوسط"
+            val note = contents.firstOrNull { it.languageCode == "es" }?.note ?: ""
+
+            sb.append(
+                listOf(
+                    (index + 1).toString(),
+                    esText,
+                    faTranslations,
+                    catName,
+                    stage,
+                    difficulty,
+                    note,
+                    concept.id
+                ).joinToString(",") { escapeCsv(it) }
+            ).append("\n")
+        }
+
+        onProgress(1f, "خروجی اکسل واژگان آماده شد.")
+        sb.toString()
+    }
+
+    suspend fun createProgressExcelCsv(
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ): String = withContext(Dispatchers.IO) {
+        onProgress(0.1f, "در حال محاسبه رگبار و آمار جلسات...")
+        val today = ClockAndDayMath.todayDayString()
+        val distinctDays = reviewSessionDao.getDistinctReviewedDays()
+        val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
+        val dailyStats = reviewSessionDao.getRecentDailyStats(365)
+        val allHistory = reviewSessionDao.getAllHistory()
+        val allSessions = reviewSessionDao.getAllSessions()
+        val learningStates = learningDao.getAllLearningStates()
+        val difficultyStates = learningDao.getAllDifficultyStates()
+
+        val totalReviews = allHistory.size
+        val correctReviews = allHistory.count { it.isCorrect }
+        val wrongReviews = totalReviews - correctReviews
+        val accuracyPct = if (totalReviews > 0) String.format(Locale.US, "%.1f", (correctReviews.toDouble() / totalReviews) * 100) else "0.0"
+
+        val learnedCount = learningStates.count { it.stage == Stage.LEARNED }
+        val monthlyCount = learningStates.count { it.stage == Stage.MONTHLY }
+        val weeklyCount = learningStates.count { it.stage == Stage.WEEKLY }
+        val dailyCount = learningStates.count { it.stage == Stage.DAILY }
+
+        val easyCount = difficultyStates.count { it.current == VocabularyDifficulty.EASY }
+        val mediumCount = difficultyStates.count { it.current == VocabularyDifficulty.MEDIUM }
+        val hardCount = difficultyStates.count { it.current == VocabularyDifficulty.HARD }
+        val veryHardCount = difficultyStates.count { it.current == VocabularyDifficulty.VERY_HARD }
+
+        val contentsMap = conceptDao.getAllContents().groupBy { it.conceptId }
+
+        onProgress(0.5f, "در حال آماده‌سازی بخش‌های اکسل...")
+        val sb = StringBuilder()
+        sb.append("\uFEFF") // UTF-8 BOM
+
+        // SECTION 1: خلاصه شاخص‌ها و رگبار متوالی
+        sb.append(escapeCsv("=== گزارش پیشرفت و رگبار مطالعه یادین ===")).append("\n")
+        sb.append(listOf("شاخص کلیدی", "مقدار", "توضیحات آماری").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("روزهای رگبار متوالی (Streak)", "$streak روز", "تداوم زنجیره مطالعه بدون وقفه روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("کل مرورهای انجام شده", "$totalReviews بار", "مجموع کل کارت‌ها و سؤالات پاسخ داده شده").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("پاسخ‌های صحیح", "$correctReviews بار", "تعداد پاسخ‌های درست در جلسات").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("پاسخ‌های نادرست", "$wrongReviews بار", "تعداد پاسخ‌های اشتباه در جلسات").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("درصد دقت پاسخ‌ها", "$accuracyPct%", "نسبت پاسخ‌های درست به کل مرورها").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("تعداد کل جلسات تمرین", "${allSessions.size} جلسه", "مجموع جلسات فلش‌کارت و کوییز برگزار شده").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان تثبیت‌شده (حافظه بلندمدت)", "$learnedCount واژه", "مرحله چهارم جعبه لایتنر (تسلط کامل)").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان مرحله ماهانه", "$monthlyCount واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان مرحله هفتگی", "$weeklyCount واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان مرحله روزانه", "$dailyCount واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح آسان", "$easyCount واژه", "EASY").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح متوسط", "$mediumCount واژه", "MEDIUM").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح سخت", "$hardCount واژه", "HARD").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح خیلی سخت", "$veryHardCount واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append("\n")
+
+        // SECTION 2: آمار حجم مرور تمرین‌های روزانه
+        sb.append(escapeCsv("=== آمار حجم مرور تمرین‌های روزانه ===")).append("\n")
+        sb.append(listOf("ردیف", "تاریخ", "روز هفته", "حجم مرور (تعداد واژه)", "پاسخ درست", "پاسخ نادرست", "درصد موفقیت روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
+        dailyStats.forEachIndexed { idx, dayStat ->
+            val dayOfWeek = try {
+                val d = java.time.LocalDate.parse(dayStat.reviewedDay)
+                when (d.dayOfWeek) {
+                    java.time.DayOfWeek.SATURDAY -> "شنبه"
+                    java.time.DayOfWeek.SUNDAY -> "یکشنبه"
+                    java.time.DayOfWeek.MONDAY -> "دوشنبه"
+                    java.time.DayOfWeek.TUESDAY -> "سه‌شنبه"
+                    java.time.DayOfWeek.WEDNESDAY -> "چهارشنبه"
+                    java.time.DayOfWeek.THURSDAY -> "پنج‌شنبه"
+                    java.time.DayOfWeek.FRIDAY -> "جمعه"
+                    else -> ""
+                }
+            } catch (_: Exception) { "" }
+            val wrongCount = dayStat.totalCount - dayStat.correctCount
+            val dayPct = if (dayStat.totalCount > 0) String.format(Locale.US, "%.1f", (dayStat.correctCount.toDouble() / dayStat.totalCount) * 100) else "0.0"
+            sb.append(listOf(
+                (idx + 1).toString(),
+                dayStat.reviewedDay,
+                dayOfWeek,
+                dayStat.totalCount.toString(),
+                dayStat.correctCount.toString(),
+                wrongCount.toString(),
+                "$dayPct%"
+            ).joinToString(",") { escapeCsv(it) }).append("\n")
+        }
+        sb.append("\n")
+
+        // SECTION 3: تاریخچه آخرین تمرین‌ها (Recent Item History - last 200 items)
+        sb.append(escapeCsv("=== آخرین تمرین‌ها و پاسخ‌ها ===")).append("\n")
+        sb.append(listOf("ردیف", "تاریخ و زمان", "واژه (اسپانیایی)", "جهت تمرین", "نوع تمرین", "نتیجه", "مرحله قبل").joinToString(",") { escapeCsv(it) }).append("\n")
+        allHistory.takeLast(200).reversed().forEachIndexed { idx, h ->
+            val wordText = contentsMap[h.conceptId]?.firstOrNull { it.languageCode == "es" }?.text ?: ""
+            val dirText = if (h.direction == CardDirection.NORMAL) "اسپانیایی به فارسی" else "فارسی به اسپانیایی"
+            val modeText = if (h.mode == ReviewMode.QUIZ) "آزمون ۴ گزینه‌ای" else "فلش‌کارت"
+            val resultText = if (h.isCorrect) "صحیح" else "غلط"
+            val stageText = when (h.stageBefore) {
+                Stage.DAILY -> "روزانه"
+                Stage.WEEKLY -> "هفتگی"
+                Stage.MONTHLY -> "ماهانه"
+                Stage.LEARNED -> "تثبیت‌شده"
+            }
+            val formattedDate = try {
+                SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(h.reviewedAt))
+            } catch (_: Exception) {
+                h.reviewedAt.toString()
+            }
+            sb.append(listOf(
+                (idx + 1).toString(),
+                formattedDate,
+                wordText,
+                dirText,
+                modeText,
+                resultText,
+                stageText
+            ).joinToString(",") { escapeCsv(it) }).append("\n")
+        }
+
+        onProgress(1f, "خروجی اکسل پیشرفت و حجم مرورها آماده شد.")
+        sb.toString()
+    }
+
+    private fun escapeCsv(value: String): String {
+        return "\"" + value.replace("\"", "\"\"") + "\""
     }
 
     suspend fun saveBackupToFile(jsonString: String, filename: String): File = withContext(Dispatchers.IO) {

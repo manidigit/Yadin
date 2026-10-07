@@ -91,7 +91,7 @@ fun BackupScreen(
     val dimensions = LocalYadinDimensions.current
     val clipboardManager = LocalClipboardManager.current
 
-    var selectedBackupType by remember { mutableStateOf(BackupType.FULL) }
+    var selectedBackupType by remember { mutableStateOf(BackupType.VOCABULARY_EXCEL) }
     var loadedJsonContent by remember { mutableStateOf<String?>(null) }
     var loadedFileName by remember { mutableStateOf<String?>(null) }
     var loadedFileSize by remember { mutableStateOf<String?>(null) }
@@ -99,8 +99,16 @@ fun BackupScreen(
     var isReplaceMode by remember { mutableStateOf(false) }
     var activeTab by remember { mutableStateOf(0) } // 0 = Export, 1 = Restore
 
-    val exportDocumentLauncher = rememberLauncherForActivityResult(
+    val exportJsonLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null && onExportBackupToUri != null) {
+            onExportBackupToUri(selectedBackupType, uri)
+        }
+    }
+
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
         if (uri != null && onExportBackupToUri != null) {
             onExportBackupToUri(selectedBackupType, uri)
@@ -363,30 +371,66 @@ fun BackupScreen(
             if (activeTab == 0) {
                 // EXPORT TAB
                 Text(
-                    text = "نوع فایل پشتیبان",
+                    text = "خروجی‌های تحلیلی اکسل (Excel / CSV)",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary
+                )
+                Text(
+                    text = "فرمت CSV استاندارد با کدگذاری UTF-8 BOM جهت باز شدن مستقیم و بی‌نقص حروف فارسی و اسپانیایی در اکسل و Google Sheets:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BackupTypeOption(
+                        type = BackupType.VOCABULARY_EXCEL,
+                        title = "خروجی اکسل واژگان و دسته‌بندی‌ها (Excel)",
+                        description = "شامل کلمات اسپانیایی، ترجمه‌های فارسی، دسته‌بندی موضوعی، مرحله جعبه لایتنر، سطح دشواری و یادداشت‌ها",
+                        isSelected = selectedBackupType == BackupType.VOCABULARY_EXCEL,
+                        onClick = { selectedBackupType = BackupType.VOCABULARY_EXCEL }
+                    )
+                    BackupTypeOption(
+                        type = BackupType.PROGRESS_EXCEL,
+                        title = "خروجی اکسل سوابق پیشرفت، رگبار و حجم مرور (Excel)",
+                        description = "شامل روزهای رگبار متوالی (Streak)، آمار تفکیکی حجم مرور تمرین‌های روزانه، درصد موفقیت و سوابق جلسات لایتنر",
+                        isSelected = selectedBackupType == BackupType.PROGRESS_EXCEL,
+                        onClick = { selectedBackupType = BackupType.PROGRESS_EXCEL }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "نسخه‌های پشتیبان سیستمی (JSON Schema v2)",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
+                )
+                Text(
+                    text = "قالب رسمی دیتابیس یادین جهت انتقال به گوشی دیگر یا بازگردانی کامل اطلاعات:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     BackupTypeOption(
                         type = BackupType.FULL,
-                        title = "پشتیبان کامل (FULL)",
-                        description = "شامل همه واژگان، ترجمه‌ها، مراحل لایتنر، زنجیره روزانه و تاریخچه مرورها",
+                        title = "پشتیبان کامل دیتابیس (JSON - FULL)",
+                        description = "شامل همه واژگان، ترجمه‌ها، مراحل لایتنر، زنجیره روزانه، دستاوردها و تاریخچه مرورها",
                         isSelected = selectedBackupType == BackupType.FULL,
                         onClick = { selectedBackupType = BackupType.FULL }
                     )
                     BackupTypeOption(
                         type = BackupType.VOCABULARY,
-                        title = "فقط بانک واژگان (VOCABULARY)",
+                        title = "فقط ساختار واژگان (JSON - VOCABULARY)",
                         description = "شامل لغات، معانی و دسته‌بندی‌ها بدون تاریخچه تمرین‌های کاربر",
                         isSelected = selectedBackupType == BackupType.VOCABULARY,
                         onClick = { selectedBackupType = BackupType.VOCABULARY }
                     )
                     BackupTypeOption(
                         type = BackupType.PROGRESS,
-                        title = "فقط سوابق پیشرفت (PROGRESS)",
+                        title = "فقط سوابق لایتنر (JSON - PROGRESS)",
                         description = "شامل سطوح سختی، تاریخچه جلسات و مراحل تکرار فاصله‌دار",
                         isSelected = selectedBackupType == BackupType.PROGRESS,
                         onClick = { selectedBackupType = BackupType.PROGRESS }
@@ -395,11 +439,22 @@ fun BackupScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
+                val isExcel = (selectedBackupType == BackupType.VOCABULARY_EXCEL || selectedBackupType == BackupType.PROGRESS_EXCEL)
+
                 // 1. SAF Storage Picker Export (User selects destination folder and name)
                 Button(
                     onClick = {
-                        val fileName = "yadin_backup_${selectedBackupType.name.lowercase()}_${System.currentTimeMillis()}.json"
-                        exportDocumentLauncher.launch(fileName)
+                        if (isExcel) {
+                            val fileName = if (selectedBackupType == BackupType.VOCABULARY_EXCEL) {
+                                "yadin_vocabularies_excel_${System.currentTimeMillis()}.csv"
+                            } else {
+                                "yadin_progress_excel_${System.currentTimeMillis()}.csv"
+                            }
+                            exportCsvLauncher.launch(fileName)
+                        } else {
+                            val fileName = "yadin_backup_${selectedBackupType.name.lowercase()}_${System.currentTimeMillis()}.json"
+                            exportJsonLauncher.launch(fileName)
+                        }
                     },
                     enabled = !isProcessing,
                     modifier = Modifier
@@ -413,7 +468,10 @@ fun BackupScreen(
                 ) {
                     Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("انتخاب پوشه و ذخیره فایل پشتیبان در دستگاه", fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isExcel) "انتخاب پوشه و ذخیره فایل اکسل در دستگاه" else "انتخاب پوشه و ذخیره فایل پشتیبان در دستگاه",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 // 2. Fallback quick save to internal storage
@@ -427,7 +485,10 @@ fun BackupScreen(
                 ) {
                     Icon(imageVector = Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("ذخیره سریع در حافظه داخلی برنامه", fontSize = 13.sp)
+                    Text(
+                        if (isExcel) "ذخیره سریع اکسل در حافظه داخلی برنامه" else "ذخیره سریع در حافظه داخلی برنامه",
+                        fontSize = 13.sp
+                    )
                 }
             } else {
                 // RESTORE TAB

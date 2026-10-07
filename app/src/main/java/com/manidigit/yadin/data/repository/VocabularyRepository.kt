@@ -56,6 +56,20 @@ class VocabularyRepository(
         }
     }
 
+    suspend fun addCategory(name: String): Category {
+        val cleanName = name.trim()
+        val all = conceptDao.getAllCategories()
+        val existing = all.firstOrNull { it.name.equals(cleanName, ignoreCase = true) }
+        if (existing != null) {
+            return Category(id = existing.id, name = existing.name, sortOrder = existing.sortOrder, isDefault = existing.isDefault)
+        }
+        val id = UUID.randomUUID().toString()
+        val maxSort = all.maxOfOrNull { it.sortOrder } ?: 0
+        val entity = CategoryEntity(id = id, name = cleanName, sortOrder = maxSort + 1, isDefault = false)
+        conceptDao.insertCategory(entity)
+        return Category(id = id, name = cleanName, sortOrder = maxSort + 1, isDefault = false)
+    }
+
     fun getAllActiveConceptsFlow(): Flow<List<ConceptEntity>> {
         return conceptDao.getAllActiveConceptsFlow()
     }

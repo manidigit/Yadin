@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Category
@@ -28,14 +30,19 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Work
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -80,15 +87,73 @@ fun ExposedCategoryDropdown(
     selectedCategoryId: String?,
     onSelectCategory: (String?) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "دسته‌بندی موضوعی"
+    label: String = "دسته‌بندی موضوعی",
+    onAddNewCategory: ((String) -> Unit)? = null
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     var expanded by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var newCategoryText by remember { mutableStateOf("") }
 
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
-    val displayText = selectedCategory?.name ?: "همه دسته‌ها"
+    val displayText = selectedCategory?.name ?: "همه دسته‌ها (عمومی)"
     val icon = getCategoryIcon(selectedCategory?.name)
+
+    if (showAddDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = {
+                Text(
+                    text = "ایجاد دسته‌بندی موضوعی جدید",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "نام دسته‌بندی مورد نظر خود را وارد کنید:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = newCategoryText,
+                        onValueChange = { newCategoryText = it },
+                        label = { Text("عنوان دسته‌بندی") },
+                        placeholder = { Text("مثال: پزشکی، ورزش، فناوری") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val name = newCategoryText.trim()
+                        if (name.isNotBlank()) {
+                            onAddNewCategory?.invoke(name)
+                            showAddDialog = false
+                            newCategoryText = ""
+                        }
+                    },
+                    enabled = newCategoryText.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary
+                    )
+                ) {
+                    Text("ثبت و انتخاب", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showAddDialog = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
+    }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -147,7 +212,7 @@ fun ExposedCategoryDropdown(
                             tint = colors.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
-                        Text("همه دسته‌ها", fontWeight = if (selectedCategoryId == null) FontWeight.Bold else FontWeight.Normal)
+                        Text("همه دسته‌ها (عمومی)", fontWeight = if (selectedCategoryId == null) FontWeight.Bold else FontWeight.Normal)
                     }
                 },
                 onClick = {
@@ -195,6 +260,34 @@ fun ExposedCategoryDropdown(
                     onClick = {
                         onSelectCategory(cat.id)
                         expanded = false
+                    }
+                )
+            }
+
+            if (onAddNewCategory != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "+ ایجاد دسته‌بندی جدید...",
+                                color = colors.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    onClick = {
+                        expanded = false
+                        showAddDialog = true
                     }
                 )
             }

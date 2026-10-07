@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,6 +61,8 @@ fun ImportScreen(
     isImporting: Boolean,
     importProgress: Float,
     onParseText: (String) -> Unit,
+    onResetParse: (() -> Unit)? = null,
+    onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
     onConfirmImport: (DuplicatePolicy, String?) -> Unit,
     onBack: () -> Unit
 ) {
@@ -79,6 +82,7 @@ fun ImportScreen(
     }
     var selectedPolicy by remember { mutableStateOf(DuplicatePolicy.MERGE) }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
 
     Column(
         modifier = Modifier
@@ -98,7 +102,13 @@ fun ImportScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 IconButton(
-                    onClick = onBack,
+                    onClick = {
+                        if (parseResult != null && onResetParse != null) {
+                            onResetParse()
+                        } else {
+                            onBack()
+                        }
+                    },
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
@@ -122,9 +132,22 @@ fun ImportScreen(
             if (parseResult == null) {
                 // Input area
                 Text(
-                    text = "متن واژگان را در کادر زیر جای‌گذاری کنید (پشتیبانی از قالب‌های دو نقطه، خط تیره، تب و چند ترجمه‌ای):",
+                    text = "متن واژگان را در کادر زیر وارد کنید (پشتیبانی از قالب‌های دو نقطه، خط تیره، تب و چند ترجمه‌ای):",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant
+                )
+
+                // Category selection BEFORE parsing
+                ExposedCategoryDropdown(
+                    categories = categories,
+                    selectedCategoryId = selectedCategoryId,
+                    onSelectCategory = { selectedCategoryId = it },
+                    onAddNewCategory = { newName ->
+                        onAddNewCategory?.invoke(newName) { newId ->
+                            selectedCategoryId = newId
+                        }
+                    },
+                    label = "دسته‌بندی موضوعی برای این واژگان (اختیاری)"
                 )
 
                 OutlinedTextField(
@@ -165,11 +188,14 @@ fun ImportScreen(
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
-                    Text(
-                        text = "هشدارهای پارسر: ${parseResult.warnings.size}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (parseResult.warnings.isNotEmpty()) colors.warning else colors.success
-                    )
+                    if (onResetParse != null) {
+                        OutlinedButton(
+                            onClick = onResetParse,
+                            shape = RoundedCornerShape(dimensions.cornerSmall)
+                        ) {
+                            Text("ویرایش مجدد متن", fontSize = 11.sp)
+                        }
+                    }
                 }
 
                 // Category selection for imported words
@@ -177,6 +203,11 @@ fun ImportScreen(
                     categories = categories,
                     selectedCategoryId = selectedCategoryId,
                     onSelectCategory = { selectedCategoryId = it },
+                    onAddNewCategory = { newName ->
+                        onAddNewCategory?.invoke(newName) { newId ->
+                            selectedCategoryId = newId
+                        }
+                    },
                     label = "دسته‌بندی موضوعی واژگان واردشده (اختیاری)"
                 )
 
@@ -219,7 +250,10 @@ fun ImportScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(parseResult.entries) { entry ->
-                        ParsedEntryCard(entry = entry)
+                        ParsedEntryCard(
+                            entry = entry,
+                            categoryName = selectedCategory?.name
+                        )
                     }
                 }
 
@@ -295,7 +329,10 @@ fun PolicyChip(
 }
 
 @Composable
-fun ParsedEntryCard(entry: ParsedEntry) {
+fun ParsedEntryCard(
+    entry: ParsedEntry,
+    categoryName: String? = null
+) {
     val colors = LocalYadinColors.current
 
     YadinCard(
@@ -310,12 +347,32 @@ fun ParsedEntryCard(entry: ParsedEntry) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = entry.sourceText,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = entry.sourceText,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                    if (!categoryName.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(colors.primary.copy(alpha = 0.12f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = categoryName,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.primary
+                            )
+                        }
+                    }
+                }
                 Text(
                     text = entry.translations.joinToString("، "),
                     style = MaterialTheme.typography.bodyMedium,
