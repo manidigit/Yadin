@@ -308,7 +308,7 @@ fun StatCard(
 @Composable
 fun SpeakButton(
     text: String,
-    languageCode: String = "es",
+    languageCode: String? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current

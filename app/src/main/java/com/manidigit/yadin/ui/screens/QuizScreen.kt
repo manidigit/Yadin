@@ -276,9 +276,8 @@ fun QuizScreen(
                                 )
                             }
 
-                            if (q.direction == CardDirection.NORMAL) {
-                                SpeakButton(text = q.promptText, languageCode = "es")
-                            }
+                            val promptLang = if (q.direction == CardDirection.NORMAL) "es" else "fa"
+                            SpeakButton(text = q.promptText, languageCode = promptLang)
                         }
                     }
 

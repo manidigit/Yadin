@@ -48,48 +48,6 @@ data class ReviewFilters(
     val maxCards: Int = 20
 )
 
-private val QUIZ_TOKEN_SPLIT = Regex("[^\\p{L}\\p{N}]+")
-
-private fun normalizeQuiz(text: String): String =
-    Normalizer.normalize(text.trim(), Normalizer.Form.NFC).lowercase(Locale.ROOT)
-
-private fun levenshteinSimilarity(a: String, b: String): Double {
-    if (a == b) return 1.0
-    if (a.isEmpty() || b.isEmpty()) return 0.0
-    var previous = IntArray(b.length + 1) { it }
-    var current = IntArray(b.length + 1)
-    for (i in a.indices) {
-        current[0] = i + 1
-        for (j in b.indices) {
-            val sub = previous[j] + if (a[i] == b[j]) 0 else 1
-            current[j + 1] = minOf(previous[j + 1] + 1, current[j] + 1, sub)
-        }
-        val tmp = previous
-        previous = current
-        current = tmp
-    }
-    val distance = previous[b.length]
-    return 1.0 - (distance.toDouble() / maxOf(a.length, b.length).toDouble()).coerceIn(0.0, 1.0)
-}
-
-private fun quizLexicalSimilarity(a: String, b: String): Double {
-    val normA = normalizeQuiz(a)
-    val normB = normalizeQuiz(b)
-    if (normA == normB) return 1.0
-    val tokensA = normA.split(QUIZ_TOKEN_SPLIT).filter { it.isNotBlank() }.toSet()
-    val tokensB = normB.split(QUIZ_TOKEN_SPLIT).filter { it.isNotBlank() }.toSet()
-    val tokenSim = if (tokensA.isEmpty() && tokensB.isEmpty()) 1.0
-    else if (tokensA.isEmpty() || tokensB.isEmpty()) 0.0
-    else tokensA.intersect(tokensB).size.toDouble() / tokensA.union(tokensB).size.toDouble()
-
-    val levSim = levenshteinSimilarity(normA, normB)
-    return (tokenSim * 0.5 + levSim * 0.5).coerceIn(0.0, 1.0)
-}
-
-private fun diffDistance(d1: VocabularyDifficulty, d2: VocabularyDifficulty): Int {
-    return kotlin.math.abs(d1.ordinal - d2.ordinal)
-}
-
 class ReviewRepository(
     private val conceptDao: ConceptDao,
     private val learningDao: LearningDao,
@@ -314,12 +272,14 @@ class ReviewRepository(
             )
 
             val scoredCandidates = candidatesToScore.map { cand ->
-                val lexSim = quizLexicalSimilarity(correctAnswer, cand.text)
-                val catMatch = if (cand.categoryId != null && cand.categoryId == categoryMap[card.conceptId]) 1.0 else 0.0
-                val diffDist = diffDistance(card.difficulty, cand.difficulty)
-                val diffBonus = (3 - diffDist).coerceAtLeast(0) / 3.0
-
-                val confusability = (lexSim * 0.4 + catMatch * 0.35 + diffBonus * 0.25).coerceIn(0.0, 1.0)
+                val confusability = QuizDistractorScorer.calculateConfusability(
+                    correctAnswer = correctAnswer,
+                    candidateText = cand.text,
+                    correctCategory = categoryMap[card.conceptId],
+                    candidateCategory = cand.categoryId,
+                    correctDifficulty = card.difficulty,
+                    candidateDifficulty = cand.difficulty
+                )
                 ScoredCandidate(cand, confusability)
             }
 

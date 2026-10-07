@@ -197,11 +197,8 @@ fun FlashcardScreen(
                             } else {
                                 Spacer(modifier = Modifier.size(1.dp))
                             }
-                            if (card.direction == CardDirection.NORMAL) {
-                                SpeakButton(text = card.sourceText, languageCode = "es")
-                            } else {
-                                Spacer(modifier = Modifier.size(1.dp))
-                            }
+                            val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
+                            SpeakButton(text = card.sourceText, languageCode = frontLang)
                         }
 
                         Column(
@@ -302,9 +299,8 @@ fun FlashcardScreen(
                                                 textAlign = TextAlign.Center
                                             )
                                         }
-                                        if (card.direction == CardDirection.REVERSE) {
-                                            SpeakButton(text = trans, languageCode = "es")
-                                        }
+                                        val backLang = if (card.direction == CardDirection.NORMAL) "fa" else "es"
+                                        SpeakButton(text = trans, languageCode = backLang)
                                     }
                                 }
                             }

@@ -136,7 +136,10 @@ fun WordDetailScreen(
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
-                        SpeakButton(text = word.sourceContent.text, languageCode = "es")
+                        SpeakButton(
+                            text = word.sourceContent.text,
+                            languageCode = word.sourceContent.languageCode
+                        )
                     }
 
                     if (word.categories.isNotEmpty()) {
@@ -177,20 +180,31 @@ fun WordDetailScreen(
                     )
                     word.targetContents.forEach { content ->
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(colors.primary)
-                            )
-                            Text(
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(colors.primary)
+                                )
+                                Text(
+                                    text = content.text,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.onSurface
+                                )
+                            }
+                            SpeakButton(
                                 text = content.text,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.onSurface
+                                languageCode = content.languageCode.ifBlank { "fa" }
                             )
                         }
                     }

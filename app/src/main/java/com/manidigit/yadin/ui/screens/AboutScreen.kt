@@ -208,7 +208,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
                     TechRow("پایگاه داده محلی", "Android Room SQLite (Schema v2)")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("سیستم طراحی پوسته", "ThemeDesign v3.3-ADAPTIVE (GTP & Gemini)")
+                    TechRow("سیستم طراحی پوسته", "چهارگانه تطبیقی (Claude, Googoli, Gemini, GTP)")
                 }
             }
 
@@ -225,7 +225,7 @@ fun AboutScreen(onBack: () -> Unit) {
                         .background(colors.surface)
                         .border(1.dp, colors.outline.copy(alpha = 0.4f), RoundedCornerShape(dimensions.cornerSmall))
                         .clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/manidigit/FlashLearn"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/manidigit/Yadin"))
                             context.startActivity(intent)
                         }
                         .padding(14.dp),
