@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.data.local.database.YadinDatabase
+import com.manidigit.yadin.data.repository.BackupExportFormat
+import com.manidigit.yadin.data.repository.BackupOptions
 import com.manidigit.yadin.data.repository.BackupRepository
 import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.data.repository.ReviewFilters
@@ -167,6 +169,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     // Backup State
+    private val _backupOptions = MutableStateFlow(BackupOptions())
+    val backupOptions: StateFlow<BackupOptions> = _backupOptions.asStateFlow()
+
     private val _isBackupProcessing = MutableStateFlow(false)
     val isBackupProcessing: StateFlow<Boolean> = _isBackupProcessing.asStateFlow()
 
@@ -613,7 +618,112 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _progressDirection.value = direction
     }
 
-    // Backup & Restore
+    // Backup & Restore Options
+    fun updateBackupOptions(options: BackupOptions) {
+        _backupOptions.value = options
+    }
+
+    fun setFullBackup(enabled: Boolean) {
+        _backupOptions.value = if (enabled) {
+            BackupOptions(
+                fullBackup = true,
+                includeVocabulary = true,
+                includeCategories = true,
+                includeDifficulty = true,
+                includeStreakAndProgress = true,
+                includeReviewStats = true,
+                includeProcessHistory = true,
+                includeSettings = true
+            )
+        } else {
+            _backupOptions.value.copy(fullBackup = false)
+        }
+    }
+
+    fun toggleBackupOption(key: String, value: Boolean) {
+        val cur = _backupOptions.value
+        val updated = when (key) {
+            "vocabulary" -> cur.copy(includeVocabulary = value)
+            "categories" -> cur.copy(includeCategories = value)
+            "difficulty" -> cur.copy(includeDifficulty = value)
+            "streak" -> cur.copy(includeStreakAndProgress = value)
+            "reviewStats" -> cur.copy(includeReviewStats = value)
+            "process" -> cur.copy(includeProcessHistory = value)
+            "settings" -> cur.copy(includeSettings = value)
+            else -> cur
+        }
+        val isAll = updated.includeVocabulary && updated.includeCategories &&
+                    updated.includeDifficulty && updated.includeStreakAndProgress &&
+                    updated.includeReviewStats && updated.includeProcessHistory &&
+                    updated.includeSettings
+        _backupOptions.value = updated.copy(fullBackup = isAll)
+    }
+
+    fun exportCustomBackupToUri(format: BackupExportFormat, uri: android.net.Uri, options: BackupOptions = _backupOptions.value) {
+        viewModelScope.launch {
+            _isBackupProcessing.value = true
+            _isBackupError.value = false
+            _backupProgress.value = 0f
+            val isExcel = (format != BackupExportFormat.JSON)
+            _backupProgressMessage.value = if (isExcel) "در حال تولید فایل اکسل..." else "در حال ایجاد فایل پشتیبان..."
+            try {
+                val content = backupRepo.createBackupByFormat(format, options) { p, msg ->
+                    _backupProgress.value = p
+                    _backupProgressMessage.value = msg
+                }
+                val context = getApplication<Application>()
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(content.toByteArray(Charsets.UTF_8))
+                    outputStream.flush()
+                }
+                _backupLastResult.value = if (isExcel) {
+                    "فایل اکسل (CSV) با موفقیت در مسیر انتخاب‌شده ذخیره شد."
+                } else {
+                    "فایل پشتیبان با موفقیت در مسیر انتخاب‌شده ذخیره شد."
+                }
+                _isBackupError.value = false
+            } catch (e: Exception) {
+                _backupLastResult.value = "خطا در ذخیره فایل: ${e.message}"
+                _isBackupError.value = true
+            } finally {
+                _isBackupProcessing.value = false
+            }
+        }
+    }
+
+    fun exportCustomBackup(format: BackupExportFormat, options: BackupOptions = _backupOptions.value) {
+        viewModelScope.launch {
+            _isBackupProcessing.value = true
+            _isBackupError.value = false
+            _backupProgress.value = 0f
+            val isExcel = (format != BackupExportFormat.JSON)
+            _backupProgressMessage.value = if (isExcel) "در حال تولید فایل اکسل..." else "در حال ایجاد فایل پشتیبان..."
+            try {
+                val content = backupRepo.createBackupByFormat(format, options) { p, msg ->
+                    _backupProgress.value = p
+                    _backupProgressMessage.value = msg
+                }
+                val ext = if (isExcel) "csv" else "json"
+                val prefix = when (format) {
+                    BackupExportFormat.JSON -> if (options.fullBackup) "yadin-full-backup" else "yadin-custom-backup"
+                    BackupExportFormat.EXCEL_CSV_VOCABULARY -> "yadin-vocabulary"
+                    BackupExportFormat.EXCEL_CSV_PROGRESS -> "yadin-progress-report"
+                    BackupExportFormat.EXCEL_CSV_COMPLETE -> "yadin-master-export"
+                }
+                val fileName = "$prefix-${System.currentTimeMillis()}.$ext"
+                val file = backupRepo.saveBackupToFile(content, fileName)
+                _backupLastResult.value = "فایل با موفقیت ذخیره شد: ${file.name}"
+                _isBackupError.value = false
+            } catch (e: Exception) {
+                _backupLastResult.value = "خطا در تهیه خروجی: ${e.message}"
+                _isBackupError.value = true
+            } finally {
+                _isBackupProcessing.value = false
+            }
+        }
+    }
+
+    // Backup & Restore (Legacy compatible overloads)
     fun exportBackupToUri(type: BackupType, uri: android.net.Uri) {
         viewModelScope.launch {
             _isBackupProcessing.value = true

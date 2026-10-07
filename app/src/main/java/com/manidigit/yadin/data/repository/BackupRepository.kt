@@ -43,7 +43,26 @@ enum class BackupType {
     PROGRESS,
     FULL,
     VOCABULARY_EXCEL,
-    PROGRESS_EXCEL
+    PROGRESS_EXCEL,
+    CUSTOM
+}
+
+data class BackupOptions(
+    val fullBackup: Boolean = true,
+    val includeVocabulary: Boolean = true,
+    val includeCategories: Boolean = true,
+    val includeDifficulty: Boolean = true,
+    val includeStreakAndProgress: Boolean = true,
+    val includeReviewStats: Boolean = true,
+    val includeProcessHistory: Boolean = true,
+    val includeSettings: Boolean = true
+)
+
+enum class BackupExportFormat {
+    JSON,
+    EXCEL_CSV_VOCABULARY,
+    EXCEL_CSV_PROGRESS,
+    EXCEL_CSV_COMPLETE
 }
 
 class RestoreContext {
@@ -68,18 +87,58 @@ class BackupRepository(
         type: BackupType = BackupType.FULL,
         onProgress: (Float, String) -> Unit
     ): String = withContext(Dispatchers.IO) {
-        onProgress(0.1f, "در حال آماده‌سازی نسخه پشتیبان...")
+        val options = when (type) {
+            BackupType.VOCABULARY -> BackupOptions(
+                fullBackup = false,
+                includeVocabulary = true,
+                includeCategories = true,
+                includeDifficulty = false,
+                includeStreakAndProgress = false,
+                includeReviewStats = false,
+                includeProcessHistory = false,
+                includeSettings = false
+            )
+            BackupType.PROGRESS -> BackupOptions(
+                fullBackup = false,
+                includeVocabulary = false,
+                includeCategories = false,
+                includeDifficulty = true,
+                includeStreakAndProgress = true,
+                includeReviewStats = true,
+                includeProcessHistory = true,
+                includeSettings = true
+            )
+            else -> BackupOptions(fullBackup = true)
+        }
+        createBackupJsonWithOptions(options, onProgress)
+    }
+
+    suspend fun createBackupJsonWithOptions(
+        options: BackupOptions,
+        onProgress: (Float, String) -> Unit
+    ): String = withContext(Dispatchers.IO) {
+        onProgress(0.1f, "در حال آماده‌سازی داده‌های پشتیبان...")
 
         val root = JSONObject()
         root.put("format", "yadin-backup")
         root.put("schemaVersion", 2)
         root.put("exportedAt", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date()))
-        root.put("backupType", type.name)
+        root.put("backupType", if (options.fullBackup) "FULL" else "CUSTOM")
+
+        val optsJson = JSONObject()
+        optsJson.put("includeVocabulary", options.includeVocabulary)
+        optsJson.put("includeCategories", options.includeCategories)
+        optsJson.put("includeDifficulty", options.includeDifficulty)
+        optsJson.put("includeStreakAndProgress", options.includeStreakAndProgress)
+        optsJson.put("includeReviewStats", options.includeReviewStats)
+        optsJson.put("includeProcessHistory", options.includeProcessHistory)
+        optsJson.put("includeSettings", options.includeSettings)
+        root.put("options", optsJson)
 
         val data = JSONObject()
 
-        if (type == BackupType.VOCABULARY || type == BackupType.FULL) {
-            onProgress(0.25f, "استخراج واژگان و دسته‌بندی‌ها...")
+        if (options.includeCategories || options.includeVocabulary) {
+            onProgress(0.2f, "استخراج دسته‌بندی‌ها...")
             val categories = conceptDao.getAllCategories()
             val catArray = JSONArray()
             categories.forEach { cat ->
@@ -91,8 +150,10 @@ class BackupRepository(
                 catArray.put(c)
             }
             data.put("categories", catArray)
+        }
 
-            // Concepts and contents (Batch loaded - 0 N+1 queries)
+        if (options.includeVocabulary) {
+            onProgress(0.35f, "استخراج واژگان و ترجمه‌ها...")
             val conceptsArray = JSONArray()
             val contentsArray = JSONArray()
             val allConcepts = conceptDao.getAllConcepts()
@@ -124,8 +185,8 @@ class BackupRepository(
             data.put("contents", contentsArray)
         }
 
-        if (type == BackupType.PROGRESS || type == BackupType.FULL) {
-            onProgress(0.55f, "استخراج مراحل یادگیری لایتنر و دشواری...")
+        if (options.includeReviewStats) {
+            onProgress(0.5f, "استخراج مراحل جعبه لایتنر...")
             val learningStates = learningDao.getAllLearningStates()
             val lsArray = JSONArray()
             learningStates.forEach { ls ->
@@ -140,7 +201,10 @@ class BackupRepository(
                 lsArray.put(o)
             }
             data.put("learningStates", lsArray)
+        }
 
+        if (options.includeDifficulty) {
+            onProgress(0.6f, "استخراج وضعیت درجه سختی کلمات...")
             val diffStates = learningDao.getAllDifficultyStates()
             val dsArray = JSONArray()
             diffStates.forEach { ds ->
@@ -155,8 +219,10 @@ class BackupRepository(
                 dsArray.put(o)
             }
             data.put("difficultyStates", dsArray)
+        }
 
-            onProgress(0.75f, "استخراج تاریخچه جلسات و دستاوردها...")
+        if (options.includeProcessHistory || options.includeStreakAndProgress) {
+            onProgress(0.75f, "استخراج تاریخچه جلسات، آزمون‌ها و پروسه پیشرفت...")
             val history = reviewSessionDao.getAllHistory()
             val histArray = JSONArray()
             history.forEach { h ->
@@ -209,7 +275,10 @@ class BackupRepository(
                 sessItemsArray.put(o)
             }
             data.put("reviewSessionItems", sessItemsArray)
+        }
 
+        if (options.includeSettings) {
+            onProgress(0.9f, "استخراج تنظیمات و دستاوردها...")
             val achievements = achievementDao.getAllAchievements()
             val achArray = JSONArray()
             achievements.forEach { a ->
@@ -243,13 +312,27 @@ class BackupRepository(
         onProgress: (Float, String) -> Unit
     ): String = withContext(Dispatchers.IO) {
         when (type) {
-            BackupType.VOCABULARY_EXCEL -> createVocabularyExcelCsv(onProgress)
-            BackupType.PROGRESS_EXCEL -> createProgressExcelCsv(onProgress)
+            BackupType.VOCABULARY_EXCEL -> createVocabularyExcelCsv(onProgress = onProgress)
+            BackupType.PROGRESS_EXCEL -> createProgressExcelCsv(onProgress = onProgress)
             else -> createBackupJson(type, onProgress)
         }
     }
 
+    suspend fun createBackupByFormat(
+        format: BackupExportFormat,
+        options: BackupOptions,
+        onProgress: (Float, String) -> Unit
+    ): String = withContext(Dispatchers.IO) {
+        when (format) {
+            BackupExportFormat.JSON -> createBackupJsonWithOptions(options, onProgress)
+            BackupExportFormat.EXCEL_CSV_VOCABULARY -> createVocabularyExcelCsv(options, onProgress)
+            BackupExportFormat.EXCEL_CSV_PROGRESS -> createProgressExcelCsv(onProgress)
+            BackupExportFormat.EXCEL_CSV_COMPLETE -> createCompleteExcelCsv(options, onProgress)
+        }
+    }
+
     suspend fun createVocabularyExcelCsv(
+        options: BackupOptions = BackupOptions(),
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ): String = withContext(Dispatchers.IO) {
         onProgress(0.1f, "در حال بارگذاری واژگان و دسته‌بندی‌ها...")
@@ -264,19 +347,18 @@ class BackupRepository(
         // Prepend UTF-8 BOM so Microsoft Excel seamlessly opens Persian & Spanish characters without corruption
         sb.append("\uFEFF")
 
-        // Header
-        sb.append(
-            listOf(
-                "ردیف",
-                "واژه یا عبارت (اسپانیایی)",
-                "ترجمه‌های فارسی",
-                "دسته‌بندی",
-                "مرحله لایتنر",
-                "سطح دشواری",
-                "توضیحات و یادداشت",
-                "شناسه واژه"
-            ).joinToString(",") { escapeCsv(it) }
-        ).append("\n")
+        // Dynamic Header based on options
+        val headers = mutableListOf<String>()
+        headers.add("ردیف")
+        headers.add("واژه یا عبارت (اسپانیایی)")
+        headers.add("ترجمه‌های فارسی")
+        if (options.includeCategories) headers.add("دسته‌بندی")
+        if (options.includeReviewStats) headers.add("مرحله لایتنر")
+        if (options.includeDifficulty) headers.add("سطح دشواری")
+        headers.add("توضیحات و یادداشت")
+        headers.add("شناسه واژه")
+
+        sb.append(headers.joinToString(",") { escapeCsv(it) }).append("\n")
 
         allConcepts.forEachIndexed { index, concept ->
             val contents = allContentsByConcept[concept.id] ?: emptyList()
@@ -301,21 +383,71 @@ class BackupRepository(
             } ?: "متوسط"
             val note = contents.firstOrNull { it.languageCode == "es" }?.note ?: ""
 
-            sb.append(
-                listOf(
-                    (index + 1).toString(),
-                    esText,
-                    faTranslations,
-                    catName,
-                    stage,
-                    difficulty,
-                    note,
-                    concept.id
-                ).joinToString(",") { escapeCsv(it) }
-            ).append("\n")
+            val row = mutableListOf<String>()
+            row.add((index + 1).toString())
+            row.add(esText)
+            row.add(faTranslations)
+            if (options.includeCategories) row.add(catName)
+            if (options.includeReviewStats) row.add(stage)
+            if (options.includeDifficulty) row.add(difficulty)
+            row.add(note)
+            row.add(concept.id)
+
+            sb.append(row.joinToString(",") { escapeCsv(it) }).append("\n")
         }
 
         onProgress(1f, "خروجی اکسل واژگان آماده شد.")
+        sb.toString()
+    }
+
+    suspend fun createCompleteExcelCsv(
+        options: BackupOptions = BackupOptions(),
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ): String = withContext(Dispatchers.IO) {
+        onProgress(0.1f, "در حال آماده‌سازی خروجی جامع اکسل...")
+        val sb = StringBuilder()
+        sb.append("\uFEFF") // UTF-8 BOM
+
+        sb.append(escapeCsv("=========================================")).append("\n")
+        sb.append(escapeCsv("   خروجی جامع پایگاه داده و آمار یادین (MASTER EXPORT)   ")).append("\n")
+        sb.append(escapeCsv("   تاریخ استخراج: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())}   ")).append("\n")
+        sb.append(escapeCsv("=========================================")).append("\n\n")
+
+        if (options.includeVocabulary) {
+            onProgress(0.3f, "افزودن بخش واژگان به اکسل...")
+            val vocabCsv = createVocabularyExcelCsv(options) { _, _ -> }
+            // Drop BOM from sub-csv if any
+            val cleanVocab = vocabCsv.removePrefix("\uFEFF")
+            sb.append(escapeCsv("=== بخش ۱: بانک واژگان و دسته‌بندی‌ها ===")).append("\n")
+            sb.append(cleanVocab).append("\n\n")
+        }
+
+        if (options.includeStreakAndProgress || options.includeProcessHistory) {
+            onProgress(0.6f, "افزودن گزارش پیشرفت و رگبار به اکسل...")
+            val progressCsv = createProgressExcelCsv { _, _ -> }
+            val cleanProgress = progressCsv.removePrefix("\uFEFF")
+            sb.append(cleanProgress).append("\n\n")
+        }
+
+        if (options.includeSettings) {
+            onProgress(0.85f, "افزودن تنظیمات و دستاوردها به اکسل...")
+            sb.append(escapeCsv("=== بخش تنظیمات و دستاوردها ===")).append("\n")
+            sb.append(listOf("کلید تنظیمات", "مقدار ذخیره‌شده").joinToString(",") { escapeCsv(it) }).append("\n")
+            val settings = settingsDao.getAllSettings()
+            settings.forEach { s ->
+                sb.append(listOf(s.key, s.value).joinToString(",") { escapeCsv(it) }).append("\n")
+            }
+            sb.append("\n")
+            
+            sb.append(listOf("شناسه نشان/دستاورد", "میزان پیشرفت", "تاریخ آنلاک").joinToString(",") { escapeCsv(it) }).append("\n")
+            val achs = achievementDao.getAllAchievements()
+            achs.forEach { a ->
+                sb.append(listOf(a.id, a.progress.toString(), a.unlockedAt?.toString() ?: "-").joinToString(",") { escapeCsv(it) }).append("\n")
+            }
+            sb.append("\n")
+        }
+
+        onProgress(1.0f, "خروجی جامع اکسل با موفقیت تولید شد.")
         sb.toString()
     }
 

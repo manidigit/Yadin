@@ -377,24 +377,33 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val categories by viewModel.categories.collectAsStateWithLifecycle()
             val isImporting by viewModel.isImporting.collectAsStateWithLifecycle()
             val importProgress by viewModel.importProgress.collectAsStateWithLifecycle()
+            val importSummary by viewModel.importSummary.collectAsStateWithLifecycle()
 
             ImportScreen(
                 parseResult = parseResult,
                 categories = categories,
                 isImporting = isImporting,
                 importProgress = importProgress,
+                importSummary = importSummary,
                 onParseText = { text -> viewModel.parseInputText(text) },
-                onResetParse = { viewModel.clearParseResult() },
+                onResetParse = {
+                    viewModel.clearParseResult()
+                    viewModel.clearImportSummary()
+                },
                 onAddNewCategory = { name, onCreated ->
                     viewModel.createCategory(name, onCreated)
                 },
                 onConfirmImport = { policy, categoryId ->
-                    viewModel.executeImport(policy, categoryId) {
-                        viewModel.navigateTo(Screen.Library)
-                    }
+                    viewModel.executeImport(policy, categoryId)
+                },
+                onGoToLibrary = {
+                    viewModel.clearImportSummary()
+                    viewModel.navigateTo(Screen.Library)
                 },
                 onBack = {
-                    if (parseResult != null) {
+                    if (importSummary != null) {
+                        viewModel.clearImportSummary()
+                    } else if (parseResult != null) {
                         viewModel.clearParseResult()
                     } else {
                         if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
@@ -455,6 +464,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val message by viewModel.backupProgressMessage.collectAsStateWithLifecycle()
             val lastResult by viewModel.backupLastResult.collectAsStateWithLifecycle()
             val isError by viewModel.isBackupError.collectAsStateWithLifecycle()
+            val backupOptions by viewModel.backupOptions.collectAsStateWithLifecycle()
 
             BackupScreen(
                 totalConcepts = statistics.totalWords,
@@ -464,6 +474,12 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 progressMessage = message,
                 lastResult = lastResult,
                 isError = isError,
+                backupOptions = backupOptions,
+                onUpdateBackupOptions = { viewModel.updateBackupOptions(it) },
+                onToggleFullBackup = { viewModel.setFullBackup(it) },
+                onToggleOption = { key, value -> viewModel.toggleBackupOption(key, value) },
+                onExportCustomBackup = { format, options -> viewModel.exportCustomBackup(format, options) },
+                onExportCustomBackupToUri = { format, uri, options -> viewModel.exportCustomBackupToUri(format, uri, options) },
                 onExportBackup = { type -> viewModel.exportBackup(type) },
                 onExportBackupToUri = { type, uri -> viewModel.exportBackupToUri(type, uri) },
                 onRestoreBackup = { json, replace -> viewModel.restoreBackup(json, replace) },
