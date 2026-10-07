@@ -300,13 +300,24 @@
 
 ---
 
-### ۲.۸. افزودن تنظیمات آستانه تغییر سختی و اختیاری‌سازی دسته‌بندی در آزمون و یادداشت راهنما
-* **شرح نیاز کاربر:**
-  1. در تنظیمات برنامه گزینه‌ای برای تعیین تعداد پاسخ‌های صحیح/غلط متوالی جهت آسان‌تر یا سخت‌تر شدن کلمات وجود نداشت.
-  2. در صفحه آزمون (کوییز)، دسته‌بندی موضوعی به صورت پیش‌فرض نمایش داده می‌شد که سرنخ ناخواسته برای پاسخ به شمار می‌رفت و همچنین امکانی برای مشاهده راهنما و یادداشت واژه وجود نداشت.
-* **اقدام اصلاحی:**
-  1. افزودن تنظیم `difficultyThreshold` (با مقادیر ۲، ۳، ۴، ۵ با پیش‌فرض ۳) در `SettingsRepository`، `SettingsScreen` و اتصال آن به موتور `DifficultyCalculator` و لایه `ReviewRepository`.
-  2. افزودن تنظیم `showCategoryInReview` (پیش‌فرض خاموش) جهت مخفی‌سازی دسته‌بندی از روی کارت‌های آزمون و فلش‌کارت تا سرنخ افشا نشود.
-  3. افزودن دکمه «راهنما و یادداشت» به هدر کارت سؤال در `QuizScreen` با دیالوگ اختصاصی که یادداشت‌های گرامری و دسته‌بندی را فقط در صورت تمایل کاربر به عنوان راهنما نمایش می‌دهد.
-  4. افزودن تست‌های واحد برای آستانه‌های سفارشی در `DifficultyCalculatorTest`.
+### ۲.۲۰. ممیزی جامع، بازطراحی بخش پشتیبان‌گیری، به‌روزرسانی آیکن و اصلاح موتور تلفظ (Audit & Cleanup 1.4.3)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/BackupScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/HomeScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/AboutScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/util/TtsManager.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/QuizDistractorScorer.kt`
+  * `app/src/main/res/drawable/ic_launcher_foreground.xml`
+  * `app/src/main/res/drawable/ic_launcher_background.xml`
+  * `app/src/main/res/mipmap-*/ic_launcher.png`
+  * `app/src/main/res/mipmap-*/ic_launcher_round.png`
+  * `README.md`
+  * `docs/CHANGELOG.md`
+* **ریشه‌یابی و اصلاحات انجام‌شده:**
+  1. **تفکیک‌پذیری کامل بخش پشتیبان‌گیری:** امکان تعیین دقیق حوزه‌های پشتیبان (واژگان، دسته‌بندی‌ها، لایتنر، دشواری، آمار رگبار و تنظیمات) فراهم گردید تا کاربر بتواند خروجی‌های سفارشی اکسل و جیسون دریافت کند.
+  2. **آیکن اختصاصی و تطبیقی:** آیکن جدید به صورت کامل در تمامی لایه‌های وکتور و تراکم‌های تصویری (`mdpi` تا `xxxhdpi`) همراه با نسخه دایره‌ای تنظیم شد.
+  3. **اصلاح زبان TTS:** تشخیص خودکار زبان متن مانع از فراخوانی موتور صوتی با کد نامعتبر `es` بر روی متون فارسی شد.
+  4. **حذف کدهای تکراری و ارتقای معماری:** توابع مقایسه متنی و تشابه در `QuizDistractorScorer` متمرکز شدند، کدهای تکراری پوسته در `HomeScreen` استانداردسازی گردید و اطلاعات فنی در `AboutScreen` تصحیح شد.
+
 
