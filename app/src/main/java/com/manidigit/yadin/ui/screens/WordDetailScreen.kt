@@ -211,7 +211,7 @@ fun WordDetailScreen(
                 }
             }
 
-            // Learning State (Normal Direction)
+            // Learning State (Normal Direction: es -> fa)
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
                 backgroundColor = colors.surface
@@ -221,7 +221,7 @@ fun WordDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "وضعیت یادگیری (اسپانیایی → فارسی)",
+                        text = "وضعیت یادگیری (🇪🇸 اسپانیایی → 🇮🇷 فارسی)",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
@@ -242,6 +242,25 @@ fun WordDetailScreen(
                         Text("سطح سختی کلمه:", color = colors.onSurfaceVariant)
                         word.normalDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
                     }
+                    val normCorrect = word.normalDifficulty?.consecutiveCorrect ?: 0
+                    val normWrong = word.normalDifficulty?.consecutiveWrong ?: 0
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("شمارنده پاسخ‌های متوالی:", color = colors.onSurfaceVariant)
+                        val text = when {
+                            normCorrect > 0 -> "✅ $normCorrect درست متوالی"
+                            normWrong > 0 -> "❌ $normWrong غلط متوالی"
+                            else -> "۰ (بدون تسلسل)"
+                        }
+                        Text(
+                            text = text,
+                            fontWeight = FontWeight.Bold,
+                            color = if (normCorrect > 0) colors.success else if (normWrong > 0) colors.error else colors.onSurfaceVariant
+                        )
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -250,6 +269,71 @@ fun WordDetailScreen(
                         Text("تاریخ سررسید مرور بعدی:", color = colors.onSurfaceVariant)
                         Text(
                             text = word.normalLearning?.nextReviewDay ?: "سررسید امروز",
+                            fontWeight = FontWeight.Bold,
+                            color = colors.primary
+                        )
+                    }
+                }
+            }
+
+            // Learning State (Reverse Direction: fa -> es)
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "وضعیت یادگیری برعکس (🇮🇷 فارسی → 🇪🇸 اسپانیایی)",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("مرحله فعلی:", color = colors.onSurfaceVariant)
+                        word.reverseLearning?.stage?.let { StageBadge(stage = it) }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("سطح سختی کلمه:", color = colors.onSurfaceVariant)
+                        word.reverseDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
+                    }
+                    val revCorrect = word.reverseDifficulty?.consecutiveCorrect ?: 0
+                    val revWrong = word.reverseDifficulty?.consecutiveWrong ?: 0
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("شمارنده پاسخ‌های متوالی:", color = colors.onSurfaceVariant)
+                        val text = when {
+                            revCorrect > 0 -> "✅ $revCorrect درست متوالی"
+                            revWrong > 0 -> "❌ $revWrong غلط متوالی"
+                            else -> "۰ (بدون تسلسل)"
+                        }
+                        Text(
+                            text = text,
+                            fontWeight = FontWeight.Bold,
+                            color = if (revCorrect > 0) colors.success else if (revWrong > 0) colors.error else colors.onSurfaceVariant
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("تاریخ سررسید مرور بعدی:", color = colors.onSurfaceVariant)
+                        Text(
+                            text = word.reverseLearning?.nextReviewDay ?: "سررسید امروز",
                             fontWeight = FontWeight.Bold,
                             color = colors.primary
                         )

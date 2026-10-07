@@ -198,7 +198,8 @@ class ReviewRepository(
 
             val learning = learningDao.getLearningState(item.conceptId, item.direction)
             val stage = learning?.stage ?: Stage.DAILY
-            val diff = learningDao.getDifficultyState(item.conceptId, item.direction)?.current ?: VocabularyDifficulty.MEDIUM
+            val diffState = learningDao.getDifficultyState(item.conceptId, item.direction)
+            val diff = diffState?.current ?: VocabularyDifficulty.MEDIUM
             val category = concept.categoryId?.let { conceptDao.getCategoryById(it)?.name }
 
             val prompt = if (item.direction == CardDirection.NORMAL) sourceContent.text else targetTranslations.joinToString("، ")
@@ -213,7 +214,9 @@ class ReviewRepository(
                     note = sourceContent.note,
                     categoryName = category,
                     stage = stage,
-                    difficulty = diff
+                    difficulty = diff,
+                    consecutiveCorrect = diffState?.consecutiveCorrect ?: 0,
+                    consecutiveWrong = diffState?.consecutiveWrong ?: 0
                 )
             )
         }
@@ -364,7 +367,9 @@ class ReviewRepository(
                     note = card.note,
                     categoryName = card.categoryName,
                     stage = card.stage,
-                    difficulty = card.difficulty
+                    difficulty = card.difficulty,
+                    consecutiveCorrect = card.consecutiveCorrect,
+                    consecutiveWrong = card.consecutiveWrong
                 )
             )
         }

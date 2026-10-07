@@ -98,6 +98,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, CardDirection.NORMAL)
 
     // Navigation & Screen
+    private val _screenStack = MutableStateFlow<List<Screen>>(listOf(Screen.Home))
+    val screenStack: StateFlow<List<Screen>> = _screenStack.asStateFlow()
+
     private val _currentScreen = MutableStateFlow<Screen>(Screen.Splash)
     val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
 
@@ -233,6 +236,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _importProgress = MutableStateFlow(0f)
     val importProgress: StateFlow<Float> = _importProgress.asStateFlow()
 
+    private val _importSummary = MutableStateFlow<com.manidigit.yadin.domain.model.ImportSummary?>(null)
+    val importSummary: StateFlow<com.manidigit.yadin.domain.model.ImportSummary?> = _importSummary.asStateFlow()
+
     init {
         initializeDatabase()
     }
@@ -252,9 +258,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun navigateTo(screen: Screen) {
+    fun navigateTo(screen: Screen, replaceCurrent: Boolean = false) {
+        val currentList = _screenStack.value
+        val newList = if (replaceCurrent && currentList.isNotEmpty()) {
+            currentList.dropLast(1) + screen
+        } else if (screen is Screen.Home) {
+            listOf(Screen.Home)
+        } else {
+            if (currentList.lastOrNull() == screen) currentList else currentList + screen
+        }
+        _screenStack.value = newList
         _currentScreen.value = screen
     }
+
+    fun navigateBack(): Boolean {
+        val currentList = _screenStack.value
+        if (currentList.size > 1) {
+            val newList = currentList.dropLast(1)
+            _screenStack.value = newList
+            _currentScreen.value = newList.last()
+            return true
+        }
+        return false
+    }
+
+    fun canNavigateBack(): Boolean = _screenStack.value.size > 1
 
     fun toggleTheme() {
         viewModelScope.launch {
@@ -338,7 +366,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startSession(
         type: ReviewType,
         mode: ReviewMode,
-        direction: CardDirection = CardDirection.NORMAL,
+        direction: CardDirection = appLanguageDirection.value,
         quizLevel: QuizLevel = QuizLevel.MEDIUM,
         limit: Int = 20
     ) {
@@ -558,18 +586,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun executeImport(policy: DuplicatePolicy, categoryId: String? = null, onComplete: () -> Unit) {
+    fun clearImportSummary() {
+        _importSummary.value = null
+    }
+
+    fun executeImport(policy: DuplicatePolicy, categoryId: String? = null, onComplete: () -> Unit = {}) {
         val result = _parseResult.value ?: return
         viewModelScope.launch {
             _isImporting.value = true
             _importProgress.value = 0f
-            vocabularyRepo.importParsedEntries(result.entries, policy, categoryId) { done, total ->
+            val summary = vocabularyRepo.importParsedEntries(result.entries, policy, categoryId) { done, total ->
                 if (total > 0) {
                     _importProgress.value = done.toFloat() / total
                 }
             }
             _isImporting.value = false
             _parseResult.value = null
+            _importSummary.value = summary
             loadRecentWords()
             onComplete()
         }

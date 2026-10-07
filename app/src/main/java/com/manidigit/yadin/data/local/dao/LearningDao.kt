@@ -109,7 +109,9 @@ interface LearningDao {
         INNER JOIN concepts c ON ls.conceptId = c.id
         WHERE c.active = 1
         AND ls.direction = :direction
-        AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)
+        AND ls.lastReviewedDay IS NOT NULL
+        AND ls.lastReviewedDay != :todayDayString
+        AND ls.stage != 'LEARNED'
         AND (
             (ls.stage = 'DAILY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (ls.stage = 'WEEKLY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
@@ -146,8 +148,17 @@ interface LearningDao {
         FROM learning_states ls
         INNER JOIN concepts c ON ls.conceptId = c.id
         WHERE c.active = 1 AND ls.direction = :direction AND ls.stage = :stage
+        AND (:stage = 'LEARNED' OR ls.lastReviewedDay IS NOT NULL)
     """)
     fun getCountByStageFlow(direction: CardDirection, stage: Stage): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(*) 
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction AND ls.lastReviewedDay IS NULL
+    """)
+    fun getUnstartedCountFlow(direction: CardDirection): Flow<Int>
 
     @Query("""
         SELECT COUNT(*) 
@@ -182,7 +193,13 @@ interface LearningDao {
         AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
         ORDER BY 
-            CASE WHEN :reviewType = 'RANDOM' THEN RANDOM() ELSE ls.nextReviewDay END ASC
+            CASE 
+                WHEN :reviewType = 'RANDOM' THEN RANDOM() 
+                WHEN ls.lastReviewedDay IS NOT NULL AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString) THEN 0
+                WHEN ls.lastReviewedDay IS NULL THEN 1
+                ELSE 2
+            END ASC,
+            ls.nextReviewDay ASC
         LIMIT :limit
     """)
     suspend fun getFilteredCandidateConceptIds(

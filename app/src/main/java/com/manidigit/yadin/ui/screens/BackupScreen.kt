@@ -3,7 +3,6 @@ package com.manidigit.yadin.ui.screens
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,29 +28,24 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.FolderZip
-import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.SaveAlt
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,18 +53,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import java.util.Locale
+
+enum class SimpleBackupFormat {
+    EXCEL,
+    JSON
+}
 
 @Composable
 fun BackupScreen(
@@ -89,21 +85,20 @@ fun BackupScreen(
     val context = LocalContext.current
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
-    val clipboardManager = LocalClipboardManager.current
 
-    var selectedBackupType by remember { mutableStateOf(BackupType.VOCABULARY_EXCEL) }
-    var loadedJsonContent by remember { mutableStateOf<String?>(null) }
-    var loadedFileName by remember { mutableStateOf<String?>(null) }
-    var loadedFileSize by remember { mutableStateOf<String?>(null) }
-    var manualJsonText by remember { mutableStateOf("") }
-    var isReplaceMode by remember { mutableStateOf(false) }
+    var selectedFormat by remember { mutableStateOf(SimpleBackupFormat.EXCEL) }
     var activeTab by remember { mutableStateOf(0) } // 0 = Export, 1 = Restore
+
+    // Restore state
+    var loadedFileContent by remember { mutableStateOf<String?>(null) }
+    var loadedFileName by remember { mutableStateOf<String?>(null) }
+    var isReplaceMode by remember { mutableStateOf(false) }
 
     val exportJsonLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null && onExportBackupToUri != null) {
-            onExportBackupToUri(selectedBackupType, uri)
+            onExportBackupToUri(BackupType.FULL, uri)
         }
     }
 
@@ -111,7 +106,7 @@ fun BackupScreen(
         contract = ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
         if (uri != null && onExportBackupToUri != null) {
-            onExportBackupToUri(selectedBackupType, uri)
+            onExportBackupToUri(BackupType.VOCABULARY_EXCEL, uri)
         }
     }
 
@@ -123,12 +118,9 @@ fun BackupScreen(
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val text = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                     if (text.isNotBlank()) {
-                        loadedJsonContent = text
-                        loadedFileName = "فایل پشتیبان انتخاب‌شده"
-                        val sizeKb = text.length / 1024
-                        loadedFileSize = if (sizeKb > 1024) String.format(Locale.US, "%.1f مگابایت", sizeKb / 1024.0) else "$sizeKb کیلوبایت"
-                        manualJsonText = ""
-                        Toast.makeText(context, "فایل پشتیبان با موفقیت بارگذاری شد ($loadedFileSize)", Toast.LENGTH_SHORT).show()
+                        loadedFileContent = text
+                        loadedFileName = "فایل انتخاب‌شده (${text.length / 1024} کیلوبایت)"
+                        Toast.makeText(context, "فایل با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
@@ -172,20 +164,20 @@ fun BackupScreen(
 
                 Column {
                     Text(
-                        text = "پشتیبان‌گیری و بازیابی داده‌ها",
+                        text = "پشتیبان‌گیری و بازیابی",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "صادرات و بازگردانی امن بر اساس Schema v2",
+                        text = "صادرات آسان در قالب اکسل و JSON",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
                 }
             }
 
-            // Database Overview Card
+            // Overview Card
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
                 backgroundColor = colors.surface
@@ -193,13 +185,13 @@ fun BackupScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(44.dp)
                             .clip(RoundedCornerShape(dimensions.cornerSmall))
                             .background(colors.primary.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
@@ -208,19 +200,19 @@ fun BackupScreen(
                             imageVector = Icons.Default.Storage,
                             contentDescription = null,
                             tint = colors.primary,
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "بانک داده‌های محلی یادین",
+                            text = "بانک اطلاعات واژگان",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
                         Text(
-                            text = "$totalConcepts واژه فعال • $totalCategories دسته‌بندی موضوعی",
+                            text = "$totalConcepts واژه • $totalCategories دسته‌بندی موضوعی",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant
                         )
@@ -228,7 +220,7 @@ fun BackupScreen(
                 }
             }
 
-            // Tab Selector: ساخت پشتیبان / بازیابی
+            // Tab Switcher: خروجی گرفتن / بازیابی
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -257,7 +249,7 @@ fun BackupScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "تهیه پشتیبان (Export)",
+                            text = "تهیه خروجی (Export)",
                             color = if (activeTab == 0) colors.onPrimary else colors.onSurfaceVariant,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp
@@ -294,15 +286,15 @@ fun BackupScreen(
                 }
             }
 
-            // Status / Progress indicator
+            // Progress Banner
             if (isProcessing) {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
                     backgroundColor = colors.surface
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -326,21 +318,21 @@ fun BackupScreen(
                             progress = { progress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
                             color = colors.primary,
-                            trackColor = colors.primary.copy(alpha = 0.2f)
+                            trackColor = colors.surfaceVariant
                         )
                     }
                 }
             }
 
-            // Success / Error Message Banner
+            // Result Alert
             if (!isProcessing && lastResult != null) {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
                     backgroundColor = if (isError) colors.error.copy(alpha = 0.12f) else colors.success.copy(alpha = 0.12f),
-                    borderStroke = androidx.compose.foundation.BorderStroke(
+                    borderStroke = BorderStroke(
                         1.dp,
                         if (isError) colors.error.copy(alpha = 0.4f) else colors.success.copy(alpha = 0.4f)
                     )
@@ -348,7 +340,7 @@ fun BackupScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
@@ -356,7 +348,7 @@ fun BackupScreen(
                             imageVector = if (isError) Icons.Default.Error else Icons.Default.CheckCircle,
                             contentDescription = null,
                             tint = if (isError) colors.error else colors.success,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                         Text(
                             text = lastResult,
@@ -369,91 +361,50 @@ fun BackupScreen(
             }
 
             if (activeTab == 0) {
-                // EXPORT TAB
+                // EXPORT TAB - CLEAR & SIMPLE
                 Text(
-                    text = "خروجی‌های تحلیلی اکسل (Excel / CSV)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.primary
-                )
-                Text(
-                    text = "فرمت CSV استاندارد با کدگذاری UTF-8 BOM جهت باز شدن مستقیم و بی‌نقص حروف فارسی و اسپانیایی در اکسل و Google Sheets:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
-                )
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BackupTypeOption(
-                        type = BackupType.VOCABULARY_EXCEL,
-                        title = "خروجی اکسل واژگان و دسته‌بندی‌ها (Excel)",
-                        description = "شامل کلمات اسپانیایی، ترجمه‌های فارسی، دسته‌بندی موضوعی، مرحله جعبه لایتنر، سطح دشواری و یادداشت‌ها",
-                        isSelected = selectedBackupType == BackupType.VOCABULARY_EXCEL,
-                        onClick = { selectedBackupType = BackupType.VOCABULARY_EXCEL }
-                    )
-                    BackupTypeOption(
-                        type = BackupType.PROGRESS_EXCEL,
-                        title = "خروجی اکسل سوابق پیشرفت، رگبار و حجم مرور (Excel)",
-                        description = "شامل روزهای رگبار متوالی (Streak)، آمار تفکیکی حجم مرور تمرین‌های روزانه، درصد موفقیت و سوابق جلسات لایتنر",
-                        isSelected = selectedBackupType == BackupType.PROGRESS_EXCEL,
-                        onClick = { selectedBackupType = BackupType.PROGRESS_EXCEL }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "نسخه‌های پشتیبان سیستمی (JSON Schema v2)",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "انتخاب قالب فایل خروجی:",
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
-                Text(
-                    text = "قالب رسمی دیتابیس یادین جهت انتقال به گوشی دیگر یا بازگردانی کامل اطلاعات:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
-                )
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BackupTypeOption(
-                        type = BackupType.FULL,
-                        title = "پشتیبان کامل دیتابیس (JSON - FULL)",
-                        description = "شامل همه واژگان، ترجمه‌ها، مراحل لایتنر، زنجیره روزانه، دستاوردها و تاریخچه مرورها",
-                        isSelected = selectedBackupType == BackupType.FULL,
-                        onClick = { selectedBackupType = BackupType.FULL }
+                // 2 Clear Format Cards
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    FormatChoiceCard(
+                        title = "فایل اکسل (Excel)",
+                        subtitle = "مناسب برای باز کردن در اکسل و Google Sheets با تفکیک ستون‌ها",
+                        icon = Icons.Default.TableChart,
+                        isSelected = selectedFormat == SimpleBackupFormat.EXCEL,
+                        accentColor = colors.success,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedFormat = SimpleBackupFormat.EXCEL }
                     )
-                    BackupTypeOption(
-                        type = BackupType.VOCABULARY,
-                        title = "فقط ساختار واژگان (JSON - VOCABULARY)",
-                        description = "شامل لغات، معانی و دسته‌بندی‌ها بدون تاریخچه تمرین‌های کاربر",
-                        isSelected = selectedBackupType == BackupType.VOCABULARY,
-                        onClick = { selectedBackupType = BackupType.VOCABULARY }
-                    )
-                    BackupTypeOption(
-                        type = BackupType.PROGRESS,
-                        title = "فقط سوابق لایتنر (JSON - PROGRESS)",
-                        description = "شامل سطوح سختی، تاریخچه جلسات و مراحل تکرار فاصله‌دار",
-                        isSelected = selectedBackupType == BackupType.PROGRESS,
-                        onClick = { selectedBackupType = BackupType.PROGRESS }
+
+                    FormatChoiceCard(
+                        title = "فایل JSON",
+                        subtitle = "پشتیبان کامل دیتابیس یادین برای انتقال به دستگاه دیگر یا بازیابی",
+                        icon = Icons.Default.Description,
+                        isSelected = selectedFormat == SimpleBackupFormat.JSON,
+                        accentColor = colors.primary,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedFormat = SimpleBackupFormat.JSON }
                     )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                val isExcel = (selectedBackupType == BackupType.VOCABULARY_EXCEL || selectedBackupType == BackupType.PROGRESS_EXCEL)
-
-                // 1. SAF Storage Picker Export (User selects destination folder and name)
+                // Primary Export Button (Downloads/Saves with Document Picker)
                 Button(
                     onClick = {
-                        if (isExcel) {
-                            val fileName = if (selectedBackupType == BackupType.VOCABULARY_EXCEL) {
-                                "yadin_vocabularies_excel_${System.currentTimeMillis()}.csv"
-                            } else {
-                                "yadin_progress_excel_${System.currentTimeMillis()}.csv"
-                            }
-                            exportCsvLauncher.launch(fileName)
+                        val timestamp = System.currentTimeMillis()
+                        if (selectedFormat == SimpleBackupFormat.EXCEL) {
+                            exportCsvLauncher.launch("yadin_vocabulary_$timestamp.csv")
                         } else {
-                            val fileName = "yadin_backup_${selectedBackupType.name.lowercase()}_${System.currentTimeMillis()}.json"
-                            exportJsonLauncher.launch(fileName)
+                            exportJsonLauncher.launch("yadin_backup_$timestamp.json")
                         }
                     },
                     enabled = !isProcessing,
@@ -462,315 +413,192 @@ fun BackupScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(dimensions.cornerMedium),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.primary,
-                        contentColor = colors.onPrimary
+                        containerColor = if (selectedFormat == SimpleBackupFormat.EXCEL) colors.success else colors.primary,
+                        contentColor = Color.White
                     )
                 ) {
-                    Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null)
+                    Icon(imageVector = Icons.Default.SaveAlt, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        if (isExcel) "انتخاب پوشه و ذخیره فایل اکسل در دستگاه" else "انتخاب پوشه و ذخیره فایل پشتیبان در دستگاه",
-                        fontWeight = FontWeight.Bold
+                        text = if (selectedFormat == SimpleBackupFormat.EXCEL) "دانلود و ذخیره فایل اکسل (Excel)" else "دانلود و ذخیره فایل پشتیبان JSON",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
                     )
                 }
 
-                // 2. Fallback quick save to internal storage
+                // Secondary Quick Save
                 OutlinedButton(
-                    onClick = { onExportBackup(selectedBackupType) },
+                    onClick = {
+                        val type = if (selectedFormat == SimpleBackupFormat.EXCEL) BackupType.VOCABULARY_EXCEL else BackupType.FULL
+                        onExportBackup(type)
+                    },
                     enabled = !isProcessing,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
                     shape = RoundedCornerShape(dimensions.cornerMedium)
                 ) {
-                    Icon(imageVector = Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        if (isExcel) "ذخیره سریع اکسل در حافظه داخلی برنامه" else "ذخیره سریع در حافظه داخلی برنامه",
-                        fontSize = 13.sp
-                    )
+                    Text("ذخیره سریع در حافظه دستگاه", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
             } else {
-                // RESTORE TAB
+                // RESTORE TAB - SIMPLE & CLEAR
                 Text(
-                    text = "بازگردانی اطلاعات از فایل یا متن JSON",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "بازگردانی فایل پشتیبان:",
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
 
-                // 1. Prominent File Picker Button
-                Button(
-                    onClick = { importFileLauncher.launch("*/*") },
-                    enabled = !isProcessing,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(dimensions.cornerMedium),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.secondary,
-                        contentColor = colors.onSecondary
-                    )
+                YadinCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = colors.surface
                 ) {
-                    Icon(imageVector = Icons.Default.FileOpen, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("انتخاب و بارگذاری فایل پشتیبان (JSON) از دستگاه", fontWeight = FontWeight.Bold)
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                if (loadedJsonContent != null) {
-                    // Loaded File Status Card (Optimized: No heavy TextField layout for multi-megabyte JSONs!)
-                    YadinCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = colors.success.copy(alpha = 0.12f),
-                        borderStroke = BorderStroke(1.5.dp, colors.success)
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
+                        Text(
+                            text = "فایل پشتیبان را از حافظه دستگاه خود انتخاب کنید:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurface
+                        )
+
+                        // File Picker Button
+                        Button(
+                            onClick = { importFileLauncher.launch("*/*") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(dimensions.cornerMedium),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.secondary,
+                                contentColor = colors.onSecondary
+                            )
+                        ) {
+                            Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(loadedFileName ?: "انتخاب فایل پشتیبان (JSON یا Excel/CSV)", fontWeight = FontWeight.Bold)
+                        }
+
+                        // Mode switch: Replace vs Merge
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(14.dp),
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success)
-                                Column {
-                                    Text(
-                                        text = loadedFileName ?: "فایل پشتیبان آماده است",
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.onSurface,
-                                        fontSize = 14.sp
-                                    )
-                                    Text(
-                                        text = "حجم: ${loadedFileSize ?: ""} • آماده بازیابی کامل",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = colors.success
-                                    )
-                                }
-                            }
-                            IconButton(
-                                onClick = {
-                                    loadedJsonContent = null
-                                    loadedFileName = null
-                                    loadedFileSize = null
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "حذف فایل بارگذاری‌شده",
-                                    tint = colors.onSurfaceVariant
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (isReplaceMode) "جایگزینی کامل دیتابیس" else "ادغام با داده‌های فعلی",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface
+                                )
+                                Text(
+                                    text = if (isReplaceMode) "اطلاعات قبلی حذف و با فایل جایگزین می‌شود" else "واژگان جدید اضافه و موارد قبلی حفظ می‌شوند",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.onSurfaceVariant,
+                                    fontSize = 11.sp
                                 )
                             }
+                            Switch(
+                                checked = isReplaceMode,
+                                onCheckedChange = { isReplaceMode = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = colors.primary,
+                                    checkedTrackColor = colors.primary.copy(alpha = 0.3f)
+                                )
+                            )
                         }
-                    }
-                } else {
-                    // Manual JSON Text Input / Clipboard
-                    Text(
-                        text = "یا متن فایل JSON را مستقیماً در کادر زیر وارد کنید:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
-                    )
 
-                    OutlinedTextField(
-                        value = manualJsonText,
-                        onValueChange = { manualJsonText = it },
-                        label = { Text("محتوای فایل پشتیبان JSON") },
-                        placeholder = { Text("{\"format\":\"yadin-backup\", ...}") },
-                        minLines = 3,
-                        maxLines = 5,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(dimensions.cornerSmall)
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                        // Confirm Restore Button
                         Button(
                             onClick = {
-                                val clipboardText = clipboardManager.getText()?.text ?: ""
-                                if (clipboardText.isNotEmpty()) {
-                                    if (clipboardText.length > 50000) {
-                                        loadedJsonContent = clipboardText
-                                        loadedFileName = "متن پشتیبان از کلیپ‌بورد"
-                                        val sizeKb = clipboardText.length / 1024
-                                        loadedFileSize = if (sizeKb > 1024) String.format(Locale.US, "%.1f مگابایت", sizeKb / 1024.0) else "$sizeKb کیلوبایت"
-                                        manualJsonText = ""
-                                    } else {
-                                        manualJsonText = clipboardText
-                                        loadedJsonContent = null
-                                    }
+                                loadedFileContent?.let {
+                                    onRestoreBackup(it, isReplaceMode)
                                 }
                             },
-                            modifier = Modifier.weight(1f),
+                            enabled = !isProcessing && loadedFileContent != null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(dimensions.cornerMedium),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.surfaceVariant,
-                                contentColor = colors.onSurface
+                                containerColor = colors.primary,
+                                contentColor = colors.onPrimary
                             )
                         ) {
-                            Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("چسباندن از کلیپ‌بورد", fontSize = 12.sp)
+                            Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("شروع بازگردانی اطلاعات", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "روش ادغام اطلاعات",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(dimensions.cornerSmall))
-                        .background(colors.surface)
-                        .border(1.dp, colors.outline.copy(alpha = 0.35f), RoundedCornerShape(dimensions.cornerSmall))
-                        .clickable { isReplaceMode = false }
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    RadioButton(
-                        selected = !isReplaceMode,
-                        onClick = { isReplaceMode = false },
-                        colors = RadioButtonDefaults.colors(selectedColor = colors.primary)
-                    )
-                    Column {
-                        Text("ادغام هوشمند (Merge)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = colors.onSurface)
-                        Text("واژه‌های جدید اضافه می‌شوند و واژگان موجود حفظ خواهند شد", fontSize = 11.sp, color = colors.onSurfaceVariant)
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(dimensions.cornerSmall))
-                        .background(colors.surface)
-                        .border(1.dp, colors.outline.copy(alpha = 0.35f), RoundedCornerShape(dimensions.cornerSmall))
-                        .clickable { isReplaceMode = true }
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    RadioButton(
-                        selected = isReplaceMode,
-                        onClick = { isReplaceMode = true },
-                        colors = RadioButtonDefaults.colors(selectedColor = colors.error)
-                    )
-                    Column {
-                        Text("جایگزینی کامل (Replace)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = colors.error)
-                        Text("تمام داده‌های قبلی پاک شده و نسخه پشتیبان جایگزین می‌گردد", fontSize = 11.sp, color = colors.onSurfaceVariant)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                val restoreTarget = loadedJsonContent ?: manualJsonText
-                val canRestore = !isProcessing && restoreTarget.isNotBlank()
-
-                Button(
-                    onClick = {
-                        if (canRestore) {
-                            onRestoreBackup(restoreTarget, isReplaceMode)
-                        }
-                    },
-                    enabled = canRestore,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(dimensions.cornerMedium),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isReplaceMode) colors.error else colors.primary,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Icon(imageVector = Icons.Default.Restore, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        if (isReplaceMode) "تأیید و جایگزینی کامل اطلاعات" else "شروع بازیابی و ادغام داده‌ها",
-                        fontWeight = FontWeight.Bold
-                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // Back Button
-        Button(
-            onClick = onBack,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(dimensions.cornerMedium),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.surfaceVariant,
-                contentColor = colors.onSurface
-            )
-        ) {
-            Text("بازگشت", fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-private fun BackupTypeOption(
-    @Suppress("UNUSED_PARAMETER") type: BackupType,
+private fun FormatChoiceCard(
     title: String,
-    description: String,
+    subtitle: String,
+    icon: ImageVector,
     isSelected: Boolean,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(dimensions.cornerSmall))
-            .background(if (isSelected) colors.primary.copy(alpha = 0.12f) else colors.surface)
+        modifier = modifier
+            .clip(RoundedCornerShape(dimensions.cornerMedium))
+            .background(if (isSelected) accentColor.copy(alpha = 0.12f) else colors.surface)
             .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.35f),
-                shape = RoundedCornerShape(dimensions.cornerSmall)
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) accentColor else colors.outline.copy(alpha = 0.25f),
+                shape = RoundedCornerShape(dimensions.cornerMedium)
             )
             .clickable { onClick() }
             .padding(14.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            RadioButton(
-                selected = isSelected,
-                onClick = onClick,
-                colors = RadioButtonDefaults.colors(selectedColor = colors.primary)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isSelected) colors.primary else colors.onSurface,
-                    fontSize = 13.sp
-                )
-                Text(
-                    text = description,
-                    color = colors.onSurfaceVariant,
-                    fontSize = 11.sp,
-                    lineHeight = 16.sp
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(accentColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(20.dp)
                 )
             }
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (isSelected) accentColor else colors.onSurface
+            )
+
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                fontSize = 11.sp,
+                lineHeight = 16.sp
+            )
         }
     }
 }

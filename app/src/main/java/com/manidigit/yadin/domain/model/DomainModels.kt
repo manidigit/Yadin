@@ -115,7 +115,9 @@ data class ReviewCard(
     val note: String?,
     val categoryName: String?,
     val stage: Stage,
-    val difficulty: VocabularyDifficulty
+    val difficulty: VocabularyDifficulty,
+    val consecutiveCorrect: Int = 0,
+    val consecutiveWrong: Int = 0
 )
 
 data class QuizQuestion(
@@ -128,7 +130,9 @@ data class QuizQuestion(
     val note: String?,
     val categoryName: String?,
     val stage: Stage,
-    val difficulty: VocabularyDifficulty
+    val difficulty: VocabularyDifficulty,
+    val consecutiveCorrect: Int = 0,
+    val consecutiveWrong: Int = 0
 )
 
 data class QuizOption(
@@ -192,6 +196,14 @@ enum class ParseWarningType {
 data class ParseResult(
     val entries: List<ParsedEntry>,
     val warnings: List<ParseWarning>
+)
+
+data class ImportSummary(
+    val totalProcessed: Int,
+    val addedCount: Int,
+    val updatedCount: Int,
+    val skippedCount: Int,
+    val categoryName: String? = null
 )
 
 data class ImportReviewItem(

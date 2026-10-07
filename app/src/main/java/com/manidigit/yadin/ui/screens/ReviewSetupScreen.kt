@@ -73,6 +73,7 @@ fun ReviewSetupScreen(
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,
     appLanguageDirection: CardDirection = CardDirection.NORMAL,
+    onDirectionChanged: ((CardDirection) -> Unit)? = null,
     onFilterChanged: (ReviewFilters) -> Unit,
     onStartReview: (ReviewFilters) -> Unit,
     onBack: () -> Unit
@@ -82,15 +83,18 @@ fun ReviewSetupScreen(
 
     var selectedType by remember { mutableStateOf(initialType) }
     var selectedMode by remember { mutableStateOf(ReviewMode.QUIZ) }
+    var selectedDirection by remember(appLanguageDirection) { mutableStateOf(appLanguageDirection) }
     var selectedQuizLevel by remember { mutableStateOf(QuizLevel.MEDIUM) }
-    var selectedDifficulties by remember { mutableStateOf(initialDifficulties) }
+    var selectedDifficulties by remember {
+        mutableStateOf(if (initialDifficulties.isNotEmpty()) initialDifficulties else VocabularyDifficulty.entries.toSet())
+    }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
     var selectedMaxCards by remember { mutableStateOf(20) }
 
     fun buildFilters() = ReviewFilters(
         reviewType = selectedType,
         mode = selectedMode,
-        direction = appLanguageDirection,
+        direction = selectedDirection,
         quizLevel = if (selectedMode == ReviewMode.QUIZ) selectedQuizLevel else null,
         difficulties = selectedDifficulties,
         categoryIds = if (selectedCategoryId != null) setOf(selectedCategoryId!!) else emptySet(),
@@ -100,7 +104,7 @@ fun ReviewSetupScreen(
     LaunchedEffect(
         selectedType,
         selectedMode,
-        appLanguageDirection,
+        selectedDirection,
         selectedQuizLevel,
         selectedDifficulties,
         selectedCategoryId,
@@ -193,6 +197,59 @@ fun ReviewSetupScreen(
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.FLASHCARD }
                             )
+                        }
+
+                        // Language Direction Toggle
+                        Text(
+                            text = "جهت زبان آزمون و مرور",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val isNormal = (selectedDirection == CardDirection.NORMAL)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isNormal) colors.primary else colors.surfaceVariant)
+                                    .clickable {
+                                        selectedDirection = CardDirection.NORMAL
+                                        onDirectionChanged?.invoke(CardDirection.NORMAL)
+                                    }
+                                    .padding(vertical = 9.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "🇪🇸 اسپانیایی ← 🇮🇷 فارسی",
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isNormal) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isNormal) colors.onPrimary else colors.onSurface
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (!isNormal) colors.primary else colors.surfaceVariant)
+                                    .clickable {
+                                        selectedDirection = CardDirection.REVERSE
+                                        onDirectionChanged?.invoke(CardDirection.REVERSE)
+                                    }
+                                    .padding(vertical = 9.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
+                                    fontSize = 11.sp,
+                                    fontWeight = if (!isNormal) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (!isNormal) colors.onPrimary else colors.onSurface
+                                )
+                            }
                         }
                     }
                 }
@@ -302,15 +359,6 @@ fun ReviewSetupScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            val isAllDiff = selectedDifficulties.isEmpty()
-                            CompactDiffBadge(
-                                label = "همه سطوح",
-                                count = difficultyCounts.values.sum(),
-                                isSelected = isAllDiff,
-                                color = colors.primary,
-                                onClick = { selectedDifficulties = emptySet() }
-                            )
-
                             diffItems.forEach { item ->
                                 val count = difficultyCounts[item.diff] ?: 0
                                 val isSelected = item.diff in selectedDifficulties
@@ -321,7 +369,8 @@ fun ReviewSetupScreen(
                                     color = item.color,
                                     onClick = {
                                         selectedDifficulties = if (isSelected) {
-                                            selectedDifficulties - item.diff
+                                            val remaining = selectedDifficulties - item.diff
+                                            if (remaining.isEmpty()) VocabularyDifficulty.entries.toSet() else remaining
                                         } else {
                                             selectedDifficulties + item.diff
                                         }
@@ -412,65 +461,34 @@ fun ReviewSetupScreen(
 
         // Bottom CTA Bar
         val isReady = candidateCount > 0
-        Row(
+        Button(
+            onClick = {
+                if (isReady) onStartReview(buildFilters())
+            },
+            enabled = isReady,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(top = 8.dp)
+                .height(52.dp),
+            shape = RoundedCornerShape(dimensions.cornerMedium),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.primary,
+                contentColor = colors.onPrimary,
+                disabledContainerColor = colors.surfaceVariant,
+                disabledContentColor = colors.onSurfaceVariant
+            )
         ) {
-            // Summary count box
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(colors.surfaceVariant)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "$candidateCount",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isReady) colors.primary else colors.onSurfaceVariant
-                    )
-                    Text(
-                        text = "واژه آماده",
-                        fontSize = 10.sp,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Start Button
-            Button(
-                onClick = {
-                    if (isReady) onStartReview(buildFilters())
-                },
-                enabled = isReady,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary,
-                    disabledContainerColor = colors.surfaceVariant,
-                    disabledContentColor = colors.onSurfaceVariant
-                )
-            ) {
-                Icon(
-                    imageVector = if (isReady) Icons.Default.PlayArrow else Icons.Default.FilterList,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = if (isReady) "شروع مرور ($candidateCount واژه)" else "واژه‌ای یافت نشد",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-            }
+            Icon(
+                imageVector = if (isReady) Icons.Default.PlayArrow else Icons.Default.FilterList,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isReady) "شروع مرور ($candidateCount واژه)" else "واژه‌ای با این فیلتر یافت نشد",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
         }
     }
 }

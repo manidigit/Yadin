@@ -430,8 +430,12 @@ class VocabularyRepository(
         policy: DuplicatePolicy,
         targetCategoryId: String? = null,
         onProgress: (Int, Int) -> Unit
-    ) {
+    ): com.manidigit.yadin.domain.model.ImportSummary {
         val total = entries.size
+        var addedCount = 0
+        var updatedCount = 0
+        var skippedCount = 0
+
         database.withTransaction {
             entries.forEachIndexed { index, entry ->
                 val cleanSource = entry.sourceText.trim()
@@ -443,7 +447,9 @@ class VocabularyRepository(
                     val existingConcept = conceptDao.getConceptById(existingContent.conceptId)
                     val effectiveCat = targetCategoryId ?: existingConcept?.categoryId
                     when (policy) {
-                        DuplicatePolicy.SKIP -> { /* Skip */ }
+                        DuplicatePolicy.SKIP -> {
+                            skippedCount++
+                        }
                         DuplicatePolicy.REPLACE -> {
                             updateWord(
                                 conceptId = existingContent.conceptId,
@@ -452,6 +458,7 @@ class VocabularyRepository(
                                 categoryId = effectiveCat,
                                 note = enrichedNote
                             )
+                            updatedCount++
                         }
                         DuplicatePolicy.MERGE -> {
                             val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
@@ -466,6 +473,7 @@ class VocabularyRepository(
                                 categoryId = effectiveCat,
                                 note = mergedNote
                             )
+                            updatedCount++
                         }
                         DuplicatePolicy.KEEP_SEPARATE -> {
                             addWord(
@@ -474,6 +482,7 @@ class VocabularyRepository(
                                 categoryId = targetCategoryId,
                                 note = enrichedNote
                             )
+                            addedCount++
                         }
                     }
                 } else {
@@ -483,10 +492,19 @@ class VocabularyRepository(
                         categoryId = targetCategoryId,
                         note = enrichedNote
                     )
+                    addedCount++
                 }
                 onProgress(index + 1, total)
             }
         }
+        val catName = targetCategoryId?.let { conceptDao.getCategoryById(it)?.name }
+        return com.manidigit.yadin.domain.model.ImportSummary(
+            totalProcessed = total,
+            addedCount = addedCount,
+            updatedCount = updatedCount,
+            skippedCount = skippedCount,
+            categoryName = catName
+        )
     }
 
     fun getProgressScoreFlow(direction: CardDirection): Flow<Double> {

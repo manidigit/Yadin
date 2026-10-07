@@ -171,13 +171,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
     // BackHandler for sub-screens
     if (screen !is Screen.Home && screen !is Screen.Splash) {
         BackHandler {
-            when (screen) {
-                is Screen.WordDetailScreen -> viewModel.navigateTo(Screen.Library)
-                is Screen.EditWordScreen -> viewModel.navigateTo(Screen.Library)
-                is Screen.SessionSummary -> viewModel.navigateTo(Screen.Home)
-                is Screen.Flashcard, is Screen.Quiz -> viewModel.navigateTo(Screen.Home)
-                is Screen.Backup -> viewModel.navigateTo(Screen.Settings)
-                else -> viewModel.navigateTo(Screen.Home)
+            if (!viewModel.navigateBack()) {
+                viewModel.navigateTo(Screen.Home)
             }
         }
     }
@@ -235,6 +230,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val categories by viewModel.categories.collectAsStateWithLifecycle()
             val difficultyCounts by viewModel.difficultyCounts.collectAsStateWithLifecycle()
             val candidateCount by viewModel.setupCandidateCount.collectAsStateWithLifecycle()
+            val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
 
             ReviewSetupScreen(
                 initialType = screen.initialType,
@@ -242,13 +238,19 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 categories = categories,
                 difficultyCounts = difficultyCounts,
                 candidateCount = candidateCount,
+                appLanguageDirection = appLanguageDirection,
+                onDirectionChanged = { dir ->
+                    viewModel.setAppLanguageDirection(dir)
+                },
                 onFilterChanged = { filters ->
                     viewModel.updateSetupFilters(filters)
                 },
                 onStartReview = { filters ->
                     viewModel.startFilteredSession(filters)
                 },
-                onBack = { viewModel.navigateTo(Screen.Home) }
+                onBack = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+                }
             )
         }
 
@@ -265,7 +267,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 showCategory = showCategory,
                 onFlip = { viewModel.flipCard() },
                 onAnswer = { isCorrect -> viewModel.submitFlashcardAnswer(isCorrect) },
-                onExit = { viewModel.navigateTo(Screen.Home) }
+                onExit = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+                }
             )
         }
 
@@ -286,7 +290,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onPreviousQuestion = { viewModel.previousQuizQuestion() },
                 onNextQuestion = { viewModel.nextQuizQuestion() },
                 onGoToQuestion = { targetIdx -> viewModel.goToQuizQuestion(targetIdx) },
-                onExit = { viewModel.navigateTo(Screen.Home) }
+                onExit = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+                }
             )
         }
 
@@ -320,7 +326,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onStageFilterChange = { viewModel.onStageFilterChanged(it) },
                 onSelectWord = { conceptId -> viewModel.selectWordDetail(conceptId) },
                 onAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
-                onBack = { viewModel.navigateTo(Screen.Home) }
+                onBack = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+                }
             )
         }
 
@@ -329,7 +337,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
 
             WordDetailScreen(
                 word = wordDetail,
-                onBack = { viewModel.navigateTo(Screen.Library) },
+                onBack = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Library)
+                },
                 onEdit = { viewModel.navigateTo(Screen.EditWordScreen(screen.conceptId)) },
                 onDelete = { viewModel.deleteWord(screen.conceptId) }
             )
@@ -347,14 +357,16 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 languageDirection = appLanguageDirection,
                 onSave = { src, trans, cat, note ->
                     viewModel.saveWord(screen.conceptId, src, trans, cat, note) {
-                        viewModel.navigateTo(Screen.Library)
+                        if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Library)
                     }
                 },
                 onBack = {
-                    if (screen.conceptId != null) {
-                        viewModel.navigateTo(Screen.WordDetailScreen(screen.conceptId))
-                    } else {
-                        viewModel.navigateTo(Screen.Library)
+                    if (!viewModel.navigateBack()) {
+                        if (screen.conceptId != null) {
+                            viewModel.navigateTo(Screen.WordDetailScreen(screen.conceptId))
+                        } else {
+                            viewModel.navigateTo(Screen.Library)
+                        }
                     }
                 }
             )
@@ -385,7 +397,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                     if (parseResult != null) {
                         viewModel.clearParseResult()
                     } else {
-                        viewModel.navigateTo(Screen.Home)
+                        if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
                     }
                 }
             )
@@ -405,7 +417,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 practicedCount = practicedCount,
                 activeDirection = activeDirection,
                 onDirectionChanged = { viewModel.setProgressDirection(it) },
-                onBack = { viewModel.navigateTo(Screen.Home) }
+                onBack = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+                }
             )
         }
 
@@ -427,7 +441,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },
                 onOpenAbout = { viewModel.navigateTo(Screen.About) },
-                onBack = { viewModel.navigateTo(Screen.Home) }
+                onBack = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+                }
             )
         }
 
@@ -451,16 +467,22 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onExportBackup = { type -> viewModel.exportBackup(type) },
                 onExportBackupToUri = { type, uri -> viewModel.exportBackupToUri(type, uri) },
                 onRestoreBackup = { json, replace -> viewModel.restoreBackup(json, replace) },
-                onBack = { viewModel.navigateTo(Screen.Settings) }
+                onBack = {
+                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Settings)
+                }
             )
         }
 
         is Screen.Help -> {
-            HelpScreen(onBack = { viewModel.navigateTo(Screen.Home) })
+            HelpScreen(onBack = {
+                if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+            })
         }
 
         is Screen.About -> {
-            AboutScreen(onBack = { viewModel.navigateTo(Screen.Home) })
+            AboutScreen(onBack = {
+                if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+            })
         }
     }
 }

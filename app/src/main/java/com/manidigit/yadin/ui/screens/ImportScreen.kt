@@ -54,32 +54,39 @@ import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
+import androidx.compose.ui.platform.LocalClipboardManager
+import com.manidigit.yadin.domain.model.ImportSummary
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.CheckCircle
+
 @Composable
 fun ImportScreen(
     parseResult: ParseResult?,
     categories: List<Category> = emptyList(),
     isImporting: Boolean,
     importProgress: Float,
+    importSummary: ImportSummary? = null,
     onParseText: (String) -> Unit,
     onResetParse: (() -> Unit)? = null,
     onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
     onConfirmImport: (DuplicatePolicy, String?) -> Unit,
+    onGoToLibrary: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    val clipboardManager = LocalClipboardManager.current
 
-    var inputText by remember {
-        mutableStateOf(
-            """
-            # نمونه واژگان برای ورود
-            amigo: دوست (مذکر)
-            casa: خانه، منزل
-            libro: کتاب
-            feliz: خوشحال، شاد
-            """.trimIndent()
-        )
-    }
+    val sampleText = """
+        amigo: دوست (مذکر)
+        casa: خانه، منزل
+        libro: کتاب
+        feliz: خوشحال، شاد
+    """.trimIndent()
+
+    var inputText by remember { mutableStateOf("") }
+    var isShowingSample by remember { mutableStateOf(false) }
     var selectedPolicy by remember { mutableStateOf(DuplicatePolicy.MERGE) }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
@@ -103,7 +110,9 @@ fun ImportScreen(
             ) {
                 IconButton(
                     onClick = {
-                        if (parseResult != null && onResetParse != null) {
+                        if (importSummary != null) {
+                            onResetParse?.invoke()
+                        } else if (parseResult != null && onResetParse != null) {
                             onResetParse()
                         } else {
                             onBack()
@@ -129,13 +138,186 @@ fun ImportScreen(
                 )
             }
 
-            if (parseResult == null) {
+            if (importSummary != null) {
+                // SUCCESS REPORT CARD
+                YadinCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = colors.surface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(colors.success.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+
+                        Text(
+                            text = "گزارش ورود گروهی واژگان",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+
+                        Text(
+                            text = "عملیات ورود با موفقیت به پایان رسید و در پایگاه داده ثبت شد.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+
+                        // Stats Summary Grid
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(dimensions.cornerMedium))
+                                .background(colors.surfaceVariant)
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("کل ردیف‌های پردازش‌شده:", color = colors.onSurfaceVariant)
+                                Text("${importSummary.totalProcessed} واژه", fontWeight = FontWeight.Bold, color = colors.onSurface)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("واژگان جدید افزوده شده:", color = colors.onSurfaceVariant)
+                                Text("${importSummary.addedCount} واژه", fontWeight = FontWeight.Bold, color = colors.success)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("واژگان به‌روزشده یا ادغام‌شده:", color = colors.onSurfaceVariant)
+                                Text("${importSummary.updatedCount} واژه", fontWeight = FontWeight.Bold, color = colors.info)
+                            }
+                            if (importSummary.skippedCount > 0) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("واژگان تکراری ردشده:", color = colors.onSurfaceVariant)
+                                    Text("${importSummary.skippedCount} واژه", fontWeight = FontWeight.Bold, color = colors.warning)
+                                }
+                            }
+                            if (!importSummary.categoryName.isNullOrBlank()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("دسته‌بندی موضوعی:", color = colors.onSurfaceVariant)
+                                    Text(importSummary.categoryName, fontWeight = FontWeight.Bold, color = colors.primary)
+                                }
+                            }
+                        }
+
+                        // Action Buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    inputText = ""
+                                    isShowingSample = false
+                                    onResetParse?.invoke()
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(dimensions.cornerMedium)
+                            ) {
+                                Text("ورود دسته جدید", fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = onGoToLibrary,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(dimensions.cornerMedium),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.primary,
+                                    contentColor = colors.onPrimary
+                                )
+                            ) {
+                                Text("مشاهده در کتابخانه", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            } else if (parseResult == null) {
                 // Input area
                 Text(
-                    text = "متن واژگان را در کادر زیر وارد کنید (پشتیبانی از قالب‌های دو نقطه، خط تیره، تب و چند ترجمه‌ای):",
+                    text = "متن واژگان را در کادر زیر وارد کنید (پشتیبانی از فرمت دو نقطه : یا خط تیره - و جداکننده کاما):",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant
                 )
+
+                // Quick Action Bar: Clear & Paste & Sample buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            val clip = clipboardManager.getText()?.text
+                            if (!clip.isNullOrBlank()) {
+                                inputText = clip
+                                isShowingSample = false
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(dimensions.cornerSmall)
+                    ) {
+                        Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("چسباندن متن (Paste)", fontSize = 11.sp)
+                    }
+
+                    if (inputText.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = {
+                                inputText = ""
+                                isShowingSample = false
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(dimensions.cornerSmall)
+                        ) {
+                            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("پاک کردن متن", fontSize = 11.sp)
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = {
+                                inputText = sampleText
+                                isShowingSample = true
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(dimensions.cornerSmall)
+                        ) {
+                            Text("درج متن نمونه", fontSize = 11.sp)
+                        }
+                    }
+                }
 
                 // Category selection BEFORE parsing
                 ExposedCategoryDropdown(
@@ -152,16 +334,34 @@ fun ImportScreen(
 
                 OutlinedTextField(
                     value = inputText,
-                    onValueChange = { inputText = it },
+                    onValueChange = {
+                        inputText = it
+                        isShowingSample = false
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    placeholder = { Text("کلمه: ترجمه1، ترجمه2") },
+                    placeholder = {
+                        Text(
+                            "متن واژگان را اینجا کپی یا بنویسید...\nمثال:\namigo: دوست\ncasa: خانه\nlibro: کتاب"
+                        )
+                    },
+                    trailingIcon = {
+                        if (inputText.isNotEmpty()) {
+                            IconButton(onClick = {
+                                inputText = ""
+                                isShowingSample = false
+                            }) {
+                                Icon(Icons.Default.Clear, contentDescription = "پاک کردن")
+                            }
+                        }
+                    },
                     shape = RoundedCornerShape(dimensions.cornerMedium)
                 )
 
                 Button(
                     onClick = { onParseText(inputText) },
+                    enabled = inputText.trim().isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
