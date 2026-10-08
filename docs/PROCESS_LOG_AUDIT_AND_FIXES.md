@@ -383,5 +383,33 @@
   10. **حذف try/catch خاموش در دیتابیس و تراکنش در SeedImporter:** ارتقای سطح ایمنی دیتابیس با حذف مسدودسازی خطاهای مهاجرت Room و درج داده‌های اولیه با `withTransaction`.
   11. **ارتقای نسخه:** ارتقای به `versionCode = 13` و `versionName = "1.5.0"`.
 
+---
+
+### ۲.۲۳. بازنگری کامل قوانین هسته لایتنر، رفع باگ‌های نشست مرور، نمایش ترکیبی سررسید/کل و آیکون اختصاصی لانچر (نسخه ۱.۶.۰)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/LearningTransition.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/LearningDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/SeedImporter.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/HomeScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ReviewSetupScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/FlashcardScreen.kt`
+  * `app/src/test/java/com/manidigit/yadin/domain/algorithm/LearningTransitionTest.kt`
+  * `app/src/main/res/mipmap-*/` و `res/drawable/`
+  * `app/build.gradle.kts`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+* **ریشه‌یابی و اقدامات اصلاحی:**
+  1. **سقوط قطعی واژه‌های یادگرفته (`LEARNED`) در پاسخ غلط:** در گذشته در متد `calculateNextStage`، واژه‌هایی که در مرحله `LEARNED` بودند در صورت پاسخ غلط با فرض اینکه دیگر نباید تغییر کنند در همان مرحله می‌ماندند. این رفتار اصلاح شد تا هر واژه‌ای در صورت پاسخ نادرست، بدون استثنا به مرحله روزانه (`Stage.DAILY`) با تاریخ سررسید فردا بازگردد.
+  2. **رفع رخنه قفل هم‌روز در واژه‌های یادگرفته و مرور رندوم:** در کوئری‌های واکشی مخزن `LEARNED` و `RANDOM` در `LearningDao`، شرط `lastReviewedDay != today` اعمال نمی‌شد و واژه‌های یادگرفته یا تصادفی در همان روز می‌توانستند دوباره تکرار شوند. این شروط صریحاً اضافه شدند.
+  3. **پیاده‌سازی نمایش ترکیبی «آماده مرور از کل مخزن»:** با اضافه شدن فیلدهای `dueDailyCount`، `dueWeeklyCount`، `dueMonthlyCount` و `availableLearnedCount` به مدل آماری، کپسول‌های لایتنر در صفحه اصلی (`StageMetricPill`) و چیپ‌های صفحه تنظیم مرور (`ReviewSetupScreen`) مقدار سررسید را نسبت به کل مخزن (مثلاً `۴۵/۱۲۰` یا `۰/۲۰`) نمایش می‌دهند.
+  4. **اصلاح ثبت موقعیت و ترتیب آیتم‌های مرور:** شناسایی سؤالات آزمون در `ReviewRepository` بر مبنای `conceptId` منحصر‌به‌فرد تنظیم شد تا پرش یا بازگشت با دکمه «قبلی» باعث عدم تطابق نگردد.
+  5. **بهبود تجربه کاربری فلش‌کارت:** غیرفعال‌سازی دکمه‌های پاسخ تا قبل از چرخش کارت به پشت و حذف آیکون پخش صدای فارسی از پشت کارت.
+  6. **جایگزینی آیکون رسمی برنامه با `docs/YADIN.ico`:** پاکسازی آیکون‌های متفرقه و تولید بسته‌های آیکون استاندارد PNG32 برای تمامی چگالی‌های اندروید (مدل‌های معمولی و گرد) به همراه به‌روزرسانی لایه‌های Adaptive Icon.
+  7. **تثبیت پایپ‌لاین CI در گیت‌هاب:** اصلاح تست `LearningTransitionTest` متناسب با قانون سقوط `LEARNED` و پاس شدن کامل تمامی ۴۷ تست یونیت و صدور موفقیت‌آمیز بیلد APK.
+  8. **ارتقای نسخه رسمی:** ارتقای شماره ساخت و نام نسخه به `versionCode = 14` و `versionName = "1.6.0"`.
+
+
 
 
