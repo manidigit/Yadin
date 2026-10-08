@@ -59,9 +59,9 @@ class LearningTransitionTest {
     }
 
     @Test
-    fun learned_wrong_remainsLearned() {
+    fun learned_wrong_fallsBackToDaily() {
         val result = LearningTransition.calculateNextStage(Stage.LEARNED, isCorrect = false, todayDayString = today)
-        assertEquals(Stage.LEARNED, result.newStage)
-        assertNull(result.nextReviewDay)
+        assertEquals(Stage.DAILY, result.newStage)
+        assertEquals("2026-10-06", result.nextReviewDay) // +1 day
     }
 }
