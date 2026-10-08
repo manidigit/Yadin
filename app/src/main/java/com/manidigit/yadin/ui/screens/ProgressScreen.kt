@@ -35,6 +35,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,9 +46,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.data.local.dao.DayCountRaw
+import com.manidigit.yadin.domain.algorithm.AchievementTierEvaluator
+import com.manidigit.yadin.domain.model.AchievementCategory
 import com.manidigit.yadin.domain.model.AchievementId
+import com.manidigit.yadin.domain.model.AchievementTier
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.StatisticsSummary
+import com.manidigit.yadin.domain.model.TieredGroupState
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.components.DailyReviewChart
 import com.manidigit.yadin.ui.components.YadinCard
@@ -109,6 +114,10 @@ fun ProgressScreen(
         achievements.any { it.id == ach.name && it.unlockedAt != null }
     }
     val unlockedPercent = if (totalAchievements > 0) ((unlockedCount.toFloat() / totalAchievements) * 100).toInt() else 0
+
+    val tieredGroups = remember(achievements) {
+        AchievementTierEvaluator.getTieredGroups(achievements)
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -641,8 +650,7 @@ fun ProgressScreen(
             }
         }
 
-        // ۸. دستاوردها:
-        // - تعداد دستاوردهای کسب‌شده
+        // ۸. دستاوردهای مرحله‌ای و زنجیره‌ای (Tiered Achievements)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -650,13 +658,13 @@ fun ProgressScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "دستاوردها",
+                    text = "دستاوردهای زنجیره‌ای",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
                 Text(
-                    text = "تعداد کسب‌شده: $unlockedCount از $totalAchievements",
+                    text = "نشان‌های کسب‌شده: $unlockedCount از $totalAchievements",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = colors.primary
@@ -690,7 +698,7 @@ fun ProgressScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "تعداد دستاوردهای کسب‌شده",
+                                text = "پیشرفت کل مدال‌ها",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -717,61 +725,12 @@ fun ProgressScreen(
             }
         }
 
-        // لیست دستاوردها
-        items(AchievementId.values()) { ach ->
-            val isUnlocked = achievements.any { it.id == ach.name && it.unlockedAt != null }
-
-            YadinCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = colors.surface
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(if (isUnlocked) colors.primary.copy(alpha = 0.2f) else colors.surfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (isUnlocked) Icons.Default.EmojiEvents else Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = if (isUnlocked) colors.primary else colors.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = ach.titleRes,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isUnlocked) colors.onSurface else colors.onSurfaceVariant
-                        )
-                        Text(
-                            text = ach.descriptionRes,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
-                    }
-
-                    if (isUnlocked) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "آزاد شده",
-                            tint = colors.success,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
+        // لیست کارت‌های مرحله‌ای (هر دسته یک کارت زنده با جایگزینی خودکار سطح)
+        items(
+            items = tieredGroups,
+            key = { it.category.name }
+        ) { group: TieredGroupState ->
+            TieredAchievementCard(group = group)
         }
 
         // ۹. دکمه بزرگ به‌روزرسانی آمار در انتهای صفحه (Refresh Button)
@@ -897,6 +856,133 @@ private fun AccuracyRow(
 }
 
 @Composable
+private fun TieredAchievementCard(group: TieredGroupState) {
+    val colors = LocalYadinColors.current
+    val ach = group.displayAchievement
+
+    // Tier badge color & title
+    val (tierColor, tierLabel) = when (ach.tier) {
+        AchievementTier.BRONZE -> Color(0xFFCD7F32) to "سطح ۱ (برنز)"
+        AchievementTier.SILVER -> Color(0xFF9E9E9E) to "سطح ۲ (نقره)"
+        AchievementTier.GOLD -> Color(0xFFFFB300) to "سطح ۳ (طلا)"
+        AchievementTier.PLATINUM -> Color(0xFF00B0FF) to "سطح ۴ (پلاتین)"
+    }
+
+    val progressFraction = if (group.isMaxLevel) 1f else {
+        (group.currentProgress.toFloat() / group.targetThreshold.coerceAtLeast(1)).coerceIn(0f, 1f)
+    }
+
+    YadinCard(
+        modifier = Modifier.fillMaxWidth(),
+        backgroundColor = colors.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Tier Icon Box
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(tierColor.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (group.isMaxLevel) Icons.Default.CheckCircle else Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        tint = tierColor,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = group.category.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(tierColor.copy(alpha = 0.15f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = tierLabel,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = tierColor
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = if (group.isMaxLevel) "تمام سطوح با موفقیت فتح شد!" else ach.descriptionRes,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 11.sp
+                    )
+                }
+
+                if (group.isMaxLevel) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "تکمیل شده",
+                        tint = colors.success,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+
+            // Progress Bar & Ratio
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (group.isMaxLevel) "نشان نهایی: ${ach.titleRes}" else "هدف بعدی: ${ach.titleRes}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = if (group.isMaxLevel) "تکمیل ۱۰۰٪" else "${group.currentProgress} / ${group.targetThreshold}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (group.isMaxLevel) colors.success else colors.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                LinearProgressIndicator(
+                    progress = { progressFraction },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = if (group.isMaxLevel) colors.success else tierColor,
+                    trackColor = colors.surfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun FormulaScorePill(
     label: String,
     color: Color,
@@ -918,3 +1004,5 @@ private fun FormulaScorePill(
         )
     }
 }
+
+

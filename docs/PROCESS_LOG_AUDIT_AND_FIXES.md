@@ -410,6 +410,25 @@
   7. **تثبیت پایپ‌لاین CI در گیت‌هاب:** اصلاح تست `LearningTransitionTest` متناسب با قانون سقوط `LEARNED` و پاس شدن کامل تمامی ۴۷ تست یونیت و صدور موفقیت‌آمیز بیلد APK.
   8. **ارتقای نسخه رسمی:** ارتقای شماره ساخت و نام نسخه به `versionCode = 14` و `versionName = "1.6.0"`.
 
+---
+
+### ۲.۲۴. طراحی و پیاده‌سازی نظام دستاوردهای مرحله‌ای و زنجیره‌ای (نسخه ۱.۷.۰)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/domain/model/TieredAchievements.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/model/Enums.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/AchievementTierEvaluator.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ProgressScreen.kt`
+  * `app/src/test/java/com/manidigit/yadin/domain/algorithm/AchievementEngineLogicTest.kt`
+  * `app/build.gradle.kts`
+  * `docs/CHANGELOG.md`
+* **اهداف و منطق پیاده‌سازی:**
+  1. **حل مشکل اشباع و پایان زودهنگام پاداش‌ها:** در گذشته ۸ نشان ثابت وجود داشت که پس از بازگشایی (مثلاً ۵۰ واژه)، هیچ هدف بعدی برای ۶,۴۰۰ واژه وجود نداشت. ساختار جدید ۲۰ مدال را در ۴ سطح (برنز، نقره، طلا، پلاتین) در ۵ شاخه اصلی واژگان، رگبار، تثبیت لایتنر، واژه‌های سخت و کوییز ساماندهی کرد.
+  2. **کاهش بار شناختی و شلوغی واسط کاربری (Progressive Replacement):** کلاس `AchievementTierEvaluator` با تجمیع مدال‌ها بر اساس شاخه، فقط سطح در حال انجام را نمایش می‌دهد و پس از فتح آن، به صورت خودکار سطح بعدی را جایگزین می‌کند.
+  3. **به‌روزرسانی جامع محاسبات و آزمون‌ها:** منطق پایش بلادرنگ در `ReviewRepository` برای هر ۲۰ مدال به‌روزرسانی شد و آزمون‌های واحد جامع در `AchievementEngineLogicTest` صحت بازگشایی و ارتقای سطوح را اعتبارسنجی کردند.
+  4. **ارتقای نسخه:** ارتقای به `versionCode = 15` و `versionName = "1.7.0"`.
+
+
 
 
 
