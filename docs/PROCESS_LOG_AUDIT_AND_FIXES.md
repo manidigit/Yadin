@@ -321,4 +321,67 @@
   4. **حذف کدهای تکراری و ارتقای معماری:** توابع مقایسه متنی و تشابه در `QuizDistractorScorer` متمرکز شدند، کدهای تکراری پوسته در `HomeScreen` استانداردسازی گردید و اطلاعات فنی در `AboutScreen` تصحیح شد.
   5. **رفع عدم نمایش کارت گزارش ورود گروهی:** در `MainActivity.kt` متغیر `importSummary` به `ImportScreen` متصل شد و پرش زودهنگام به کتابخانه حذف گردید تا کارت گزارش نتایج به‌صورت شفاف و کامل نمایش داده شود.
 
+---
+
+### ۲.۲۱. اصلاح شمارنده‌های مراحل لایتنر و بازطراحی جامع صفحه آمار و گزارش (نسخه ۱.۴.۴)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/LearningDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/ReviewSessionDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ProgressScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/components/DailyReviewChart.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/CHANGELOG.md`
+* **ریشه‌یابی خطای شمارنده‌های آمار (Stage Counters):**
+  در کوئری `LearningDao.getCountByStageFlow` شرط `AND (:stage = 'LEARNED' OR ls.lastReviewedDay IS NOT NULL)` وجود داشت. از آن‌جا که تمام ۶,۴۱۲ واژه اولیه در دیتابیس با `lastReviewedDay = null` ساخته می‌شوند، تا قبل از مرور شدن هر کارت، این شرط مانع از شمرده شدن واژه‌ها در مراحل روزانه، هفتگی و ماهانه می‌شد و در نتیجه عدد کل واژگان (`totalWords`) و هرم لایتنر نزدیک به صفر نشان داده می‌شد.
+* **اقدامات اصلاحی و قابلیت‌های افزوده:**
+  1. **اصلاح کوئری `getCountByStageFlow`:** شرط غیرضروری `lastReviewedDay IS NOT NULL` حذف شد تا تمامی واژگان جدید و بدون پیشینه مرور بلافاصله در مرحله مربوطه شمارش گردند.
+  2. **افزایش برد آماری به ۹۰ روز:** لیمیت متد `getRecentDailyStatsFlow` از ۱۴ به ۹۰ روز افزایش یافت تا فیلتر ماهانه در نمودارها و جدول دقت ماهانه دارای داده‌های واقعی ۳۰ روزه باشد.
+  3. **پیاده‌سازی دقیق تمامی ۹ شاخص درخواستی صفحه آمار (`ProgressScreen`):**
+     * **کارت‌های خلاصه سه‌گانه:** دقت کل (%)، تعداد یادگرفته‌شده، و کل واژه‌های تمرین‌شده.
+     * **پیشرفت یادگیری:** درصد پیشرفت کلی و نوار پیشرفت بر اساس فرمول ۶.۱۸.
+     * **حفظ ماندگار (Retention):** نمایش نسبت پاسخ‌های درست از کل و درصد با نوار پیشرفت سبز.
+     * **فعالیت مرور:** فیلتر بازه زمانی (هفتگی/ماهانه)، نمودار میله‌ای روزهای هفته و برچسب محور عمودی «تعداد مرور».
+     * **مراحل یادگیری:** نوارهای پیشرفت اختصاصی برای مراحل روزانه، هفتگی، ماهانه و یادگرفته.
+     * **پروفایل سختی:** نوارهای پیشرفت اختصاصی برای سطوح آسان، متوسط، سخت و خیلی سخت.
+     * **دقت مرور:** جدول تفکیکی امروز، این هفته، این ماه و مجموع کل با نمایش نسبت درست از کل و درصد.
+     * **دستاوردها:** شمارنده رسمی «تعداد دستاوردهای کسب‌شده» از کل و گالری نشان‌ها.
+     * **دکمه به‌روزرسانی آمار:** تعبیه دکمه Refresh در هدر بالا و دکمه اختصاصی در انتهای صفحه جهت تازه‌سازی بلادرنگ.
+  4. **ارتقای نسخه:** ارتقای به `versionCode = 12` و `versionName = "1.4.4"`.
+
+---
+
+### ۲.۲۲. ممیزی عمیق و رفع تمامی باگ‌های پنهان، هماهنگ‌سازی جهت‌های زبانی، ایمن‌سازی نشست‌های مرور و ارتقای به نسخه ۱.۵.۰
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/AddEditWordScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ProgressScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/BackupRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/SeedImporter.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/database/YadinDatabase.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/FileReaders.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/CHANGELOG.md`
+* **ریشه‌یابی خطاها و اقدامات اصلاحی:**
+  1. **باگ جهت زبانی در افزودن و ویرایش واژه:** متدهای `addWord` و `updateWord` زبان واژه را هاردکد (`es` و `fa`) ذخیره می‌کردند حتی زمانی که کاربر در جهت معکوس (`REVERSE`: فارسی $\to$ اسپانیایی) واژه اضافه می‌کرد. پارامتر `languageDirection` افزوده شد تا در حالت معکوس متن ورودی اول به عنوان زبان مبدأ فارسی (`fa`) و ترجمه به عنوان زبان مقصد اسپانیایی (`es`) ثبت شود.
+  2. **آمار صفحه پیشرفت وابسته به سوئیچ جهت:** متغیرهای `progressScorePercent`، `practicedWordsCount` و `statistics` در `ProgressScreen` اکنون مستقیماً بر اساس جهت انتخابی در تب بالای صفحه (`progressDirection`) تغییر و به‌روزرسانی می‌شوند.
+  3. **اصلاح تناقض بازه‌های زمانی دقت:** محاسبه دقت کلی مستقیماً بر اساس کل تاریخچه مرورها از `ReviewSessionDao` متصل شد تا با دقت بازه‌ای ۱۴ یا ۹۰ روزه مخلوط نشود.
+  4. **یکپارچه‌سازی دستاوردها:** وضعیت بازگشایی نشان‌ها در UI مستقیماً به استیت واقعی دیتابیس (`getAllAchievementsFlow`) مقید شد و شرط دستاورد `QUIZ_ACE` با متن آن (کسب نمره کامل در آزمون ۱۰ سؤالی) هماهنگ شد.
+  5. **جلوگیری از پاسخ‌های تکراری فلش‌کارت:** اضافه شدن متغیر و قفل اعتبارسنجی همزمانی در `MainViewModel` مانع از ارسال پاسخ‌های پشت سر هم برای یک کارت در اثر لمس‌های سریع گردید.
+  6. **مدیریت نشست‌های رهاشده:** اضافه شدن متد `abandonSession` در ریپازیتوری تا با خروج کاربر از آزمون، وضعیت جلسه به جای معلق ماندن در `ACTIVE`، صریحاً به `ABANDONED` تغییر یافته و ساعت اتمام آن ثبت شود.
+  7. **تضمین گزینه‌های انحرافی کوییز:** افزایش ظرفیت استخر واژگان کاندید به ۸۰۰ واژه و ایجاد فال‌بک تکمیلی در شرایط دسته‌های کم‌واژه جهت پیشگیری از ۳ گزینه‌ای شدن کوییز.
+  8. **بازفعال‌سازی واژگان در ورود گروهی:** در عملیات ادغام و ویرایش، کلمات غیرفعال گذشته مجدداً با `active = true` فعال می‌شوند و شمارنده‌های نتیجه دقیق‌تر شدند.
+  9. **تثبیت پارسر فایل‌ها و بازیابی اتمیک:** رفع خطای نادیده گرفتن فایل‌های JSON با ساختار غیرمجاز، پشتیبانی از سلول‌های حاوی تگ‌های inlineStr در فایل‌های اکسل، و حذف محتواهای قدیمی هنگام جایگزینی در بازیابی پشتیبان.
+  10. **حذف try/catch خاموش در دیتابیس و تراکنش در SeedImporter:** ارتقای سطح ایمنی دیتابیس با حذف مسدودسازی خطاهای مهاجرت Room و درج داده‌های اولیه با `withTransaction`.
+  11. **ارتقای نسخه:** ارتقای به `versionCode = 13` و `versionName = "1.5.0"`.
+
+
 
