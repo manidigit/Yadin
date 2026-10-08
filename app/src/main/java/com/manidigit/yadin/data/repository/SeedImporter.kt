@@ -2,6 +2,8 @@ package com.manidigit.yadin.data.repository
 
 import android.content.Context
 import android.util.JsonReader
+import com.manidigit.yadin.data.local.database.YadinDatabase
+import androidx.room.withTransaction
 import com.manidigit.yadin.data.local.dao.AchievementDao
 import com.manidigit.yadin.data.local.dao.ConceptDao
 import com.manidigit.yadin.data.local.dao.LearningDao
@@ -24,6 +26,7 @@ import java.util.UUID
 
 class SeedImporter(
     private val context: Context,
+    private val database: YadinDatabase,
     private val conceptDao: ConceptDao,
     private val learningDao: LearningDao,
     private val achievementDao: AchievementDao
@@ -173,26 +176,7 @@ class SeedImporter(
             reader.close()
 
             onProgress(0.35f, "در حال دسته‌بندی موضوعات...")
-            if (categories.isNotEmpty()) {
-                conceptDao.insertCategories(categories)
-            }
-
-            onProgress(0.50f, "در حال ذخیره‌سازی واژگان (${concepts.size} مدخل)...")
-            // Batch insert concepts in chunks of 500
             val now = System.currentTimeMillis()
-            concepts.chunked(500).forEachIndexed { i, chunk ->
-                conceptDao.insertConcepts(chunk)
-                val p = 0.50f + (0.20f * (i.toFloat() / (concepts.size / 500 + 1)))
-                onProgress(p, "در حال درج واژه‌ها (${(i + 1) * 500}/${concepts.size})...")
-            }
-
-            onProgress(0.70f, "در حال ذخیره‌سازی ترجمه‌ها...")
-            contents.chunked(1000).forEach { chunk ->
-                conceptDao.insertContents(chunk)
-            }
-
-            onProgress(0.85f, "در حال تنظیم مراحل یادگیری...")
-            // Create initial learning states and difficulty states for new concepts
             val conceptsNeedingStates = if (existingConceptIds.isEmpty()) {
                 concepts
             } else {
@@ -245,19 +229,32 @@ class SeedImporter(
                 )
             }
 
-            if (learningBatch.isNotEmpty()) {
-                learningBatch.chunked(1000).forEach {
-                    learningDao.insertLearningStates(it)
+            database.withTransaction {
+                if (categories.isNotEmpty()) {
+                    conceptDao.insertCategories(categories)
                 }
-            }
-            if (diffBatch.isNotEmpty()) {
-                diffBatch.chunked(1000).forEach {
-                    learningDao.insertDifficultyStates(it)
-                }
-            }
 
-            onProgress(0.95f, "در حال آماده‌سازی دستاوردها...")
-            ensureDefaultAchievements()
+                concepts.chunked(500).forEach { chunk ->
+                    conceptDao.insertConcepts(chunk)
+                }
+
+                contents.chunked(1000).forEach { chunk ->
+                    conceptDao.insertContents(chunk)
+                }
+
+                if (learningBatch.isNotEmpty()) {
+                    learningBatch.chunked(1000).forEach {
+                        learningDao.insertLearningStates(it)
+                    }
+                }
+                if (diffBatch.isNotEmpty()) {
+                    diffBatch.chunked(1000).forEach {
+                        learningDao.insertDifficultyStates(it)
+                    }
+                }
+
+                ensureDefaultAchievements()
+            }
 
             onProgress(1.0f, "آماده‌سازی با موفقیت پایان یافت.")
         } catch (e: Exception) {

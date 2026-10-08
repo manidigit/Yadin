@@ -59,11 +59,36 @@ fun AddEditWordScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
-    var sourceText by remember { mutableStateOf(initialWord?.sourceContent?.text ?: "") }
-    var translationsText by remember {
-        mutableStateOf(initialWord?.targetContents?.joinToString("، ") { it.text } ?: "")
+    val isNormal = (languageDirection == CardDirection.NORMAL)
+
+    var sourceText by remember(initialWord, languageDirection) {
+        mutableStateOf(
+            if (isNormal) {
+                initialWord?.sourceContent?.text ?: ""
+            } else {
+                initialWord?.targetContents?.firstOrNull()?.text ?: ""
+            }
+        )
     }
-    var note by remember { mutableStateOf(initialWord?.sourceContent?.note ?: "") }
+    var translationsText by remember(initialWord, languageDirection) {
+        mutableStateOf(
+            if (isNormal) {
+                initialWord?.targetContents?.joinToString("، ") { it.text } ?: ""
+            } else {
+                initialWord?.sourceContent?.text ?: ""
+            }
+        )
+    }
+    var note by remember(initialWord, languageDirection) {
+        mutableStateOf(
+            if (isNormal) {
+                initialWord?.sourceContent?.note ?: ""
+            } else {
+                initialWord?.targetContents?.firstOrNull { !it.note.isNullOrBlank() }?.note
+                    ?: initialWord?.sourceContent?.note ?: ""
+            }
+        )
+    }
     var selectedCategoryId by remember { mutableStateOf(initialWord?.concept?.categoryId) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 

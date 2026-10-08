@@ -25,6 +25,7 @@ import com.manidigit.yadin.domain.model.QuizQuestion
 import com.manidigit.yadin.domain.model.ReviewCard
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewSession
+import com.manidigit.yadin.domain.model.SessionStatus
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.StatisticsSummary
@@ -66,7 +67,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsRepo = SettingsRepository(db.settingsDao())
     val vocabularyRepo = VocabularyRepository(db, db.conceptDao(), db.learningDao(), db.reviewSessionDao())
     val reviewRepo = ReviewRepository(db.conceptDao(), db.learningDao(), db.reviewSessionDao(), db.achievementDao())
-    private val seedImporter = SeedImporter(application, db.conceptDao(), db.learningDao(), db.achievementDao())
+    private val seedImporter = SeedImporter(application, db, db.conceptDao(), db.learningDao(), db.achievementDao())
     val backupRepo = BackupRepository(
         application,
         db,
@@ -156,7 +157,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val progressDirection: StateFlow<CardDirection> = _progressDirection.asStateFlow()
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val progressScorePercent: StateFlow<Double> = appLanguageDirection
+    val progressScorePercent: StateFlow<Double> = _progressDirection
         .flatMapLatest { dir -> vocabularyRepo.getProgressScoreFlow(dir) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
@@ -164,8 +165,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val practicedWordsCount: StateFlow<Int> = appLanguageDirection
+    val practicedWordsCount: StateFlow<Int> = _progressDirection
         .flatMapLatest { dir -> vocabularyRepo.getPracticedWordsCountFlow(dir) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val progressStatistics: StateFlow<StatisticsSummary> = _progressDirection
+        .flatMapLatest { dir -> vocabularyRepo.getStatisticsSummary(dir) }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            StatisticsSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        )
+
+    val achievements: StateFlow<List<com.manidigit.yadin.data.local.entity.AchievementEntity>> = reviewRepo.getAllAchievementsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val totalCorrectReviewsCount: StateFlow<Int> = vocabularyRepo.getTotalCorrectReviewsCountFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     // Backup State
@@ -390,36 +406,58 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isCardFlipped.value = !_isCardFlipped.value
     }
 
+    private var isSubmittingFlashcard = false
+
     fun submitFlashcardAnswer(isCorrect: Boolean) {
+        if (isSubmittingFlashcard) return
         val session = _activeSession.value ?: return
         val cards = _sessionCards.value
         val idx = _currentCardIndex.value
         if (idx >= cards.size) return
 
+        isSubmittingFlashcard = true
         val currentCard = cards[idx]
         viewModelScope.launch {
-            reviewRepo.submitAnswer(
-                sessionId = session.id,
-                conceptId = currentCard.conceptId,
-                direction = currentCard.direction,
-                isCorrect = isCorrect,
-                mode = ReviewMode.FLASHCARD,
-                difficultyThreshold = difficultyThreshold.value
-            )
+            try {
+                reviewRepo.submitAnswer(
+                    sessionId = session.id,
+                    conceptId = currentCard.conceptId,
+                    direction = currentCard.direction,
+                    isCorrect = isCorrect,
+                    mode = ReviewMode.FLASHCARD,
+                    difficultyThreshold = difficultyThreshold.value
+                )
 
-            if (isCorrect) {
-                _sessionCorrectCount.value += 1
-            } else {
-                _sessionWrongCount.value += 1
-            }
+                if (isCorrect) {
+                    _sessionCorrectCount.value += 1
+                } else {
+                    _sessionWrongCount.value += 1
+                }
 
-            if (idx + 1 < cards.size) {
-                _currentCardIndex.value = idx + 1
-                _isCardFlipped.value = false
-            } else {
-                reviewRepo.completeSession(session.id)
-                _currentScreen.value = Screen.SessionSummary
+                if (idx + 1 < cards.size) {
+                    _currentCardIndex.value = idx + 1
+                    _isCardFlipped.value = false
+                } else {
+                    reviewRepo.completeSession(session.id)
+                    _currentScreen.value = Screen.SessionSummary
+                }
+            } finally {
+                isSubmittingFlashcard = false
             }
+        }
+    }
+
+    fun exitSession() {
+        val session = _activeSession.value
+        if (session != null && session.status == SessionStatus.ACTIVE) {
+            viewModelScope.launch {
+                reviewRepo.abandonSession(session.id)
+            }
+        }
+        _activeSession.value = null
+        isSubmittingFlashcard = false
+        if (!navigateBack()) {
+            _currentScreen.value = Screen.Home
         }
     }
 
@@ -554,13 +592,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         translations: List<String>,
         categoryId: String?,
         note: String?,
+        direction: CardDirection = appLanguageDirection.value,
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
             if (conceptId != null) {
-                vocabularyRepo.updateWord(conceptId, sourceText, translations, categoryId, note)
+                vocabularyRepo.updateWord(conceptId, sourceText, translations, categoryId, note, direction)
             } else {
-                vocabularyRepo.addWord(sourceText, translations, categoryId, note)
+                vocabularyRepo.addWord(sourceText, translations, categoryId, note, direction)
             }
             performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value)
             onSuccess()
@@ -608,9 +647,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Progress Direction
+    // Progress Direction & Statistics Refresh
     fun setProgressDirection(direction: CardDirection) {
         _progressDirection.value = direction
+    }
+
+    fun refreshStatistics() {
+        viewModelScope.launch {
+            reviewRepo.checkAchievements()
+            val currentDir = _progressDirection.value
+            _progressDirection.value = currentDir
+        }
     }
 
     // Backup & Restore Options

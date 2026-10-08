@@ -208,8 +208,7 @@ class VocabularyRepository(
         translations: List<String>,
         categoryId: String? = null,
         note: String? = null,
-        sourceLang: String = "es",
-        targetLang: String = "fa",
+        direction: CardDirection = CardDirection.NORMAL,
         entryType: EntryType = EntryType.WORD
     ): Result<String> {
         val cleanSource = sourceText.trim()
@@ -221,6 +220,8 @@ class VocabularyRepository(
             return Result.failure(IllegalArgumentException("حداقل یک ترجمه باید وارد شود"))
         }
 
+        val sourceLang = if (direction == CardDirection.REVERSE) "fa" else "es"
+        val targetLang = if (direction == CardDirection.REVERSE) "es" else "fa"
         val conceptId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
@@ -312,13 +313,17 @@ class VocabularyRepository(
         sourceText: String,
         translations: List<String>,
         categoryId: String?,
-        note: String?
+        note: String?,
+        direction: CardDirection = CardDirection.NORMAL
     ): Result<Unit> {
         return database.withTransaction {
             val existing = conceptDao.getConceptById(conceptId)
                 ?: return@withTransaction Result.failure(IllegalArgumentException("مفهوم یافت نشد"))
             val now = System.currentTimeMillis()
-            conceptDao.updateConcept(existing.copy(categoryId = categoryId, updatedAt = now))
+            conceptDao.updateConcept(existing.copy(categoryId = categoryId, active = true, updatedAt = now))
+
+            val sourceLang = if (direction == CardDirection.REVERSE) "fa" else "es"
+            val targetLang = if (direction == CardDirection.REVERSE) "es" else "fa"
 
             // Recreate contents
             conceptDao.deleteContentsForConcept(conceptId)
@@ -327,7 +332,7 @@ class VocabularyRepository(
                 ContentEntity(
                     id = UUID.randomUUID().toString(),
                     conceptId = conceptId,
-                    languageCode = "es",
+                    languageCode = sourceLang,
                     text = sourceText.trim(),
                     canonicalKey = TextUtilities.toCanonicalKey(sourceText.trim()),
                     note = note?.trim()?.ifEmpty { null },
@@ -339,7 +344,7 @@ class VocabularyRepository(
                     ContentEntity(
                         id = UUID.randomUUID().toString(),
                         conceptId = conceptId,
-                        languageCode = "fa",
+                        languageCode = targetLang,
                         text = trans.trim(),
                         canonicalKey = TextUtilities.toCanonicalKey(trans.trim()),
                         note = null,
@@ -356,6 +361,10 @@ class VocabularyRepository(
         database.withTransaction {
             conceptDao.softDeleteConcept(conceptId)
         }
+    }
+
+    fun getTotalCorrectReviewsCountFlow(): Flow<Int> {
+        return reviewSessionDao.getTotalCorrectReviewsCountFlow()
     }
 
     suspend fun getRecentDailyStats(days: Int = 14): List<DayCountRaw> {
@@ -468,14 +477,14 @@ class VocabularyRepository(
                             skippedCount++
                         }
                         DuplicatePolicy.REPLACE -> {
-                            updateWord(
+                            val res = updateWord(
                                 conceptId = existingContent.conceptId,
                                 sourceText = cleanSource,
                                 translations = entry.translations,
                                 categoryId = effectiveCat,
                                 note = enrichedNote
                             )
-                            updatedCount++
+                            if (res.isSuccess) updatedCount++ else skippedCount++
                         }
                         DuplicatePolicy.MERGE -> {
                             val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
@@ -483,33 +492,33 @@ class VocabularyRepository(
                             val merged = (existingTranslations + entry.translations).distinct()
                             val currentEs = currentContents.firstOrNull { it.languageCode == "es" }
                             val mergedNote = listOfNotNull(currentEs?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
-                            updateWord(
+                            val res = updateWord(
                                 conceptId = existingContent.conceptId,
                                 sourceText = cleanSource,
                                 translations = merged,
                                 categoryId = effectiveCat,
                                 note = mergedNote
                             )
-                            updatedCount++
+                            if (res.isSuccess) updatedCount++ else skippedCount++
                         }
                         DuplicatePolicy.KEEP_SEPARATE -> {
-                            addWord(
+                            val res = addWord(
                                 sourceText = cleanSource,
                                 translations = entry.translations,
                                 categoryId = targetCategoryId,
                                 note = enrichedNote
                             )
-                            addedCount++
+                            if (res.isSuccess) addedCount++ else skippedCount++
                         }
                     }
                 } else {
-                    addWord(
+                    val res = addWord(
                         sourceText = cleanSource,
                         translations = entry.translations,
                         categoryId = targetCategoryId,
                         note = enrichedNote
                     )
-                    addedCount++
+                    if (res.isSuccess) addedCount++ else skippedCount++
                 }
                 onProgress(index + 1, total)
             }
@@ -536,7 +545,7 @@ class VocabularyRepository(
     }
 
     fun getRecentDailyStatsFlow(): Flow<List<DayCountRaw>> {
-        return reviewSessionDao.getRecentDailyStatsFlow(14)
+        return reviewSessionDao.getRecentDailyStatsFlow(90)
     }
 
     fun getPracticedWordsCountFlow(direction: CardDirection): Flow<Int> {

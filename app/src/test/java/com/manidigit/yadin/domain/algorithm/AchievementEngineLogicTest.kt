@@ -33,7 +33,7 @@ class AchievementEngineLogicTest {
         if (masteredHardWords >= 5) unlocked.add(AchievementId.HARD_MASTER)
 
         // 5. Quiz ace
-        if (quizQuestionsCount >= 5 && quizCorrectCount == quizQuestionsCount) {
+        if (quizQuestionsCount >= 10 && quizCorrectCount == quizQuestionsCount) {
             unlocked.add(AchievementId.QUIZ_ACE)
         }
 
@@ -91,14 +91,14 @@ class AchievementEngineLogicTest {
     }
 
     @Test
-    fun `perfect quiz score on 5 or more questions triggers QUIZ_ACE`() {
-        val imperfect = evaluateAchievements(0, 0, 0, 0, 5, 4)
+    fun `perfect quiz score on 10 or more questions triggers QUIZ_ACE`() {
+        val imperfect = evaluateAchievements(0, 0, 0, 0, 10, 9)
         assertFalse(imperfect.contains(AchievementId.QUIZ_ACE))
 
-        val tooShort = evaluateAchievements(0, 0, 0, 0, 4, 4)
+        val tooShort = evaluateAchievements(0, 0, 0, 0, 9, 9)
         assertFalse(tooShort.contains(AchievementId.QUIZ_ACE))
 
-        val perfect = evaluateAchievements(0, 0, 0, 0, 5, 5)
+        val perfect = evaluateAchievements(0, 0, 0, 0, 10, 10)
         assertTrue(perfect.contains(AchievementId.QUIZ_ACE))
     }
 }

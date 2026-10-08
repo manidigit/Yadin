@@ -191,8 +191,8 @@ class ReviewRepository(
         val targetLang = if (session?.direction == CardDirection.REVERSE) "es" else "fa"
         val sessionConceptIds = cards.map { it.conceptId }.toSet()
 
-        // Fast random candidate sampling (250 items max) to ensure instant load time regardless of DB size
-        val randomCandidateContents = conceptDao.getRandomContents(targetLang, 250)
+        // Fast random candidate sampling (500 items) to ensure wide pool and instant load time
+        val randomCandidateContents = conceptDao.getRandomContents(targetLang, 500)
         
         val candidateConceptIds = (randomCandidateContents.map { it.conceptId } + sessionConceptIds).distinct()
         val allContents = conceptDao.getContentsForConcepts(candidateConceptIds).filter { it.languageCode == targetLang && it.text.isNotBlank() }
@@ -312,6 +312,37 @@ class ReviewRepository(
                 }
             }
 
+            // Fallback 1: Relax collision check among chosen distractors if candidate does not collide with correct answer
+            if (chosenDistractors.size < 3) {
+                for (cand in nonCollidingPool) {
+                    if (chosenDistractors.size >= 3) break
+                    if (cand.text != correctAnswer && chosenDistractors.none { it.text == cand.text }) {
+                        chosenDistractors.add(cand)
+                    }
+                }
+            }
+
+            // Fallback 2: If still < 3, fetch extra random items from database
+            if (chosenDistractors.size < 3) {
+                val extraFromDb = conceptDao.getRandomContents(targetLang, 100)
+                for (extra in extraFromDb) {
+                    if (chosenDistractors.size >= 3) break
+                    val cleanText = extra.text.trim()
+                    if (cleanText.isNotBlank() && cleanText != correctAnswer && chosenDistractors.none { it.text == cleanText }) {
+                        chosenDistractors.add(
+                            DistractorPoolItem(
+                                conceptId = extra.conceptId,
+                                text = cleanText,
+                                categoryId = null,
+                                entryType = EntryType.WORD,
+                                difficulty = VocabularyDifficulty.MEDIUM,
+                                semantic = QuizDistractorScorer.precomputeSemantic(cleanText)
+                            )
+                        )
+                    }
+                }
+            }
+
             val chosenTexts = chosenDistractors.map { it.text }
             val optionsList = (chosenTexts.map { QuizOption(it, "") } + QuizOption(correctAnswer, card.conceptId)).shuffled()
             val correctIdx = optionsList.indexOfFirst { it.text == correctAnswer }.coerceAtLeast(0)
@@ -419,8 +450,14 @@ class ReviewRepository(
         )
         reviewSessionDao.insertHistoryItem(historyItem)
 
-        // Update position in session
+        // Update position and item state in session
         if (session != null) {
+            val sessionItems = reviewSessionDao.getItemsForSession(sessionId)
+            val currentPos = session.currentPosition
+            val curItem = sessionItems.getOrNull(currentPos)
+            if (curItem != null) {
+                reviewSessionDao.updateItemState(curItem.id, SessionItemState.ANSWERED)
+            }
             reviewSessionDao.updateSession(
                 session.copy(currentPosition = session.currentPosition + 1)
             )
@@ -437,7 +474,7 @@ class ReviewRepository(
         )
     }
 
-    private suspend fun checkAchievements(sessionId: String) {
+    suspend fun checkAchievements(sessionId: String = "") {
         val today = ClockAndDayMath.todayDayString()
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
         val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
@@ -482,11 +519,11 @@ class ReviewRepository(
         }
         achievementDao.updateProgress("HARD_MASTER", hardMastered.coerceAtMost(5))
 
-        // 5. Quiz Ace (QUIZ_ACE: 100% correct in a quiz session of 5+ questions)
+        // 5. Quiz Ace (QUIZ_ACE: 100% correct in a quiz session of 10 questions)
         val session = reviewSessionDao.getSessionById(sessionId)
         if (session != null && session.mode == ReviewMode.QUIZ) {
             val history = reviewSessionDao.getHistoryForSession(sessionId)
-            if (history.size >= 5 && history.all { it.isCorrect }) {
+            if (history.size >= 10 && history.all { it.isCorrect }) {
                 achievementDao.unlock("QUIZ_ACE")
                 achievementDao.updateProgress("QUIZ_ACE", 1)
             }
@@ -504,10 +541,24 @@ class ReviewRepository(
         // Re-check quiz ace on session completion
         if (session.mode == ReviewMode.QUIZ) {
             val history = reviewSessionDao.getHistoryForSession(sessionId)
-            if (history.size >= 5 && history.all { it.isCorrect }) {
+            if (history.size >= 10 && history.all { it.isCorrect }) {
                 achievementDao.unlock("QUIZ_ACE")
                 achievementDao.updateProgress("QUIZ_ACE", 1)
             }
         }
     }
+
+    suspend fun abandonSession(sessionId: String) {
+        val session = reviewSessionDao.getSessionById(sessionId) ?: return
+        if (session.status == SessionStatus.ACTIVE) {
+            reviewSessionDao.updateSession(
+                session.copy(
+                    status = SessionStatus.ABANDONED,
+                    endedAt = System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
+    fun getAllAchievementsFlow() = achievementDao.getAllAchievementsFlow()
 }

@@ -74,7 +74,7 @@ interface ReviewSessionDao {
         ORDER BY reviewedDay DESC
         LIMIT :limit
     """)
-    suspend fun getRecentDailyStats(limit: Int = 14): List<DayCountRaw>
+    suspend fun getRecentDailyStats(limit: Int = 90): List<DayCountRaw>
 
     @Query("""
         SELECT 
@@ -87,7 +87,7 @@ interface ReviewSessionDao {
         ORDER BY reviewedDay DESC
         LIMIT :limit
     """)
-    fun getRecentDailyStatsFlow(limit: Int = 14): Flow<List<DayCountRaw>>
+    fun getRecentDailyStatsFlow(limit: Int = 90): Flow<List<DayCountRaw>>
 
     @Query("SELECT * FROM review_history")
     suspend fun getAllHistory(): List<ReviewHistoryEntity>

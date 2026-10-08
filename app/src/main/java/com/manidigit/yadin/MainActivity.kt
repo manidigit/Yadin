@@ -267,9 +267,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 showCategory = showCategory,
                 onFlip = { viewModel.flipCard() },
                 onAnswer = { isCorrect -> viewModel.submitFlashcardAnswer(isCorrect) },
-                onExit = {
-                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
-                }
+                onExit = { viewModel.exitSession() }
             )
         }
 
@@ -290,9 +288,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onPreviousQuestion = { viewModel.previousQuizQuestion() },
                 onNextQuestion = { viewModel.nextQuizQuestion() },
                 onGoToQuestion = { targetIdx -> viewModel.goToQuizQuestion(targetIdx) },
-                onExit = {
-                    if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
-                }
+                onExit = { viewModel.exitSession() }
             )
         }
 
@@ -356,7 +352,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 categories = categories,
                 languageDirection = appLanguageDirection,
                 onSave = { src, trans, cat, note ->
-                    viewModel.saveWord(screen.conceptId, src, trans, cat, note) {
+                    viewModel.saveWord(screen.conceptId, src, trans, cat, note, appLanguageDirection) {
                         if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Library)
                     }
                 },
@@ -414,10 +410,12 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
 
         is Screen.ProgressStats -> {
             val progressPercent by viewModel.progressScorePercent.collectAsStateWithLifecycle()
-            val statistics by viewModel.statistics.collectAsStateWithLifecycle()
+            val statistics by viewModel.progressStatistics.collectAsStateWithLifecycle()
             val dailyStats by viewModel.dailyStats.collectAsStateWithLifecycle()
             val practicedCount by viewModel.practicedWordsCount.collectAsStateWithLifecycle()
             val activeDirection by viewModel.progressDirection.collectAsStateWithLifecycle()
+            val achievements by viewModel.achievements.collectAsStateWithLifecycle()
+            val totalCorrectCount by viewModel.totalCorrectReviewsCount.collectAsStateWithLifecycle()
 
             ProgressScreen(
                 progressPercent = progressPercent,
@@ -425,7 +423,10 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 dailyStats = dailyStats,
                 practicedCount = practicedCount,
                 activeDirection = activeDirection,
+                achievements = achievements,
+                totalCorrectCount = totalCorrectCount,
                 onDirectionChanged = { viewModel.setProgressDirection(it) },
+                onRefresh = { viewModel.refreshStatistics() },
                 onBack = {
                     if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
                 }

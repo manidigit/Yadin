@@ -10,9 +10,7 @@ import com.manidigit.yadin.domain.text.TextUtilities
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
-import java.io.BufferedReader
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.util.zip.ZipInputStream
 
 object FileReaders {
@@ -23,13 +21,13 @@ object FileReaders {
     }
 
     fun readCsv(inputStream: InputStream): ParseResult {
-        val reader = BufferedReader(InputStreamReader(inputStream, Charsets.UTF_8))
-        val lines = reader.readLines()
-        if (lines.isEmpty()) return ParseResult(emptyList(), emptyList())
+        val text = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        if (text.isBlank()) return ParseResult(emptyList(), emptyList())
 
-        // Delimiter auto-detection on first line
-        val firstLine = lines.first()
-        val delimiter = detectDelimiter(firstLine)
+        // Delimiter auto-detection ignoring quotes
+        val delimiter = detectDelimiter(text)
+        val records = parseCsvRecords(text, delimiter)
+        if (records.isEmpty()) return ParseResult(emptyList(), emptyList())
 
         val entries = mutableListOf<ParsedEntry>()
         val warnings = mutableListOf<ParseWarning>()
@@ -41,11 +39,10 @@ object FileReaders {
         var typeCol = 4
         var startIndex = 0
 
-        // Check header
-        val headerTokens = parseCsvLine(firstLine, delimiter)
-        if (isHeaderRow(headerTokens)) {
+        val firstRow = records.first()
+        if (isHeaderRow(firstRow)) {
             startIndex = 1
-            for ((idx, colName) in headerTokens.withIndex()) {
+            for ((idx, colName) in firstRow.withIndex()) {
                 val clean = colName.trim().lowercase()
                 when {
                     clean in listOf("source", "word", "spanish", "واژه", "کلمه", "اسپانیایی") -> sourceCol = idx
@@ -57,11 +54,10 @@ object FileReaders {
             }
         }
 
-        for (i in startIndex until lines.size) {
-            val line = lines[i].trim()
-            if (line.isEmpty()) continue
+        for (i in startIndex until records.size) {
+            val tokens = records[i]
+            if (tokens.all { it.isBlank() }) continue
 
-            val tokens = parseCsvLine(line, delimiter)
             val source = tokens.getOrNull(sourceCol)?.let { TextUtilities.cleanText(it) } ?: ""
             val transText = tokens.getOrNull(transCol) ?: ""
             val translations = TextUtilities.splitTranslations(transText)
@@ -79,7 +75,7 @@ object FileReaders {
                     ParseWarning(
                         type = ParseWarningType.UNKNOWN_FORMAT,
                         lineNumber = i + 1,
-                        rawText = line,
+                        rawText = tokens.joinToString(","),
                         message = "ردیف فاقد مبدأ یا ترجمه معتبر است"
                     )
                 )
@@ -93,7 +89,7 @@ object FileReaders {
                         entryType = entryType,
                         confidence = 1.0,
                         lineNumber = i + 1,
-                        rawLines = listOf(line)
+                        rawLines = listOf(tokens.joinToString(","))
                     )
                 )
             }
@@ -102,10 +98,24 @@ object FileReaders {
         return ParseResult(entries, warnings)
     }
 
-    private fun detectDelimiter(line: String): Char {
-        val commaCount = line.count { it == ',' }
-        val semicolonCount = line.count { it == ';' }
-        val tabCount = line.count { it == '\t' }
+    private fun detectDelimiter(text: String): Char {
+        var commaCount = 0
+        var semicolonCount = 0
+        var tabCount = 0
+        var inQuotes = false
+        for (i in text.indices) {
+            val c = text[i]
+            if (c == '"') {
+                inQuotes = !inQuotes
+            } else if (!inQuotes) {
+                when (c) {
+                    ',' -> commaCount++
+                    ';' -> semicolonCount++
+                    '\t' -> tabCount++
+                    '\n', '\r' -> break
+                }
+            }
+        }
         return when {
             tabCount > commaCount && tabCount > semicolonCount -> '\t'
             semicolonCount > commaCount -> ';'
@@ -118,31 +128,47 @@ object FileReaders {
         return tokens.any { it.trim().lowercase() in keywords }
     }
 
-    private fun parseCsvLine(line: String, delimiter: Char): List<String> {
-        val result = mutableListOf<String>()
-        var current = StringBuilder()
+    private fun parseCsvRecords(text: String, delimiter: Char): List<List<String>> {
+        val records = mutableListOf<List<String>>()
+        var currentRecord = mutableListOf<String>()
+        val currentField = StringBuilder()
         var inQuotes = false
         var i = 0
 
-        while (i < line.length) {
-            val c = line[i]
+        while (i < text.length) {
+            val c = text[i]
             if (c == '"') {
-                if (inQuotes && i + 1 < line.length && line[i + 1] == '"') {
-                    current.append('"')
+                if (inQuotes && i + 1 < text.length && text[i + 1] == '"') {
+                    currentField.append('"')
                     i++
                 } else {
                     inQuotes = !inQuotes
                 }
             } else if (c == delimiter && !inQuotes) {
-                result.add(current.toString().trim())
-                current = StringBuilder()
+                currentRecord.add(currentField.toString().trim())
+                currentField.clear()
+            } else if ((c == '\n' || c == '\r') && !inQuotes) {
+                if (c == '\r' && i + 1 < text.length && text[i + 1] == '\n') {
+                    i++
+                }
+                currentRecord.add(currentField.toString().trim())
+                currentField.clear()
+                if (currentRecord.any { it.isNotBlank() }) {
+                    records.add(currentRecord)
+                }
+                currentRecord = mutableListOf()
             } else {
-                current.append(c)
+                currentField.append(c)
             }
             i++
         }
-        result.add(current.toString().trim())
-        return result
+        if (currentField.isNotEmpty() || currentRecord.isNotEmpty()) {
+            currentRecord.add(currentField.toString().trim())
+            if (currentRecord.any { it.isNotBlank() }) {
+                records.add(currentRecord)
+            }
+        }
+        return records
     }
 
     fun readJson(inputStream: InputStream): ParseResult {
@@ -171,6 +197,15 @@ object FileReaders {
             } else if (trimmed.startsWith("[")) {
                 val array = JSONArray(trimmed)
                 parseJsonArray(array, entries, warnings)
+            } else {
+                warnings.add(
+                    ParseWarning(
+                        type = ParseWarningType.UNKNOWN_FORMAT,
+                        lineNumber = 1,
+                        rawText = text.take(100),
+                        message = "فرمت فایل نامعتبر است: داده با { یا [ آغاز نمی‌شود"
+                    )
+                )
             }
         } catch (e: Exception) {
             warnings.add(
@@ -218,11 +253,12 @@ object FileReaders {
                 VocabularyParser.classifyEntry(source)
             }
 
-            if (source.isNotBlank() && translations.isNotEmpty()) {
+            val cleanTrans = translations.filter { it.isNotBlank() }
+            if (source.isNotBlank() && cleanTrans.isNotEmpty()) {
                 entries.add(
                     ParsedEntry(
                         sourceText = source,
-                        translations = translations.filter { it.isNotBlank() },
+                        translations = cleanTrans,
                         note = note,
                         categoryNames = categories.filter { it.isNotBlank() },
                         entryType = entryType,
@@ -256,7 +292,7 @@ object FileReaders {
             while (entry != null) {
                 if (entry.name == "xl/sharedStrings.xml") {
                     parseSharedStrings(zip, sharedStrings)
-                } else if (entry.name == "xl/worksheets/sheet1.xml") {
+                } else if (entry.name.startsWith("xl/worksheets/sheet") && entry.name.endsWith(".xml") && sheetBytes == null) {
                     sheetBytes = zip.readBytes()
                 }
                 zip.closeEntry()
@@ -273,7 +309,6 @@ object FileReaders {
             )
         }
 
-        // Convert parsed sheet rows to CSV-style parsing
         if (sheetRows.isEmpty()) return ParseResult(emptyList(), emptyList())
         val csvSimulated = sheetRows.joinToString("\n") { row ->
             row.joinToString(",") { "\"${it.replace("\"", "\"\"")}\"" }
@@ -313,8 +348,10 @@ object FileReaders {
 
         var currentRow = mutableListOf<String>()
         var cellType: String? = null
+        var cellRef: String? = null
         var cellValue = StringBuilder()
         var insideV = false
+        var insideInlineT = false
 
         while (eventType != XmlPullParser.END_DOCUMENT) {
             when (eventType) {
@@ -323,17 +360,20 @@ object FileReaders {
                         "row" -> currentRow = mutableListOf()
                         "c" -> {
                             cellType = parser.getAttributeValue(null, "t")
+                            cellRef = parser.getAttributeValue(null, "r")
                             cellValue = StringBuilder()
                         }
                         "v" -> insideV = true
+                        "t" -> if (cellType == "inlineStr") insideInlineT = true
                     }
                 }
                 XmlPullParser.TEXT -> {
-                    if (insideV) cellValue.append(parser.text)
+                    if (insideV || insideInlineT) cellValue.append(parser.text)
                 }
                 XmlPullParser.END_TAG -> {
                     when (parser.name) {
                         "v" -> insideV = false
+                        "t" -> insideInlineT = false
                         "c" -> {
                             val textVal = cellValue.toString().trim()
                             val resolved = if (cellType == "s") {
@@ -341,6 +381,14 @@ object FileReaders {
                                 if (idx in sharedStrings.indices) sharedStrings[idx] else textVal
                             } else {
                                 textVal
+                            }
+
+                            // Pad columns if cellRef specifies a column letter (e.g. B2 -> col index 1)
+                            val colIdx = cellRef?.takeWhile { it.isLetter() }?.let { colLettersToIndex(it) }
+                            if (colIdx != null && colIdx > currentRow.size) {
+                                while (currentRow.size < colIdx) {
+                                    currentRow.add("")
+                                }
                             }
                             currentRow.add(resolved)
                         }
@@ -350,5 +398,13 @@ object FileReaders {
             }
             eventType = parser.next()
         }
+    }
+
+    private fun colLettersToIndex(letters: String): Int {
+        var result = 0
+        for (ch in letters.uppercase()) {
+            result = result * 26 + (ch - 'A' + 1)
+        }
+        return (result - 1).coerceAtLeast(0)
     }
 }

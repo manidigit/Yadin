@@ -221,8 +221,8 @@ class BackupRepository(
             data.put("difficultyStates", dsArray)
         }
 
-        if (options.includeProcessHistory || options.includeStreakAndProgress) {
-            onProgress(0.75f, "استخراج تاریخچه جلسات، آزمون‌ها و پروسه پیشرفت...")
+        if (options.includeProcessHistory) {
+            onProgress(0.75f, "استخراج تاریخچه جلسات و آزمون‌ها...")
             val history = reviewSessionDao.getAllHistory()
             val histArray = JSONArray()
             history.forEach { h ->
@@ -277,8 +277,8 @@ class BackupRepository(
             data.put("reviewSessionItems", sessItemsArray)
         }
 
-        if (options.includeSettings) {
-            onProgress(0.9f, "استخراج تنظیمات و دستاوردها...")
+        if (options.includeStreakAndProgress) {
+            onProgress(0.85f, "استخراج نشان‌ها و دستاوردها...")
             val achievements = achievementDao.getAllAchievements()
             val achArray = JSONArray()
             achievements.forEach { a ->
@@ -289,7 +289,10 @@ class BackupRepository(
                 achArray.put(o)
             }
             data.put("achievements", achArray)
+        }
 
+        if (options.includeSettings) {
+            onProgress(0.9f, "استخراج تنظیمات برنامه...")
             val settings = settingsDao.getAllSettings()
             val setArray = JSONArray()
             settings.forEach { s ->
@@ -339,8 +342,8 @@ class BackupRepository(
         val categories = conceptDao.getAllCategories().associateBy { it.id }
         val allConcepts = conceptDao.getAllConcepts().filter { it.active }
         val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
-        val learningMap = learningDao.getAllLearningStates().associateBy { it.conceptId }
-        val diffMap = learningDao.getAllDifficultyStates().associateBy { it.conceptId }
+        val learningMap = learningDao.getAllLearningStates().associateBy { it.conceptId to it.direction }
+        val diffMap = learningDao.getAllDifficultyStates().associateBy { it.conceptId to it.direction }
 
         onProgress(0.5f, "در حال ساخت سطرهای اکسل...")
         val sb = StringBuilder()
@@ -353,8 +356,14 @@ class BackupRepository(
         headers.add("واژه یا عبارت (اسپانیایی)")
         headers.add("ترجمه‌های فارسی")
         if (options.includeCategories) headers.add("دسته‌بندی")
-        if (options.includeReviewStats) headers.add("مرحله لایتنر")
-        if (options.includeDifficulty) headers.add("سطح دشواری")
+        if (options.includeReviewStats) {
+            headers.add("مرحله عادی (اسپانیایی به فارسی)")
+            headers.add("مرحله برعکس (فارسی به اسپانیایی)")
+        }
+        if (options.includeDifficulty) {
+            headers.add("دشواری (عادی)")
+            headers.add("دشواری (برعکس)")
+        }
         headers.add("توضیحات و یادداشت")
         headers.add("شناسه واژه")
 
@@ -365,22 +374,13 @@ class BackupRepository(
             val esText = contents.firstOrNull { it.languageCode == "es" }?.text ?: ""
             val faTranslations = contents.filter { it.languageCode == "fa" }.map { it.text }.joinToString(" ، ")
             val catName = categories[concept.categoryId]?.name ?: "عمومی"
-            val stage = learningMap[concept.id]?.stage?.let {
-                when (it) {
-                    Stage.DAILY -> "روزانه (Daily)"
-                    Stage.WEEKLY -> "هفتگی (Weekly)"
-                    Stage.MONTHLY -> "ماهانه (Monthly)"
-                    Stage.LEARNED -> "تثبیت‌شده (Learned)"
-                }
-            } ?: "آماده یادگیری"
-            val difficulty = diffMap[concept.id]?.current?.let {
-                when (it) {
-                    VocabularyDifficulty.EASY -> "آسان"
-                    VocabularyDifficulty.MEDIUM -> "متوسط"
-                    VocabularyDifficulty.HARD -> "سخت"
-                    VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
-                }
-            } ?: "متوسط"
+            
+            val stageNormal = learningMap[concept.id to CardDirection.NORMAL]?.stage?.let { formatStageName(it) } ?: "آماده یادگیری"
+            val stageReverse = learningMap[concept.id to CardDirection.REVERSE]?.stage?.let { formatStageName(it) } ?: "آماده یادگیری"
+            
+            val diffNormal = diffMap[concept.id to CardDirection.NORMAL]?.current?.let { formatDiffName(it) } ?: "متوسط"
+            val diffReverse = diffMap[concept.id to CardDirection.REVERSE]?.current?.let { formatDiffName(it) } ?: "متوسط"
+            
             val note = contents.firstOrNull { it.languageCode == "es" }?.note ?: ""
 
             val row = mutableListOf<String>()
@@ -388,8 +388,14 @@ class BackupRepository(
             row.add(esText)
             row.add(faTranslations)
             if (options.includeCategories) row.add(catName)
-            if (options.includeReviewStats) row.add(stage)
-            if (options.includeDifficulty) row.add(difficulty)
+            if (options.includeReviewStats) {
+                row.add(stageNormal)
+                row.add(stageReverse)
+            }
+            if (options.includeDifficulty) {
+                row.add(diffNormal)
+                row.add(diffReverse)
+            }
             row.add(note)
             row.add(concept.id)
 
@@ -469,15 +475,23 @@ class BackupRepository(
         val wrongReviews = totalReviews - correctReviews
         val accuracyPct = if (totalReviews > 0) String.format(Locale.US, "%.1f", (correctReviews.toDouble() / totalReviews) * 100) else "0.0"
 
-        val learnedCount = learningStates.count { it.stage == Stage.LEARNED }
-        val monthlyCount = learningStates.count { it.stage == Stage.MONTHLY }
-        val weeklyCount = learningStates.count { it.stage == Stage.WEEKLY }
-        val dailyCount = learningStates.count { it.stage == Stage.DAILY }
+        val normalLearned = learningStates.count { it.direction == CardDirection.NORMAL && it.stage == Stage.LEARNED }
+        val reverseLearned = learningStates.count { it.direction == CardDirection.REVERSE && it.stage == Stage.LEARNED }
+        val normalMonthly = learningStates.count { it.direction == CardDirection.NORMAL && it.stage == Stage.MONTHLY }
+        val reverseMonthly = learningStates.count { it.direction == CardDirection.REVERSE && it.stage == Stage.MONTHLY }
+        val normalWeekly = learningStates.count { it.direction == CardDirection.NORMAL && it.stage == Stage.WEEKLY }
+        val reverseWeekly = learningStates.count { it.direction == CardDirection.REVERSE && it.stage == Stage.WEEKLY }
+        val normalDaily = learningStates.count { it.direction == CardDirection.NORMAL && it.stage == Stage.DAILY }
+        val reverseDaily = learningStates.count { it.direction == CardDirection.REVERSE && it.stage == Stage.DAILY }
 
-        val easyCount = difficultyStates.count { it.current == VocabularyDifficulty.EASY }
-        val mediumCount = difficultyStates.count { it.current == VocabularyDifficulty.MEDIUM }
-        val hardCount = difficultyStates.count { it.current == VocabularyDifficulty.HARD }
-        val veryHardCount = difficultyStates.count { it.current == VocabularyDifficulty.VERY_HARD }
+        val normalEasy = difficultyStates.count { it.direction == CardDirection.NORMAL && it.current == VocabularyDifficulty.EASY }
+        val reverseEasy = difficultyStates.count { it.direction == CardDirection.REVERSE && it.current == VocabularyDifficulty.EASY }
+        val normalMedium = difficultyStates.count { it.direction == CardDirection.NORMAL && it.current == VocabularyDifficulty.MEDIUM }
+        val reverseMedium = difficultyStates.count { it.direction == CardDirection.REVERSE && it.current == VocabularyDifficulty.MEDIUM }
+        val normalHard = difficultyStates.count { it.direction == CardDirection.NORMAL && it.current == VocabularyDifficulty.HARD }
+        val reverseHard = difficultyStates.count { it.direction == CardDirection.REVERSE && it.current == VocabularyDifficulty.HARD }
+        val normalVeryHard = difficultyStates.count { it.direction == CardDirection.NORMAL && it.current == VocabularyDifficulty.VERY_HARD }
+        val reverseVeryHard = difficultyStates.count { it.direction == CardDirection.REVERSE && it.current == VocabularyDifficulty.VERY_HARD }
 
         val contentsMap = conceptDao.getAllContents().groupBy { it.conceptId }
 
@@ -494,14 +508,15 @@ class BackupRepository(
         sb.append(listOf("پاسخ‌های نادرست", "$wrongReviews بار", "تعداد پاسخ‌های اشتباه در جلسات").joinToString(",") { escapeCsv(it) }).append("\n")
         sb.append(listOf("درصد دقت پاسخ‌ها", "$accuracyPct%", "نسبت پاسخ‌های درست به کل مرورها").joinToString(",") { escapeCsv(it) }).append("\n")
         sb.append(listOf("تعداد کل جلسات تمرین", "${allSessions.size} جلسه", "مجموع جلسات فلش‌کارت و کوییز برگزار شده").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان تثبیت‌شده (حافظه بلندمدت)", "$learnedCount واژه", "مرحله چهارم جعبه لایتنر (تسلط کامل)").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان مرحله ماهانه", "$monthlyCount واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان مرحله هفتگی", "$weeklyCount واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان مرحله روزانه", "$dailyCount واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح آسان", "$easyCount واژه", "EASY").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح متوسط", "$mediumCount واژه", "MEDIUM").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح سخت", "$hardCount واژه", "HARD").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح خیلی سخت", "$veryHardCount واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان تثبیت‌شده (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان تثبیت‌شده (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان مرحله ماهانه (عادی / برعکس)", "$normalMonthly / $reverseMonthly واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان مرحله هفتگی (عادی / برعکس)", "$normalWeekly / $reverseWeekly واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان مرحله روزانه (عادی / برعکس)", "$normalDaily / $reverseDaily واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح آسان (عادی / برعکس)", "$normalEasy / $reverseEasy واژه", "EASY").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح متوسط (عادی / برعکس)", "$normalMedium / $reverseMedium واژه", "MEDIUM").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح سخت (عادی / برعکس)", "$normalHard / $reverseHard واژه", "HARD").joinToString(",") { escapeCsv(it) }).append("\n")
+        sb.append(listOf("واژگان سطح خیلی سخت (عادی / برعکس)", "$normalVeryHard / $reverseVeryHard واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) }).append("\n")
         sb.append("\n")
 
         // SECTION 2: آمار حجم مرور تمرین‌های روزانه
@@ -890,6 +905,14 @@ class BackupRepository(
                     reviewSessionDao.clearHistory()
                     reviewSessionDao.clearSessions()
                     reviewSessionDao.clearSessionItems()
+                } else {
+                    // Smart Merge: clean previous contents for re-imported concepts to avoid duplicate contents
+                    val incomingConceptIds = conceptsList.map { it.id }
+                    if (incomingConceptIds.isNotEmpty()) {
+                        incomingConceptIds.chunked(500).forEach {
+                            conceptDao.deleteContentsForConcepts(it)
+                        }
+                    }
                 }
 
                 categoriesList.chunked(500).forEach { conceptDao.insertCategories(it) }
@@ -915,6 +938,24 @@ class BackupRepository(
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure(e)
+        }
+    }
+
+    private fun formatStageName(stage: Stage): String {
+        return when (stage) {
+            Stage.DAILY -> "روزانه (Daily)"
+            Stage.WEEKLY -> "هفتگی (Weekly)"
+            Stage.MONTHLY -> "ماهانه (Monthly)"
+            Stage.LEARNED -> "تثبیت‌شده (Learned)"
+        }
+    }
+
+    private fun formatDiffName(diff: VocabularyDifficulty): String {
+        return when (diff) {
+            VocabularyDifficulty.EASY -> "آسان"
+            VocabularyDifficulty.MEDIUM -> "متوسط"
+            VocabularyDifficulty.HARD -> "سخت"
+            VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
         }
     }
 }

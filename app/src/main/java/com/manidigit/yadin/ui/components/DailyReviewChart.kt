@@ -126,13 +126,13 @@ fun DailyReviewChart(
             ) {
                 Column {
                     Text(
-                        text = "حجم مرور و تمرین واژگان",
+                        text = "فعالیت مرور",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "مجموع: $totalReviews واژه در دوره انتخاب‌شده",
+                        text = "مجموع: $totalReviews مرور در دوره انتخاب‌شده",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -165,6 +165,20 @@ fun DailyReviewChart(
                         }
                     }
                 }
+            }
+
+            // Axis Label Indicator
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "محور عمودی: تعداد مرور",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.onSurfaceVariant
+                )
             }
 
             // Custom Canvas Chart with Y-Axis and X-Axis

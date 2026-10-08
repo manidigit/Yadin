@@ -1,7 +1,7 @@
 package com.manidigit.yadin.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -23,11 +22,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +48,7 @@ import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.model.AchievementId
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.StatisticsSummary
+import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.components.DailyReviewChart
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
@@ -58,11 +61,54 @@ fun ProgressScreen(
     dailyStats: List<DayCountRaw>,
     practicedCount: Int,
     activeDirection: CardDirection,
+    achievements: List<com.manidigit.yadin.data.local.entity.AchievementEntity> = emptyList(),
+    totalCorrectCount: Int = 0,
     onDirectionChanged: (CardDirection) -> Unit,
+    onRefresh: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    val context = LocalContext.current
+
+    val totalReviewed = statistics.totalReviewsCount
+    val totalAccuracy = if (totalReviewed > 0) {
+        ((totalCorrectCount.toFloat() / totalReviewed) * 100).toInt().coerceIn(0, 100)
+    } else 0
+
+    // Calculations for Review Accuracy breakdown (امروز، این هفته، این ماه، مجموع کل)
+    val today = ClockAndDayMath.todayDayString()
+    val statMap = dailyStats.associateBy { it.reviewedDay }
+
+    // امروز (Today)
+    val todayStat = statMap[today]
+    val todayCorrect = todayStat?.correctCount ?: 0
+    val todayTotal = todayStat?.totalCount ?: 0
+    val todayPercent = if (todayTotal > 0) ((todayCorrect.toFloat() / todayTotal) * 100).toInt().coerceIn(0, 100) else 0
+
+    // این هفته (۷ روز اخیر)
+    val weekDays = (0..6).map { ClockAndDayMath.addDays(today, -it) }
+    val weekCorrect = weekDays.sumOf { statMap[it]?.correctCount ?: 0 }
+    val weekTotal = weekDays.sumOf { statMap[it]?.totalCount ?: 0 }
+    val weekPercent = if (weekTotal > 0) ((weekCorrect.toFloat() / weekTotal) * 100).toInt().coerceIn(0, 100) else 0
+
+    // این ماه (۳۰ روز اخیر)
+    val monthDays = (0..29).map { ClockAndDayMath.addDays(today, -it) }
+    val monthCorrect = monthDays.sumOf { statMap[it]?.correctCount ?: 0 }
+    val monthTotal = monthDays.sumOf { statMap[it]?.totalCount ?: 0 }
+    val monthPercent = if (monthTotal > 0) ((monthCorrect.toFloat() / monthTotal) * 100).toInt().coerceIn(0, 100) else 0
+
+    // مجموع کل
+    val allTimeCorrect = totalCorrectCount
+    val allTimeTotal = totalReviewed
+    val allTimePercent = totalAccuracy
+
+    // دستاوردها (Achievements count)
+    val totalAchievements = AchievementId.values().size
+    val unlockedCount = AchievementId.values().count { ach ->
+        achievements.any { it.id == ach.name && it.unlockedAt != null }
+    }
+    val unlockedPercent = if (totalAchievements > 0) ((unlockedCount.toFloat() / totalAchievements) * 100).toInt() else 0
 
     LazyColumn(
         modifier = Modifier
@@ -71,44 +117,67 @@ fun ProgressScreen(
             .padding(dimensions.screenPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Top Header
+        // ۱. هدر بالا با دکمه بازگشت و دکمه به‌روزرسانی آمار (Top Header with Back & Refresh)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "بازگشت",
+                            tint = colors.onSurface
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "پیشرفت و آمار یادگیری",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = "گزارش جامع وضعیت یادگیری و حافظه",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // دکمه به‌روزرسانی آمار (آیتم ۹)
                 IconButton(
-                    onClick = onBack,
+                    onClick = {
+                        onRefresh()
+                        Toast.makeText(context, "آمار با موفقیت به‌روزرسانی شد", Toast.LENGTH_SHORT).show()
+                    },
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(colors.surfaceVariant)
+                        .background(colors.primary.copy(alpha = 0.12f))
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
-                        tint = colors.onSurface
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = "پیشرفت و آمار یادگیری",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = "محاسبه بر اساس فرمول استاندارد ۶.۱۸ سند یادین",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "به‌روزرسانی آمار",
+                        tint = colors.primary
                     )
                 }
             }
         }
 
-        // 2. Direction Toggle Bar [ عادی | برعکس ] (spec 7.13)
+        // نوار تغییر جهت یادگیری [ عادی | برعکس ]
         item {
             Row(
                 modifier = Modifier
@@ -154,15 +223,152 @@ fun ProgressScreen(
             }
         }
 
-        // 3. Formula Progress Hero Card (Section 6.18)
+        // نوار رگبار متوالی (Streak Badge)
+        if (statistics.currentStreakDays > 0) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.warning.copy(alpha = 0.12f))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocalFireDepartment,
+                        contentDescription = null,
+                        tint = colors.warning,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "رگبار متوالی: ${statistics.currentStreakDays} روز تمرین مستمر و پیوسته",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.warning
+                    )
+                }
+            }
+        }
+
+        // ۱. کارت‌های خلاصه (سه عدد):
+        // - دقت کل: درصد
+        // - یادگرفته: تعداد واژه‌ها
+        // - کل واژه‌ها تمرین شده: تعداد
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // کارت دقت کل
+                YadinCard(
+                    modifier = Modifier.weight(1f),
+                    backgroundColor = colors.surface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Speed,
+                            contentDescription = null,
+                            tint = colors.success,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text(
+                            text = "$totalAccuracy%",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = colors.success
+                        )
+                        Text(
+                            text = "دقت کل",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // کارت یادگرفته
+                YadinCard(
+                    modifier = Modifier.weight(1f),
+                    backgroundColor = colors.surface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text(
+                            text = "${statistics.learnedStageCount}",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = "یادگرفته",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // کارت کل واژه‌ها تمرین شده
+                YadinCard(
+                    modifier = Modifier.weight(1f),
+                    backgroundColor = colors.surface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                            contentDescription = null,
+                            tint = colors.info,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text(
+                            text = "$practicedCount",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = "کل تمرین‌شده",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+
+        // ۲. پیشرفت یادگیری:
+        // - درصد پیشرفت کلی
+        // - نوار پیشرفت
         item {
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
                 backgroundColor = colors.surface
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -171,13 +377,13 @@ fun ProgressScreen(
                     ) {
                         Column {
                             Text(
-                                text = "درصد پیشرفت کلی (فرمول نهایی)",
+                                text = "پیشرفت یادگیری",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
                             )
                             Text(
-                                text = "مجموع امتیاز کارت‌ها ÷ تعداد کل واژگان فعال",
+                                text = "درصد پیشرفت کلی بر اساس فرمول استاندارد لایتنر",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 fontSize = 11.sp
@@ -202,7 +408,6 @@ fun ProgressScreen(
                         trackColor = colors.primary.copy(alpha = 0.2f)
                     )
 
-                    // Scoring Formula Badges Explanation
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -216,127 +421,81 @@ fun ProgressScreen(
             }
         }
 
-        // 4. Quick Metrics Summary Cards (Streak, Practiced, Accuracy)
+        // ۳. حفظ ماندگار:
+        // - تعداد پاسخ‌های درست از کل پاسخ‌ها
+        // - درصد
+        // - نوار پیشرفت
         item {
-            Row(
+            YadinCard(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                backgroundColor = colors.surface
             ) {
-                // Streak Card
-                YadinCard(
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = colors.surface
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.LocalFireDepartment,
-                            contentDescription = null,
-                            tint = colors.warning,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Text(
-                            text = "${statistics.currentStreakDays} روز",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = "رگبار متوالی",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
+                        Column {
+                            Text(
+                                text = "حفظ ماندگار",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                            Text(
+                                text = "$totalCorrectCount پاسخ درست از مجموع $totalReviewed پاسخ ثبت‌شده",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant,
+                                fontSize = 12.sp
+                            )
+                        }
 
-                // Practiced Words Card
-                YadinCard(
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = colors.surface
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                            contentDescription = null,
-                            tint = colors.info,
-                            modifier = Modifier.size(28.dp)
-                        )
                         Text(
-                            text = "$practicedCount",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = "واژه تمرین‌شده",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-
-                // Accuracy Card
-                val totalReviewed = statistics.totalReviewsCount
-                val totalCorrect = dailyStats.sumOf { it.correctCount }
-                val accuracy = if (totalReviewed > 0) {
-                    ((totalCorrect.toFloat() / totalReviewed) * 100).toInt().coerceIn(0, 100)
-                } else 0
-
-                YadinCard(
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = colors.surface
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Speed,
-                            contentDescription = null,
-                            tint = colors.success,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Text(
-                            text = "$accuracy%",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
+                            text = "$totalAccuracy%",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black,
                             color = colors.success
                         )
-                        Text(
-                            text = "دقت آزمون‌ها",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
                     }
+
+                    LinearProgressIndicator(
+                        progress = { (totalAccuracy / 100f).coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = colors.success,
+                        trackColor = colors.success.copy(alpha = 0.18f)
+                    )
                 }
             }
         }
 
-        // 5. Daily/Weekly Activity Chart (نمودار آمار تعداد کلمات تمرین شده)
+        // ۴. فعالیت مرور:
+        // - فیلتر بازه زمانی: ماهانه، هفتگی
+        // - نمودار میله‌ای تعداد مرور به تفکیک روزهای هفته
+        // - برچسب محور: تعداد مرور
         item {
             DailyReviewChart(dailyStats = dailyStats)
         }
 
-        // 6. Spaced Repetition Distribution (توزیع مراحل تکرار فاصله‌دار)
+        // ۵. مراحل یادگیری: (نوار پیشرفت)
+        // - روزانه: تعداد واژه‌ها
+        // - هفتگی: تعداد
+        // - ماهانه: تعداد
+        // - یادگرفته: تعداد
         item {
             Text(
-                text = "هرم توزیع مراحل یادگیری (لایتنر)",
+                text = "مراحل یادگیری (لایتنر)",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -348,26 +507,26 @@ fun ProgressScreen(
                 ) {
                     val total = statistics.totalWords.coerceAtLeast(1)
 
-                    FunnelRow(
-                        title = "مرحله روزانه (مرور هر روز)",
+                    ProgressRow(
+                        title = "روزانه",
                         count = statistics.dailyStageCount,
                         total = total,
                         color = colors.primary
                     )
-                    FunnelRow(
-                        title = "مرحله هفتگی (تثبیت ۷ روزه)",
+                    ProgressRow(
+                        title = "هفتگی",
                         count = statistics.weeklyStageCount,
                         total = total,
                         color = colors.info
                     )
-                    FunnelRow(
-                        title = "مرحله ماهانه (حافظه ۳۰ روزه)",
+                    ProgressRow(
+                        title = "ماهانه",
                         count = statistics.monthlyStageCount,
                         total = total,
                         color = colors.warning
                     )
-                    FunnelRow(
-                        title = "مرحله یادگرفته‌شده (حافظه دائمی)",
+                    ProgressRow(
+                        title = "یادگرفته",
                         count = statistics.learnedStageCount,
                         total = total,
                         color = colors.success
@@ -376,48 +535,191 @@ fun ProgressScreen(
             }
         }
 
-        // 7. Word Difficulty Spectrum Counters (طیف سطح دشواری واژگان)
+        // ۶. پروفایل سختی: (نوار پیشرفت)
+        // - آسان: تعداد
+        // - متوسط: تعداد
+        // - سخت: تعداد
+        // - خیلی سخت: تعداد
         item {
             Text(
-                text = "شمارنده طیف سختی کلمات",
+                text = "پروفایل سختی",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val diffTotal = (statistics.easyCount + statistics.mediumCount + statistics.hardCount + statistics.veryHardCount).coerceAtLeast(1)
+
+                    ProgressRow(
+                        title = "آسان",
+                        count = statistics.easyCount,
+                        total = diffTotal,
+                        color = colors.success
+                    )
+                    ProgressRow(
+                        title = "متوسط",
+                        count = statistics.mediumCount,
+                        total = diffTotal,
+                        color = colors.info
+                    )
+                    ProgressRow(
+                        title = "سخت",
+                        count = statistics.hardCount,
+                        total = diffTotal,
+                        color = colors.warning
+                    )
+                    ProgressRow(
+                        title = "خیلی سخت",
+                        count = statistics.veryHardCount,
+                        total = diffTotal,
+                        color = colors.error
+                    )
+                }
+            }
+        }
+
+        // ۷. دقت مرور:
+        // - امروز: تعداد درست از کل و درصد
+        // - این هفته: تعداد درست از کل و درصد
+        // - این ماه: تعداد درست از کل و درصد
+        // - مجموع کل: تعداد درست از کل و درصد
+        item {
+            Text(
+                text = "دقت مرور",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = colors.onSurface
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    AccuracyRow(
+                        label = "امروز",
+                        correct = todayCorrect,
+                        total = todayTotal,
+                        percentage = todayPercent,
+                        color = colors.primary
+                    )
+                    AccuracyRow(
+                        label = "این هفته",
+                        correct = weekCorrect,
+                        total = weekTotal,
+                        percentage = weekPercent,
+                        color = colors.info
+                    )
+                    AccuracyRow(
+                        label = "این ماه",
+                        correct = monthCorrect,
+                        total = monthTotal,
+                        percentage = monthPercent,
+                        color = colors.warning
+                    )
+                    AccuracyRow(
+                        label = "مجموع کل",
+                        correct = allTimeCorrect,
+                        total = allTimeTotal,
+                        percentage = allTimePercent,
+                        color = colors.success
+                    )
+                }
+            }
+        }
+
+        // ۸. دستاوردها:
+        // - تعداد دستاوردهای کسب‌شده
+        item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                DifficultyMetricBox("آسان", statistics.easyCount, colors.success, Modifier.weight(1f))
-                DifficultyMetricBox("متوسط", statistics.mediumCount, colors.info, Modifier.weight(1f))
-                DifficultyMetricBox("سخت", statistics.hardCount, colors.warning, Modifier.weight(1f))
-                DifficultyMetricBox("خیلی سخت", statistics.veryHardCount, colors.error, Modifier.weight(1f))
+                Text(
+                    text = "دستاوردها",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = "تعداد کسب‌شده: $unlockedCount از $totalAchievements",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary
+                )
             }
         }
 
-        // 8. Gamification Achievements Gallery
+        // کارت خلاصه پیشرفت دستاوردها
         item {
-            Text(
-                text = "نشان‌ها و دستاوردهای یادگیری",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface
-            )
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = colors.warning,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "تعداد دستاوردهای کسب‌شده",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                        }
+                        Text(
+                            text = "$unlockedPercent%",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Black,
+                            color = colors.primary
+                        )
+                    }
+
+                    LinearProgressIndicator(
+                        progress = { (unlockedPercent / 100f).coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp)),
+                        color = colors.primary,
+                        trackColor = colors.primary.copy(alpha = 0.2f)
+                    )
+                }
+            }
         }
 
+        // لیست دستاوردها
         items(AchievementId.values()) { ach ->
-            val isUnlocked = when (ach) {
-                AchievementId.FIRST_TEN_WORDS -> practicedCount >= 10
-                AchievementId.VOCABULARY_BUILDER -> practicedCount >= 50
-                AchievementId.STREAK_3_DAYS -> statistics.currentStreakDays >= 3
-                AchievementId.STREAK_7_DAYS -> statistics.currentStreakDays >= 7
-                AchievementId.STREAK_30_DAYS -> statistics.currentStreakDays >= 30
-                AchievementId.LONG_TERM_MEMORY -> statistics.learnedStageCount >= 20
-                AchievementId.HARD_MASTER -> statistics.learnedStageCount >= 5
-                AchievementId.QUIZ_ACE -> statistics.totalReviewsCount >= 10
-            }
+            val isUnlocked = achievements.any { it.id == ach.name && it.unlockedAt != null }
 
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -472,9 +774,125 @@ fun ProgressScreen(
             }
         }
 
+        // ۹. دکمه بزرگ به‌روزرسانی آمار در انتهای صفحه (Refresh Button)
         item {
-            Spacer(modifier = Modifier.height(20.dp))
+            Button(
+                onClick = {
+                    onRefresh()
+                    Toast.makeText(context, "آمار با موفقیت به‌روزرسانی شد", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primary,
+                    contentColor = colors.onPrimary
+                )
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "به‌روزرسانی آمار",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
         }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun ProgressRow(
+    title: String,
+    count: Int,
+    total: Int,
+    color: Color
+) {
+    val fraction = if (total > 0) (count.toFloat() / total).coerceIn(0f, 1f) else 0f
+    val percent = (fraction * 100).toInt()
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                )
+                Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            }
+            Text("$count واژه ($percent٪)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
+        }
+        LinearProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = color,
+            trackColor = color.copy(alpha = 0.15f)
+        )
+    }
+}
+
+@Composable
+private fun AccuracyRow(
+    label: String,
+    correct: Int,
+    total: Int,
+    percentage: Int,
+    color: Color
+) {
+    val fraction = (percentage / 100f).coerceIn(0f, 1f)
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "$correct از $total ($percentage٪)",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        }
+        LinearProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(7.dp)
+                .clip(RoundedCornerShape(3.5.dp)),
+            color = color,
+            trackColor = color.copy(alpha = 0.15f)
+        )
     }
 }
 
@@ -497,70 +915,6 @@ private fun FormulaScorePill(
             fontWeight = FontWeight.Bold,
             color = color,
             textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-private fun DifficultyMetricBox(
-    title: String,
-    count: Int,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    val colors = LocalYadinColors.current
-
-    YadinCard(
-        modifier = modifier,
-        backgroundColor = colors.surface
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodySmall,
-                color = color,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp
-            )
-            Text(
-                text = "$count",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Black,
-                color = colors.onSurface
-            )
-        }
-    }
-}
-
-@Composable
-fun FunnelRow(
-    title: String,
-    count: Int,
-    total: Int,
-    color: Color
-) {
-    val fraction = if (total > 0) (count.toFloat() / total).coerceIn(0f, 1f) else 0f
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-            Text("$count واژه", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
-        }
-        LinearProgressIndicator(
-            progress = { fraction },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp)),
-            color = color,
-            trackColor = color.copy(alpha = 0.15f)
         )
     }
 }
