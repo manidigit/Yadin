@@ -478,28 +478,32 @@ fun HomeScreen(
                     ) {
                         StageMetricPill(
                             title = "روزانه",
-                            count = statistics.dailyStageCount,
+                            dueCount = statistics.dueDailyCount,
+                            totalCount = statistics.dailyStageCount,
                             color = colors.primary,
                             modifier = Modifier.weight(1f),
                             onClick = { onOpenReviewSetup(ReviewType.DAILY) }
                         )
                         StageMetricPill(
                             title = "هفتگی",
-                            count = statistics.weeklyStageCount,
+                            dueCount = statistics.dueWeeklyCount,
+                            totalCount = statistics.weeklyStageCount,
                             color = colors.info,
                             modifier = Modifier.weight(1f),
                             onClick = { onOpenReviewSetup(ReviewType.WEEKLY) }
                         )
                         StageMetricPill(
                             title = "ماهانه",
-                            count = statistics.monthlyStageCount,
+                            dueCount = statistics.dueMonthlyCount,
+                            totalCount = statistics.monthlyStageCount,
                             color = colors.warning,
                             modifier = Modifier.weight(1f),
                             onClick = { onOpenReviewSetup(ReviewType.MONTHLY) }
                         )
                         StageMetricPill(
                             title = "تثبیت‌شده",
-                            count = statistics.learnedStageCount,
+                            dueCount = statistics.availableLearnedCount,
+                            totalCount = statistics.learnedStageCount,
                             color = colors.success,
                             modifier = Modifier.weight(1f),
                             onClick = { onOpenReviewSetup(ReviewType.LEARNED) }
@@ -590,7 +594,8 @@ fun HomeScreen(
 @Composable
 fun StageMetricPill(
     title: String,
-    count: Int,
+    dueCount: Int,
+    totalCount: Int,
     color: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
@@ -607,7 +612,7 @@ fun StageMetricPill(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -615,13 +620,25 @@ fun StageMetricPill(
                     .clip(CircleShape)
                     .background(color)
             )
-            Text(
-                text = "$count",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
-                fontSize = 14.sp
-            )
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "$dueCount",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (dueCount > 0) colors.onSurface else colors.onSurfaceVariant.copy(alpha = 0.6f),
+                    fontSize = 13.sp
+                )
+                Text(
+                    text = "/$totalCount",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Normal,
+                    color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                    fontSize = 10.sp
+                )
+            }
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,

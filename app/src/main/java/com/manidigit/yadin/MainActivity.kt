@@ -230,6 +230,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val categories by viewModel.categories.collectAsStateWithLifecycle()
             val difficultyCounts by viewModel.difficultyCounts.collectAsStateWithLifecycle()
             val candidateCount by viewModel.setupCandidateCount.collectAsStateWithLifecycle()
+            val statistics by viewModel.statistics.collectAsStateWithLifecycle()
             val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
 
             ReviewSetupScreen(
@@ -238,6 +239,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 categories = categories,
                 difficultyCounts = difficultyCounts,
                 candidateCount = candidateCount,
+                statistics = statistics,
                 appLanguageDirection = appLanguageDirection,
                 onDirectionChanged = { dir ->
                     viewModel.setAppLanguageDirection(dir)

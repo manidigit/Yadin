@@ -238,7 +238,11 @@ data class StatisticsSummary(
     val easyCount: Int,
     val mediumCount: Int,
     val hardCount: Int,
-    val veryHardCount: Int
+    val veryHardCount: Int,
+    val dueDailyCount: Int = 0,
+    val dueWeeklyCount: Int = 0,
+    val dueMonthlyCount: Int = 0,
+    val availableLearnedCount: Int = 0
 )
 
 data class DailyReviewCount(

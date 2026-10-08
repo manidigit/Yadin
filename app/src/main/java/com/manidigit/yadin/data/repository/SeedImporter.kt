@@ -19,6 +19,7 @@ import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.text.TextUtilities
+import com.manidigit.yadin.domain.time.ClockAndDayMath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
@@ -183,6 +184,7 @@ class SeedImporter(
                 concepts.filter { it.id !in existingConceptIds }
             }
 
+            val today = ClockAndDayMath.todayDayString()
             val learningBatch = mutableListOf<LearningStateEntity>()
             val diffBatch = mutableListOf<DifficultyStateEntity>()
 
@@ -193,7 +195,7 @@ class SeedImporter(
                         conceptId = concept.id,
                         direction = CardDirection.NORMAL,
                         stage = Stage.DAILY,
-                        nextReviewDay = null,
+                        nextReviewDay = today,
                         lastReviewedDay = null,
                         createdAt = now,
                         updatedAt = now
@@ -205,7 +207,7 @@ class SeedImporter(
                         conceptId = concept.id,
                         direction = CardDirection.REVERSE,
                         stage = Stage.DAILY,
-                        nextReviewDay = null,
+                        nextReviewDay = today,
                         lastReviewedDay = null,
                         createdAt = now,
                         updatedAt = now
@@ -216,7 +218,7 @@ class SeedImporter(
                         id = UUID.randomUUID().toString(),
                         conceptId = concept.id,
                         direction = CardDirection.NORMAL,
-                        current = VocabularyDifficulty.MEDIUM
+                        current = VocabularyDifficulty.EASY
                     )
                 )
                 diffBatch.add(
@@ -224,7 +226,7 @@ class SeedImporter(
                         id = UUID.randomUUID().toString(),
                         conceptId = concept.id,
                         direction = CardDirection.REVERSE,
-                        current = VocabularyDifficulty.MEDIUM
+                        current = VocabularyDifficulty.EASY
                     )
                 )
             }

@@ -56,10 +56,17 @@ object LearningTransition {
                 }
             }
             Stage.LEARNED -> {
-                TransitionResult(
-                    newStage = Stage.LEARNED,
-                    nextReviewDay = null
-                )
+                if (isCorrect) {
+                    TransitionResult(
+                        newStage = Stage.LEARNED,
+                        nextReviewDay = null
+                    )
+                } else {
+                    TransitionResult(
+                        newStage = Stage.DAILY,
+                        nextReviewDay = ClockAndDayMath.addDays(todayDayString, 1)
+                    )
+                }
             }
         }
     }

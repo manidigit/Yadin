@@ -453,13 +453,13 @@ class ReviewRepository(
         // Update position and item state in session
         if (session != null) {
             val sessionItems = reviewSessionDao.getItemsForSession(sessionId)
-            val currentPos = session.currentPosition
-            val curItem = sessionItems.getOrNull(currentPos)
-            if (curItem != null) {
-                reviewSessionDao.updateItemState(curItem.id, SessionItemState.ANSWERED)
+            val matchedItem = sessionItems.firstOrNull { it.conceptId == conceptId }
+            if (matchedItem != null) {
+                reviewSessionDao.updateItemState(matchedItem.id, SessionItemState.ANSWERED)
             }
+            val answeredCount = sessionItems.count { it.state == SessionItemState.ANSWERED } + 1
             reviewSessionDao.updateSession(
-                session.copy(currentPosition = session.currentPosition + 1)
+                session.copy(currentPosition = answeredCount.coerceAtMost(session.totalItems))
             )
         }
 

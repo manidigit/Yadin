@@ -176,6 +176,27 @@ interface LearningDao {
     suspend fun getStageBreakdown(direction: CardDirection): List<StageCount>
 
     @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId) FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1
+        AND ls.direction = :direction
+        AND ls.stage = :stage
+        AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)
+        AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)
+    """)
+    fun getDueCountByStageFlow(direction: CardDirection, stage: Stage, todayDayString: String): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId) FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1
+        AND ls.direction = :direction
+        AND ls.stage = 'LEARNED'
+        AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)
+    """)
+    fun getLearnedAvailableCountFlow(direction: CardDirection, todayDayString: String): Flow<Int>
+
+    @Query("""
         SELECT ls.conceptId FROM learning_states ls
         INNER JOIN concepts c ON ls.conceptId = c.id
         LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
@@ -185,8 +206,8 @@ interface LearningDao {
             (:reviewType = 'DAILY' AND ls.stage = 'DAILY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'WEEKLY' AND ls.stage = 'WEEKLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'MONTHLY' AND ls.stage = 'MONTHLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-            (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED') OR
-            (:reviewType = 'RANDOM' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString))
+            (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
+            (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
         )
         AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
@@ -221,8 +242,8 @@ interface LearningDao {
             (:reviewType = 'DAILY' AND ls.stage = 'DAILY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'WEEKLY' AND ls.stage = 'WEEKLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'MONTHLY' AND ls.stage = 'MONTHLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-            (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED') OR
-            (:reviewType = 'RANDOM' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString))
+            (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
+            (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
         )
         AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))

@@ -72,6 +72,7 @@ fun ReviewSetupScreen(
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,
+    statistics: com.manidigit.yadin.domain.model.StatisticsSummary? = null,
     appLanguageDirection: CardDirection = CardDirection.NORMAL,
     onDirectionChanged: ((CardDirection) -> Unit)? = null,
     onFilterChanged: (ReviewFilters) -> Unit,
@@ -288,6 +289,15 @@ fun ReviewSetupScreen(
                         ) {
                             reviewTypeItems.forEach { item ->
                                 val isSelected = (selectedType == item.type)
+                                val countBadge = statistics?.let { stats ->
+                                    when (item.type) {
+                                        ReviewType.DAILY -> "${stats.dueDailyCount}/${stats.dailyStageCount}"
+                                        ReviewType.WEEKLY -> "${stats.dueWeeklyCount}/${stats.weeklyStageCount}"
+                                        ReviewType.MONTHLY -> "${stats.dueMonthlyCount}/${stats.monthlyStageCount}"
+                                        ReviewType.LEARNED -> "${stats.availableLearnedCount}/${stats.learnedStageCount}"
+                                        ReviewType.RANDOM -> "${stats.dueTodayCount}/${stats.totalWords}"
+                                    }
+                                }
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
@@ -312,6 +322,21 @@ fun ReviewSetupScreen(
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                             color = if (isSelected) colors.onPrimary else colors.onSurface
                                         )
+                                        if (countBadge != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(if (isSelected) colors.onPrimary.copy(alpha = 0.2f) else colors.surface)
+                                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                                            ) {
+                                                Text(
+                                                    text = countBadge,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

@@ -262,13 +262,14 @@ class VocabularyRepository(
                 )
             }
 
+            val today = ClockAndDayMath.todayDayString()
             // Default learning and difficulty states for both directions
             val normalLearning = LearningStateEntity(
                 id = UUID.randomUUID().toString(),
                 conceptId = conceptId,
                 direction = CardDirection.NORMAL,
                 stage = Stage.DAILY,
-                nextReviewDay = null,
+                nextReviewDay = today,
                 lastReviewedDay = null,
                 createdAt = now,
                 updatedAt = now
@@ -278,7 +279,7 @@ class VocabularyRepository(
                 conceptId = conceptId,
                 direction = CardDirection.REVERSE,
                 stage = Stage.DAILY,
-                nextReviewDay = null,
+                nextReviewDay = today,
                 lastReviewedDay = null,
                 createdAt = now,
                 updatedAt = now
@@ -287,13 +288,13 @@ class VocabularyRepository(
                 id = UUID.randomUUID().toString(),
                 conceptId = conceptId,
                 direction = CardDirection.NORMAL,
-                current = VocabularyDifficulty.MEDIUM
+                current = VocabularyDifficulty.EASY
             )
             val reverseDiff = DifficultyStateEntity(
                 id = UUID.randomUUID().toString(),
                 conceptId = conceptId,
                 direction = CardDirection.REVERSE,
-                current = VocabularyDifficulty.MEDIUM
+                current = VocabularyDifficulty.EASY
             )
 
             conceptDao.insertConcept(concept)
@@ -383,25 +384,51 @@ class VocabularyRepository(
 
     fun getStatisticsSummary(direction: CardDirection = CardDirection.NORMAL): Flow<StatisticsSummary> {
         val today = ClockAndDayMath.todayDayString()
-        return combine(
+        data class StageCountsHolder(val daily: Int, val weekly: Int, val monthly: Int, val learned: Int)
+        val stageCountsFlow: Flow<StageCountsHolder> = combine(
             learningDao.getCountByStageFlow(direction, Stage.DAILY),
             learningDao.getCountByStageFlow(direction, Stage.WEEKLY),
             learningDao.getCountByStageFlow(direction, Stage.MONTHLY),
-            learningDao.getCountByStageFlow(direction, Stage.LEARNED),
+            learningDao.getCountByStageFlow(direction, Stage.LEARNED)
+        ) { daily, weekly, monthly, learned ->
+            StageCountsHolder(daily, weekly, monthly, learned)
+        }
+
+        data class StageDuesHolder(val dueDaily: Int, val dueWeekly: Int, val dueMonthly: Int, val availLearned: Int)
+        val stageDueFlow: Flow<StageDuesHolder> = combine(
+            learningDao.getDueCountByStageFlow(direction, Stage.DAILY, today),
+            learningDao.getDueCountByStageFlow(direction, Stage.WEEKLY, today),
+            learningDao.getDueCountByStageFlow(direction, Stage.MONTHLY, today),
+            learningDao.getLearnedAvailableCountFlow(direction, today)
+        ) { dueDaily, dueWeekly, dueMonthly, availLearned ->
+            StageDuesHolder(dueDaily, dueWeekly, dueMonthly, availLearned)
+        }
+
+        data class ReviewsHolder(val dueToday: Int, val reviewedToday: Int, val totalReviews: Int)
+        val reviewsFlow: Flow<ReviewsHolder> = combine(
             learningDao.getDueCountFlow(direction, today),
             reviewSessionDao.getReviewCountForDayFlow(today),
-            reviewSessionDao.getTotalReviewsCountFlow(),
+            reviewSessionDao.getTotalReviewsCountFlow()
+        ) { dueToday, reviewedToday, totalReviews ->
+            ReviewsHolder(dueToday, reviewedToday, totalReviews)
+        }
+
+        return combine(
+            stageCountsFlow,
+            stageDueFlow,
+            reviewsFlow,
             learningDao.getDifficultyBreakdownFlow(direction)
-        ) { args ->
-            val daily = args[0] as Int
-            val weekly = args[1] as Int
-            val monthly = args[2] as Int
-            val learned = args[3] as Int
-            val dueToday = args[4] as Int
-            val reviewedToday = args[5] as Int
-            val totalReviews = args[6] as Int
-            @Suppress("UNCHECKED_CAST")
-            val diffList = args[7] as List<com.manidigit.yadin.data.local.dao.DifficultyCount>
+        ) { stageCounts, stageDues, reviews, diffList ->
+            val daily = stageCounts.daily
+            val weekly = stageCounts.weekly
+            val monthly = stageCounts.monthly
+            val learned = stageCounts.learned
+
+            val dueDaily = stageDues.dueDaily
+            val dueWeekly = stageDues.dueWeekly
+            val dueMonthly = stageDues.dueMonthly
+            val availLearned = stageDues.availLearned
+
             val totalWords = daily + weekly + monthly + learned
 
             val diffBreakdown = diffList.associate { it.current to it.count }
@@ -413,14 +440,18 @@ class VocabularyRepository(
                 weeklyStageCount = weekly,
                 monthlyStageCount = monthly,
                 learnedStageCount = learned,
-                dueTodayCount = dueToday,
-                reviewedTodayCount = reviewedToday,
+                dueTodayCount = reviews.dueToday,
+                reviewedTodayCount = reviews.reviewedToday,
                 currentStreakDays = calculateStreakDays(reviewSessionDao.getDistinctReviewedDays(), today),
-                totalReviewsCount = totalReviews,
+                totalReviewsCount = reviews.totalReviews,
                 easyCount = diffBreakdown[VocabularyDifficulty.EASY] ?: 0,
                 mediumCount = diffBreakdown[VocabularyDifficulty.MEDIUM] ?: 0,
                 hardCount = diffBreakdown[VocabularyDifficulty.HARD] ?: 0,
-                veryHardCount = diffBreakdown[VocabularyDifficulty.VERY_HARD] ?: 0
+                veryHardCount = diffBreakdown[VocabularyDifficulty.VERY_HARD] ?: 0,
+                dueDailyCount = dueDaily,
+                dueWeeklyCount = dueWeekly,
+                dueMonthlyCount = dueMonthly,
+                availableLearnedCount = availLearned
             )
         }
     }
