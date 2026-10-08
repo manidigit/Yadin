@@ -60,6 +60,7 @@ import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.YadinPalette
 
 @Composable
 fun SettingsScreen(
@@ -187,10 +188,10 @@ fun SettingsScreen(
                         modifier = Modifier.background(colors.surface)
                     ) {
                         listOf(
-                            Triple("googoli", "تم گوگولی (Googoli)", Color(0xFFFF5E7E)),
-                            Triple("claude", "تم Claude (کلاد)", Color(0xFFC15F3D)),
-                            Triple("gemini", "تم Gemini", Color(0xFF1A73E8)),
-                            Triple("gtp", "تم GTP", Color(0xFF7C3AED))
+                            Triple("googoli", "تم گوگولی (Googoli)", YadinPalette.GoogoliTeal),
+                            Triple("claude", "تم Claude (کلاد)", YadinPalette.ClaudeTerracotta),
+                            Triple("gemini", "تم Gemini", YadinPalette.GeminiBlue),
+                            Triple("gtp", "تم GTP", YadinPalette.GtpPurple)
                         ).forEach { (id, title, color) ->
                             DropdownMenuItem(
                                 text = {

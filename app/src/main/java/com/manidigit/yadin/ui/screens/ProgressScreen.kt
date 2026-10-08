@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.manidigit.yadin.ui.theme.YadinPalette
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.data.local.dao.DayCountRaw
@@ -862,10 +863,10 @@ private fun TieredAchievementCard(group: TieredGroupState) {
 
     // Tier badge color & title
     val (tierColor, tierLabel) = when (ach.tier) {
-        AchievementTier.BRONZE -> Color(0xFFCD7F32) to "سطح ۱ (برنز)"
-        AchievementTier.SILVER -> Color(0xFF9E9E9E) to "سطح ۲ (نقره)"
-        AchievementTier.GOLD -> Color(0xFFFFB300) to "سطح ۳ (طلا)"
-        AchievementTier.PLATINUM -> Color(0xFF00B0FF) to "سطح ۴ (پلاتین)"
+        AchievementTier.BRONZE -> YadinPalette.TierBronze to "سطح ۱ (برنز)"
+        AchievementTier.SILVER -> YadinPalette.TierSilver to "سطح ۲ (نقره)"
+        AchievementTier.GOLD -> YadinPalette.TierGold to "سطح ۳ (طلا)"
+        AchievementTier.PLATINUM -> YadinPalette.TierPlatinum to "سطح ۴ (پلاتین)"
     }
 
     val progressFraction = if (group.isMaxLevel) 1f else {
