@@ -335,29 +335,22 @@ class ReviewRepository(
                 }
             }
 
-            // Fallback 2: If still < 3, fetch extra random items from database
+            // If after checking nonCollidingPool we have fewer than 3 distractors,
+            // according to Spec 6.6 step 5 and Decision D0.2, random filling is prohibited:
+            // this question strictly falls back to flashcard and is omitted from 4-option quiz questions.
             if (chosenDistractors.size < 3) {
-                val extraFromDb = conceptDao.getRandomContents(targetLang, 100)
-                for (extra in extraFromDb) {
-                    if (chosenDistractors.size >= 3) break
-                    val cleanText = extra.text.trim()
-                    if (cleanText.isNotBlank() && cleanText != correctAnswer && chosenDistractors.none { it.text == cleanText }) {
-                        chosenDistractors.add(
-                            DistractorPoolItem(
-                                conceptId = extra.conceptId,
-                                text = cleanText,
-                                categoryId = null,
-                                entryType = EntryType.WORD,
-                                difficulty = VocabularyDifficulty.MEDIUM,
-                                semantic = QuizDistractorScorer.precomputeSemantic(cleanText)
-                            )
-                        )
-                    }
-                }
+                continue
             }
 
             val chosenTexts = chosenDistractors.map { it.text }
             val optionsList = (chosenTexts.map { QuizOption(it, "") } + QuizOption(correctAnswer, card.conceptId)).shuffled()
+            val distinctNormOptions = optionsList.map { it.text.trim().lowercase() }.distinct()
+            
+            // Spec 6.6 step 8 final validation: exactly 4 pairwise-distinct options
+            if (optionsList.size != 4 || distinctNormOptions.size != 4) {
+                continue
+            }
+
             val correctIdx = optionsList.indexOfFirst { it.text == correctAnswer }.coerceAtLeast(0)
 
             questions.add(

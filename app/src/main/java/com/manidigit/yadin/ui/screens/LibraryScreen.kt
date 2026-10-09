@@ -55,9 +55,17 @@ fun LibraryScreen(
     categories: List<Category>,
     selectedCategory: String?,
     selectedStage: Stage?,
+    selectedDifficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty? = null,
+    showOnlyInactive: Boolean = false,
+    hasMoreResults: Boolean = false,
+    isLoadingMore: Boolean = false,
     onSearchChange: (String) -> Unit,
     onCategoryFilterChange: (String?) -> Unit,
     onStageFilterChange: (Stage?) -> Unit,
+    onDifficultyFilterChange: (com.manidigit.yadin.domain.model.VocabularyDifficulty?) -> Unit = {},
+    onInactiveFilterToggle: (Boolean) -> Unit = {},
+    onLoadMore: () -> Unit = {},
+    onReactivateWord: ((String) -> Unit)? = null,
     onSelectWord: (String) -> Unit,
     onAddWord: () -> Unit,
     onBack: () -> Unit
@@ -99,13 +107,13 @@ fun LibraryScreen(
 
                 Column {
                     Text(
-                        text = "کتابخانه واژگان",
+                        text = if (showOnlyInactive) "سطل بازیافت (واژگان غیرفعال)" else "کتابخانه واژگان",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "${words.size} واژه و عبارت با پرچم زبان و ترجمه",
+                        text = "${words.size} واژه بارگذاری‌شده (اسکرول نامحدود)",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -134,32 +142,72 @@ fun LibraryScreen(
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Filter Chips (Stage)
+            // Filter Chips Row 1: Active vs Inactive & Stage
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 item {
                     FilterChip(
-                        label = "همه مراحل",
-                        isSelected = selectedStage == null,
-                        onClick = { onStageFilterChange(null) }
+                        label = if (showOnlyInactive) "🗑️ واژگان حذف‌شده" else "✅ واژگان فعال",
+                        isSelected = showOnlyInactive,
+                        onClick = { onInactiveFilterToggle(!showOnlyInactive) }
                     )
                 }
-                Stage.values().forEach { st ->
-                    val name = when (st) {
-                        Stage.DAILY -> "روزانه"
-                        Stage.WEEKLY -> "هفتگی"
-                        Stage.MONTHLY -> "ماهانه"
-                        Stage.LEARNED -> "یادگرفته"
+                if (!showOnlyInactive) {
+                    item {
+                        FilterChip(
+                            label = "همه مراحل",
+                            isSelected = selectedStage == null,
+                            onClick = { onStageFilterChange(null) }
+                        )
+                    }
+                    Stage.values().forEach { st ->
+                        val name = when (st) {
+                            Stage.DAILY -> "روزانه"
+                            Stage.WEEKLY -> "هفتگی"
+                            Stage.MONTHLY -> "ماهانه"
+                            Stage.LEARNED -> "یادگرفته"
+                        }
+                        item {
+                            FilterChip(
+                                label = name,
+                                isSelected = selectedStage == st,
+                                onClick = { onStageFilterChange(if (selectedStage == st) null else st) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Filter Chips Row 2: Difficulty Filter (ISS-02)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                item {
+                    FilterChip(
+                        label = "همه سختی‌ها",
+                        isSelected = selectedDifficulty == null,
+                        onClick = { onDifficultyFilterChange(null) }
+                    )
+                }
+                com.manidigit.yadin.domain.model.VocabularyDifficulty.values().forEach { diff ->
+                    val diffName = when (diff) {
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> "آسان"
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> "متوسط"
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> "سخت"
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
                     }
                     item {
                         FilterChip(
-                            label = name,
-                            isSelected = selectedStage == st,
-                            onClick = { onStageFilterChange(if (selectedStage == st) null else st) }
+                            label = diffName,
+                            isSelected = selectedDifficulty == diff,
+                            onClick = { onDifficultyFilterChange(if (selectedDifficulty == diff) null else diff) }
                         )
                     }
                 }
@@ -177,7 +225,7 @@ fun LibraryScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Word List
             if (words.isEmpty()) {
@@ -188,7 +236,7 @@ fun LibraryScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "هیچ واژه‌ای با این مشخصات یافت نشد",
+                        text = if (showOnlyInactive) "هیچ واژه غیرفعالی در سطل بازیافت وجود ندارد" else "هیچ واژه‌ای با این مشخصات یافت نشد",
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant
                     )
@@ -203,9 +251,39 @@ fun LibraryScreen(
                     items(words, key = { it.concept.id }) { word ->
                         WordItemCard(
                             word = word,
-                            onClick = { onSelectWord(word.concept.id) }
+                            onClick = { onSelectWord(word.concept.id) },
+                            onReactivate = if (!word.concept.active && onReactivateWord != null) {
+                                { onReactivateWord(word.concept.id) }
+                            } else null
                         )
                     }
+
+                    if (hasMoreResults) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isLoadingMore) {
+                                    androidx.compose.material3.CircularProgressIndicator(
+                                        modifier = Modifier.size(28.dp),
+                                        color = colors.primary,
+                                        strokeWidth = 3.dp
+                                    )
+                                } else {
+                                    androidx.compose.material3.OutlinedButton(
+                                        onClick = onLoadMore,
+                                        shape = RoundedCornerShape(dimensions.cornerMedium)
+                                    ) {
+                                        Text("بارگذاری موارد بیشتر...")
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     item {
                         Spacer(modifier = Modifier.height(76.dp))
                     }
@@ -269,7 +347,8 @@ private fun getLanguageFlag(langCode: String?): String {
 @Composable
 fun WordItemCard(
     word: WordDetail,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onReactivate: (() -> Unit)? = null
 ) {
     val colors = LocalYadinColors.current
 
@@ -317,8 +396,21 @@ fun WordItemCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        word.normalLearning?.stage?.let { StageBadge(stage = it) }
-                        word.normalDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
+                        if (!word.concept.active) {
+                            Text(
+                                text = "حذف‌شده",
+                                color = colors.error,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(colors.error.copy(alpha = 0.15f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        } else {
+                            word.normalLearning?.stage?.let { StageBadge(stage = it) }
+                            word.normalDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
+                        }
                     }
                 }
 
@@ -356,7 +448,18 @@ fun WordItemCard(
 
             Spacer(modifier = Modifier.width(6.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (!word.concept.active && onReactivate != null) {
+                    androidx.compose.material3.TextButton(
+                        onClick = onReactivate,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text("احیا", color = colors.success, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
                 SpeakButton(text = word.sourceContent.text, languageCode = word.sourceContent.languageCode)
             }
         }

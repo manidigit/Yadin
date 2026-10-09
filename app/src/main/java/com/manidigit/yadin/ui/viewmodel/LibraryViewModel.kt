@@ -51,6 +51,22 @@ class LibraryViewModel(
     /** مرحله لایتنر انتخاب‌شده جهت فیلتر (null یعنی تمام مراحل) */
     val selectedStageFilter: StateFlow<Stage?> = _selectedStageFilter.asStateFlow()
 
+    private val _selectedDifficultyFilter = MutableStateFlow<com.manidigit.yadin.domain.model.VocabularyDifficulty?>(null)
+    /** فیلتر درجه سختی واژگان (آسان، متوسط، سخت، خیلی سخت) */
+    val selectedDifficultyFilter: StateFlow<com.manidigit.yadin.domain.model.VocabularyDifficulty?> = _selectedDifficultyFilter.asStateFlow()
+
+    private val _showOnlyInactiveFilter = MutableStateFlow<Boolean>(false)
+    /** فیلتر نمایش فقط واژگان حذف‌شده/غیرفعال */
+    val showOnlyInactiveFilter: StateFlow<Boolean> = _showOnlyInactiveFilter.asStateFlow()
+
+    private val _hasMoreResults = MutableStateFlow(true)
+    /** نشانگر وجود داده‌های بیشتر برای لود تدریجی */
+    val hasMoreResults: StateFlow<Boolean> = _hasMoreResults.asStateFlow()
+
+    private val _isLoadingMore = MutableStateFlow(false)
+    /** نشانگر در حال لود صفحه بعدی */
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
     private val _searchResults = MutableStateFlow<List<WordDetail>>(emptyList())
     /** نتایج جستجو و فیلتر واژگان در کتابخانه */
     val searchResults: StateFlow<List<WordDetail>> = _searchResults.asStateFlow()
@@ -88,7 +104,7 @@ class LibraryViewModel(
      */
     fun onSearchQueryChanged(q: String, direction: CardDirection = CardDirection.NORMAL) {
         _searchQuery.value = q
-        performSearch(q, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
+        performSearch(q, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value)
     }
 
     /**
@@ -96,7 +112,7 @@ class LibraryViewModel(
      */
     fun onCategoryFilterChanged(catId: String?, direction: CardDirection = CardDirection.NORMAL) {
         _selectedCategoryFilter.value = catId
-        performSearch(_searchQuery.value, catId, _selectedStageFilter.value, direction)
+        performSearch(_searchQuery.value, catId, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value)
     }
 
     /**
@@ -104,17 +120,35 @@ class LibraryViewModel(
      */
     fun onStageFilterChanged(stage: Stage?, direction: CardDirection = CardDirection.NORMAL) {
         _selectedStageFilter.value = stage
-        performSearch(_searchQuery.value, _selectedCategoryFilter.value, stage, direction)
+        performSearch(_searchQuery.value, _selectedCategoryFilter.value, stage, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value)
     }
 
     /**
-     * اجرای کوئری فیلترشده در پایگاه داده.
+     * تغییر فیلتر سختی واژه.
+     */
+    fun onDifficultyFilterChanged(difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty?, direction: CardDirection = CardDirection.NORMAL) {
+        _selectedDifficultyFilter.value = difficulty
+        performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, difficulty, _showOnlyInactiveFilter.value)
+    }
+
+    /**
+     * تغییر فیلتر نمایش واژه‌های غیرفعال/حذف‌شده.
+     */
+    fun onInactiveFilterToggled(onlyInactive: Boolean, direction: CardDirection = CardDirection.NORMAL) {
+        _showOnlyInactiveFilter.value = onlyInactive
+        performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, onlyInactive)
+    }
+
+    /**
+     * اجرای کوئری فیلترشده در پایگاه داده با صفحه‌بندی نامحدود.
      */
     fun performSearch(
         query: String,
         categoryId: String?,
         stage: Stage?,
-        direction: CardDirection = CardDirection.NORMAL
+        direction: CardDirection = CardDirection.NORMAL,
+        difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty? = _selectedDifficultyFilter.value,
+        onlyInactive: Boolean = _showOnlyInactiveFilter.value
     ) {
         scope.launch {
             try {
@@ -124,11 +158,61 @@ class LibraryViewModel(
                     categoryId = categoryId,
                     stage = stage,
                     direction = direction,
-                    limit = 300
+                    difficulty = difficulty,
+                    onlyInactive = onlyInactive,
+                    limit = 60,
+                    offset = 0
                 )
                 _searchResults.value = results
+                _hasMoreResults.value = (results.size >= 60)
             } catch (e: Exception) {
                 _libraryErrorMessage.value = "خطا در جستجوی واژگان: ${e.message}"
+            }
+        }
+    }
+
+    /**
+     * لود کردن صفحه بعدی نتایج برای اسکرول نامحدود (Infinite Scroll).
+     */
+    fun loadNextPage(direction: CardDirection = CardDirection.NORMAL) {
+        if (!_hasMoreResults.value || _isLoadingMore.value) return
+        scope.launch {
+            try {
+                _isLoadingMore.value = true
+                val currentSize = _searchResults.value.size
+                val nextBatch = vocabularyRepo.searchFiltered(
+                    query = _searchQuery.value,
+                    categoryId = _selectedCategoryFilter.value,
+                    stage = _selectedStageFilter.value,
+                    direction = direction,
+                    difficulty = _selectedDifficultyFilter.value,
+                    onlyInactive = _showOnlyInactiveFilter.value,
+                    limit = 60,
+                    offset = currentSize
+                )
+                if (nextBatch.isEmpty() || nextBatch.size < 60) {
+                    _hasMoreResults.value = false
+                }
+                _searchResults.value = (_searchResults.value + nextBatch).distinctBy { it.concept.id }
+            } catch (e: Exception) {
+                _libraryErrorMessage.value = "خطا در بارگذاری موارد بیشتر: ${e.message}"
+            } finally {
+                _isLoadingMore.value = false
+            }
+        }
+    }
+
+    /**
+     * احیا و فعال‌سازی مجدد واژه غیرفعال‌شده.
+     */
+    fun reactivateWord(conceptId: String, direction: CardDirection = CardDirection.NORMAL) {
+        scope.launch {
+            try {
+                vocabularyRepo.reactivateWord(conceptId)
+                // Refresh current view
+                performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
+            } catch (e: Exception) {
+                _libraryErrorMessage.value = "خطا در فعال‌سازی مجدد واژه: ${e.message}"
             }
         }
     }
@@ -229,6 +313,14 @@ class LibraryViewModel(
      */
     fun clearParseResult() {
         _parseResult.value = null
+    }
+
+    /**
+     * تنظیم مستقیم نتیجه پارس‌شده از فایل (CSV, JSON, XLSX, Text).
+     */
+    fun setParseResult(result: ParseResult) {
+        _libraryErrorMessage.value = null
+        _parseResult.value = result
     }
 
     /**

@@ -176,16 +176,40 @@ class VocabularyRepository(
         categoryId: String? = null,
         stage: Stage? = null,
         direction: CardDirection = CardDirection.NORMAL,
-        limit: Int = 300
+        difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty? = null,
+        onlyInactive: Boolean = false,
+        limit: Int = 50,
+        offset: Int = 0
     ): List<WordDetail> {
         val entities = conceptDao.searchConceptsFiltered(
             query = query.trim(),
             categoryId = categoryId,
             stage = stage?.name,
             direction = direction,
-            limit = limit
+            difficulty = difficulty?.name,
+            onlyInactive = onlyInactive,
+            limit = limit,
+            offset = offset
         )
         return entities.mapNotNull { getWordDetail(it.id) }
+    }
+
+    suspend fun reactivateWord(conceptId: String): Result<Unit> {
+        return try {
+            conceptDao.reactivateConcept(conceptId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun purgeInactiveWords(): Int = database.withTransaction {
+        val inactives = conceptDao.getInactiveConcepts()
+        if (inactives.isEmpty()) return@withTransaction 0
+        val ids = inactives.map { it.id }
+        conceptDao.deleteContentsForConcepts(ids)
+        conceptDao.deleteConceptsPermanently(ids)
+        inactives.size
     }
 
     suspend fun search(query: String, limit: Int = 100): List<WordDetail> {
@@ -497,7 +521,7 @@ class VocabularyRepository(
             entries.forEachIndexed { index, entry ->
                 val cleanSource = entry.sourceText.trim()
                 val canonical = TextUtilities.toCanonicalKey(cleanSource)
-                val existingContent = conceptDao.findContentByCanonicalKey("es", canonical)
+                val existingContent = conceptDao.findActiveContentByCanonicalKey("es", canonical)
                 val enrichedNote = formatEnrichedNote(entry)
 
                 if (existingContent != null) {

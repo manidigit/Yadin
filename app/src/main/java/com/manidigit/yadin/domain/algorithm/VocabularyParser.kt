@@ -189,16 +189,42 @@ object VocabularyParser {
                     val pair = splitPair(stripped)
 
                     if (pair != null) {
-                        // Inline translation e.g. "1. manzana -> سیب"
-                        flushEntry()
-                        currentLineNumber = lineNum
-                        currentSource = pair.first
-                        val extracted = extractParentheticalNote(pair.second)
-                        currentTranslations.add(extracted.first)
-                        extracted.second?.let { currentNotes.add(it) }
-                        currentConfidence = 1.0
-                        currentEvidence.add("inlineTranslationMarker")
-                        if (isNumbered(trimmed)) currentEvidence.add("numbered")
+                        // Check if this is a breakdown item of the current entry (Spec Rule 4 & 6.10):
+                        // A line is a breakdown item if:
+                        // 1. We already have an active entry with source and translations
+                        // 2. The line is not numbered (or starts with bullet/dash)
+                        // 3. AND either:
+                        //    - currentSource contains pair.first (ignoring case)
+                        //    - or we already started collecting breakdowns
+                        //    - or the line starts with bullet/dash
+                        val isSubBreakdown = currentSource != null && currentTranslations.isNotEmpty() && (
+                            !isNumbered(trimmed) && (
+                                currentBreakdowns.isNotEmpty() ||
+                                currentSource!!.contains(pair.first, ignoreCase = true) ||
+                                trimmed.startsWith("-") || trimmed.startsWith("•") || trimmed.startsWith("*")
+                            )
+                        )
+
+                        if (isSubBreakdown) {
+                            currentBreakdowns.add(
+                                VocabularyBreakdownEntry(
+                                    sourcePart = pair.first,
+                                    translationPart = pair.second,
+                                    orderIndex = currentBreakdowns.size
+                                )
+                            )
+                        } else {
+                            // Inline translation e.g. "1. manzana -> سیب"
+                            flushEntry()
+                            currentLineNumber = lineNum
+                            currentSource = pair.first
+                            val extracted = extractParentheticalNote(pair.second)
+                            currentTranslations.add(extracted.first)
+                            extracted.second?.let { currentNotes.add(it) }
+                            currentConfidence = 1.0
+                            currentEvidence.add("inlineTranslationMarker")
+                            if (isNumbered(trimmed)) currentEvidence.add("numbered")
+                        }
                     } else {
                         // Multi-line source or standalone source header
                         if (currentSource == null) {

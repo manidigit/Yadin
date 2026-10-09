@@ -11,12 +11,14 @@ import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.data.repository.SettingsRepository
 import com.manidigit.yadin.domain.model.CardDirection
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * مدیریت تنظیمات برنامه، تم، جهت مطالعه و پشتیبان‌گیری/بازیابی - SettingsViewModel
@@ -59,6 +61,24 @@ class SettingsViewModel(
 
     val showCategoryInReview: StateFlow<Boolean> = settingsRepo.showCategoryInReviewFlow
         .stateIn(scope, SharingStarted.Eagerly, false)
+
+    val ttsEnabled: StateFlow<Boolean> = settingsRepo.ttsEnabledFlow
+        .stateIn(scope, SharingStarted.Eagerly, true)
+
+    val ttsAutoPlay: StateFlow<Boolean> = settingsRepo.ttsAutoPlayFlow
+        .stateIn(scope, SharingStarted.Eagerly, false)
+
+    val ttsSpeechRate: StateFlow<Float> = settingsRepo.ttsSpeechRateFlow
+        .stateIn(scope, SharingStarted.Eagerly, 1.0f)
+
+    val quizAutoAdvanceSeconds: StateFlow<Int> = settingsRepo.quizAutoAdvanceSecondsFlow
+        .stateIn(scope, SharingStarted.Eagerly, 2)
+
+    val defaultQuizLevel: StateFlow<com.manidigit.yadin.domain.model.QuizLevel> = settingsRepo.defaultQuizLevelFlow
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.QuizLevel.MEDIUM)
+
+    val defaultReviewMode: StateFlow<com.manidigit.yadin.domain.model.ReviewMode> = settingsRepo.defaultReviewModeFlow
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD)
 
     val appLanguageDirection: StateFlow<CardDirection> = settingsRepo.appLanguageDirectionFlow
         .stateIn(scope, SharingStarted.Eagerly, CardDirection.NORMAL)
@@ -158,6 +178,48 @@ class SettingsViewModel(
         }
     }
 
+    fun setUiLanguage(language: String) {
+        scope.launch {
+            settingsRepo.setUiLanguage(language)
+        }
+    }
+
+    fun setTtsEnabled(enabled: Boolean) {
+        scope.launch {
+            settingsRepo.setTtsEnabled(enabled)
+        }
+    }
+
+    fun setTtsAutoPlay(autoPlay: Boolean) {
+        scope.launch {
+            settingsRepo.setTtsAutoPlay(autoPlay)
+        }
+    }
+
+    fun setTtsSpeechRate(rate: Float) {
+        scope.launch {
+            settingsRepo.setTtsSpeechRate(rate)
+        }
+    }
+
+    fun setQuizAutoAdvanceSeconds(seconds: Int) {
+        scope.launch {
+            settingsRepo.setQuizAutoAdvanceSeconds(seconds)
+        }
+    }
+
+    fun setDefaultQuizLevel(level: com.manidigit.yadin.domain.model.QuizLevel) {
+        scope.launch {
+            settingsRepo.setDefaultQuizLevel(level)
+        }
+    }
+
+    fun setDefaultReviewMode(mode: com.manidigit.yadin.domain.model.ReviewMode) {
+        scope.launch {
+            settingsRepo.setDefaultReviewMode(mode)
+        }
+    }
+
     // --- متدهای مدیریت پشتیبان‌گیری ---
     fun updateBackupOptions(options: BackupOptions) {
         _backupOptions.value = options
@@ -219,9 +281,11 @@ class SettingsViewModel(
                     _backupProgressMessage.value = msg
                 }
                 val context = getApplication<Application>()
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(content.toByteArray(Charsets.UTF_8))
-                    outputStream.flush()
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(content.toByteArray(Charsets.UTF_8))
+                        outputStream.flush()
+                    }
                 }
                 _backupLastResult.value = if (isExcel) {
                     "فایل اکسل (CSV) با موفقیت در مسیر انتخاب‌شده ذخیره شد."
@@ -292,9 +356,11 @@ class SettingsViewModel(
                     _backupProgressMessage.value = msg
                 }
                 val context = getApplication<Application>()
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(content.toByteArray(Charsets.UTF_8))
-                    outputStream.flush()
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(content.toByteArray(Charsets.UTF_8))
+                        outputStream.flush()
+                    }
                 }
                 _backupLastResult.value = if (isExcel) {
                     "فایل اکسل (CSV) با موفقیت در مسیر انتخاب‌شده ذخیره شد."

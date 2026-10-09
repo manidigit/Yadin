@@ -127,8 +127,15 @@ class ReviewViewModel(
                     onSessionStarted?.invoke(ReviewMode.FLASHCARD)
                 } else {
                     val questions = reviewRepo.generateQuizQuestions(session.id)
-                    _quizQuestions.value = questions
-                    onSessionStarted?.invoke(ReviewMode.QUIZ)
+                    if (questions.isEmpty()) {
+                        // Fallback to flashcard if insufficient distractors in database (Spec 6.6 & Decision D0.2)
+                        val cards = reviewRepo.fetchCardsForSession(session.id)
+                        _sessionCards.value = cards
+                        onSessionStarted?.invoke(ReviewMode.FLASHCARD)
+                    } else {
+                        _quizQuestions.value = questions
+                        onSessionStarted?.invoke(ReviewMode.QUIZ)
+                    }
                 }
             } catch (e: Exception) {
                 _reviewErrorMessage.value = "خطا در شروع نشست مرور: ${e.message}"

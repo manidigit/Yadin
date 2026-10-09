@@ -29,6 +29,36 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     val showCategoryInReviewFlow: Flow<Boolean> = settingsDao.getSettingFlow("showCategoryInReview")
         .map { it?.toBooleanStrictOrNull() ?: false }
 
+    val ttsEnabledFlow: Flow<Boolean> = settingsDao.getSettingFlow("ttsEnabled")
+        .map { it?.toBooleanStrictOrNull() ?: true }
+
+    val ttsAutoPlayFlow: Flow<Boolean> = settingsDao.getSettingFlow("ttsAutoPlay")
+        .map { it?.toBooleanStrictOrNull() ?: false }
+
+    val ttsSpeechRateFlow: Flow<Float> = settingsDao.getSettingFlow("ttsSpeechRate")
+        .map { it?.toFloatOrNull()?.coerceIn(0.5f, 2.0f) ?: 1.0f }
+
+    val quizAutoAdvanceSecondsFlow: Flow<Int> = settingsDao.getSettingFlow("quizAutoAdvanceSeconds")
+        .map { it?.toIntOrNull()?.coerceIn(1, 10) ?: 2 }
+
+    val defaultQuizLevelFlow: Flow<com.manidigit.yadin.domain.model.QuizLevel> = settingsDao.getSettingFlow("defaultQuizLevel")
+        .map {
+            try {
+                if (it != null) com.manidigit.yadin.domain.model.QuizLevel.valueOf(it) else com.manidigit.yadin.domain.model.QuizLevel.MEDIUM
+            } catch (e: Exception) {
+                com.manidigit.yadin.domain.model.QuizLevel.MEDIUM
+            }
+        }
+
+    val defaultReviewModeFlow: Flow<com.manidigit.yadin.domain.model.ReviewMode> = settingsDao.getSettingFlow("defaultReviewMode")
+        .map {
+            try {
+                if (it != null) com.manidigit.yadin.domain.model.ReviewMode.valueOf(it) else com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD
+            } catch (e: Exception) {
+                com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD
+            }
+        }
+
     suspend fun setThemeId(themeId: String) {
         val sanitized = when (themeId.lowercase()) {
             "googoli" -> "googoli"
@@ -64,5 +94,31 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     suspend fun setShowCategoryInReview(show: Boolean) {
         settingsDao.setSetting(SettingEntity("showCategoryInReview", show.toString()))
+    }
+
+    suspend fun setTtsEnabled(enabled: Boolean) {
+        settingsDao.setSetting(SettingEntity("ttsEnabled", enabled.toString()))
+    }
+
+    suspend fun setTtsAutoPlay(autoPlay: Boolean) {
+        settingsDao.setSetting(SettingEntity("ttsAutoPlay", autoPlay.toString()))
+    }
+
+    suspend fun setTtsSpeechRate(rate: Float) {
+        val clamped = rate.coerceIn(0.5f, 2.0f)
+        settingsDao.setSetting(SettingEntity("ttsSpeechRate", clamped.toString()))
+    }
+
+    suspend fun setQuizAutoAdvanceSeconds(seconds: Int) {
+        val clamped = seconds.coerceIn(1, 10)
+        settingsDao.setSetting(SettingEntity("quizAutoAdvanceSeconds", clamped.toString()))
+    }
+
+    suspend fun setDefaultQuizLevel(level: com.manidigit.yadin.domain.model.QuizLevel) {
+        settingsDao.setSetting(SettingEntity("defaultQuizLevel", level.name))
+    }
+
+    suspend fun setDefaultReviewMode(mode: com.manidigit.yadin.domain.model.ReviewMode) {
+        settingsDao.setSetting(SettingEntity("defaultReviewMode", mode.name))
     }
 }

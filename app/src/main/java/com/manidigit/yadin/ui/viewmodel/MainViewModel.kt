@@ -135,6 +135,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val difficultyThreshold: StateFlow<Int> get() = settingsVm.difficultyThreshold
     val showCategoryInReview: StateFlow<Boolean> get() = settingsVm.showCategoryInReview
     val appLanguageDirection: StateFlow<CardDirection> get() = settingsVm.appLanguageDirection
+    val ttsEnabled: StateFlow<Boolean> get() = settingsVm.ttsEnabled
+    val ttsAutoPlay: StateFlow<Boolean> get() = settingsVm.ttsAutoPlay
+    val ttsSpeechRate: StateFlow<Float> get() = settingsVm.ttsSpeechRate
+    val quizAutoAdvanceSeconds: StateFlow<Int> get() = settingsVm.quizAutoAdvanceSeconds
+    val defaultQuizLevel: StateFlow<QuizLevel> get() = settingsVm.defaultQuizLevel
+    val defaultReviewMode: StateFlow<ReviewMode> get() = settingsVm.defaultReviewMode
 
     // ==========================================
     // تفویض وضعیت آمار و پیشرفت (StatisticsViewModel)
@@ -158,6 +164,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val searchQuery: StateFlow<String> get() = libraryVm.searchQuery
     val selectedCategoryFilter: StateFlow<String?> get() = libraryVm.selectedCategoryFilter
     val selectedStageFilter: StateFlow<Stage?> get() = libraryVm.selectedStageFilter
+    val selectedDifficultyFilter: StateFlow<VocabularyDifficulty?> get() = libraryVm.selectedDifficultyFilter
+    val showOnlyInactiveFilter: StateFlow<Boolean> get() = libraryVm.showOnlyInactiveFilter
+    val hasMoreResults: StateFlow<Boolean> get() = libraryVm.hasMoreResults
+    val isLoadingMore: StateFlow<Boolean> get() = libraryVm.isLoadingMore
     val searchResults: StateFlow<List<WordDetail>> get() = libraryVm.searchResults
     val selectedWordDetail: StateFlow<WordDetail?> get() = libraryVm.selectedWordDetail
     val parseResult: StateFlow<ParseResult?> get() = libraryVm.parseResult
@@ -255,6 +265,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleDarkMode() = settingsVm.toggleDarkMode()
     fun setDarkMode(dark: Boolean) = settingsVm.setDarkMode(dark)
     fun setDifficultyThreshold(threshold: Int) = settingsVm.setDifficultyThreshold(threshold)
+    fun setUiLanguage(lang: String) = settingsVm.setUiLanguage(lang)
+    fun setTtsEnabled(enabled: Boolean) = settingsVm.setTtsEnabled(enabled)
+    fun setTtsAutoPlay(autoPlay: Boolean) = settingsVm.setTtsAutoPlay(autoPlay)
+    fun setTtsSpeechRate(rate: Float) = settingsVm.setTtsSpeechRate(rate)
+    fun setQuizAutoAdvanceSeconds(seconds: Int) = settingsVm.setQuizAutoAdvanceSeconds(seconds)
+    fun setDefaultQuizLevel(level: QuizLevel) = settingsVm.setDefaultQuizLevel(level)
+    fun setDefaultReviewMode(mode: ReviewMode) = settingsVm.setDefaultReviewMode(mode)
+    fun purgeInactiveWords(onComplete: (Int) -> Unit = {}) {
+        viewModelScope.launch {
+            val count = vocabularyRepo.purgeInactiveWords()
+            loadRecentWords()
+            onComplete(count)
+        }
+    }
     fun setAppLanguageDirection(direction: CardDirection) {
         settingsVm.setAppLanguageDirection(direction) {
             statisticsVm.setProgressDirection(it)
@@ -338,6 +362,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onSearchQueryChanged(q: String) = libraryVm.onSearchQueryChanged(q, appLanguageDirection.value)
     fun onCategoryFilterChanged(catId: String?) = libraryVm.onCategoryFilterChanged(catId, appLanguageDirection.value)
     fun onStageFilterChanged(stage: Stage?) = libraryVm.onStageFilterChanged(stage, appLanguageDirection.value)
+    fun onDifficultyFilterChanged(difficulty: VocabularyDifficulty?) = libraryVm.onDifficultyFilterChanged(difficulty, appLanguageDirection.value)
+    fun onInactiveFilterToggled(onlyInactive: Boolean) = libraryVm.onInactiveFilterToggled(onlyInactive, appLanguageDirection.value)
+    fun loadNextLibraryPage() = libraryVm.loadNextPage(appLanguageDirection.value)
+    fun reactivateWord(conceptId: String) = libraryVm.reactivateWord(conceptId, appLanguageDirection.value)
     fun loadRecentWords() = libraryVm.loadRecentWords(appLanguageDirection.value)
 
     fun selectWordDetail(conceptId: String) {
@@ -380,6 +408,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // متدهای ورود داده‌ها (Import)
     // ==========================================
     fun parseInputText(text: String) = libraryVm.parseInputText(text)
+    fun setParseResult(result: ParseResult) = libraryVm.setParseResult(result)
     fun clearParseResult() = libraryVm.clearParseResult()
     fun createCategory(name: String, onCreated: (String) -> Unit = {}) = libraryVm.createCategory(name, onCreated)
     fun clearImportSummary() = libraryVm.clearImportSummary()

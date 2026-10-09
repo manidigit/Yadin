@@ -312,6 +312,10 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val categories by viewModel.categories.collectAsStateWithLifecycle()
             val selectedCat by viewModel.selectedCategoryFilter.collectAsStateWithLifecycle()
             val selectedStage by viewModel.selectedStageFilter.collectAsStateWithLifecycle()
+            val selectedDiff by viewModel.selectedDifficultyFilter.collectAsStateWithLifecycle()
+            val onlyInactive by viewModel.showOnlyInactiveFilter.collectAsStateWithLifecycle()
+            val hasMore by viewModel.hasMoreResults.collectAsStateWithLifecycle()
+            val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
 
             LibraryScreen(
                 words = results,
@@ -319,9 +323,17 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 categories = categories,
                 selectedCategory = selectedCat,
                 selectedStage = selectedStage,
+                selectedDifficulty = selectedDiff,
+                showOnlyInactive = onlyInactive,
+                hasMoreResults = hasMore,
+                isLoadingMore = isLoadingMore,
                 onSearchChange = { viewModel.onSearchQueryChanged(it) },
                 onCategoryFilterChange = { viewModel.onCategoryFilterChanged(it) },
                 onStageFilterChange = { viewModel.onStageFilterChanged(it) },
+                onDifficultyFilterChange = { viewModel.onDifficultyFilterChanged(it) },
+                onInactiveFilterToggle = { viewModel.onInactiveFilterToggled(it) },
+                onLoadMore = { viewModel.loadNextLibraryPage() },
+                onReactivateWord = { viewModel.reactivateWord(it) },
                 onSelectWord = { conceptId -> viewModel.selectWordDetail(conceptId) },
                 onAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
                 onBack = {
@@ -384,6 +396,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 importProgress = importProgress,
                 importSummary = importSummary,
                 onParseText = { text -> viewModel.parseInputText(text) },
+                onParseResult = { result -> viewModel.setParseResult(result) },
                 onResetParse = {
                     viewModel.clearParseResult()
                     viewModel.clearImportSummary()
@@ -440,16 +453,38 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val isDark by viewModel.isDark.collectAsStateWithLifecycle()
             val diffThreshold by viewModel.difficultyThreshold.collectAsStateWithLifecycle()
             val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
+            val uiLanguage by viewModel.uiLanguage.collectAsStateWithLifecycle()
+            val ttsEnabled by viewModel.ttsEnabled.collectAsStateWithLifecycle()
+            val ttsAutoPlay by viewModel.ttsAutoPlay.collectAsStateWithLifecycle()
+            val ttsSpeechRate by viewModel.ttsSpeechRate.collectAsStateWithLifecycle()
+            val quizAutoAdvanceSeconds by viewModel.quizAutoAdvanceSeconds.collectAsStateWithLifecycle()
+            val defaultQuizLevel by viewModel.defaultQuizLevel.collectAsStateWithLifecycle()
+            val defaultReviewMode by viewModel.defaultReviewMode.collectAsStateWithLifecycle()
 
             SettingsScreen(
                 currentThemeId = themeId,
                 isDark = isDark,
                 difficultyThreshold = diffThreshold,
                 languageDirection = appLanguageDirection,
+                uiLanguage = uiLanguage,
+                ttsEnabled = ttsEnabled,
+                ttsAutoPlay = ttsAutoPlay,
+                ttsSpeechRate = ttsSpeechRate,
+                quizAutoAdvanceSeconds = quizAutoAdvanceSeconds,
+                defaultQuizLevel = defaultQuizLevel,
+                defaultReviewMode = defaultReviewMode,
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                 onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
                 onSetLanguageDirection = { viewModel.setAppLanguageDirection(it) },
+                onSetUiLanguage = { viewModel.setUiLanguage(it) },
+                onToggleTtsEnabled = { viewModel.setTtsEnabled(it) },
+                onToggleTtsAutoPlay = { viewModel.setTtsAutoPlay(it) },
+                onSetTtsSpeechRate = { viewModel.setTtsSpeechRate(it) },
+                onSetQuizAutoAdvanceSeconds = { viewModel.setQuizAutoAdvanceSeconds(it) },
+                onSetDefaultQuizLevel = { viewModel.setDefaultQuizLevel(it) },
+                onSetDefaultReviewMode = { viewModel.setDefaultReviewMode(it) },
+                onPurgeInactiveWords = { viewModel.purgeInactiveWords() },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },
                 onOpenAbout = { viewModel.navigateTo(Screen.About) },

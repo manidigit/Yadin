@@ -489,6 +489,54 @@
   4. **به‌روزرسانی بانک واژگان:** ارتقای دانه اولیه و اسناد به ۶,۶۶۴ مفهوم و ۱۵,۵۶۱ ترجمه در دو فرمت JSON و CSV.
   5. **ارتقای نسخه:** `versionCode = 19` و `versionName = "1.11.0"`.
 
+---
+
+### ۲.۲۹. حل کامل تمامی اولویت‌های بالای باقیمانده (نسخه ۱.۱۲.۰ - ISS-01, ISS-02, ISS-03, ISS-06, ISS-18, ISS-19, ISS-20, ISS-29, ISS-31)
+* **تاریخ:** ۲۰۲۶-۱۰-۰۹
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/LibraryScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/LibraryViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/ConceptDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ImportScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/SettingsScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/SettingsViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/SettingsRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/ReviewViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/text/TextUtilities.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/VocabularyParser.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/database/YadinDatabase.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/BackupScreen.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/CHANGELOG.md`
+* **ریشه‌یابی و اقدامات اصلاحی:**
+  1. **صفحه‌بندی نامحدود کتابخانه (ISS-01):**
+     * حذف هاردکد `LIMIT 300` در دیتابیس و اضافه کردن پارامترهای `limit` و `offset` به کوئری `searchConceptsFiltered`.
+     * پیاده‌سازی متد `loadMoreWords` در `LibraryViewModel` و اتصال شاخص مشاهده آیتم‌های اسکرول در `LibraryScreen` جهت مرور پیوسته تمامی ۶,۶۶۴ کلمه.
+  2. **فیلترهای دشواری و وضعیت فعال/غیرفعال کتابخانه (ISS-02):**
+     * طراحی چیپ‌های افقی فیلتر درجه سختی (آسان، متوسط، سخت، خیلی سخت) و چیپ سوئیچ فعال/غیرفعال.
+     * امکان مشاهده واژگان حذف‌شده همراه با دکمه «فعال‌سازی مجدد» (`reactivateWord`) جهت احیای مستقیم واژگان.
+  3. **انتخابگر سیستمی فایل در فرم ورود (ISS-03):**
+     * افزودن `ActivityResultContracts.GetContent` در `ImportScreen` و دکمه انتخابگر فایل‌های متنی، اکسل، CSV و JSON و اتصال به `FileReaders`.
+  4. **گزینه‌های پیشرفته تنظیمات (ISS-06):**
+     * اضافه شدن فیلدهای موتور صوتی TTS (روشن/خاموش، پخش خودکار، اسلایدر سرعت پخش ۰.۵x تا ۲.۰x)، تاخیر آزمون (۱ تا ۱۰ ثانیه)، سطوح پیش‌فرض و دکمه پاکسازی واژگان غیرفعال در `SettingsScreen` و `SettingsRepository`.
+  5. **فال‌بک اکید به فلش‌کارت در آزمون (ISS-18):**
+     * ممانعت از پر کردن تصادفی گزینه‌ها با ترجمه‌های مخدوش؛ اعتبارسنجی قطعی ۴ گزینه یکتا و متمایز (`distinct().size == 4`) و بازگشت خودکار نشست به حالت `FLASHCARD` در صورت کمبود گزینه‌های انحرافی طبق تصمیم D0.2 و استاندارد ۶.۶ سند.
+  6. **پارسر هوشمند اسلش و نشانگرهای Breakdown (ISS-19):**
+     * اصلاح `splitTranslations` جهت حفظ سلامت عبارات دارای اسلش بدون فاصله (نظیر «روی کسی/چیزی حساب کردن») و تفکیک نشانگرهای Breakdown در `VocabularyParser` بدون بستن زودهنگام ورودی.
+  7. **عدم احیای ناخواسته واژگان حذف‌شده (ISS-20):**
+     * تعبیه متد `findActiveContentByCanonicalKey` با شرط `c.active = 1` در `ConceptDao` جهت جلوگیری از تداخل واژگان حذف‌شده با ایمپورت‌های جدید.
+  8. **تثبیت دیتابیس واحد (ISS-29):**
+     * حذف هرگونه کلاس دیتابیس موازی و تثبیت `YadinDatabase` به عنوان منبع انحصاری و تمیز دیتابیس روم.
+  9. **غیرمسدودسازی عملیات پشتیبان‌گیری در کورتین (ISS-31):**
+     * انتقال تمامی عملیات نوشتن و خواندن استریم‌های فایل به بافت `withContext(Dispatchers.IO)` در `SettingsViewModel` و `BackupScreen`، جلوگیری از هرگونه فریز نخ اصلی یا خطای ANR.
+  10. **ارتقای نسخه:**
+      * افزایش `versionCode = 20` و `versionName = "1.12.0"` در `app/build.gradle.kts`.
+      * به‌روزرسانی کامل `README.md`، `CHANGELOG.md` و شناسنامه باگ‌ها در `ISSUES_AND_DEFECTS_BACKLOG.md`.
+
 
 
 

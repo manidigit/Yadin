@@ -66,6 +66,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +74,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,6 +110,7 @@ fun BackupScreen(
     val context = LocalContext.current
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    val coroutineScope = rememberCoroutineScope()
 
     var selectedFormat by remember { mutableStateOf(BackupExportFormat.JSON) }
     var activeTab by remember { mutableStateOf(0) } // 0 = Export, 1 = Restore
@@ -148,17 +153,23 @@ fun BackupScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            try {
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val text = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-                    if (text.isNotBlank()) {
-                        loadedFileContent = text
-                        loadedFileName = "فایل انتخاب‌شده (${text.length / 1024} کیلوبایت)"
-                        Toast.makeText(context, "فایل با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    val text = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                    }
+                    withContext(Dispatchers.Main) {
+                        if (!text.isNullOrBlank()) {
+                            loadedFileContent = text
+                            loadedFileName = "فایل انتخاب‌شده (${text.length / 1024} کیلوبایت)"
+                            Toast.makeText(context, "فایل با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "خطا در خواندن فایل: ${e.message}", Toast.LENGTH_LONG).show()
                     }
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "خطا در خواندن فایل: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }

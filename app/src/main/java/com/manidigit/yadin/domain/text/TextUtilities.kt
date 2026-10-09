@@ -40,10 +40,39 @@ object TextUtilities {
 
     fun splitTranslations(text: String?): List<String> {
         if (text.isNullOrBlank()) return emptyList()
-        return text.split(TRANSLATION_DELIMITERS)
+        // First split by commas, semicolons, and newlines
+        val primarySegments = text.split(Regex("[،,;\n]"))
             .map { cleanText(it) }
             .filter { it.isNotBlank() }
-            .distinct()
+
+        val result = mutableListOf<String>()
+        for (seg in primarySegments) {
+            if (seg.contains('/')) {
+                // If slash is surrounded by whitespace, e.g. "سیب / گلابی"
+                if (Regex("""\s+/\s*|\s*/\s+""").containsMatchIn(seg)) {
+                    val sub = seg.split(Regex("""\s+/\s*|\s*/\s+"""))
+                        .map { cleanText(it) }
+                        .filter { it.isNotBlank() }
+                    result.addAll(sub)
+                } else {
+                    // Slash without spaces. Check word count.
+                    // If multi-word phrase like "روی کسی/چیزی حساب کردن" (more than 2 tokens), keep intact!
+                    val tokens = seg.split(Regex("""\s+""")).filter { it.isNotBlank() }
+                    if (tokens.size > 2) {
+                        result.add(seg)
+                    } else {
+                        // Isolated single tokens, e.g. "شاد/خوشحال"
+                        val sub = seg.split('/')
+                            .map { cleanText(it) }
+                            .filter { it.isNotBlank() }
+                        result.addAll(sub)
+                    }
+                }
+            } else {
+                result.add(seg)
+            }
+        }
+        return result.distinct()
     }
 
     fun formatTranslations(translations: List<String>): String {

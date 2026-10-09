@@ -59,6 +59,13 @@ import com.manidigit.yadin.domain.model.ImportSummary
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FileOpen
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.provider.OpenableColumns
+import android.net.Uri
+import com.manidigit.yadin.domain.algorithm.FileReaders
 
 @Composable
 fun ImportScreen(
@@ -68,6 +75,7 @@ fun ImportScreen(
     importProgress: Float,
     importSummary: ImportSummary? = null,
     onParseText: (String) -> Unit,
+    onParseResult: ((ParseResult) -> Unit)? = null,
     onResetParse: (() -> Unit)? = null,
     onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
     onConfirmImport: (DuplicatePolicy, String?) -> Unit,
@@ -77,6 +85,14 @@ fun ImportScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    var fileLoadError by remember { mutableStateOf<String?>(null) }
+
+    var inputText by remember { mutableStateOf("") }
+    var isShowingSample by remember { mutableStateOf(false) }
+    var selectedPolicy by remember { mutableStateOf(DuplicatePolicy.MERGE) }
+    var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
 
     val sampleText = """
         amigo: دوست (مذکر)
@@ -85,11 +101,42 @@ fun ImportScreen(
         feliz: خوشحال، شاد
     """.trimIndent()
 
-    var inputText by remember { mutableStateOf("") }
-    var isShowingSample by remember { mutableStateOf(false) }
-    var selectedPolicy by remember { mutableStateOf(DuplicatePolicy.MERGE) }
-    var selectedCategoryId by remember { mutableStateOf<String?>(null) }
-    val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                fileLoadError = null
+                val contentResolver = context.contentResolver
+                val inputStream = contentResolver.openInputStream(uri)
+                if (inputStream != null) {
+                    var displayName = ""
+                    contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (nameIndex != -1 && cursor.moveToFirst()) {
+                            displayName = cursor.getString(nameIndex) ?: ""
+                        }
+                    }
+                    val lowerName = displayName.lowercase()
+                    val result = when {
+                        lowerName.endsWith(".csv") || lowerName.endsWith(".tsv") -> FileReaders.readCsv(inputStream)
+                        lowerName.endsWith(".json") -> FileReaders.readJson(inputStream)
+                        lowerName.endsWith(".xlsx") -> FileReaders.readXlsx(inputStream)
+                        else -> FileReaders.readText(inputStream)
+                    }
+                    if (onParseResult != null) {
+                        onParseResult(result)
+                    } else {
+                        inputText = result.entries.joinToString("\n") { e ->
+                            "${e.sourceText}: ${e.translations.joinToString("، ")}"
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                fileLoadError = "خطا در خواندن فایل: ${e.message}"
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -271,10 +318,10 @@ fun ImportScreen(
                     color = colors.onSurfaceVariant
                 )
 
-                // Quick Action Bar: Clear & Paste & Sample buttons
+                // Quick Action Bar: Clear & Paste & File Picker & Sample buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     OutlinedButton(
                         onClick = {
@@ -287,9 +334,21 @@ fun ImportScreen(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(dimensions.cornerSmall)
                     ) {
-                        Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("چسباندن متن (Paste)", fontSize = 11.sp)
+                        Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text("Paste", fontSize = 11.sp)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            filePickerLauncher.launch(arrayOf("*/*"))
+                        },
+                        modifier = Modifier.weight(1.3f),
+                        shape = RoundedCornerShape(dimensions.cornerSmall)
+                    ) {
+                        Icon(Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text("انتخاب فایل", fontSize = 11.sp)
                     }
 
                     if (inputText.isNotEmpty()) {
@@ -298,12 +357,12 @@ fun ImportScreen(
                                 inputText = ""
                                 isShowingSample = false
                             },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(0.9f),
                             shape = RoundedCornerShape(dimensions.cornerSmall)
                         ) {
-                            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("پاک کردن متن", fontSize = 11.sp)
+                            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(15.dp))
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text("پاک", fontSize = 11.sp)
                         }
                     } else {
                         OutlinedButton(
@@ -311,12 +370,25 @@ fun ImportScreen(
                                 inputText = sampleText
                                 isShowingSample = true
                             },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(0.9f),
                             shape = RoundedCornerShape(dimensions.cornerSmall)
                         ) {
-                            Text("درج متن نمونه", fontSize = 11.sp)
+                            Text("نمونه", fontSize = 11.sp)
                         }
                     }
+                }
+
+                if (fileLoadError != null) {
+                    Text(
+                        text = fileLoadError!!,
+                        color = colors.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(dimensions.cornerSmall))
+                            .background(colors.error.copy(alpha = 0.1f))
+                            .padding(8.dp)
+                    )
                 }
 
                 // Category selection BEFORE parsing

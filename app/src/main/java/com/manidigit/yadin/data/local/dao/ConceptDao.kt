@@ -75,6 +75,22 @@ interface ConceptDao {
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode AND canonicalKey = :canonicalKey LIMIT 1")
     suspend fun findContentByCanonicalKey(languageCode: String, canonicalKey: String): ContentEntity?
 
+    @Query("""
+        SELECT cnt.* FROM contents cnt
+        INNER JOIN concepts c ON cnt.conceptId = c.id
+        WHERE cnt.languageCode = :languageCode 
+        AND cnt.canonicalKey = :canonicalKey 
+        AND c.active = 1
+        LIMIT 1
+    """)
+    suspend fun findActiveContentByCanonicalKey(languageCode: String, canonicalKey: String): ContentEntity?
+
+    @Query("SELECT * FROM concepts WHERE active = 0")
+    suspend fun getInactiveConcepts(): List<ConceptEntity>
+
+    @Query("DELETE FROM concepts WHERE id IN (:conceptIds)")
+    suspend fun deleteConceptsPermanently(conceptIds: List<String>)
+
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode AND canonicalKey IN (:canonicalKeys)")
     suspend fun findContentsByCanonicalKeys(languageCode: String, canonicalKeys: List<String>): List<ContentEntity>
 
@@ -115,19 +131,24 @@ interface ConceptDao {
         SELECT DISTINCT c.* FROM concepts c
         INNER JOIN contents cnt ON c.id = cnt.conceptId
         LEFT JOIN learning_states ls ON (c.id = ls.conceptId AND ls.direction = :direction)
-        WHERE c.active = 1
+        LEFT JOIN difficulty_states ds ON (c.id = ds.conceptId AND ds.direction = :direction)
+        WHERE ((:onlyInactive = 0 AND c.active = 1) OR (:onlyInactive = 1 AND c.active = 0))
         AND (:query = '' OR cnt.text LIKE '%' || :query || '%' OR cnt.canonicalKey LIKE '%' || :query || '%' OR cnt.note LIKE '%' || :query || '%')
         AND (:categoryId IS NULL OR c.categoryId = :categoryId)
         AND (:stage IS NULL OR ls.stage = :stage)
+        AND (:difficulty IS NULL OR ds.current = :difficulty)
         ORDER BY c.updatedAt DESC
-        LIMIT :limit
+        LIMIT :limit OFFSET :offset
     """)
     suspend fun searchConceptsFiltered(
         query: String,
         categoryId: String?,
         stage: String?,
         direction: CardDirection,
-        limit: Int = 300
+        difficulty: String? = null,
+        onlyInactive: Boolean = false,
+        limit: Int = 50,
+        offset: Int = 0
     ): List<ConceptEntity>
 
     @Query("""
