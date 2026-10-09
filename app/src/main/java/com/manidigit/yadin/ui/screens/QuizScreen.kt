@@ -38,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
-import com.manidigit.yadin.domain.algorithm.QuizDistractorScorer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -313,9 +312,7 @@ fun QuizScreen(
             ) {
                 q.options.forEachIndexed { index, option ->
                     val isSelected = (selectedOption == index)
-                    val isCorrect = (index == q.correctIndex) || 
-                        (correctOptionText.isNotEmpty() && QuizDistractorScorer.areSemanticallyColliding(option.text, correctOptionText)) ||
-                        QuizDistractorScorer.areSemanticallyColliding(option.text, q.correctAnswer)
+                    val isCorrect = (index == q.correctIndex)
 
                     val optionBorderColor = when {
                         !hasAnswered -> colors.outline.copy(alpha = dimensions.cardBorderAlpha)

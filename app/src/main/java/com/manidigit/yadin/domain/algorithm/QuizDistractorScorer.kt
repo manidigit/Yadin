@@ -55,13 +55,6 @@ object QuizDistractorScorer {
             .replace('أ', 'ا')
             .replace('آ', 'ا')
             .replace('ئ', 'ی')
-            .replace('á', 'a')
-            .replace('é', 'e')
-            .replace('í', 'i')
-            .replace('ó', 'o')
-            .replace('ú', 'u')
-            .replace('ü', 'u')
-            .replace('ñ', 'n')
     }
 
     /**
