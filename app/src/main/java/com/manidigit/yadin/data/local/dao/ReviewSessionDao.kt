@@ -48,6 +48,12 @@ interface ReviewSessionDao {
     @Query("SELECT * FROM review_history WHERE sessionId = :sessionId ORDER BY reviewedAt ASC")
     suspend fun getHistoryForSession(sessionId: String): List<ReviewHistoryEntity>
 
+    @Query("SELECT * FROM review_history WHERE reviewAttemptId = :attemptId LIMIT 1")
+    suspend fun getHistoryByAttemptId(attemptId: String): ReviewHistoryEntity?
+
+    @Query("SELECT * FROM review_session_items WHERE sessionId = :sessionId AND conceptId = :conceptId LIMIT 1")
+    suspend fun getItemForSessionAndConcept(sessionId: String, conceptId: String): ReviewSessionItemEntity?
+
     @Query("SELECT COUNT(*) FROM review_history WHERE reviewedDay = :dayString")
     fun getReviewCountForDayFlow(dayString: String): Flow<Int>
 

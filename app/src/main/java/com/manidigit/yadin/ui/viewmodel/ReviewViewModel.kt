@@ -186,6 +186,7 @@ class ReviewViewModel(
 
         isSubmittingFlashcard = true
         val currentCard = cards[idx]
+        val attemptId = "${session.id}_${currentCard.conceptId}_${currentCard.direction}_$idx"
         scope.launch {
             try {
                 _reviewErrorMessage.value = null
@@ -195,7 +196,8 @@ class ReviewViewModel(
                     direction = currentCard.direction,
                     isCorrect = isCorrect,
                     mode = ReviewMode.FLASHCARD,
-                    difficultyThreshold = difficultyThreshold
+                    difficultyThreshold = difficultyThreshold,
+                    reviewAttemptId = attemptId
                 )
 
                 if (isCorrect) {
@@ -254,6 +256,7 @@ class ReviewViewModel(
             _sessionWrongCount.value += 1
         }
 
+        val attemptId = "${session.id}_${q.conceptId}_${q.direction}_$idx"
         scope.launch {
             try {
                 _reviewErrorMessage.value = null
@@ -265,7 +268,8 @@ class ReviewViewModel(
                     mode = ReviewMode.QUIZ,
                     selectedIndex = optionIndex,
                     correctIndex = q.correctIndex,
-                    difficultyThreshold = difficultyThreshold
+                    difficultyThreshold = difficultyThreshold,
+                    reviewAttemptId = attemptId
                 )
             } catch (e: Exception) {
                 _reviewErrorMessage.value = "خطا در ثبت پاسخ آزمون: ${e.message}"

@@ -65,12 +65,33 @@ enum class BackupExportFormat {
     EXCEL_CSV_COMPLETE
 }
 
+/**
+ * ساختار نگاشت شناسه‌ها (RestoreContext) برای اتصال یکپارچه واژگان و پیشرفت.
+ *
+ * طبق الگوریتم ۶.۱۴ سند مشخصات یادین، در حالت ادغام (MERGE):
+ * هنگامی که یک مفهوم در فایل پشتیبان با یک مفهوم محلی تطبیق داده می‌شود، شناسه نسخه محلی
+ * جایگزین می‌گردد. تمام بخش‌های بازیابی پیشرفت (learning_states، difficulty_states، review_history)
+ * شناسه‌ها را صرفاً از طریق RestoreContext بازخوانی می‌کنند تا هیچ رکوردی به شناسه نامعتبر متصل نشود.
+ */
 class RestoreContext {
-    private val conceptIdMap = mutableMapOf<String, String>()
+    private val conceptIdMap = mutableMapOf<String, String>() // backupConceptId -> localConceptId
+
+    /** بازنگاشت شناسه پشتیبان به شناسه معادل محلی */
     fun remapConceptId(backupId: String): String = conceptIdMap[backupId] ?: backupId
+
+    /** ثبت نگاشت شناسه نسخه پشتیبان به شناسه نسخه محلی */
     fun registerMapping(backupId: String, localId: String) {
         conceptIdMap[backupId] = localId
     }
+
+    /** بررسی وجود نگاشت صریح برای شناسه مورد نظر */
+    fun hasMapping(backupId: String): Boolean = conceptIdMap.containsKey(backupId)
+
+    /** تعداد نگاشت‌های ثبت‌شده */
+    val mappingCount: Int get() = conceptIdMap.size
+
+    /** استخراج کپی تمامی نگاشت‌ها جهت ارزیابی و تست */
+    fun getAllMappings(): Map<String, String> = conceptIdMap.toMap()
 }
 
 class BackupRepository(
@@ -588,12 +609,76 @@ class BackupRepository(
         return "\"" + value.replace("\"", "\"\"") + "\""
     }
 
+    companion object {
+        const val MAX_SAFETY_BACKUPS = 3
+        const val CURRENT_SUPPORTED_SCHEMA_VERSION = 2
+    }
+
     suspend fun saveBackupToFile(jsonString: String, filename: String): File = withContext(Dispatchers.IO) {
         val backupsDir = File(context.filesDir, "backups")
         if (!backupsDir.exists()) backupsDir.mkdirs()
         val file = File(backupsDir, filename)
         file.writeText(jsonString, Charsets.UTF_8)
         file
+    }
+
+    /**
+     * ایجاد نسخه پشتیبان اضطراری ایمن (Safety Backup) قبل از آغاز هرگونه بازیابی داده‌ها.
+     * طبق الزام بخش ۶.۱۴ و ISS-17 سند مشخصات، پیش از هرگونه دستکاری در دیتابیس باید
+     * یک نسخه پشتیبان کامل اضطراری در پوشه `safety_backups` ذخیره شود و حداکثر ۳ نسخه اخیر نگهداری گردند.
+     */
+    suspend fun createSafetyBackup(): File = withContext(Dispatchers.IO) {
+        val safetyDir = File(context.filesDir, "safety_backups")
+        if (!safetyDir.exists()) safetyDir.mkdirs()
+
+        // استخراج کلیه داده‌های فعلی بدون ایجاد وقفه در UI
+        val backupJson = createBackupJson(BackupType.FULL) { _, _ -> }
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val safetyFile = File(safetyDir, "safety_backup_${timestamp}_${System.currentTimeMillis()}.json")
+        safetyFile.writeText(backupJson, Charsets.UTF_8)
+
+        // سیاست چرخش فایل‌ها: نگهداری حداکثر ۳ فایل اخیر و حذف قدیمی‌ترها
+        rotateSafetyBackups(safetyDir)
+        safetyFile
+    }
+
+    /**
+     * اعمال سیاست چرخش و محدودیت حداکثر ۳ نسخه پشتیبان اضطراری.
+     */
+    private fun rotateSafetyBackups(safetyDir: File) {
+        try {
+            val files = safetyDir.listFiles { f ->
+                f.isFile && f.name.startsWith("safety_backup_") && f.name.endsWith(".json")
+            }?.sortedByDescending { it.lastModified() } ?: emptyList()
+
+            if (files.size > MAX_SAFETY_BACKUPS) {
+                files.drop(MAX_SAFETY_BACKUPS).forEach { oldFile ->
+                    oldFile.delete()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * دریافت لیست فایل‌های پشتیبان اضطراری موجود.
+     */
+    suspend fun getSafetyBackups(): List<File> = withContext(Dispatchers.IO) {
+        val safetyDir = File(context.filesDir, "safety_backups")
+        if (!safetyDir.exists()) return@withContext emptyList()
+        safetyDir.listFiles { f ->
+            f.isFile && f.name.startsWith("safety_backup_") && f.name.endsWith(".json")
+        }?.sortedByDescending { it.lastModified() }?.toList() ?: emptyList()
+    }
+
+    /**
+     * دریافت لیست فایل‌های پشتیبان داخلی ذخیره‌شده در پوشه backups.
+     */
+    suspend fun getInternalBackups(): List<File> = withContext(Dispatchers.IO) {
+        val backupsDir = File(context.filesDir, "backups")
+        if (!backupsDir.exists()) return@withContext emptyList()
+        backupsDir.listFiles { f -> f.isFile }?.sortedByDescending { it.lastModified() }?.toList() ?: emptyList()
     }
 
     private fun parseIsoDay(isoOrDay: String?): String? {
@@ -604,24 +689,59 @@ class BackupRepository(
         return null
     }
 
+    /**
+     * بازیابی بانک اطلاعاتی از رشته JSON بر اساس الگوریتم ۶.۱۴ سند مشخصات و رفع نواقص ISS-17.
+     *
+     * گام‌های کلیدی:
+     * ۰. تهیه خودکار فایل پشتیبان اضطراری ایمن (Safety Backup) با سیاست سقف ۳ نسخه.
+     * ۱. اعتبارسنجی ساختار، نسخه (schemaVersion <= 2) و نوع داده‌های پشتیبان.
+     * ۲. تجزیه حافظه‌ای کلیه رکوردهای دیتابیس پیش از باز کردن قفل تراکنش SQLite.
+     * ۳. ساخت نگاشت RestoreContext برای تطبیق هوشمند شناسه‌های مفاهیم در حالت ادغام (MERGE).
+     * ۴. عدم پاک‌سازی جداول پیشرفت در حالت REPLACE چنانچه فایل صرفاً حاوی واژگان باشد (ISS-17).
+     * ۵. ادغام هوشمند پیشرفت، سطوح دشواری و حفظ بالاترین رکوردهای مرور بدون رونویسی ناصحیح.
+     *
+     * @param jsonString رشته محتوای JSON فایل پشتیبان
+     * @param isReplace در صورت true جایگزینی کامل، در غیر این صورت ادغام هوشمند
+     * @param onProgress گزارش درصد و وضعیت عملیات
+     * @return پیام موفقیت یا خطای عملیات
+     */
     suspend fun restoreFromJson(
         jsonString: String,
         isReplace: Boolean = false,
         onProgress: (Float, String) -> Unit
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
-            onProgress(0.05f, "در حال پردازش و استخراج محتوای پشتیبان...")
+            // گام ۰: تهیه فایل پشتیبان اضطراری ایمن (Safety Backup) پیش از اعمال هرگونه تغییر
+            onProgress(0.02f, "ایجاد فایل پشتیبان اضطراری ایمن (Safety Backup)...")
+            try {
+                createSafetyBackup()
+            } catch (e: Exception) {
+                // ثبت لاگ هشدار؛ در صورت دسترسی به دیتابیس ادامه می‌دهیم
+                android.util.Log.w("BackupRepository", "Safety backup creation warning: ${e.message}")
+            }
+
+            // گام ۱: اعتبارسنجی اولیه ساختار، نسخه و نوع
+            onProgress(0.06f, "در حال بررسی و اعتبارسنجی ساختار فایل پشتیبان...")
             val root = JSONObject(jsonString)
 
             val format = root.optString("format", "")
-            val isFlashLearn = root.has("payloads")
+            val isFlashLearn = root.has("payloads") || root.has("payload") ||
+                root.optString("app", "").equals("FlashLearn", ignoreCase = true)
+
             if (format != "yadin-backup" && !isFlashLearn) {
-                return@withContext Result.failure(IllegalArgumentException("قالب فایل پشتیبان نامعتبر است"))
+                return@withContext Result.failure(IllegalArgumentException("فایل پشتیبان نامعتبر است (فرمت شناخته‌شده نیست)"))
             }
 
-            // Consolidate data from both Yadin format ("data") and FlashLearn bundle format ("payloads")
+            val schemaVersion = root.optInt("schemaVersion", 1)
+            if (format == "yadin-backup" && schemaVersion > CURRENT_SUPPORTED_SCHEMA_VERSION) {
+                return@withContext Result.failure(
+                    IllegalArgumentException("نسخه فایل پشتیبان ($schemaVersion) بالاتر از نسخه پشتیبانی‌شده برنامه ($CURRENT_SUPPORTED_SCHEMA_VERSION) است. لطفاً برنامه را بروزرسانی کنید.")
+                )
+            }
+
+            // یکپارچه‌سازی محتوای داده از فرمت استاندارد یادین ("data") یا فرمت بسته‌ای فلش‌لرن ("payloads"/"payload")
             val data = JSONObject()
-            
+
             root.optJSONObject("data")?.let { direct ->
                 val keys = direct.keys()
                 while (keys.hasNext()) {
@@ -644,20 +764,30 @@ class BackupRepository(
                 }
             }
 
-            if (data.length() == 0) {
-                return@withContext Result.failure(IllegalArgumentException("اطلاعات پشتیبان خالی یا مخدوش است"))
+            // پشتیبانی از آرایه تکی payload در فلش‌لرن
+            if (data.length() == 0 && root.has("payload")) {
+                val payloadArr = root.optJSONArray("payload")
+                val pType = root.optString("type", "")
+                if (payloadArr != null) {
+                    if (pType.equals("PROGRESS", ignoreCase = true)) {
+                        data.put("learningStates", payloadArr)
+                    } else if (pType.equals("VOCABULARY", ignoreCase = true)) {
+                        data.put("concepts", payloadArr)
+                    }
+                }
             }
 
-            val restoreContext = RestoreContext()
+            if (data.length() == 0) {
+                return@withContext Result.failure(IllegalArgumentException("فایل پشتیبان نامعتبر است (داده‌ای یافت نشد)"))
+            }
 
-            // Step 1: Parse ALL entities in memory BEFORE opening SQLite transaction
-            // This prevents holding an exclusive write lock during long JSON iterations, eliminating UI freezes!
+            // گام ۲: پارس کردن تمامی موجودیت‌ها در حافظه قبل از گشودن تراکنش SQLite
             
-            // 1. Categories
+            // ۱. دسته‌بندی‌ها (Categories)
             val categoriesJson = data.optJSONArray("categories")
             val categoriesList = mutableListOf<CategoryEntity>()
             if (categoriesJson != null) {
-                onProgress(0.15f, "پردازش دسته‌بندی‌ها...")
+                onProgress(0.12f, "پردازش دسته‌بندی‌ها...")
                 for (i in 0 until categoriesJson.length()) {
                     val co = categoriesJson.getJSONObject(i)
                     categoriesList.add(
@@ -671,20 +801,20 @@ class BackupRepository(
                 }
             }
 
-            // 2. Concepts & Contents
+            // ۲. مفاهیم و محتواها (Concepts & Contents)
             val conceptsJson = data.optJSONArray("concepts")
             val contentsJson = data.optJSONArray("contents")
-            val conceptsList = mutableListOf<ConceptEntity>()
-            val contentsList = mutableListOf<ContentEntity>()
+            val incomingConcepts = mutableListOf<ConceptEntity>()
+            val incomingContents = mutableListOf<ContentEntity>()
 
             if (conceptsJson != null) {
-                onProgress(0.25f, "پردازش ساختار واژگان...")
+                onProgress(0.20f, "پردازش مفاهیم و واژگان...")
                 for (i in 0 until conceptsJson.length()) {
                     val co = conceptsJson.getJSONObject(i)
                     val cid = co.getString("id")
                     val entryTypeStr = co.optString("entryType", "WORD")
                     val entryType = runCatching { EntryType.valueOf(entryTypeStr) }.getOrDefault(EntryType.WORD)
-                    conceptsList.add(
+                    incomingConcepts.add(
                         ConceptEntity(
                             id = cid,
                             entryType = entryType,
@@ -698,13 +828,13 @@ class BackupRepository(
             }
 
             if (contentsJson != null) {
-                onProgress(0.35f, "پردازش معانی و ترجمه‌ها...")
+                onProgress(0.30f, "پردازش ترجمه‌ها و معانی...")
                 for (i in 0 until contentsJson.length()) {
                     val cto = contentsJson.getJSONObject(i)
-                    contentsList.add(
+                    incomingContents.add(
                         ContentEntity(
                             id = cto.optString("id", UUID.randomUUID().toString()),
-                            conceptId = restoreContext.remapConceptId(cto.getString("conceptId")),
+                            conceptId = cto.getString("conceptId"),
                             languageCode = cto.optString("languageCode", "es"),
                             text = cto.getString("text"),
                             canonicalKey = cto.optString("canonicalKey", cto.getString("text").lowercase()),
@@ -715,25 +845,24 @@ class BackupRepository(
                 }
             }
 
-            // 3. Learning States (Handles both FlashLearn nextReviewAt/lastReviewedAt and Yadin nextReviewDay/lastReviewedDay)
+            // ۳. مراحل لایتنر (Learning States)
             val lsJson = data.optJSONArray("learningStates")
-            val learningStatesList = mutableListOf<LearningStateEntity>()
+            val incomingLearningStates = mutableListOf<LearningStateEntity>()
             if (lsJson != null) {
-                onProgress(0.50f, "پردازش مراحل لایتنر واژگان...")
+                onProgress(0.40f, "پردازش مراحل یادگیری لایتنر...")
                 for (i in 0 until lsJson.length()) {
                     val o = lsJson.getJSONObject(i)
                     val dirStr = o.optString("direction", "NORMAL")
                     val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
                     val stageStr = o.optString("stage", "DAILY")
                     val stage = runCatching { Stage.valueOf(stageStr) }.getOrDefault(Stage.DAILY)
-                    
                     val nextDay = parseIsoDay(o.optString("nextReviewDay", "").ifEmpty { o.optString("nextReviewAt", "") })
                     val lastDay = parseIsoDay(o.optString("lastReviewedDay", "").ifEmpty { o.optString("lastReviewedAt", "") })
 
-                    learningStatesList.add(
+                    incomingLearningStates.add(
                         LearningStateEntity(
                             id = o.optString("id", UUID.randomUUID().toString()),
-                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            conceptId = o.getString("conceptId"),
                             direction = dir,
                             stage = stage,
                             nextReviewDay = nextDay,
@@ -744,21 +873,21 @@ class BackupRepository(
                 }
             }
 
-            // 4. Difficulty States
+            // ۴. سطوح دشواری (Difficulty States)
             val dsJson = data.optJSONArray("difficultyStates")
-            val difficultyStatesList = mutableListOf<DifficultyStateEntity>()
+            val incomingDifficultyStates = mutableListOf<DifficultyStateEntity>()
             if (dsJson != null) {
-                onProgress(0.65f, "پردازش سطوح دشواری...")
+                onProgress(0.50f, "پردازش سطوح دشواری کارت‌ها...")
                 for (i in 0 until dsJson.length()) {
                     val o = dsJson.getJSONObject(i)
                     val dirStr = o.optString("direction", "NORMAL")
                     val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
                     val curStr = o.optString("current", "MEDIUM")
                     val current = runCatching { VocabularyDifficulty.valueOf(curStr) }.getOrDefault(VocabularyDifficulty.MEDIUM)
-                    difficultyStatesList.add(
+                    incomingDifficultyStates.add(
                         DifficultyStateEntity(
                             id = o.optString("id", UUID.randomUUID().toString()),
-                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            conceptId = o.getString("conceptId"),
                             direction = dir,
                             current = current,
                             consecutiveCorrect = o.optInt("consecutiveCorrect", 0),
@@ -769,11 +898,11 @@ class BackupRepository(
                 }
             }
 
-            // 5. Review History
+            // ۵. تاریخچه مرورها (Review History)
             val histJson = data.optJSONArray("reviewHistory")
-            val historyList = mutableListOf<ReviewHistoryEntity>()
+            val incomingHistoryList = mutableListOf<ReviewHistoryEntity>()
             if (histJson != null) {
-                onProgress(0.75f, "پردازش تاریخچه مرور...")
+                onProgress(0.60f, "پردازش تاریخچه مرورها و آزمون‌ها...")
                 for (i in 0 until histJson.length()) {
                     val o = histJson.getJSONObject(i)
                     val dirStr = o.optString("direction", "NORMAL")
@@ -788,14 +917,15 @@ class BackupRepository(
                     val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
 
                     val revAt = o.optLong("reviewedAt", System.currentTimeMillis())
-                    val revDay = parseIsoDay(o.optString("reviewedDay", "")) ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(revAt))
+                    val revDay = parseIsoDay(o.optString("reviewedDay", ""))
+                        ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(revAt))
 
-                    historyList.add(
+                    incomingHistoryList.add(
                         ReviewHistoryEntity(
                             id = o.optString("id", UUID.randomUUID().toString()),
                             sessionId = o.optString("sessionId", UUID.randomUUID().toString()),
-                            reviewAttemptId = UUID.randomUUID().toString(),
-                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            reviewAttemptId = o.optString("reviewAttemptId", UUID.randomUUID().toString()),
+                            conceptId = o.getString("conceptId"),
                             direction = dir,
                             reviewedAt = revAt,
                             reviewedDay = revDay,
@@ -812,9 +942,9 @@ class BackupRepository(
                 }
             }
 
-            // 6. Review Sessions
+            // ۶. جلسات مرور (Review Sessions & Items)
             val sessJson = data.optJSONArray("reviewSessions")
-            val sessionsList = mutableListOf<ReviewSessionEntity>()
+            val incomingSessionsList = mutableListOf<ReviewSessionEntity>()
             if (sessJson != null) {
                 for (i in 0 until sessJson.length()) {
                     val o = sessJson.getJSONObject(i)
@@ -829,7 +959,7 @@ class BackupRepository(
                     val qlStr = o.optString("quizLevel", "")
                     val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
 
-                    sessionsList.add(
+                    incomingSessionsList.add(
                         ReviewSessionEntity(
                             id = o.getString("id"),
                             startedAt = o.optLong("startedAt", System.currentTimeMillis()),
@@ -847,7 +977,7 @@ class BackupRepository(
             }
 
             val itemsJson = data.optJSONArray("reviewSessionItems")
-            val sessionItemsList = mutableListOf<ReviewSessionItemEntity>()
+            val incomingSessionItemsList = mutableListOf<ReviewSessionItemEntity>()
             if (itemsJson != null) {
                 for (i in 0 until itemsJson.length()) {
                     val o = itemsJson.getJSONObject(i)
@@ -855,11 +985,11 @@ class BackupRepository(
                     val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
                     val stStr = o.optString("state", "PENDING")
                     val state = runCatching { SessionItemState.valueOf(stStr) }.getOrDefault(SessionItemState.PENDING)
-                    sessionItemsList.add(
+                    incomingSessionItemsList.add(
                         ReviewSessionItemEntity(
                             id = o.getString("id"),
                             sessionId = o.getString("sessionId"),
-                            conceptId = restoreContext.remapConceptId(o.getString("conceptId")),
+                            conceptId = o.getString("conceptId"),
                             direction = dir,
                             position = o.optInt("position", i),
                             state = state
@@ -868,73 +998,271 @@ class BackupRepository(
                 }
             }
 
-            // 7. Achievements & Settings
+            // ۷. نشان‌ها و تنظیمات (Achievements & Settings)
             val achJson = data.optJSONArray("achievements")
-            val achievementsList = mutableListOf<Pair<String, Pair<Long?, Int>>>()
+            val incomingAchievementsList = mutableListOf<Pair<String, Pair<Long?, Int>>>()
             if (achJson != null) {
                 for (i in 0 until achJson.length()) {
                     val o = achJson.getJSONObject(i)
                     val id = o.getString("id")
                     val unlockedAt = if (o.has("unlockedAt") && !o.isNull("unlockedAt")) o.getLong("unlockedAt") else null
                     val progress = o.optInt("progress", 0)
-                    achievementsList.add(id to Pair(unlockedAt, progress))
+                    incomingAchievementsList.add(id to Pair(unlockedAt, progress))
                 }
             }
 
             val setJson = data.optJSONArray("settings")
-            val settingsList = mutableListOf<SettingEntity>()
+            val incomingSettingsList = mutableListOf<SettingEntity>()
             if (setJson != null) {
                 for (i in 0 until setJson.length()) {
                     val o = setJson.getJSONObject(i)
-                    settingsList.add(SettingEntity(o.getString("key"), o.getString("value")))
+                    incomingSettingsList.add(SettingEntity(o.getString("key"), o.getString("value")))
                 }
             }
 
-            // Step 2: High-speed Batch Chunked Database Inserts inside a single transaction
-            onProgress(0.85f, "در حال بروزرسانی دیتابیس...")
+            // بررسی ماهیت محتوای فایل پشتیبان
+            val hasVocabInData = incomingConcepts.isNotEmpty()
+            val hasProgressInData = incomingLearningStates.isNotEmpty() ||
+                incomingDifficultyStates.isNotEmpty() ||
+                incomingHistoryList.isNotEmpty() ||
+                incomingSessionsList.isNotEmpty()
+
+            // گام ۳: ایجاد ساختار RestoreContext و انطباق شناسه‌ها طبق الگوریتم ۶.۱۴
+            onProgress(0.70f, "تحلیل شناسه‌ها و اتصال RestoreContext...")
+            val restoreContext = RestoreContext()
+
+            // بازخوانی وضعیت فعلی پایگاه داده برای تطبیق
+            val existingConcepts = conceptDao.getAllConcepts().associateBy { it.id }
+            val existingContents = conceptDao.getAllContents()
+            val existingContentsByConcept = existingContents.groupBy { it.conceptId }
+            val existingContentsByKey = existingContents.groupBy { it.languageCode to it.canonicalKey }
+
+            val incomingContentsByConcept = incomingContents.groupBy { it.conceptId }
+
+            if (!isReplace) {
+                // حالت MERGE: منطبق‌سازی مفاهیم بر اساس UUID یا کلید کانونیکال واژه مبدأ
+                for (bConcept in incomingConcepts) {
+                    if (existingConcepts.containsKey(bConcept.id)) {
+                        // تطبیق با همان شناسه یکتا در دیتابیس
+                        restoreContext.registerMapping(bConcept.id, bConcept.id)
+                    } else {
+                        // جستجو بر اساس کلمه مبدأ (اسپانیایی یا اولین محتوا)
+                        val bContents = incomingContentsByConcept[bConcept.id] ?: emptyList()
+                        val sourceContent = bContents.firstOrNull { it.languageCode == "es" } ?: bContents.firstOrNull()
+                        val matchedLocalConceptId = if (sourceContent != null) {
+                            val candidates = existingContentsByKey[sourceContent.languageCode to sourceContent.canonicalKey]
+                            candidates?.mapNotNull { existingConcepts[it.conceptId] }
+                                ?.sortedBy { it.createdAt }
+                                ?.firstOrNull()?.id
+                        } else null
+
+                        if (matchedLocalConceptId != null) {
+                            // مفهوم با شناسه محلی ادغام می‌شود
+                            restoreContext.registerMapping(bConcept.id, matchedLocalConceptId)
+                        } else {
+                            // مفهوم تازه وارد شده با همان شناسه بکاپ درج می‌شود
+                            restoreContext.registerMapping(bConcept.id, bConcept.id)
+                        }
+                    }
+                }
+            } else {
+                // حالت REPLACE: تمامی شناسه‌های بکاپ مستقیماً استفاده می‌شوند
+                for (bConcept in incomingConcepts) {
+                    restoreContext.registerMapping(bConcept.id, bConcept.id)
+                }
+            }
+
+            // آماده‌سازی لیست مفاهیم و محتواهای نهایی برای درج
+            val finalConceptsToInsert = mutableListOf<ConceptEntity>()
+            val finalContentsToInsert = mutableListOf<ContentEntity>()
+            val reactivatedConceptIds = mutableListOf<String>()
+
+            if (isReplace) {
+                finalConceptsToInsert.addAll(incomingConcepts)
+                for (ct in incomingContents) {
+                    finalContentsToInsert.add(
+                        ct.copy(conceptId = restoreContext.remapConceptId(ct.conceptId))
+                    )
+                }
+            } else {
+                for (bConcept in incomingConcepts) {
+                    val localId = restoreContext.remapConceptId(bConcept.id)
+                    val existing = existingConcepts[localId]
+                    if (existing == null) {
+                        // مفهوم کاملاً جدید
+                        finalConceptsToInsert.add(bConcept)
+                    } else {
+                        // اگر مفهوم محلی غیرفعال بود و مفهوم پشتیبان فعال است، فعال شود
+                        if (!existing.active && bConcept.active) {
+                            reactivatedConceptIds.add(existing.id)
+                        }
+                    }
+
+                    // الحاق ترجمه‌ها و محتواهای جدید بدون تکرار
+                    val bContents = incomingContentsByConcept[bConcept.id] ?: emptyList()
+                    val existingLocalContents = existingContentsByConcept[localId] ?: emptyList()
+                    val existingKeys = existingLocalContents.map { it.languageCode to it.canonicalKey }.toSet()
+                    var nextIndex = (existingLocalContents.maxOfOrNull { it.translationIndex } ?: -1) + 1
+
+                    for (bc in bContents) {
+                        val keyPair = bc.languageCode to bc.canonicalKey
+                        if (!existingKeys.contains(keyPair)) {
+                            finalContentsToInsert.add(
+                                bc.copy(
+                                    id = UUID.randomUUID().toString(),
+                                    conceptId = localId,
+                                    translationIndex = nextIndex++
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            // آماده‌سازی پیشرفت (LearningStates & DifficultyStates) با اعمال کامل RestoreContext
+            val existingLearningStates = learningDao.getAllLearningStates().associateBy { it.conceptId to it.direction }
+            val existingDifficultyStates = learningDao.getAllDifficultyStates().associateBy { it.conceptId to it.direction }
+
+            val finalLearningStatesToInsert = mutableListOf<LearningStateEntity>()
+            val finalDifficultyStatesToInsert = mutableListOf<DifficultyStateEntity>()
+
+            // شناسه‌های معتبر مفاهیم (موجود یا در حال اضافه شدن) جهت جلوگیری از درج رکوردهای بی‌سرپرست
+            val validConceptIds = if (isReplace) {
+                finalConceptsToInsert.map { it.id }.toSet()
+            } else {
+                existingConcepts.keys + finalConceptsToInsert.map { it.id }.toSet()
+            }
+
+            val bDiffMap = incomingDifficultyStates.associateBy { it.conceptId to it.direction }
+
+            for (bLs in incomingLearningStates) {
+                val mappedCid = restoreContext.remapConceptId(bLs.conceptId)
+                if (!validConceptIds.contains(mappedCid)) {
+                    // رکورد بدون مفهوم مرتبط رد می‌شود (طبق بخش ۶.۱۴ سند)
+                    continue
+                }
+
+                val pairKey = mappedCid to bLs.direction
+                val localLs = existingLearningStates[pairKey]
+                val bDs = bDiffMap[bLs.conceptId to bLs.direction]
+
+                if (isReplace) {
+                    finalLearningStatesToInsert.add(bLs.copy(conceptId = mappedCid))
+                    if (bDs != null) {
+                        finalDifficultyStatesToInsert.add(bDs.copy(conceptId = mappedCid))
+                    }
+                } else {
+                    // حالت MERGE طبق تصمیمات سند یادین:
+                    // اگر کارت محلی هنوز مرور نشده (lastReviewedDay = null): ردیف پشتیبان جایگزین می‌شود
+                    // اگر ردیف پشتیبان lastReviewedDay دارد و از محلی جدیدتر است: پشتیبان جایگزین می‌شود
+                    val shouldUseBackup = when {
+                        localLs == null -> true
+                        localLs.lastReviewedDay == null -> true
+                        bLs.lastReviewedDay != null && (localLs.lastReviewedDay == null || bLs.lastReviewedDay > localLs.lastReviewedDay) -> true
+                        else -> false
+                    }
+
+                    if (shouldUseBackup) {
+                        finalLearningStatesToInsert.add(bLs.copy(conceptId = mappedCid))
+                        if (bDs != null) {
+                            finalDifficultyStatesToInsert.add(bDs.copy(conceptId = mappedCid))
+                        }
+                    }
+                }
+            }
+
+            // آماده‌سازی تاریخچه و جلسات مرور
+            val existingHistory = reviewSessionDao.getAllHistory()
+            val existingAttemptIds = existingHistory.map { it.reviewAttemptId }.toSet()
+            val existingSessionIds = reviewSessionDao.getAllSessions().map { it.id }.toSet()
+
+            val finalHistoryToInsert = mutableListOf<ReviewHistoryEntity>()
+            val finalSessionsToInsert = mutableListOf<ReviewSessionEntity>()
+            val finalSessionItemsToInsert = mutableListOf<ReviewSessionItemEntity>()
+
+            for (h in incomingHistoryList) {
+                val mappedCid = restoreContext.remapConceptId(h.conceptId)
+                if (!validConceptIds.contains(mappedCid)) continue
+                if (isReplace || !existingAttemptIds.contains(h.reviewAttemptId)) {
+                    finalHistoryToInsert.add(h.copy(conceptId = mappedCid))
+                }
+            }
+
+            for (s in incomingSessionsList) {
+                if (isReplace || !existingSessionIds.contains(s.id)) {
+                    finalSessionsToInsert.add(s)
+                }
+            }
+
+            for (si in incomingSessionItemsList) {
+                val mappedCid = restoreContext.remapConceptId(si.conceptId)
+                if (!validConceptIds.contains(mappedCid)) continue
+                finalSessionItemsToInsert.add(si.copy(conceptId = mappedCid))
+            }
+
+            // آماده‌سازی دستاوردها و تنظیمات
+            val existingSettings = settingsDao.getAllSettings().associateBy { it.key }
+            val finalSettingsToInsert = mutableListOf<SettingEntity>()
+
+            for (st in incomingSettingsList) {
+                // کلید seedImported هرگز در بازیابی بازنویسی نمی‌شود
+                if (st.key == "seedImported") continue
+                if (isReplace || !existingSettings.containsKey(st.key)) {
+                    finalSettingsToInsert.add(st)
+                }
+            }
+
+            // گام ۴: اعمال دسته‌ای و اتمیک تغییرات درون یک تراکنش واحد دیتابیس
+            onProgress(0.85f, "در حال ثبت اتمیک اطلاعات در دیتابیس...")
             database.withTransaction {
                 if (isReplace) {
-                    val hasVocab = conceptsList.isNotEmpty()
-                    if (hasVocab) {
+                    // پاک‌سازی واژگان صرفاً در صورتی که فایل حاوی واژگان باشد
+                    if (hasVocabInData) {
                         conceptDao.clearContents()
                         conceptDao.clearConcepts()
                         conceptDao.clearCustomCategories()
                     }
-                    learningDao.clearLearningStates()
-                    learningDao.clearDifficultyStates()
-                    reviewSessionDao.clearHistory()
-                    reviewSessionDao.clearSessions()
-                    reviewSessionDao.clearSessionItems()
-                } else {
-                    // Smart Merge: clean previous contents for re-imported concepts to avoid duplicate contents
-                    val incomingConceptIds = conceptsList.map { it.id }
-                    if (incomingConceptIds.isNotEmpty()) {
-                        incomingConceptIds.chunked(500).forEach {
-                            conceptDao.deleteContentsForConcepts(it)
-                        }
+                    // رفع نقص بحرانی ISS-17: پاک‌سازی جداول پیشرفت صرفاً در صورتی مجاز است که
+                    // فایل پشتیبان انتخاب‌شده واقعاً حاوی رکوردهای پیشرفت باشد!
+                    if (hasProgressInData) {
+                        learningDao.clearLearningStates()
+                        learningDao.clearDifficultyStates()
+                        reviewSessionDao.clearHistory()
+                        reviewSessionDao.clearSessions()
+                        reviewSessionDao.clearSessionItems()
                     }
                 }
 
+                // فعال‌سازی مجدد مفاهیم غیرفعال
+                reactivatedConceptIds.forEach { conceptDao.reactivateConcept(it) }
+
+                // درج واژگان و دسته‌ها به صورت دسته‌ای (Batch 500)
                 categoriesList.chunked(500).forEach { conceptDao.insertCategories(it) }
-                conceptsList.chunked(500).forEach { conceptDao.insertConcepts(it) }
-                contentsList.chunked(500).forEach { conceptDao.insertContents(it) }
-                learningStatesList.chunked(500).forEach { learningDao.insertLearningStates(it) }
-                difficultyStatesList.chunked(500).forEach { learningDao.insertDifficultyStates(it) }
-                historyList.chunked(500).forEach { reviewSessionDao.insertHistoryItems(it) }
-                sessionsList.chunked(500).forEach { reviewSessionDao.insertSessions(it) }
-                sessionItemsList.chunked(500).forEach { reviewSessionDao.insertSessionItems(it) }
-                
-                achievementsList.forEach { (id, pair) ->
+                finalConceptsToInsert.chunked(500).forEach { conceptDao.insertConcepts(it) }
+                finalContentsToInsert.chunked(500).forEach { conceptDao.insertContents(it) }
+
+                // درج مراحل لایتنر و دشواری
+                finalLearningStatesToInsert.chunked(500).forEach { learningDao.insertLearningStates(it) }
+                finalDifficultyStatesToInsert.chunked(500).forEach { learningDao.insertDifficultyStates(it) }
+
+                // درج تاریخچه و جلسات مرور
+                finalSessionsToInsert.chunked(500).forEach { reviewSessionDao.insertSessions(it) }
+                finalSessionItemsToInsert.chunked(500).forEach { reviewSessionDao.insertSessionItems(it) }
+                finalHistoryToInsert.chunked(500).forEach { reviewSessionDao.insertHistoryItems(it) }
+
+                // به‌روزرسانی دستاوردها به صورت اجتماع (Union)
+                incomingAchievementsList.forEach { (id, pair) ->
                     val (unlockedAt, progress) = pair
                     if (unlockedAt != null) achievementDao.unlock(id, unlockedAt)
                     if (progress > 0) achievementDao.updateProgress(id, progress)
                 }
 
-                settingsList.forEach { settingsDao.setSetting(it) }
+                // ثبت تنظیمات
+                finalSettingsToInsert.forEach { settingsDao.setSetting(it) }
             }
 
-            onProgress(1.0f, "بازیابی داده‌ها با موفقیت انجام شد")
-            Result.success("تمام داده‌ها با موفقیت بازیابی شدند")
+            onProgress(1.0f, "بازیابی داده‌ها با موفقیت کامل انجام شد")
+            Result.success("اطلاعات پشتیبان با موفقیت بازیابی شدند")
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure(e)

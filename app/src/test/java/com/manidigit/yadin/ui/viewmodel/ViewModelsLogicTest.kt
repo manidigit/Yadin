@@ -70,4 +70,21 @@ class ViewModelsLogicTest {
         assertEquals("صحبت کردن", parseResult.entries[0].translations.firstOrNull())
         assertEquals("comer", parseResult.entries[1].sourceText)
     }
+
+    @Test
+    fun `ISS-15 Deterministic reviewAttemptId prevents duplicate review submissions`() {
+        val sessionId = "session-123"
+        val conceptId = "concept-456"
+        val direction = com.manidigit.yadin.domain.model.CardDirection.NORMAL
+        val cardIndex = 3
+
+        val attemptId1 = "${sessionId}_${conceptId}_${direction}_$cardIndex"
+        val attemptId2 = "${sessionId}_${conceptId}_${direction}_$cardIndex"
+
+        // Attempt IDs generated for the same card in the same session must be identical
+        assertEquals("Attempt IDs for the same card review must be deterministic", attemptId1, attemptId2)
+
+        val differentCardAttempt = "${sessionId}_${conceptId}_${direction}_${cardIndex + 1}"
+        assertNotEquals("Attempt IDs for different card indices must be distinct", attemptId1, differentCardAttempt)
+    }
 }

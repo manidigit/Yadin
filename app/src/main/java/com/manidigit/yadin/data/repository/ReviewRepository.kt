@@ -4,6 +4,8 @@ import com.manidigit.yadin.data.local.dao.AchievementDao
 import com.manidigit.yadin.data.local.dao.ConceptDao
 import com.manidigit.yadin.data.local.dao.LearningDao
 import com.manidigit.yadin.data.local.dao.ReviewSessionDao
+import com.manidigit.yadin.data.local.database.YadinDatabase
+import androidx.room.withTransaction
 import com.manidigit.yadin.data.local.entity.ContentEntity
 import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
@@ -53,8 +55,18 @@ class ReviewRepository(
     private val conceptDao: ConceptDao,
     private val learningDao: LearningDao,
     private val reviewSessionDao: ReviewSessionDao,
-    private val achievementDao: AchievementDao
+    private val achievementDao: AchievementDao,
+    private val database: YadinDatabase? = null
 ) {
+
+    private suspend fun <T> runInTransaction(block: suspend () -> T): T {
+        val db = database
+        return if (db != null) {
+            db.withTransaction { block() }
+        } else {
+            block()
+        }
+    }
 
     suspend fun countCandidates(filters: ReviewFilters): Int {
         val today = ClockAndDayMath.todayDayString()
@@ -377,102 +389,126 @@ class ReviewRepository(
         selectedIndex: Int? = null,
         correctIndex: Int? = null,
         optionsJson: String? = null,
-        difficultyThreshold: Int = 3
+        difficultyThreshold: Int = 3,
+        reviewAttemptId: String = UUID.randomUUID().toString()
     ): SubmitResult {
-        val today = ClockAndDayMath.todayDayString()
-        val now = System.currentTimeMillis()
-
-        val currentLearning = learningDao.getLearningState(conceptId, direction)
-        val currentStage = currentLearning?.stage ?: Stage.DAILY
-
-        val transition = LearningTransition.calculateNextStage(
-            currentStage = currentStage,
-            isCorrect = isCorrect,
-            todayDayString = today
-        )
-
-        val updatedLearning = (currentLearning ?: com.manidigit.yadin.data.local.entity.LearningStateEntity(
-            id = UUID.randomUUID().toString(),
-            conceptId = conceptId,
-            direction = direction
-        )).copy(
-            stage = transition.newStage,
-            nextReviewDay = transition.nextReviewDay,
-            lastReviewedDay = today,
-            updatedAt = now
-        )
-        learningDao.insertLearningState(updatedLearning)
-
-        val currentDiff = learningDao.getDifficultyState(conceptId, direction)
-        val curDifficultyEnum = currentDiff?.current ?: VocabularyDifficulty.MEDIUM
-        val consecutiveCorrect = currentDiff?.consecutiveCorrect ?: 0
-        val consecutiveWrong = currentDiff?.consecutiveWrong ?: 0
-        val hasReachedVeryHard = currentDiff?.hasReachedVeryHard ?: false
-
-        val diffResult = DifficultyCalculator.updateDifficulty(
-            current = curDifficultyEnum,
-            consecutiveCorrect = consecutiveCorrect,
-            consecutiveWrong = consecutiveWrong,
-            hasReachedVeryHard = hasReachedVeryHard,
-            isCorrect = isCorrect,
-            threshold = difficultyThreshold
-        )
-
-        val updatedDiff = (currentDiff ?: com.manidigit.yadin.data.local.entity.DifficultyStateEntity(
-            id = UUID.randomUUID().toString(),
-            conceptId = conceptId,
-            direction = direction
-        )).copy(
-            current = diffResult.newDifficulty,
-            consecutiveCorrect = diffResult.consecutiveCorrect,
-            consecutiveWrong = diffResult.consecutiveWrong,
-            hasReachedVeryHard = diffResult.hasReachedVeryHard
-        )
-        learningDao.insertDifficultyState(updatedDiff)
-
-        // Record history
-        val session = reviewSessionDao.getSessionById(sessionId)
-        val historyItem = ReviewHistoryEntity(
-            id = UUID.randomUUID().toString(),
-            sessionId = sessionId,
-            reviewAttemptId = UUID.randomUUID().toString(),
-            conceptId = conceptId,
-            direction = direction,
-            reviewedAt = now,
-            reviewedDay = today,
-            isCorrect = isCorrect,
-            reviewType = session?.reviewType ?: ReviewType.DAILY,
-            mode = mode,
-            stageBefore = currentStage,
-            quizLevel = session?.quizLevel,
-            optionsJson = optionsJson,
-            selectedIndex = selectedIndex,
-            correctIndex = correctIndex
-        )
-        reviewSessionDao.insertHistoryItem(historyItem)
-
-        // Update position and item state in session
-        if (session != null) {
-            val sessionItems = reviewSessionDao.getItemsForSession(sessionId)
-            val matchedItem = sessionItems.firstOrNull { it.conceptId == conceptId }
-            if (matchedItem != null) {
-                reviewSessionDao.updateItemState(matchedItem.id, SessionItemState.ANSWERED)
-            }
-            val answeredCount = sessionItems.count { it.state == SessionItemState.ANSWERED } + 1
-            reviewSessionDao.updateSession(
-                session.copy(currentPosition = answeredCount.coerceAtMost(session.totalItems))
+        // Idempotency guard: If this exact attempt was already recorded, return latest state directly
+        val existingAttempt = reviewSessionDao.getHistoryByAttemptId(reviewAttemptId)
+        if (existingAttempt != null) {
+            val curLearning = learningDao.getLearningState(conceptId, direction)
+            val curDiff = learningDao.getDifficultyState(conceptId, direction)
+            return SubmitResult(
+                newStage = curLearning?.stage ?: Stage.DAILY,
+                nextReviewDay = curLearning?.nextReviewDay,
+                newDifficulty = curDiff?.current ?: VocabularyDifficulty.MEDIUM,
+                isCorrect = existingAttempt.isCorrect
             )
         }
 
-        // Check achievements trigger
+        val today = ClockAndDayMath.todayDayString()
+        val now = System.currentTimeMillis()
+
+        val submitResult = runInTransaction {
+            val currentLearning = learningDao.getLearningState(conceptId, direction)
+            val currentStage = currentLearning?.stage ?: Stage.DAILY
+
+            val transition = LearningTransition.calculateNextStage(
+                currentStage = currentStage,
+                isCorrect = isCorrect,
+                todayDayString = today
+            )
+
+            val updatedLearning = (currentLearning ?: com.manidigit.yadin.data.local.entity.LearningStateEntity(
+                id = UUID.randomUUID().toString(),
+                conceptId = conceptId,
+                direction = direction
+            )).copy(
+                stage = transition.newStage,
+                nextReviewDay = transition.nextReviewDay,
+                lastReviewedDay = today,
+                updatedAt = now
+            )
+            learningDao.insertLearningState(updatedLearning)
+
+            val currentDiff = learningDao.getDifficultyState(conceptId, direction)
+            val curDifficultyEnum = currentDiff?.current ?: VocabularyDifficulty.MEDIUM
+            val consecutiveCorrect = currentDiff?.consecutiveCorrect ?: 0
+            val consecutiveWrong = currentDiff?.consecutiveWrong ?: 0
+            val hasReachedVeryHard = currentDiff?.hasReachedVeryHard ?: false
+
+            val diffResult = DifficultyCalculator.updateDifficulty(
+                current = curDifficultyEnum,
+                consecutiveCorrect = consecutiveCorrect,
+                consecutiveWrong = consecutiveWrong,
+                hasReachedVeryHard = hasReachedVeryHard,
+                isCorrect = isCorrect,
+                threshold = difficultyThreshold
+            )
+
+            val updatedDiff = (currentDiff ?: com.manidigit.yadin.data.local.entity.DifficultyStateEntity(
+                id = UUID.randomUUID().toString(),
+                conceptId = conceptId,
+                direction = direction
+            )).copy(
+                current = diffResult.newDifficulty,
+                consecutiveCorrect = diffResult.consecutiveCorrect,
+                consecutiveWrong = diffResult.consecutiveWrong,
+                hasReachedVeryHard = diffResult.hasReachedVeryHard
+            )
+            learningDao.insertDifficultyState(updatedDiff)
+
+            // Record history
+            val session = reviewSessionDao.getSessionById(sessionId)
+            val historyItem = ReviewHistoryEntity(
+                id = UUID.randomUUID().toString(),
+                sessionId = sessionId,
+                reviewAttemptId = reviewAttemptId,
+                conceptId = conceptId,
+                direction = direction,
+                reviewedAt = now,
+                reviewedDay = today,
+                isCorrect = isCorrect,
+                reviewType = session?.reviewType ?: ReviewType.DAILY,
+                mode = mode,
+                stageBefore = currentStage,
+                quizLevel = session?.quizLevel,
+                optionsJson = optionsJson,
+                selectedIndex = selectedIndex,
+                correctIndex = correctIndex
+            )
+            reviewSessionDao.insertHistoryItem(historyItem)
+
+            // Update item state for this concept in the session
+            val matchedItem = reviewSessionDao.getItemForSessionAndConcept(sessionId, conceptId)
+            if (matchedItem != null) {
+                reviewSessionDao.updateItemState(matchedItem.id, SessionItemState.ANSWERED)
+            }
+
+            // Fresh read of session inside transaction to avoid race condition and preserve status
+            val currentDbSession = reviewSessionDao.getSessionById(sessionId)
+            if (currentDbSession != null) {
+                val sessionItems = reviewSessionDao.getItemsForSession(sessionId)
+                val answeredCount = sessionItems.count { it.state == SessionItemState.ANSWERED }
+                reviewSessionDao.updateSession(
+                    currentDbSession.copy(
+                        currentPosition = answeredCount.coerceAtMost(currentDbSession.totalItems),
+                        status = if (currentDbSession.status == SessionStatus.COMPLETED) SessionStatus.COMPLETED else currentDbSession.status
+                    )
+                )
+            }
+
+            SubmitResult(
+                newStage = transition.newStage,
+                nextReviewDay = transition.nextReviewDay,
+                newDifficulty = diffResult.newDifficulty,
+                isCorrect = isCorrect
+            )
+        }
+
+        // Check achievements outside transaction
         checkAchievements(sessionId)
 
-        return SubmitResult(
-            newStage = transition.newStage,
-            nextReviewDay = transition.nextReviewDay,
-            newDifficulty = diffResult.newDifficulty,
-            isCorrect = isCorrect
-        )
+        return submitResult
     }
 
     suspend fun checkAchievements(sessionId: String = "") {
@@ -554,13 +590,16 @@ class ReviewRepository(
     }
 
     suspend fun completeSession(sessionId: String) {
-        val session = reviewSessionDao.getSessionById(sessionId) ?: return
-        reviewSessionDao.updateSession(
-            session.copy(
+        val session = runInTransaction {
+            val s = reviewSessionDao.getSessionById(sessionId) ?: return@runInTransaction null
+            val updated = s.copy(
                 status = SessionStatus.COMPLETED,
-                endedAt = System.currentTimeMillis()
+                endedAt = s.endedAt ?: System.currentTimeMillis()
             )
-        )
+            reviewSessionDao.updateSession(updated)
+            updated
+        } ?: return
+
         // Re-check quiz achievements on session completion
         if (session.mode == ReviewMode.QUIZ) {
             val history = reviewSessionDao.getHistoryForSession(sessionId)
@@ -583,14 +622,16 @@ class ReviewRepository(
     }
 
     suspend fun abandonSession(sessionId: String) {
-        val session = reviewSessionDao.getSessionById(sessionId) ?: return
-        if (session.status == SessionStatus.ACTIVE) {
-            reviewSessionDao.updateSession(
-                session.copy(
-                    status = SessionStatus.ABANDONED,
-                    endedAt = System.currentTimeMillis()
+        runInTransaction {
+            val session = reviewSessionDao.getSessionById(sessionId) ?: return@runInTransaction
+            if (session.status == SessionStatus.ACTIVE) {
+                reviewSessionDao.updateSession(
+                    session.copy(
+                        status = SessionStatus.ABANDONED,
+                        endedAt = session.endedAt ?: System.currentTimeMillis()
+                    )
                 )
-            )
+            }
         }
     }
 
