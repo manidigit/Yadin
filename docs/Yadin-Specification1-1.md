@@ -54,6 +54,11 @@
 ۸. پشتیبان رمزدار. لغو شد. پشتیبان بدون رمز است.
 ۹. جدول رگبار. حذف شد. رگبار از تاریخچه مرور محاسبه می‌شود.
 ۱۰. علاقه‌مندی (Favorite). وجود ندارد.
+۱۱. «در بازیابی REPLACE واژگان، پیشرفت لایتنر هم پاک می‌شود». لغو شد (تصمیم D40 / ISS-17)؛ پاکسازی پیشرفت منحصراً مشروط به حضور داده‌های پیشرفت (hasProgressInData) در فایل بکاپ است.
+۱۲. «سقف ۳۰۰تایی بارگذاری کتابخانه». لغو شد (تصمیم D41 / ISS-01)؛ صفحه‌بندی نامحدود تدریجی جایگزین شد.
+۱۳. «شکستن ترجمه‌ها روی هر اسلش در عبارات توضیحی». لغو شد (تصمیم D45 / ISS-19)؛ تفکیک هوشمند اسلش اعمال می‌شود.
+۱۴. «احیای ناخواسته واژگان حذف‌شده در جستجوی کانونیکال ورود واژگان». لغو شد (تصمیم D46 / ISS-20)؛ تطابق منحصراً با مفاهیم فعال (active = 1) انجام می‌شود.
+۱۵. «اجرای مسدودکننده استریم‌های I/O پشتیبان‌گیری در نخ اصلی». لغو شد (تصمیم D47 / ISS-31)؛ تمام عملیات به بافت کورتین Dispatchers.IO منتقل شد.
 
 ---
 
@@ -172,128 +177,100 @@
 
 ## 3.1 نسخه‌های قطعی ابزار
 
-این نسخه‌ها در فلش‌لرن آزموده شده‌اند و تغییرشان فقط با تصمیم مکتوب صاحب پروژه مجاز است.
+نسخه‌های قطعی و پایدار محیط ساخت و وابستگی‌های پروژه (منطبق بر `libs.versions.toml` و `build.gradle.kts`):
 
 | مورد | نسخه |
 |------|------|
-| Kotlin | 1.9.20 |
-| Android Gradle Plugin | 8.2.2 |
-| Gradle | 8.2 |
+| Kotlin | 1.9.24 |
+| Android Gradle Plugin (AGP) | 8.5.2 |
+| Gradle | 8.9 |
 | JDK | 17 |
 | compileSdk و targetSdk | 34 |
 | minSdk | 26 |
-| Compose UI و Foundation | 1.5.4 |
-| Compose Compiler | 1.5.4 |
+| Compose UI و Graphics | 1.6.8 |
+| Compose Compiler | 1.5.14 |
 | Material 3 | 1.2.1 |
-| Material Icons Extended | 1.5.4 |
-| Activity Compose | 1.8.0 |
-| Lifecycle (runtime و viewmodel-compose) | 2.6.2 |
-| Navigation Compose | 2.7.5 |
-| Room (runtime، ktx، compiler، paging) | 2.6.1 |
-| Paging | 3.2.1 |
-| Hilt | 2.51.1 |
-| Hilt Navigation Compose | 1.1.0 |
-| Coroutines | 1.7.3 |
+| Material Icons Extended | 1.6.8 |
+| Activity Compose | 1.9.1 |
+| Lifecycle (runtime و viewmodel-compose) | 2.8.4 |
+| Navigation Compose | 2.7.7 |
+| Room (runtime، ktx، compiler) | 2.6.1 |
+| Coroutines (core و android) | 1.8.1 |
+| Serialization Json | 1.6.3 |
+| پردازشگر حاشیه‌نویسی | KSP (1.9.24-1.0.20 - جایگزین kapt جهت ساخت سریع و سازگار) |
 | JUnit | 4.13.2 |
-| پردازشگر حاشیه‌نویسی | kapt (برای Room و Hilt) |
 | شناسه برنامه و نام پکیج | com.manidigit.yadin |
 
-نکته مهم: Gradle wrapper jar داخل مخزن گذاشته نمی‌شود.
-ساخت فقط با GitHub Actions انجام می‌شود (محیط توسعه Termux است و ساخت محلی ندارد).
+## 3.2 معماری و سازماندهی کد
 
-## 3.2 ماژول‌ها
+ساختار پروژه به صورت ماژول یکپارچه `:app` همراه با تفکیک لایه‌ای سه‌گانه و تمیز (Clean Architecture / SRP) پیاده‌سازی شده است:
 
-سه ماژول گریدل:
+۱. **لایه دامنه (domain):** مدل‌ها، الگوریتم‌های خالص لایتنر، محاسبه سختی، موتور آزمون، نرمال‌سازی متن و کلید کانونیکال، پارسر و قواعد زبانی.
+۲. **لایه داده (data):** پایگاه داده تکین `YadinDatabase`، کلیه DAOها و Entityهای روم، مخازن تخصصی (`VocabularyRepository`، `LearningRepository`، `ReviewRepository`، `SettingsRepository`، `BackupRepository`)، خواننده‌های جریانی فایل (`FileReaders`) و ورود بانک اولیه.
+۳. **لایه نمایش (ui):** رابط کاربری تمام‌کامپوز (Material 3)، سامانه‌های تم، ناوبری بر پایه State، و تفکیک مسئولیت ویومدل‌ها (SRP - تصمیم D38):
+   - `ReviewViewModel`: مدیریت نشست‌های مرور، فلش‌کارت، آزمون ۴ گزینه‌ای، فال‌بک اکید و ثبت اتمیک پاسخ‌ها.
+   - `LibraryViewModel`: کتابخانه، اسکرول تدریجی نامحدود (Paging)، فیلترهای سختی/مرحله/فعال و عملیات فعال‌سازی مجدد.
+   - `StatisticsViewModel`: آمار، درصد پیشرفت، رگبار، نمودارها و مدال‌های مرحله‌ای ۲۰گانه.
+   - `SettingsViewModel`: تنظیمات جامع، تم‌ها، موتور غیرمسدودکننده پشتیبان‌گیری و بازیابی.
+   - `MainViewModel`: هماهنگ‌کننده ریشه برنامه (Facade Coordinator).
 
-۱. domain: کاتلین خالص (بدون اندروید). مدل‌ها، الگوریتم‌ها، موارد استفاده (UseCase)، رابط مخزن‌ها. تمام تست‌های واحد اصلی اینجاست.
-۲. data: کتابخانه اندروید. دیتابیس تکین `YadinDatabase`، DAOها، پیاده‌سازی مخزن‌ها، ورود و خروج فایل، بانک اولیه، پارسر فایل‌ها (CSV، JSON، XLSX، SQLite).
-۳. app: کامپوز، ویومدل‌های تفکیک‌شده (SRP - تصمیم D38)، ناوبری، تم، دارایی‌ها (assets):
-   - `ReviewViewModel`: مدیریت نشست‌های مرور، فلش‌کارت، آزمون ۴ گزینه‌ای و ثبت اتمیک پاسخ‌ها.
-   - `LibraryViewModel`: کتابخانه، اسکرول تدریجی، فیلترهای سختی/مرحله/فعال و عملیات واژگان.
-   - `StatisticsViewModel`: آمار، درصد پیشرفت، رگبار، نمودارها و مدال‌های مرحله‌ای.
-   - `SettingsViewModel`: تنظیمات، تم‌ها، موتور غیرمسدودکننده پشتیبان‌گیری و بازیابی.
-   - `MainViewModel`: هماهنگ‌کننده ریشه (Facade Coordinator).
-
-قانون وابستگی: app به domain و data وابسته است. data به domain. domain به هیچ‌چیز وابسته نیست جز Coroutines و javax.inject.
+قانون وابستگی: لایه `ui` به `domain` و `data` وابسته است؛ `data` به `domain` متصل است؛ `domain` کاتلین خالص و مستقل از وابستگی‌های پلتفرمی اندروید است.
 
 ## 3.3 ساختار پکیج‌ها
 
 ```text
-domain/src/main/kotlin/com/manidigit/yadin/domain/
-  model/            مدل‌ها و enumها
-  text/             Normalizer، CanonicalKey، TextCleaner
-  time/             Clock، DayMath
-  algorithm/        LearningTransition، DifficultyCalculator، QuizBuilder، ...
-  parser/           VocabularyParser و نشانگرها
-  usecase/          هر مورد استفاده یک کلاس
-  repository/       رابط‌های مخزن
-  backup/           مدل پشتیبان و اعتبارسنج
-data/src/main/kotlin/com/manidigit/yadin/data/
-  db/               YadinDatabase، Entity، Dao، Converters، Migrations
-  repository/       پیاده‌سازی‌ها
-  io/               BackupFileIo، ImportReaders (csv/json/xlsx/sqlite)
-  seed/             SeedImporter
-app/src/main/kotlin/com/manidigit/yadin/
-  YadinApp.kt، MainActivity.kt
-  di/               ماژول‌های Hilt
-  ui/theme/         تم
-  ui/nav/           ناوبری
-  ui/home، review، library، addword، importer، progress، settings، backup، help
+app/src/main/java/com/manidigit/yadin/
+  domain/
+    model/            مدل‌ها و enumها (Direction, Stage, QuizLevel, ...)
+    algorithm/        LearningTransition, DifficultyCalculator, QuizBuilder, ...
+    text/             Normalizer, CanonicalKey, TextUtilities, VocabularyParser
+    time/             DayMath, Clock
+  data/
+    local/
+      database/       YadinDatabase (تکین)، Converters
+      entity/         ConceptEntity, ContentEntity, LearningStateEntity, ...
+      dao/            ConceptDao, LearningDao, ReviewSessionDao, SettingsDao, ...
+    repository/       VocabularyRepository, LearningRepository, ReviewRepository, ...
+    io/               FileReaders (xlsx, csv, json, txt, sqlite), BackupFileIo
+    seed/             SeedImporter
+  ui/
+    screens/          Home, ReviewSetup, Flashcard, Quiz, Library, AddEditWord, ...
+    components/       CommonCards, Chips, StatsCharts, Dialogs
+    viewmodel/        MainViewModel, ReviewViewModel, LibraryViewModel, ...
+    theme/            YadinTheme, ThemePalettes (GTP, Gemini, Claude, Googoli), Type, Shape
+    nav/              Screen, Navigation State
 ```
 
 ## 3.4 ساختار مخزن
 
 ```text
 Yadin/
-  app/  domain/  data/
+  app/
   docs/
-    Yadin-Specification.md          (همین سند)
-    Vocabulary.json                 (بانک اولیه، نسخه‌ای که در assets کپی می‌شود)
-    PROGRESS_TRACKER.md  CHANGELOG.md  VERSION_LEDGER.md
+    Yadin-Specification1-1.md       (همین سند)
+    Vocabulary.json                 (بانک اولیه، کپی در assets)
+    CHANGELOG.md  ISSUES_AND_DEFECTS_BACKLOG.md  README.md
   samples/
     import/sample.txt  sample.csv  sample.json  sample.xlsx
     backup/sample_backup.json
-  tools/make_sample_xlsx.py
-  .github/workflows/android-ci.yml
-  README.md
+  gradle/
+    libs.versions.toml
+  build.gradle.kts  settings.gradle.kts
 ```
-
-نسخه بانک اولیه داخل برنامه: app/src/main/assets/seed/vocabulary_seed.json (کپی عینی docs/Vocabulary.json).
 
 ## 3.5 CI
 
-فایل android-ci.yml باید در هر push و pull request این مراحل را اجرا کند:
+فایل گردش‌کار در گیت‌هاب اکشنز در هر push و pull request این مراحل را اجرا می‌کند:
+۱. نصب JDK 17.
+۲. نصب Android SDK پلتفرم 34 و build-tools.
+۳. اجرای تست‌های واحد (gradle test).
+۴. ساخت نسخه دیباگ (assembleDebug).
+۵. ساخت نسخه ریلیز (assembleRelease).
 
-۱. نصب JDK 17 و Gradle 8.2.
-۲. نصب Android SDK پلتفرم 34 و build-tools 34.0.0.
-۳. ساخت کلید دیباگ ثابت CI (برای نصب روی نسخه قبل بدون حذف داده).
-۴. ساخت assembleDebug.
-۵. اجرای همه تست‌های واحد (gradle test).
-۶. ساخت assembleRelease با R8 فعال.
-۷. بررسی نسخه (versionName و versionCode) APK.
-۸. بارگذاری APK ها به‌عنوان artifact.
+## 3.6 مدیریت چرخه حیات و تزریق وابستگی
 
-نسخه‌ها: versionName مطابق جدول بخش 12.2 و versionCode = عدد صحیح همان (مثلاً 0.3 به 3 و 1.0 به 100).
-
-## 3.6 تزریق وابستگی
-
-Hilt برای app و data. domain فقط با @Inject روی سازنده کلاس‌ها کار می‌کند.
-زمان از طریق رابط Clock تزریق می‌شود (هرگز مستقیم از System.currentTimeMillis در منطق استفاده نشود).
-
-```kotlin
-interface Clock {
-    fun now(): java.time.Instant
-    val zone: java.time.ZoneId
-}
-```
-
-اجرای تراکنش از طریق رابط TransactionRunner:
-
-```kotlin
-interface TransactionRunner {
-    suspend fun <T> run(block: suspend () -> T): T
-}
-```
+مدیریت مخازن به صورت الگوهای تکین (Singleton) در سطح `YadinDatabase` و تزریق سازنده به ویومدل‌ها پیاده‌سازی شده است.
+زمان از طریق متدهای کمکی و تاریخ محلی دستگاه محاسبه می‌شود و عملیات حساس دیتابیس درون تراکنش‌های اتمیک (`withTransaction`) اجرا می‌گردند.
 
 ---
 
@@ -2626,6 +2603,7 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | T-QZ-14 | ترتیب گزینه‌ها تصادفی است (آماری) |
 | T-QZ-15 | کارایی: بانک 6000 مفهوم، ساخت سؤال زیر 150 میلی‌ثانیه روی JVM |
 | T-QZ-16 | شباهت: مقادیر مرجع (tokenSim، levSim، bigramSim) |
+| T-QZ-17 | فال‌بک اکید به فلش‌کارت در کمبود گزینه‌های انحرافی و ممانعت از پر کردن تصادفی گزینه‌ها با داده مخدوش (ISS-18) |
 
 ## 11.6 پارسر
 
@@ -2646,6 +2624,8 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | T-P-13 | ترجمه قبل از مبدأ (جفت‌شدن با مدخل بعد) |
 | T-P-14 | classifyEntry بر اساس تعداد کلمه |
 | T-P-15 | ZWNJ داخل کلمه حفظ و در ابتدا و انتها حذف |
+| T-P-16 | تفکیک هوشمند اسلش در عبارات مرکب (مانند «کسی/چیزی») بدون خرد شدن عبارت (ISS-19) |
+| T-P-17 | ثبت خطوط تفکیک (Breakdown) درون مدخل جاری بدون تخلیه یا اتمام زودهنگام ورودی (ISS-19) |
 
 ## 11.7 ورود
 
@@ -2666,6 +2646,7 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | T-I-13 | XLSX: خواندن shared strings و inline |
 | T-I-14 | SQLite: قالب یادین و فلش‌لرن |
 | T-I-15 | شکست یک دسته، دسته‌های دیگر ماندگار |
+| T-I-16 | تطابق کانونیکال ورود داده منحصراً با مفاهیم فعال (active=1) و ممانعت از احیای واژگان حذف‌شده (ISS-20) |
 
 ## 11.8 بانک اولیه
 
@@ -2691,13 +2672,14 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | T-B-05 | اعتبارسنجی هر دوازده مورد با فایل خراب |
 | T-B-06 | فایل خراب ← دیتابیس بدون تغییر |
 | T-B-07 | MERGE واژگان: فقط ترجمه جدید |
-| T-B-08 | REPLACE واژگان |
-| T-B-09 | MERGE پیشرفت: قانون جدیدتر برنده |
+| T-B-08 | REPLACE واژگان: جایگزینی مفاهیم با حفظ قطعی پیشرفت لایتنر کاربر (گارد hasProgressInData - تصمیم D40 / ISS-17) |
+| T-B-09 | MERGE پیشرفت: قانون جدیدتر برنده و بازنگاشت شناسه‌ها با RestoreContext (ISS-17) |
 | T-B-10 | REPLACE پیشرفت |
 | T-B-11 | ردیف پیشرفت بدون مفهوم رد و گزارش شود |
 | T-B-12 | شکست وسط ← ROLLBACK |
-| T-B-13 | پشتیبان ایمنی پیش از REPLACE |
+| T-B-13 | پشتیبان ایمنی اضطراری خودکار (Safety Backup) پیش از اعمال تغییرات با چرخش ۳ نسخه (ISS-17) |
 | T-B-14 | بازیابی بدون انتخاب روش انجام نشود (UI) |
+| T-B-15 | اجرای I/O و نوشتن استریم‌های پشتیبان و بازیابی بر روی Dispatchers.IO بدون مسدودسازی UI (ISS-31) |
 
 ## 11.10 آمار، رگبار، دستاورد
 
@@ -2736,6 +2718,9 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | T-UI-05 | افزودن واژه تکی |
 | T-UI-06 | کتابخانه: جستجو و فیلتر روی تمامی ۶,۶۶۴ مورد با اسکرول تدریجی نامحدود (Paging) روان |
 | T-UI-07 | راه‌اندازی اول با بانک اولیه |
+| T-UI-08 | فیلتر ۴ سطح سختی و فیلتر واژگان غیرفعال همراه با دکمه اختصاصی فعال‌سازی مجدد در کتابخانه (ISS-02) |
+| T-UI-09 | انتخابگر سیستمی فایل (SAF) در ورود گروهی واژگان برای XLSX, CSV, JSON, TXT (ISS-03) |
+| T-UI-10 | تنظیمات سرعت TTS، تاخیر عبور خودکار آزمون، و پاکسازی قطعی غیرفعال‌ها در SettingsScreen (ISS-06) |
 
 ---
 
@@ -2772,8 +2757,10 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | 8 | 0.8 | پشتیبان و بازیابی (سه نوع، ادغام و جایگزینی) | T-B |
 | 9 | 0.9 | پیشرفت + آمار + دستاوردها + تنظیمات کامل + تلفظ | T-ST و T-AC و T-PG |
 | 10 | 1.0 | آموزش، Refresh، مهاجرت، سخت‌سازی، تست‌های ابزاری، README، مستندات | همه تست‌ها سبز |
+| 11 | 1.11.0 | ایمن‌سازی بازیابی (Restore)، گارد محافظت از پیشرفت لایتنر، بکاپ اضطراری Safety Backup، نگاشت کامل شناسه‌ها با RestoreContext (ISS-17) | تست‌های واحد سبز و صحت نگاشت شناسه |
+| 12 | 1.12.0 | حل کامل تمامی اولویت‌های بالای باقیمانده: صفحه‌بندی نامحدود کتابخانه (ISS-01)، فیلترهای سختی و وضعیت و فعال‌سازی مجدد (ISS-02)، انتخابگر سیستمی فایل SAF (ISS-03)، تنظیمات پیشرفته و سرعت TTS (ISS-06)، فال‌بک اکید آزمون (ISS-18)، پارسر هوشمند اسلش و تفکیک (ISS-19)، ممانعت از احیای واژگان حذف‌شده در ورود (ISS-20)، تثبیت دیتابیس تکین (ISS-29)، غیرمسدودسازی I/O در کورتین (ISS-31) | بیلد سبز، تست‌های واحد سبز، رفع کامل گلوگاه‌ها |
 
-شماره نسخه برنامه: versionName برابر شماره جدول (مثلاً 0.3) و versionCode برابر عدد صحیح (3 برای 0.3 و 100 برای 1.0).
+شماره نسخه برنامه: versionName برابر شماره جدول و versionCode برابر عدد صحیح متناظر (کد ۲۰ برای نسخه ۱.۱۲.۰).
 
 ## 12.3 تعریف تمام‌شدن هر مرحله
 
@@ -2796,7 +2783,7 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | A4 | حذف maxQuizPoolSize؛ فقط maxReviewCards. |
 | A5 | قابلیت راهنما (Hint) در نسخه اول نیست. |
 | A6 | رابطه‌ها و تنوع‌ها و فراداده پارسر جدول ندارند؛ متنشان در یادداشت می‌آید. |
-| A7 | در REPLACE واژگان، پیشرفت هم پاک می‌شود. |
+| A7 | در بازیابی REPLACE واژگان، پیشرفت لایتنر کاربر کاملاً حفظ می‌شود و پاک‌سازی جداول پیشرفت منحصراً مشروط به حضور داده‌های پیشرفت (hasProgressInData) در فایل است (تصمیم D40 و ISS-17). |
 | A8 | MERGE پیشرفت: کارت با مرور جدیدتر برنده است. |
 | A9 | ورود SQLite فقط از قالب یادین و فلش‌لرن و جدول ساده؛ بازیابی از فایل پشتیبان قدیمی فلش‌لرن پشتیبانی نمی‌شود. |
 | A10 | افزودن جفت زبانی جدید در نسخه اول رابط ندارد (فقط es-fa)؛ اسکیما آماده است. |
