@@ -428,6 +428,67 @@
   3. **به‌روزرسانی جامع محاسبات و آزمون‌ها:** منطق پایش بلادرنگ در `ReviewRepository` برای هر ۲۰ مدال به‌روزرسانی شد و آزمون‌های واحد جامع در `AchievementEngineLogicTest` صحت بازگشایی و ارتقای سطوح را اعتبارسنجی کردند.
   4. **ارتقای نسخه:** ارتقای به `versionCode = 15` و `versionName = "1.7.0"`.
 
+---
+
+### ۲.۲۵. تفکیک معماری تم‌ها، استقرار فونت وزیرمتن و شناسنامه بک‌لاگ (نسخه ۱.۸.۰ - ISS-26)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/theme/` (`Color.kt`, `ThemePalettes.kt`, `Shape.kt`, `Type.kt`, `ThemeTokens.kt`, `YadinTheme.kt`)
+  * `app/src/main/res/font/vazirmatn.ttf`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `app/build.gradle.kts`
+* **ریشه‌یابی و اقدامات اصلاحی:**
+  1. **شکستن فایل حجیم `ThemeTokens.kt`:** تفکیک توکن‌ها به ماژول‌های مجزا با توکن‌های پالت سمانتیک بدون رنگ‌های هاردکدشده.
+  2. **استقرار فونت وزیرمتن:** بارگیری و استقرار محلی فونت خوانا و استاندارد وزیرمتن در تمامی سطوح تایپوگرافی M3.
+  3. **متعادل‌سازی تم گوگولی:** جایگزینی تم شلوغ با پالت نعنایی-پاستلی آرامش‌بخش.
+  4. **تدوین شناسنامه ۳۴ باگ فنی:** تنظیم `ISSUES_AND_DEFECTS_BACKLOG.md` برای پیگیری سیستماتیک نواقص.
+  5. **ارتقای نسخه:** `versionCode = 16` و `versionName = "1.8.0"`.
+
+---
+
+### ۲.۲۶. تفکیک معماری ویومدل‌ها (SRP) و اصلاح نمره‌دهی آزمون (نسخه ۱.۹.۰ - ISS-27, ISS-16, ISS-22)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/` (`ReviewViewModel`, `LibraryViewModel`, `StatisticsViewModel`, `SettingsViewModel`, `MainViewModel`)
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/QuizDistractorScorer.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/QuizScreen.kt`
+  * `app/src/test/java/com/manidigit/yadin/ui/viewmodel/ViewModelsLogicTest.kt`
+  * `app/build.gradle.kts`
+* **ریشه‌یابی و اقدامات اصلاحی:**
+  1. **شکستن God ViewModel:** جداسازی مسئولیت‌های نشست مطالعه، کتابخانه، آمار و تنظیمات به ۴ ویومدل تخصصی با حفظ `MainViewModel` به عنوان هماهنگ‌کننده ریشه.
+  2. **اصلاح نمره‌دهی آزمون (ISS-16):** حذف کامل شرط برخورد معنایی کاذب از نمره‌دهی؛ ارزیابی منحصراً بر مبنای `optionIndex == correctIndex` تثبیت شد.
+  3. **حفظ اکسان‌های اسپانیایی:** ممانعت از حذف کاراکترهای با اعراب اسپانیایی در نرمال‌سازی آزمون طبق تصمیم D18.
+  4. **مدیریت ایمن استثناها (ISS-22):** ممانعت از بلعیده شدن خطاها در کورتین‌های ورود داده و ذخیره واژگان.
+  5. **ارتقای نسخه:** `versionCode = 17` و `versionName = "1.9.0"`.
+
+---
+
+### ۲.۲۷. اتمیک‌سازی ثبت پاسخ مرور و رفع شرایط رقابتی (نسخه ۱.۱۰.۰ - ISS-15)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/YadinDatabase.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/ReviewViewModel.kt`
+  * `app/build.gradle.kts`
+* **ریشه‌یابی و اقدامات اصلاحی:**
+  1. **تراکنش اتمیک دیتابیسی:** انتقال تمامی ۵ مرحله ثبت پاسخ به یک تراکنش واحد (`database.withTransaction`).
+  2. **رفع ریس و Lost Update نشست:** بازخوانی بلادرنگ رکورد سشن درون تراکنش جهت حفظ قطعی وضعیت `COMPLETED`.
+  3. **گارد بی‌اثرسازی تکرار (Idempotency Guard):** ارسال شناسه تلاش مرور پایدار (`reviewAttemptId`) از ویومدل و جلوگیری از ثبت مجدد پاسخ با لمس مضاعف.
+  4. **ارتقای نسخه:** `versionCode = 18` و `versionName = "1.10.0"`.
+
+---
+
+### ۲.۲۸. ایمن‌سازی بازیابی (Restore)، گارد پیشرفت و بکاپ اضطراری (نسخه ۱.۱۱.۰ - ISS-17)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/repository/BackupRepository.kt`
+  * `app/src/test/java/com/manidigit/yadin/data/repository/BackupRepositoryTest.kt`
+  * `app/src/main/assets/seed/vocabulary_seed.json`
+  * `docs/vocabulary.json` و `docs/yadin-vocabulary.csv`
+  * `app/build.gradle.kts`
+* **ریشه‌یابی و اقدامات اصلاحی:**
+  1. **گارد محافظت از پیشرفت لایتنر در `isReplace`:** منع پاکسازی جداول پیشرفت در صورتی که فایل بکاپ صرفاً حاوی واژگان (`VOCABULARY`) باشد.
+  2. **موتور خودکار بکاپ اضطراری (`Safety Backup`):** تهیه نسخه پشتیبان پیش از هرگونه بازیابی با چرخش حداکثر ۳ نسخه در `safety_backups/`.
+  3. **نگاشت پایدار شناسه‌ها (`RestoreContext`):** نگاشت شناسه‌های بکاپ به محلی بر اساس کانونیکال واژه مبدأ و رد ایمن رکوردهای پیشرفت بی‌سرپرست.
+  4. **به‌روزرسانی بانک واژگان:** ارتقای دانه اولیه و اسناد به ۶,۶۶۴ مفهوم و ۱۵,۵۶۱ ترجمه در دو فرمت JSON و CSV.
+  5. **ارتقای نسخه:** `versionCode = 19` و `versionName = "1.11.0"`.
+
 
 
 
