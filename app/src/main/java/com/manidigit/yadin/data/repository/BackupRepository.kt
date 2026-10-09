@@ -882,8 +882,8 @@ class BackupRepository(
                     val o = dsJson.getJSONObject(i)
                     val dirStr = o.optString("direction", "NORMAL")
                     val dir = runCatching { CardDirection.valueOf(dirStr) }.getOrDefault(CardDirection.NORMAL)
-                    val curStr = o.optString("current", "MEDIUM")
-                    val current = runCatching { VocabularyDifficulty.valueOf(curStr) }.getOrDefault(VocabularyDifficulty.MEDIUM)
+                    val curStr = o.optString("current", "EASY")
+                    val current = runCatching { VocabularyDifficulty.valueOf(curStr) }.getOrDefault(VocabularyDifficulty.EASY)
                     incomingDifficultyStates.add(
                         DifficultyStateEntity(
                             id = o.optString("id", UUID.randomUUID().toString()),

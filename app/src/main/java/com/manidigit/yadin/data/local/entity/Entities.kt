@@ -116,7 +116,7 @@ data class DifficultyStateEntity(
     @PrimaryKey val id: String,
     val conceptId: String,
     val direction: CardDirection = CardDirection.NORMAL,
-    val current: VocabularyDifficulty = VocabularyDifficulty.MEDIUM,
+    val current: VocabularyDifficulty = VocabularyDifficulty.EASY,
     val consecutiveCorrect: Int = 0,
     val consecutiveWrong: Int = 0,
     val hasReachedVeryHard: Boolean = false

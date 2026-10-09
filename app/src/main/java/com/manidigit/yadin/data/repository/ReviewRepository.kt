@@ -170,7 +170,7 @@ class ReviewRepository(
             val learning = learningDao.getLearningState(item.conceptId, item.direction)
             val stage = learning?.stage ?: Stage.DAILY
             val diffState = learningDao.getDifficultyState(item.conceptId, item.direction)
-            val diff = diffState?.current ?: VocabularyDifficulty.MEDIUM
+            val diff = diffState?.current ?: VocabularyDifficulty.EASY
             val category = concept.categoryId?.let { conceptDao.getCategoryById(it)?.name }
 
             val prompt = if (item.direction == CardDirection.NORMAL) sourceContent.text else targetTranslations.joinToString("، ")
@@ -247,7 +247,7 @@ class ReviewRepository(
                     text = combinedText,
                     categoryId = categoryMap[cId],
                     entryType = entryTypeMap[cId] ?: EntryType.WORD,
-                    difficulty = diffMap[cId] ?: VocabularyDifficulty.MEDIUM,
+                    difficulty = diffMap[cId] ?: VocabularyDifficulty.EASY,
                     semantic = semantic
                 )
             }
@@ -393,7 +393,7 @@ class ReviewRepository(
             return SubmitResult(
                 newStage = curLearning?.stage ?: Stage.DAILY,
                 nextReviewDay = curLearning?.nextReviewDay,
-                newDifficulty = curDiff?.current ?: VocabularyDifficulty.MEDIUM,
+                newDifficulty = curDiff?.current ?: VocabularyDifficulty.EASY,
                 isCorrect = existingAttempt.isCorrect
             )
         }
@@ -424,7 +424,7 @@ class ReviewRepository(
             learningDao.insertLearningState(updatedLearning)
 
             val currentDiff = learningDao.getDifficultyState(conceptId, direction)
-            val curDifficultyEnum = currentDiff?.current ?: VocabularyDifficulty.MEDIUM
+            val curDifficultyEnum = currentDiff?.current ?: VocabularyDifficulty.EASY
             val consecutiveCorrect = currentDiff?.consecutiveCorrect ?: 0
             val consecutiveWrong = currentDiff?.consecutiveWrong ?: 0
             val hasReachedVeryHard = currentDiff?.hasReachedVeryHard ?: false

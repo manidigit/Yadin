@@ -45,13 +45,13 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromDifficulty(value: VocabularyDifficulty?): String = value?.name ?: VocabularyDifficulty.MEDIUM.name
+    fun fromDifficulty(value: VocabularyDifficulty?): String = value?.name ?: VocabularyDifficulty.EASY.name
 
     @TypeConverter
     fun toDifficulty(value: String?): VocabularyDifficulty = try {
-        value?.let { VocabularyDifficulty.valueOf(it) } ?: VocabularyDifficulty.MEDIUM
+        value?.let { VocabularyDifficulty.valueOf(it) } ?: VocabularyDifficulty.EASY
     } catch (_: Exception) {
-        VocabularyDifficulty.MEDIUM
+        VocabularyDifficulty.EASY
     }
 
     @TypeConverter

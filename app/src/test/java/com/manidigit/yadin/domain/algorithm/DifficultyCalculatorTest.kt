@@ -122,4 +122,52 @@ class DifficultyCalculatorTest {
         assertEquals(VocabularyDifficulty.HARD, resultWrong.newDifficulty)
         assertEquals(0, resultWrong.consecutiveWrong)
     }
+
+    @Test
+    fun easy_defaultDifficultyStateEntity_isEasy() {
+        val entity = com.manidigit.yadin.data.local.entity.DifficultyStateEntity(
+            id = "test-1",
+            conceptId = "concept-1"
+        )
+        assertEquals(VocabularyDifficulty.EASY, entity.current)
+    }
+
+    @Test
+    fun easy_threeConsecutiveWrong_becomesMedium() {
+        var state = DifficultyUpdateResult(VocabularyDifficulty.EASY, 0, 0, false)
+        for (i in 1..3) {
+            state = DifficultyCalculator.updateDifficulty(
+                current = state.newDifficulty,
+                consecutiveCorrect = state.consecutiveCorrect,
+                consecutiveWrong = state.consecutiveWrong,
+                hasReachedVeryHard = state.hasReachedVeryHard,
+                isCorrect = false
+            )
+        }
+        assertEquals(VocabularyDifficulty.MEDIUM, state.newDifficulty)
+        assertEquals(0, state.consecutiveWrong)
+    }
+
+    @Test
+    fun easy_consecutiveCorrect_staysEasy() {
+        var state = DifficultyUpdateResult(VocabularyDifficulty.EASY, 0, 0, false)
+        for (i in 1..5) {
+            state = DifficultyCalculator.updateDifficulty(
+                current = state.newDifficulty,
+                consecutiveCorrect = state.consecutiveCorrect,
+                consecutiveWrong = state.consecutiveWrong,
+                hasReachedVeryHard = state.hasReachedVeryHard,
+                isCorrect = true
+            )
+        }
+        assertEquals(VocabularyDifficulty.EASY, state.newDifficulty)
+    }
+
+    @Test
+    fun converters_defaultDifficulty_isEasy() {
+        val converters = com.manidigit.yadin.data.local.database.Converters()
+        assertEquals(VocabularyDifficulty.EASY.name, converters.fromDifficulty(null))
+        assertEquals(VocabularyDifficulty.EASY, converters.toDifficulty(null))
+        assertEquals(VocabularyDifficulty.EASY, converters.toDifficulty("INVALID_NAME"))
+    }
 }
