@@ -1250,11 +1250,20 @@ class BackupRepository(
                 finalSessionItemsToInsert.chunked(500).forEach { reviewSessionDao.insertSessionItems(it) }
                 finalHistoryToInsert.chunked(500).forEach { reviewSessionDao.insertHistoryItems(it) }
 
-                // به‌روزرسانی دستاوردها به صورت اجتماع (Union)
+                // به‌روزرسانی دستاوردها به صورت اجتماع (Union) - حل نقص ISS-37
+                val existingAchievements = achievementDao.getAllAchievements().associateBy { it.id }
                 incomingAchievementsList.forEach { (id, pair) ->
                     val (unlockedAt, progress) = pair
-                    if (unlockedAt != null) achievementDao.unlock(id, unlockedAt)
-                    if (progress > 0) achievementDao.updateProgress(id, progress)
+                    val existing = existingAchievements[id]
+                    if (unlockedAt != null) {
+                        val finalUnlockedAt = if (existing?.unlockedAt != null) minOf(existing.unlockedAt, unlockedAt) else unlockedAt
+                        achievementDao.unlock(id, finalUnlockedAt)
+                    }
+                    val currentLocalProgress = existing?.progress ?: 0
+                    val finalProgress = maxOf(currentLocalProgress, progress)
+                    if (finalProgress > 0) {
+                        achievementDao.updateProgress(id, finalProgress)
+                    }
                 }
 
                 // ثبت تنظیمات

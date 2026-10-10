@@ -301,11 +301,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // تضمین همخوانی قطعی با جهت سراسری تنظیمات برنامه (ISS-58)
         val unifiedFilters = filters.copy(direction = appLanguageDirection.value)
         reviewVm.startFilteredSession(unifiedFilters) { mode ->
-            if (mode == ReviewMode.FLASHCARD) {
-                _currentScreen.value = Screen.Flashcard
-            } else {
-                _currentScreen.value = Screen.Quiz
-            }
+            val targetScreen = if (mode == ReviewMode.FLASHCARD) Screen.Flashcard else Screen.Quiz
+            navigateTo(targetScreen)
         }
     }
 
@@ -334,7 +331,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isCorrect = isCorrect,
             difficultyThreshold = difficultyThreshold.value,
             onSessionCompleted = {
-                _currentScreen.value = Screen.SessionSummary
+                // حل نقص ISS-56: انتقال استاندارد به خلاصه نشست و هماهنگ‌سازی پشته ناوبری
+                navigateTo(Screen.SessionSummary)
             }
         )
     }
@@ -356,7 +354,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun nextQuizQuestion() {
         reviewVm.nextQuizQuestion {
-            _currentScreen.value = Screen.SessionSummary
+            // حل نقص ISS-56: انتقال استاندارد به خلاصه نشست و هماهنگ‌سازی پشته ناوبری
+            navigateTo(Screen.SessionSummary)
         }
     }
 

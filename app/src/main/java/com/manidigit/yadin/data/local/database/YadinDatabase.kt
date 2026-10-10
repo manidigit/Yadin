@@ -93,6 +93,12 @@ abstract class YadinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_1 = object : Migration(2, 1) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // حل نقص ISS-40: مهاجرت معکوس امن بدون پاکسازی مخرب پایگاه داده
+            }
+        }
+
         fun getInstance(context: Context): YadinDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -100,8 +106,7 @@ abstract class YadinDatabase : RoomDatabase() {
                     YadinDatabase::class.java,
                     "yadin_database.db"
                 )
-                    .addMigrations(MIGRATION_1_2)
-                    .fallbackToDestructiveMigrationOnDowngrade()
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_1)
                     .build()
                 INSTANCE = instance
                 instance

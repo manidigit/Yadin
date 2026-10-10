@@ -583,3 +583,43 @@
   - تثبیت تغییر جهت زبان **منحصراً و فقط در صفحه تنظیمات (`SettingsScreen`)** با اعمال سراسری در کل لایه‌ها (قاعده تصمیم D48).
   - نمایش خودکار جهت زبان فعال در هدر صفحه اصلی (`HomeScreen`).
   - افزایش نسخه به `versionCode = 21` و `versionName = "1.13.0"`.
+
+---
+
+### ۳.۲. گزارش به‌روزرسانی نسخه ۱.۱۴.۰ (حل باگ مسابقه جستجو و نخ‌امنی و خطایابی کامل TTS)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/LibraryViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/util/TtsManager.kt`
+  * `app/build.gradle.kts`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+* **ریشه‌یابی و اقدام:**
+  - **رفع مسابقه Coroutine و لغو درخواست در جستجو (مورد ۸ ممیزی / D49):** نگهداری `searchJob` در `LibraryViewModel` و فراخوانی `searchJob?.cancel()` قبل از هر کوئری جدید، به همراه تاخیر ۳۰۰ میلی‌ثانیه‌ای (`delay(300)`) هنگام تایپ سریع.
+  - **جستجوی بی‌تفاوت به اعراب و اکسان (ISS-34):** استفاده از `TextUtilities.searchKey` در `VocabularyRepository.searchFiltered` جهت جستجوی دقیق در `canonicalKey` و `text` بدون حساسیت به اکسان‌های اسپانیایی یا اعراب فارسی.
+  - **مدیریت نخ‌امن و گزارش داده‌های غایب در TTS (موارد ۲۱ و ۲۲ ممیزی / D49):** بازنویسی کامل `TtsManager` جهت جلوگیری از بازسازی و `shutdown()` مکرر موتور TTS در فراخوانی‌های سریع متوالی، صف‌بندی درخواست‌ها با `pendingSpeech` و ارزیابی نتیجه `setLanguage` برای نمایش پیام راهنما در صورت عدم نصب داده صوتی زبان بر روی دستگاه.
+  - **ارتقای نسخه:** افزایش نسخه به `versionCode = 22` و `versionName = "1.14.0"`.
+
+---
+
+### ۳.۳. گزارش به‌روزرسانی نسخه ۱.۱۵.۰ (همگام‌سازی ناوبری مرور، حل ریس آزمون، حذف تخریب پایگاه داده و ادغام یکنواخت دستاوردها)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/ReviewViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/database/YadinDatabase.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/BackupRepository.kt`
+  * `app/build.gradle.kts`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+* **شرح اقدامات انجام‌شده:**
+  1. **لغو و رهاسازی امن نشست با دکمه بازگشت سیستم (ISS-55):** در `MainActivity`، کامپوننت `BackHandler` برای صفحات `Flashcard` و `Quiz` به `viewModel.exitSession()` متصل شد تا در صورت خروج ناگهانی کاربر با کلید سخت‌افزاری/سیستمی، نشست در دیتابیس به صورت تمیز رهاسازی شود (`ABANDONED`) و رکورد معلق `ACTIVE` باقی نماند.
+  2. **ناوبری استاندارد به خلاصه نشست و تصحیح پشته (ISS-56):** انتقال به `Screen.SessionSummary` در `MainViewModel` به متد رسمی `navigateTo` متصل شد تا پشته تاریخچه صفحات (`_screenStack`) هماهنگ باشد و بازگشت از خلاصه نیز مستقیماً به خانه هدایت شود.
+  3. **حل شرایط مسابقه (Race Condition) در آزمون (ISS-41):** در `ReviewViewModel.nextQuizQuestion` برای سوال نهایی آزمون، کورتین تا پایان اجرای کامل `lastSubmitQuizJob?.join()` منتظر می‌ماند و سپس `completeSession` را فراخوانی می‌کند؛ کالبک اتمام جلسه نیز درون بافت کورتین و پس از تضمین ثبت تراکنش اجرا می‌شود.
+  4. **حذف تخریب مخرب دیتابیس در تنزل نسخه (ISS-40):** حذف `fallbackToDestructiveMigrationOnDowngrade` از ساختار Room و تعریف `MIGRATION_2_1` برای محافظت از داده‌های کاربر در صورت نصب نسخه پایین‌تر.
+  5. **صیانت از پیشرفت دستاوردها در ادغام بکاپ (ISS-37):** در `BackupRepository`، پیشرفت دستاوردها با `maxOf(currentLocalProgress, progress)` ادغام می‌شود تا هیچ‌گونه افت یا پس‌رفتی در دستاوردهای کاربر هنگام بازیابی رخ ندهد.
+  6. **تثبیت و اعتبارسنجی قاعده سراسری جهت زبان (ISS-58):** عدم وجود هرگونه سوئیچ محلی در سایر صفحات و کنترل ۱۰۰٪ متمرکز جهت مطالعه از صفحه تنظیمات تایید و علامت‌گذاری گردید.
+  7. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 23` و `versionName = "1.15.0"`.

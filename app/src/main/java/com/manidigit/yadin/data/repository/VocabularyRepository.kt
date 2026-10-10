@@ -181,8 +181,10 @@ class VocabularyRepository(
         limit: Int = 50,
         offset: Int = 0
     ): List<WordDetail> {
+        val trimmed = query.trim()
+        val searchQuery = if (trimmed.isEmpty()) "" else TextUtilities.searchKey(trimmed)
         val entities = conceptDao.searchConceptsFiltered(
-            query = query.trim(),
+            query = searchQuery,
             categoryId = categoryId,
             stage = stage?.name,
             direction = direction,

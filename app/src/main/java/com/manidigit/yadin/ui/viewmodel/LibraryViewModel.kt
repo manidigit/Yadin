@@ -12,6 +12,8 @@ import com.manidigit.yadin.domain.model.ParseResult
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.WordDetail
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +39,8 @@ class LibraryViewModel(
 
     private val scope: CoroutineScope
         get() = externalScope ?: viewModelScope
+
+    private var searchJob: Job? = null
 
     // --- وضعیت جستجو و فیلترها ---
     private val _searchQuery = MutableStateFlow("")
@@ -100,11 +104,11 @@ class LibraryViewModel(
     val libraryErrorMessage: StateFlow<String?> = _libraryErrorMessage.asStateFlow()
 
     /**
-     * تغییر عبارت جستجو و به‌روزرسانی نتایج کتابخانه.
+     * تغییر عبارت جستجو و به‌روزرسانی نتایج کتابخانه با debounce.
      */
     fun onSearchQueryChanged(q: String, direction: CardDirection = CardDirection.NORMAL) {
         _searchQuery.value = q
-        performSearch(q, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value)
+        performSearch(q, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value, debounceMs = 300L)
     }
 
     /**
@@ -112,7 +116,7 @@ class LibraryViewModel(
      */
     fun onCategoryFilterChanged(catId: String?, direction: CardDirection = CardDirection.NORMAL) {
         _selectedCategoryFilter.value = catId
-        performSearch(_searchQuery.value, catId, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value)
+        performSearch(_searchQuery.value, catId, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value, debounceMs = 0L)
     }
 
     /**
@@ -120,7 +124,7 @@ class LibraryViewModel(
      */
     fun onStageFilterChanged(stage: Stage?, direction: CardDirection = CardDirection.NORMAL) {
         _selectedStageFilter.value = stage
-        performSearch(_searchQuery.value, _selectedCategoryFilter.value, stage, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value)
+        performSearch(_searchQuery.value, _selectedCategoryFilter.value, stage, direction, _selectedDifficultyFilter.value, _showOnlyInactiveFilter.value, debounceMs = 0L)
     }
 
     /**
@@ -128,7 +132,7 @@ class LibraryViewModel(
      */
     fun onDifficultyFilterChanged(difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty?, direction: CardDirection = CardDirection.NORMAL) {
         _selectedDifficultyFilter.value = difficulty
-        performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, difficulty, _showOnlyInactiveFilter.value)
+        performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, difficulty, _showOnlyInactiveFilter.value, debounceMs = 0L)
     }
 
     /**
@@ -136,11 +140,11 @@ class LibraryViewModel(
      */
     fun onInactiveFilterToggled(onlyInactive: Boolean, direction: CardDirection = CardDirection.NORMAL) {
         _showOnlyInactiveFilter.value = onlyInactive
-        performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, onlyInactive)
+        performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction, _selectedDifficultyFilter.value, onlyInactive, debounceMs = 0L)
     }
 
     /**
-     * اجرای کوئری فیلترشده در پایگاه داده با صفحه‌بندی نامحدود.
+     * اجرای کوئری فیلترشده در پایگاه داده با صفحه‌بندی نامحدود و لغو Job قبلی (ممانعت از race condition).
      */
     fun performSearch(
         query: String,
@@ -148,9 +152,14 @@ class LibraryViewModel(
         stage: Stage?,
         direction: CardDirection = CardDirection.NORMAL,
         difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty? = _selectedDifficultyFilter.value,
-        onlyInactive: Boolean = _showOnlyInactiveFilter.value
+        onlyInactive: Boolean = _showOnlyInactiveFilter.value,
+        debounceMs: Long = 0L
     ) {
-        scope.launch {
+        searchJob?.cancel()
+        searchJob = scope.launch {
+            if (debounceMs > 0) {
+                delay(debounceMs)
+            }
             try {
                 _libraryErrorMessage.value = null
                 val results = vocabularyRepo.searchFiltered(
@@ -165,6 +174,8 @@ class LibraryViewModel(
                 )
                 _searchResults.value = results
                 _hasMoreResults.value = (results.size >= 60)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _libraryErrorMessage.value = "خطا در جستجوی واژگان: ${e.message}"
             }

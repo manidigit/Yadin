@@ -13,10 +13,13 @@ import com.manidigit.yadin.domain.model.ReviewSession
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.SessionStatus
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * مدیریت نشست‌های مرور (فلش‌کارت و آزمون ۴گزینه‌ای) - ReviewViewModel
@@ -85,6 +88,7 @@ class ReviewViewModel(
     val reviewErrorMessage: StateFlow<String?> = _reviewErrorMessage.asStateFlow()
 
     private var isSubmittingFlashcard = false
+    private var lastSubmitQuizJob: Job? = null
 
     /**
      * به‌روزرسانی تعداد کلمات واجد شرایط برای فیلترهای تنظیمی کاربر.
@@ -264,7 +268,7 @@ class ReviewViewModel(
         }
 
         val attemptId = "${session.id}_${q.conceptId}_${q.direction}_$idx"
-        scope.launch {
+        lastSubmitQuizJob = scope.launch {
             try {
                 _reviewErrorMessage.value = null
                 reviewRepo.submitAnswer(
@@ -286,6 +290,10 @@ class ReviewViewModel(
 
     /**
      * رفتن به سؤال بعدی آزمون یا اتمام نشست در صورت رسیدن به انتها.
+     *
+     * حل نقص ISS-41:
+     * در سوال پایانی، با انتظار برای تکمیل lastSubmitQuizJob تضمین می‌شود که ثبت پاسخ
+     * و تغییرات دیتابیس قبل از فراخوانی completeSession نهایی شده و ریس وضعیتی رخ ندهد.
      */
     fun nextQuizQuestion(onSessionCompleted: (() -> Unit)? = null) {
         val questions = _quizQuestions.value
@@ -300,13 +308,22 @@ class ReviewViewModel(
             session?.let {
                 scope.launch {
                     try {
+                        // حل نقص بحرانی ISS-41: منتظر پایان کار ثبت آخرین پاسخ می‌مانیم
+                        lastSubmitQuizJob?.join()
                         reviewRepo.completeSession(it.id)
+                        withContext(Dispatchers.Main) {
+                            onSessionCompleted?.invoke()
+                        }
                     } catch (e: Exception) {
                         _reviewErrorMessage.value = "خطا در اتمام نشست آزمون: ${e.message}"
+                        withContext(Dispatchers.Main) {
+                            onSessionCompleted?.invoke()
+                        }
                     }
                 }
+            } ?: run {
+                onSessionCompleted?.invoke()
             }
-            onSessionCompleted?.invoke()
         }
     }
 
