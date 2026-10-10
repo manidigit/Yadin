@@ -74,7 +74,6 @@ fun ReviewSetupScreen(
     candidateCount: Int,
     statistics: com.manidigit.yadin.domain.model.StatisticsSummary? = null,
     appLanguageDirection: CardDirection = CardDirection.NORMAL,
-    onDirectionChanged: ((CardDirection) -> Unit)? = null,
     onFilterChanged: (ReviewFilters) -> Unit,
     onStartReview: (ReviewFilters) -> Unit,
     onBack: () -> Unit
@@ -84,7 +83,6 @@ fun ReviewSetupScreen(
 
     var selectedType by remember { mutableStateOf(initialType) }
     var selectedMode by remember { mutableStateOf(ReviewMode.QUIZ) }
-    var selectedDirection by remember(appLanguageDirection) { mutableStateOf(appLanguageDirection) }
     var selectedQuizLevel by remember { mutableStateOf(QuizLevel.MEDIUM) }
     var selectedDifficulties by remember {
         mutableStateOf(if (initialDifficulties.isNotEmpty()) initialDifficulties else VocabularyDifficulty.entries.toSet())
@@ -95,7 +93,7 @@ fun ReviewSetupScreen(
     fun buildFilters() = ReviewFilters(
         reviewType = selectedType,
         mode = selectedMode,
-        direction = selectedDirection,
+        direction = appLanguageDirection,
         quizLevel = if (selectedMode == ReviewMode.QUIZ) selectedQuizLevel else null,
         difficulties = selectedDifficulties,
         categoryIds = if (selectedCategoryId != null) setOf(selectedCategoryId!!) else emptySet(),
@@ -105,7 +103,7 @@ fun ReviewSetupScreen(
     LaunchedEffect(
         selectedType,
         selectedMode,
-        selectedDirection,
+        appLanguageDirection,
         selectedQuizLevel,
         selectedDifficulties,
         selectedCategoryId,
@@ -200,57 +198,37 @@ fun ReviewSetupScreen(
                             )
                         }
 
-                        // Language Direction Toggle
-                        Text(
-                            text = "جهت زبان آزمون و مرور",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+                        // نشانگر جهت مطالعه فعال (تنظیم‌شده در تنظیمات سراسری طبق دستور کارفرما)
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.surfaceVariant.copy(alpha = 0.6f))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            val isNormal = (selectedDirection == CardDirection.NORMAL)
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isNormal) colors.primary else colors.surfaceVariant)
-                                    .clickable {
-                                        selectedDirection = CardDirection.NORMAL
-                                        onDirectionChanged?.invoke(CardDirection.NORMAL)
-                                    }
-                                    .padding(vertical = 9.dp, horizontal = 4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
+                            Column {
                                 Text(
-                                    text = "🇪🇸 اسپانیایی ← 🇮🇷 فارسی",
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isNormal) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isNormal) colors.onPrimary else colors.onSurface
+                                    text = "جهت مطالعه فعال:",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colors.onSurfaceVariant
+                                )
+                                Text(
+                                    text = if (appLanguageDirection == CardDirection.NORMAL)
+                                        "🇪🇸 اسپانیایی ← 🇮🇷 فارسی"
+                                    else
+                                        "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
                                 )
                             }
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (!isNormal) colors.primary else colors.surfaceVariant)
-                                    .clickable {
-                                        selectedDirection = CardDirection.REVERSE
-                                        onDirectionChanged?.invoke(CardDirection.REVERSE)
-                                    }
-                                    .padding(vertical = 9.dp, horizontal = 4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
-                                    fontSize = 11.sp,
-                                    fontWeight = if (!isNormal) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (!isNormal) colors.onPrimary else colors.onSurface
-                                )
-                            }
+                            Text(
+                                text = "تنظیم در منوی تنظیمات",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSurfaceVariant.copy(alpha = 0.8f)
+                            )
                         }
                     }
                 }

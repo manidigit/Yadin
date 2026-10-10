@@ -69,7 +69,6 @@ fun ProgressScreen(
     activeDirection: CardDirection,
     achievements: List<com.manidigit.yadin.data.local.entity.AchievementEntity> = emptyList(),
     totalCorrectCount: Int = 0,
-    onDirectionChanged: (CardDirection) -> Unit,
     onRefresh: () -> Unit = {},
     onBack: () -> Unit
 ) {
@@ -187,49 +186,31 @@ fun ProgressScreen(
             }
         }
 
-        // نوار تغییر جهت یادگیری [ عادی | برعکس ]
+        // نشانگر جهت مطالعه فعال (تنظیم‌شده در تنظیمات سراسری طبق دستور کارفرما)
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(dimensions.cornerPill))
-                    .background(colors.surfaceVariant)
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    .background(colors.surfaceVariant.copy(alpha = 0.6f))
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(dimensions.cornerPill))
-                        .background(if (activeDirection == CardDirection.NORMAL) colors.primary else Color.Transparent)
-                        .clickable { onDirectionChanged(CardDirection.NORMAL) }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "جهت عادی (اسپانیایی ← فارسی)",
-                        color = if (activeDirection == CardDirection.NORMAL) colors.onPrimary else colors.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(dimensions.cornerPill))
-                        .background(if (activeDirection == CardDirection.REVERSE) colors.primary else Color.Transparent)
-                        .clickable { onDirectionChanged(CardDirection.REVERSE) }
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "جهت برعکس (فارسی ← اسپانیایی)",
-                        color = if (activeDirection == CardDirection.REVERSE) colors.onPrimary else colors.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
+                Text(
+                    text = "جهت مطالعه فعال:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+                Text(
+                    text = if (activeDirection == CardDirection.NORMAL)
+                        "🇪🇸 اسپانیایی ← 🇮🇷 فارسی"
+                    else
+                        "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary
+                )
             }
         }
 

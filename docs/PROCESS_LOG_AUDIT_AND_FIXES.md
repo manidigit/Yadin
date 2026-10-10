@@ -541,3 +541,45 @@
 
 
 
+
+
+---
+
+## ۳. دستورالعمل و روال الزامی پس از هر به‌روزرسانی (Mandatory Post-Update Checklist)
+
+از نسخه ۱.۱۳.۰ به بعد، **پس از انجام هرگونه اصلاح، باگ‌فیکس یا افزودن قابلیت جدید در برنامه**، انجام مراحل زیر به صورت **یکپرچه و اجباری** الزامی است:
+
+1. **ارتقای شماره و کد نسخه (Version Bump):**
+   - افزایش `versionCode` (مثلاً ۲۱) و `versionName` (مثلاً `1.13.0`) در فایل `app/build.gradle.kts`.
+2. **به‌روزرسانی سند مشخصات فنی اصلی (`docs/Yadin-Specification1-1.md`):**
+   - به‌روزرسانی تاریخ و نسخه اجرایی منطبق در بالای سند.
+   - اضافه کردن تصمیم اجرایی جدید به جدول تصمیمات تصمیم‌گیری (بخش ۱.۳ - جدول D01 تا Dxx).
+3. **ثبت تغییرات در Changelog (`docs/CHANGELOG.md`):**
+   - افزودن بخش جدید نسخه (شامل تاریخ، عنوان تغییرات و توضیحات ریز تغییرات UI/Logic/Database).
+4. **به‌روزرسانی بک‌لاگ مشکلات (`docs/ISSUES_AND_DEFECTS_BACKLOG.md`):**
+   - تغییر وضعیت موارد حل‌شده از 🟡 به 🟢 یا ثبت علت لغو/تغییر استراتژی.
+5. **ثبت گزارش فرآیند اصلاحات (`docs/PROCESS_LOG_AUDIT_AND_FIXES.md`):**
+   - ثبت گزارش تغییرات فنی، ریشه‌یابی خطاها و فایل‌های دستکاری‌شده در لاگ فرآیند.
+6. **اعتبارسنجی ساخت و تست‌ها (Verification):**
+   - اجرای `compile_applet` و مطمئن شدن از عدم وجود خطای کامپایل.
+   - اجرای آزمون‌های واحد `gradle :app:testDebugUnitTest` جهت اطمینان از سلامت عملکردی برنامه.
+
+---
+
+### ۳.۱. گزارش به‌روزرسانی نسخه ۱.۱۳.۰ (تمرکز یکپارچه جهت زبان در تنظیمات)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/SettingsScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ReviewSetupScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ProgressScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/HomeScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/build.gradle.kts`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+* **ریشه‌یابی و اقدام:**
+  - حذف کلیه کلیدها و تب‌های تغییر جهت زبان محلی از `ReviewSetupScreen` و `ProgressScreen` جهت جلوگیری از ناهماهنگی و سردرگمی کاربر.
+  - تثبیت تغییر جهت زبان **منحصراً و فقط در صفحه تنظیمات (`SettingsScreen`)** با اعمال سراسری در کل لایه‌ها (قاعده تصمیم D48).
+  - نمایش خودکار جهت زبان فعال در هدر صفحه اصلی (`HomeScreen`).
+  - افزایش نسخه به `versionCode = 21` و `versionName = "1.13.0"`.

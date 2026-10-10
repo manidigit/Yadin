@@ -197,7 +197,10 @@ fun HomeScreen(
                             }
                         }
 
-                        val pairLabel = if (activePair == "es-fa") "🇪🇸 اسپانیایی ⇄ فارسی 🇮🇷" else activePair
+                        val pairLabel = when (activePair) {
+                            "fa-es" -> "🇮🇷 فارسی ← 🇪🇸 اسپانیایی"
+                            else -> "🇪🇸 اسپانیایی ← 🇮🇷 فارسی"
+                        }
                         Text(
                             text = pairLabel,
                             style = MaterialTheme.typography.bodySmall,

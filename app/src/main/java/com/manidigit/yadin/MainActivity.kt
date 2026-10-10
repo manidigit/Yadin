@@ -241,9 +241,6 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 candidateCount = candidateCount,
                 statistics = statistics,
                 appLanguageDirection = appLanguageDirection,
-                onDirectionChanged = { dir ->
-                    viewModel.setAppLanguageDirection(dir)
-                },
                 onFilterChanged = { filters ->
                     viewModel.updateSetupFilters(filters)
                 },
@@ -440,7 +437,6 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 activeDirection = activeDirection,
                 achievements = achievements,
                 totalCorrectCount = totalCorrectCount,
-                onDirectionChanged = { viewModel.setProgressDirection(it) },
                 onRefresh = { viewModel.refreshStatistics() },
                 onBack = {
                     if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)

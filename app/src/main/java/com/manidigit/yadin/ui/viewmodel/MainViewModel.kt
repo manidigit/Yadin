@@ -149,13 +149,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val statistics: StateFlow<StatisticsSummary> = statisticsVm.getStatisticsFlow(settingsVm.appLanguageDirection)
     val difficultyCounts: StateFlow<Map<VocabularyDifficulty, Int>> = statisticsVm.getDifficultyCountsFlow(settingsVm.appLanguageDirection)
 
-    val progressDirection: StateFlow<CardDirection> get() = statisticsVm.progressDirection
-    val progressScorePercent: StateFlow<Double> get() = statisticsVm.progressScorePercent
+    val progressDirection: StateFlow<CardDirection> get() = settingsVm.appLanguageDirection
+    val progressScorePercent: StateFlow<Double> = statisticsVm.getProgressScoreFlow(settingsVm.appLanguageDirection)
     val dailyStats: StateFlow<List<DayCountRaw>> get() = statisticsVm.dailyStats
-    val practicedWordsCount: StateFlow<Int> get() = statisticsVm.practicedWordsCount
-    val progressStatistics: StateFlow<StatisticsSummary> get() = statisticsVm.progressStatistics
+    val practicedWordsCount: StateFlow<Int> = statisticsVm.getPracticedWordsCountFlow(settingsVm.appLanguageDirection)
+    val progressStatistics: StateFlow<StatisticsSummary> = statisticsVm.getProgressStatisticsFlow(settingsVm.appLanguageDirection)
     val achievements: StateFlow<List<AchievementEntity>> get() = statisticsVm.achievements
-    val totalCorrectReviewsCount: StateFlow<Int> get() = statisticsVm.totalCorrectReviewsCount
+    val totalCorrectReviewsCount: StateFlow<Int> = statisticsVm.totalCorrectReviewsCount
 
     // ==========================================
     // تفویض وضعیت کتابخانه و ورود (LibraryViewModel)
@@ -201,6 +201,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         initializeDatabase()
+        viewModelScope.launch {
+            settingsVm.appLanguageDirection.collect { dir ->
+                statisticsVm.syncDirection(dir)
+                libraryVm.loadRecentWords(dir)
+            }
+        }
     }
 
     private fun initializeDatabase() {
@@ -292,7 +298,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateSetupFilters(filters: ReviewFilters) = reviewVm.updateSetupFilters(filters)
 
     fun startFilteredSession(filters: ReviewFilters) {
-        reviewVm.startFilteredSession(filters) { mode ->
+        // تضمین همخوانی قطعی با جهت سراسری تنظیمات برنامه (ISS-58)
+        val unifiedFilters = filters.copy(direction = appLanguageDirection.value)
+        reviewVm.startFilteredSession(unifiedFilters) { mode ->
             if (mode == ReviewMode.FLASHCARD) {
                 _currentScreen.value = Screen.Flashcard
             } else {
@@ -423,7 +431,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ==========================================
     // متدهای آمار و پیشرفت
     // ==========================================
-    fun setProgressDirection(direction: CardDirection) = statisticsVm.setProgressDirection(direction)
+    fun setProgressDirection(direction: CardDirection) {
+        settingsVm.setAppLanguageDirection(direction)
+    }
     fun refreshStatistics() = statisticsVm.refreshStatistics()
 
     // ==========================================
