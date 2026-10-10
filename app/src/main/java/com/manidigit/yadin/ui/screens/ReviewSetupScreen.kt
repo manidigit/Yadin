@@ -396,9 +396,9 @@ fun ReviewSetupScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 listOf(
-                                    QuizLevel.EASY to "مبتدی",
+                                    QuizLevel.EASY to "آسان",
                                     QuizLevel.MEDIUM to "متوسط",
-                                    QuizLevel.HARD to "حرفه‌ای"
+                                    QuizLevel.HARD to "سخت"
                                 ).forEach { (lvl, title) ->
                                     val isSelected = (selectedQuizLevel == lvl)
                                     Box(

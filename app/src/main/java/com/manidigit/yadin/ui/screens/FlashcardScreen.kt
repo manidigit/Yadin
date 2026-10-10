@@ -26,6 +26,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.Refresh
+import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -33,6 +36,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,16 +74,64 @@ fun FlashcardScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
+    var showExitConfirmDialog by remember { mutableStateOf(false) }
+
+    // خالی بودن صف مرور (حل نقص ISS-88: افزودن دکمه خروج درون‌برنامه‌ای)
     if (cards.isEmpty() || currentIndex >= cards.size) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.background),
+                .background(colors.background)
+                .padding(dimensions.screenPadding),
             contentAlignment = Alignment.Center
         ) {
-            Text("هیچ کارتی برای مرور وجود ندارد", color = colors.onSurface)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(68.dp)
+                        .clip(CircleShape)
+                        .background(colors.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MenuBook,
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(34.dp)
+                    )
+                }
+                Text(
+                    text = "هیچ کارتی برای مرور وجود ندارد",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = "همه واژگان واجد شرایط مرور شده‌اند یا کارتی مطابق فیلترهای انتخابی شما یافت نشد.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Button(
+                    onClick = onExit,
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.height(44.dp)
+                ) {
+                    Text("بازگشت به صفحه اصلی", fontWeight = FontWeight.Bold)
+                }
+            }
         }
         return
+    }
+
+    // رهگیری دکمه بازگشت سیستم در حین مرور فعال
+    BackHandler {
+        showExitConfirmDialog = true
     }
 
     val card = cards[currentIndex]
@@ -111,7 +166,7 @@ fun FlashcardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = onExit,
+                    onClick = { showExitConfirmDialog = true },
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
@@ -399,5 +454,43 @@ fun FlashcardScreen(
                 Text("نمایش پاسخ (چرخش کارت)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
+    }
+
+    // دیالوگ هشدار تأیید خروج از مرور (حل نقص ISS-87 / ISS-113)
+    if (showExitConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmDialog = false },
+            title = {
+                Text(
+                    text = "خروج از جلسه مرور",
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "آیا مطمئن هستید که می‌خواهید از جلسه مرور خارج شوید؟ کارت‌های بررسی‌نشده در این نشست ذخیره نخواهند شد.",
+                    color = colors.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitConfirmDialog = false
+                        onExit()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.error)
+                ) {
+                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmDialog = false }) {
+                    Text("ادامه مرور", fontWeight = FontWeight.Bold, color = colors.primary)
+                }
+            },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }

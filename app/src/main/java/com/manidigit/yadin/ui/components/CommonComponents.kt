@@ -183,7 +183,7 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
 fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
     val (title, color) = when (difficulty) {
-        VocabularyDifficulty.EASY -> "ساده" to colors.success
+        VocabularyDifficulty.EASY -> "آسان" to colors.success
         VocabularyDifficulty.MEDIUM -> "متوسط" to colors.info
         VocabularyDifficulty.HARD -> "سخت" to colors.warning
         VocabularyDifficulty.VERY_HARD -> "خیلی سخت" to colors.error

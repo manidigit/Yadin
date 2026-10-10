@@ -78,6 +78,12 @@ fun QuizScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     var showHelpDialog by remember { mutableStateOf(false) }
+    var showExitConfirmDialog by remember { mutableStateOf(false) }
+
+    // Intercept hardware back button to show exit confirmation
+    androidx.activity.compose.BackHandler {
+        showExitConfirmDialog = true
+    }
 
     if (questions.isEmpty() || currentIndex >= questions.size) {
         Box(
@@ -122,7 +128,7 @@ fun QuizScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = onExit,
+                    onClick = { showExitConfirmDialog = true },
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
@@ -387,40 +393,43 @@ fun QuizScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Navigation Buttons (Always Visible & Pinned at Bottom)
+        // Navigation Buttons (Always Visible & Pinned at Bottom - حل نقص ISS-68)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (currentIndex > 0) {
-                OutlinedButton(
-                    onClick = onPreviousQuestion,
-                    modifier = Modifier
-                        .weight(0.35f)
-                        .height(46.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colors.onSurface
-                    ),
-                    border = BorderStroke(1.dp, colors.outline.copy(alpha = 0.4f))
+            OutlinedButton(
+                onClick = onPreviousQuestion,
+                enabled = currentIndex > 0,
+                modifier = Modifier
+                    .weight(0.35f)
+                    .height(46.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colors.onSurface,
+                    disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.35f)
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    if (currentIndex > 0) colors.outline.copy(alpha = 0.4f) else colors.outline.copy(alpha = 0.15f)
+                )
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "سؤال قبلی",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "قبلی",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "سؤال قبلی",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "قبلی",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
                 }
             }
 
@@ -428,7 +437,7 @@ fun QuizScreen(
                 onClick = onNextQuestion,
                 enabled = hasAnswered,
                 modifier = Modifier
-                    .weight(if (currentIndex > 0) 0.65f else 1f)
+                    .weight(0.65f)
                     .height(46.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -547,6 +556,44 @@ fun QuizScreen(
                             )
                         }
                     }
+                }
+            },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // دیالوگ هشدار تأیید خروج از آزمون (حل نقص ISS-113)
+    if (showExitConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmDialog = false },
+            title = {
+                Text(
+                    text = "خروج از آزمون",
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "آیا مطمئن هستید که می‌خواهید از آزمون خارج شوید؟ پاسخ‌های ثبت‌نشده در این نشست ذخیره نخواهند شد.",
+                    color = colors.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitConfirmDialog = false
+                        onExit()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.error)
+                ) {
+                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmDialog = false }) {
+                    Text("ادامه آزمون", fontWeight = FontWeight.Bold, color = colors.primary)
                 }
             },
             containerColor = colors.surface,

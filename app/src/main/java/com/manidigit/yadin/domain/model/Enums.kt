@@ -76,6 +76,17 @@ enum class RelationType {
     DERIVED_FROM
 }
 
+fun RelationType.toPersianLabel(): String = when (this) {
+    RelationType.SYNONYM -> "مترادف"
+    RelationType.ANTONYM -> "متضاد"
+    RelationType.USED_IN -> "به‌کاررفته در"
+    RelationType.INFLECTED_FORM -> "شکل صرف‌شده"
+    RelationType.CONTRAST -> "متمایز با"
+    RelationType.EXAMPLE_OF -> "نمونه‌ای از"
+    RelationType.RELATED_TO -> "مرتبط با"
+    RelationType.DERIVED_FROM -> "مشتق از"
+}
+
 enum class DuplicatePolicy {
     SKIP,
     MERGE,

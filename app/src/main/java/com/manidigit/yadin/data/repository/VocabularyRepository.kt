@@ -23,6 +23,7 @@ import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.StatisticsSummary
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.WordDetail
+import com.manidigit.yadin.domain.model.toPersianLabel
 import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import kotlinx.coroutines.flow.Flow
@@ -233,6 +234,10 @@ class VocabularyRepository(
         if (inactives.isEmpty()) return@withTransaction 0
         val ids = inactives.map { it.id }
         conceptDao.deleteContentsForConcepts(ids)
+        learningDao.deleteLearningStatesForConcepts(ids)
+        learningDao.deleteDifficultyStatesForConcepts(ids)
+        reviewSessionDao.deleteSessionItemsForConcepts(ids)
+        reviewSessionDao.deleteHistoryForConcepts(ids)
         conceptDao.deleteConceptsPermanently(ids)
         inactives.size
     }
@@ -524,7 +529,7 @@ class VocabularyRepository(
             parts.add("تحلیل اجزاء: $bText")
         }
         if (entry.relations.isNotEmpty()) {
-            val rText = entry.relations.joinToString("، ") { "${it.relationType.name}: ${it.relatedSourceText}" }
+            val rText = entry.relations.joinToString("، ") { "${it.relationType.toPersianLabel()}: ${it.relatedSourceText}" }
             parts.add("روابط واژگانی: $rText")
         }
         entry.possibleCorrection?.takeIf { it.isNotBlank() }?.let { parts.add("اصلاح پیشنهادی: ${it.trim()}") }

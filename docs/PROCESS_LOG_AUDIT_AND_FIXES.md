@@ -685,3 +685,33 @@
   4. **نمایش برچسب غیرفعال و تعبیه دکمه احیا در جزئیات واژه (`ISS-110`):** در صورت غیرفعال بودن واژه، برچسب «غیرفعال (حذف‌شده)» در هدر و یک بنر هشدار با دکمه مستقیم «احیا و فعال‌سازی» در صفحه `WordDetailScreen` قرار گرفت و به متد `reactivateWord` ویومدل متصل شد.
   5. **اصلاح متن گمراه‌کننده تاریخ سررسید (`ISS-111`):** برای واژگان در مرحله تثبیت‌شده عبارت «تثبیت‌شده در حافظه دائم» و برای واژگان فاقد صف عبارت «در صف مرور قرار نگرفته» به جای متن کاذب «سررسید امروز» نمایش داده می‌شود.
   6. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 27` و `versionName = "1.19.0"`.
+
+---
+
+### ۳.۷. گزارش به‌روزرسانی نسخه ۱.۲۰.۰ (دیالوگ‌های تأیید خروج، دکمه وضعیت خالی، فارسی‌سازی روابط، پاکسازی زنجیره‌ای رکوردهای غیرفعال و یکپارچگی سطوح سختی)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/QuizScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/FlashcardScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/model/Enums.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/LearningDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/ReviewSessionDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/components/CommonComponents.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ReviewSetupScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/HelpScreen.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+* **شرح اقدامات انجام‌شده:**
+  1. **تعبیه دیالوگ هشدار تأیید خروج و محافظت از آزمون (`ISS-113`, `ISS-87`):** در `QuizScreen.kt` و `FlashcardScreen.kt`، دیالوگ هشدار تأیید خروج (`AlertDialog`) برای دکمه خروج نوار بالا و رویداد کلید بازگشت فیزیکی/جسچر سیستم (`BackHandler`) اضافه شد. بدین ترتیب از بسته شدن تصادفی آزمون و رها شدن ناخواسته نشست جلوگیری به عمل آمد.
+  2. **طراحی نمای تعاملی وضعیت خالی در فلش‌کارت (`ISS-88`):** در صورت خالی بودن صف مرور در `FlashcardScreen.kt`، به جای متن ایستا، یک نمای کامل با آیکن کتاب، متن توضیحی و دکمه تعاملی «بازگشت به صفحه اصلی» متصل به ناوبری تعبیه گردید تا کاربر دچار بن‌بست ناوبری نشود.
+  3. **پایداری اوزان دکمه‌های ناوبری آزمون (`ISS-68`):** دکمه‌های «قبلی» و «بعدی» در `QuizScreen.kt` با اوزان ثابت 0.35f و 0.65f تراز شدند و دکمه قبلی در سؤال نخست به صورت غیرفعال (Disabled) نمایش داده می‌شود تا از هرگونه پرش ناگهانی عرض دکمه‌ها در حین حل آزمون جلوگیری شود.
+  4. **بومی‌سازی روابط واژگانی در زمان ایمپورت (`ISS-118`):** متد `toPersianLabel()` برای انوم `RelationType` در `Enums.kt` تعریف شد و هنگام ثبت خودکار روابط واژگانی در یادداشت‌ها در `VocabularyRepository.kt`، واژگان مصوب فارسی جایگزین نام‌های انگلیسی شدند.
+  5. **پاکسازی زنجیره‌ای رکوردهای غیرفعال در دیتابیس (`ISS-115`):** متدهای حذف دسته‌ای `deleteLearningStatesForConcepts`، `deleteDifficultyStatesForConcepts`، `deleteSessionItemsForConcepts` و `deleteHistoryForConcepts` در DAOهای مربوطه پیاده‌سازی شدند و در متد `purgeInactiveWords()` درون یک تراکنش اتمیک صدا زده شدند تا هنگام تخلیه سطل زباله، هیچ رکورد یتیمی در دیتابیس باقی نماند.
+  6. **یکپارچه‌سازی نام‌گذاری سطوح سختی (`ISS-105`):** عنوان سطح سختی `EASY` به واژه واحد «آسان» در `DifficultyBadge`، تنظیمات آزمون در `ReviewSetupScreen` (تبدیل «مبتدی» به «آسان» و «حرفه‌ای» به «سخت») و متن راهنما در `HelpScreen` یکنواخت شد.
+  7. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 28` و `versionName = "1.20.0"`.
+

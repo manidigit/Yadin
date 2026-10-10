@@ -118,4 +118,10 @@ interface ReviewSessionDao {
 
     @Query("DELETE FROM review_session_items")
     suspend fun clearSessionItems()
+
+    @Query("DELETE FROM review_session_items WHERE conceptId IN (:conceptIds)")
+    suspend fun deleteSessionItemsForConcepts(conceptIds: List<String>)
+
+    @Query("DELETE FROM review_history WHERE conceptId IN (:conceptIds)")
+    suspend fun deleteHistoryForConcepts(conceptIds: List<String>)
 }

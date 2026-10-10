@@ -327,4 +327,10 @@ interface LearningDao {
         WHERE c.active = 1 AND ds.hasReachedVeryHard = 1 AND (ds.current = 'EASY' OR ds.current = 'MEDIUM')
     """)
     suspend fun getMasteredHardWordsCount(): Int
+
+    @Query("DELETE FROM learning_states WHERE conceptId IN (:conceptIds)")
+    suspend fun deleteLearningStatesForConcepts(conceptIds: List<String>)
+
+    @Query("DELETE FROM difficulty_states WHERE conceptId IN (:conceptIds)")
+    suspend fun deleteDifficultyStatesForConcepts(conceptIds: List<String>)
 }

@@ -168,13 +168,10 @@ fun YadinBottomBar(
 
 @Composable
 fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
-    // BackHandler for sub-screens
-    if (screen !is Screen.Home && screen !is Screen.Splash) {
+    // BackHandler for sub-screens (جلسات مرور و آزمون دارای دیالوگ تأیید خروج اختصاصی درون‌صفحه‌ای هستند)
+    if (screen !is Screen.Home && screen !is Screen.Splash && screen !is Screen.Flashcard && screen !is Screen.Quiz) {
         BackHandler {
-            if (screen is Screen.Flashcard || screen is Screen.Quiz) {
-                // حل نقص ISS-55: لغو و رهاسازی امن نشست فعال به جای معلق ماندن در دیتابیس
-                viewModel.exitSession()
-            } else if (screen is Screen.SessionSummary) {
+            if (screen is Screen.SessionSummary) {
                 // حل نقص ISS-56: بازگشت مستقیم به خانه از خلاصه نشست
                 viewModel.navigateTo(Screen.Home)
             } else {
