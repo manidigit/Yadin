@@ -28,6 +28,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +56,30 @@ fun WordDetailScreen(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("تأیید حذف واژه", fontWeight = FontWeight.Bold) },
+            text = { Text("آیا از حذف این واژه از کتابخانه و جعبه لایتنر اطمینان دارید؟") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete()
+                    }
+                ) {
+                    Text("حذف شود", color = colors.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
+    }
 
     if (word == null) {
         Box(
@@ -106,7 +134,7 @@ fun WordDetailScreen(
                 )
 
                 Row {
-                    IconButton(onClick = onDelete) {
+                    IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "حذف",

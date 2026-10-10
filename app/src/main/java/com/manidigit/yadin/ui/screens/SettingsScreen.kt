@@ -217,12 +217,13 @@ fun SettingsScreen(
                         onDismissRequest = { themeMenuExpanded = false },
                         modifier = Modifier.background(colors.surface)
                     ) {
-                        listOf(
-                            Triple("googoli", "تم گوگولی (Googoli)", YadinPalette.GoogoliTeal),
-                            Triple("claude", "تم Claude (کلاد)", YadinPalette.ClaudeTerracotta),
-                            Triple("gemini", "تم Gemini", YadinPalette.GeminiBlue),
-                            Triple("gtp", "تم GTP", YadinPalette.GtpPurple)
-                        ).forEach { (id, title, color) ->
+                        com.manidigit.yadin.ui.theme.AppTheme.entries.forEach { appTheme ->
+                            val themeColor = when (appTheme) {
+                                com.manidigit.yadin.ui.theme.AppTheme.GOOGOLI -> YadinPalette.GoogoliTeal
+                                com.manidigit.yadin.ui.theme.AppTheme.CLAUDE -> YadinPalette.ClaudeTerracotta
+                                com.manidigit.yadin.ui.theme.AppTheme.GEMINI -> YadinPalette.GeminiBlue
+                                com.manidigit.yadin.ui.theme.AppTheme.GTP -> YadinPalette.GtpPurple
+                            }
                             DropdownMenuItem(
                                 text = {
                                     Row(
@@ -233,17 +234,17 @@ fun SettingsScreen(
                                             modifier = Modifier
                                                 .size(12.dp)
                                                 .clip(CircleShape)
-                                                .background(color)
+                                                .background(themeColor)
                                         )
                                         Text(
-                                            text = title,
-                                            fontWeight = if (currentThemeId == id) FontWeight.Bold else FontWeight.Normal,
+                                            text = appTheme.titleFa,
+                                            fontWeight = if (currentThemeId == appTheme.id) FontWeight.Bold else FontWeight.Normal,
                                             color = colors.onSurface
                                         )
                                     }
                                 },
                                 onClick = {
-                                    onSelectTheme(id)
+                                    onSelectTheme(appTheme.id)
                                     themeMenuExpanded = false
                                 }
                             )
@@ -453,18 +454,11 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     LanguageDirectionPill(
-                        title = "فارسی (پیش‌فرض)",
-                        subtitle = "واسط کاربری فارسی",
-                        isSelected = uiLanguage == "fa",
-                        modifier = Modifier.weight(1f),
+                        title = "فارسی (ایران) 🇮🇷",
+                        subtitle = "رابط کاربری راست‌به‌چپ (پیش‌فرض استاندارد)",
+                        isSelected = true,
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = { onSetUiLanguage("fa") }
-                    )
-                    LanguageDirectionPill(
-                        title = "English",
-                        subtitle = "English UI (Draft)",
-                        isSelected = uiLanguage == "en",
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSetUiLanguage("en") }
                     )
                 }
             }

@@ -174,6 +174,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isImporting: StateFlow<Boolean> get() = libraryVm.isImporting
     val importProgress: StateFlow<Float> get() = libraryVm.importProgress
     val importSummary: StateFlow<ImportSummary?> get() = libraryVm.importSummary
+    val libraryErrorMessage: StateFlow<String?> get() = libraryVm.libraryErrorMessage
 
     // ==========================================
     // تفویض وضعیت مرور و نشست‌ها (ReviewViewModel)
@@ -188,6 +189,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val quizUserAnswers: StateFlow<Map<Int, Int>> get() = reviewVm.quizUserAnswers
     val sessionCorrectCount: StateFlow<Int> get() = reviewVm.sessionCorrectCount
     val sessionWrongCount: StateFlow<Int> get() = reviewVm.sessionWrongCount
+    val reviewErrorMessage: StateFlow<String?> get() = reviewVm.reviewErrorMessage
 
     // ==========================================
     // تفویض وضعیت پشتیبان‌گیری (SettingsViewModel)
@@ -397,6 +399,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         categoryId: String?,
         note: String?,
         direction: CardDirection = appLanguageDirection.value,
+        onError: ((String) -> Unit)? = null,
         onSuccess: () -> Unit
     ) {
         libraryVm.saveWord(
@@ -406,10 +409,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             categoryId = categoryId,
             note = note,
             direction = direction,
-            onError = { /* پیام خطا در libraryVm ثبت شد */ },
+            onError = onError,
             onSuccess = onSuccess
         )
     }
+
+    fun clearLibraryErrorMessage() = libraryVm.clearErrorMessage()
+    fun clearReviewErrorMessage() = reviewVm.clearErrorMessage()
 
     // ==========================================
     // متدهای ورود داده‌ها (Import)

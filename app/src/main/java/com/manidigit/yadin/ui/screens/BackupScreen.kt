@@ -463,7 +463,7 @@ fun BackupScreen(
                         // Granular Checkboxes
                         BackupOptionCheckboxRow(
                             title = "پایگاه واژگان (Vocabulary Database)",
-                            subtitle = "تمام کلمات، ترجمه‌های فارسی، تلفظ و یادداشت‌ها",
+                            subtitle = "تمام کلمات، ترجمه‌های فارسی، دسته‌بندی‌ها و یادداشت‌ها",
                             icon = Icons.Default.Translate,
                             isChecked = backupOptions.includeVocabulary,
                             onCheckedChange = { onToggleOption("vocabulary", it) }

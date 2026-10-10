@@ -520,14 +520,62 @@ fun ImportScreen(
                     )
                 }
 
-                // Parsed entries list
+                // Warning Card for discarded lines / parse warnings
+                if (parseResult.warnings.isNotEmpty()) {
+                    YadinCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        backgroundColor = colors.warning.copy(alpha = 0.12f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = colors.warning,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = "هشدار و خطوط کنارگذاشته‌شده (${parseResult.warnings.size} مورد):",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.warning
+                                )
+                            }
+                            parseResult.warnings.take(5).forEach { warn ->
+                                Text(
+                                    text = "• $warn",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.onSurface
+                                )
+                            }
+                            if (parseResult.warnings.size > 5) {
+                                Text(
+                                    text = "... و ${parseResult.warnings.size - 5} مورد دیگر",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colors.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Parsed entries list with performance key
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(parseResult.entries) { entry ->
+                    items(
+                        items = parseResult.entries,
+                        key = { entry -> entry.sourceText + "_" + entry.translations.joinToString() }
+                    ) { entry ->
                         ParsedEntryCard(
                             entry = entry,
                             categoryName = selectedCategory?.name

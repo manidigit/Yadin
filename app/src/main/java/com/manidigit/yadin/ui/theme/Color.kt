@@ -36,7 +36,7 @@ object YadinPalette {
     val GeminiOutlineDark = Color(0xFF2E3E5B)
 
     // Claude Theme Colors
-    val ClaudeTerracotta = Color(0xFFC15F3D)
+    val ClaudeTerracotta = Color(0xFFB44B27) // High-contrast terracotta (WCAG AA compliant)
     val ClaudeTerracottaLight = Color(0xFFE08466)
     val ClaudeSage = Color(0xFF4A7C59)
     val ClaudeSageLight = Color(0xFF7CB88F)
@@ -52,7 +52,7 @@ object YadinPalette {
     val ClaudeOutlineDark = Color(0xFF3E362E)
 
     // Googoli Theme Colors (Fresh Mint/Teal primary with cute pastel peach/pink/lavender accents)
-    val GoogoliTeal = Color(0xFF14B8A6)       // Vibrant mint/teal primary
+    val GoogoliTeal = Color(0xFF0D9488)       // High-contrast teal for light mode (WCAG AA compliant)
     val GoogoliTealLight = Color(0xFF2DD4BF)  // Soft bright mint for dark mode
     val GoogoliPeach = Color(0xFFFF8B66)      // Warm pastel coral/peach secondary
     val GoogoliPeachLight = Color(0xFFFFA07A) // Light peach secondary
