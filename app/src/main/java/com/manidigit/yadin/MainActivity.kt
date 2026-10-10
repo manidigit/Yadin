@@ -458,36 +458,17 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val diffThreshold by viewModel.difficultyThreshold.collectAsStateWithLifecycle()
             val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
             val uiLanguage by viewModel.uiLanguage.collectAsStateWithLifecycle()
-            val ttsEnabled by viewModel.ttsEnabled.collectAsStateWithLifecycle()
-            val ttsAutoPlay by viewModel.ttsAutoPlay.collectAsStateWithLifecycle()
-            val ttsSpeechRate by viewModel.ttsSpeechRate.collectAsStateWithLifecycle()
-            val quizAutoAdvanceSeconds by viewModel.quizAutoAdvanceSeconds.collectAsStateWithLifecycle()
-            val defaultQuizLevel by viewModel.defaultQuizLevel.collectAsStateWithLifecycle()
-            val defaultReviewMode by viewModel.defaultReviewMode.collectAsStateWithLifecycle()
-
             SettingsScreen(
                 currentThemeId = themeId,
                 isDark = isDark,
                 difficultyThreshold = diffThreshold,
                 languageDirection = appLanguageDirection,
                 uiLanguage = uiLanguage,
-                ttsEnabled = ttsEnabled,
-                ttsAutoPlay = ttsAutoPlay,
-                ttsSpeechRate = ttsSpeechRate,
-                quizAutoAdvanceSeconds = quizAutoAdvanceSeconds,
-                defaultQuizLevel = defaultQuizLevel,
-                defaultReviewMode = defaultReviewMode,
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                 onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
                 onSetLanguageDirection = { viewModel.setAppLanguageDirection(it) },
                 onSetUiLanguage = { viewModel.setUiLanguage(it) },
-                onToggleTtsEnabled = { viewModel.setTtsEnabled(it) },
-                onToggleTtsAutoPlay = { viewModel.setTtsAutoPlay(it) },
-                onSetTtsSpeechRate = { viewModel.setTtsSpeechRate(it) },
-                onSetQuizAutoAdvanceSeconds = { viewModel.setQuizAutoAdvanceSeconds(it) },
-                onSetDefaultQuizLevel = { viewModel.setDefaultQuizLevel(it) },
-                onSetDefaultReviewMode = { viewModel.setDefaultReviewMode(it) },
                 onPurgeInactiveWords = { viewModel.purgeInactiveWords() },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },

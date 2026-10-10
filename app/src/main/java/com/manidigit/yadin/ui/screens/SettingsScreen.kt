@@ -36,11 +36,6 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.ViewCarousel
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,9 +44,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,8 +61,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.domain.model.CardDirection
-import com.manidigit.yadin.domain.model.QuizLevel
-import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -83,23 +73,11 @@ fun SettingsScreen(
     difficultyThreshold: Int = 3,
     languageDirection: CardDirection = CardDirection.NORMAL,
     uiLanguage: String = "fa",
-    ttsEnabled: Boolean = true,
-    ttsAutoPlay: Boolean = false,
-    ttsSpeechRate: Float = 1.0f,
-    quizAutoAdvanceSeconds: Int = 2,
-    defaultQuizLevel: QuizLevel = QuizLevel.MEDIUM,
-    defaultReviewMode: ReviewMode = ReviewMode.FLASHCARD,
     onSelectTheme: (String) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onSetDifficultyThreshold: (Int) -> Unit = {},
     onSetLanguageDirection: (CardDirection) -> Unit = {},
     onSetUiLanguage: (String) -> Unit = {},
-    onToggleTtsEnabled: (Boolean) -> Unit = {},
-    onToggleTtsAutoPlay: (Boolean) -> Unit = {},
-    onSetTtsSpeechRate: (Float) -> Unit = {},
-    onSetQuizAutoAdvanceSeconds: (Int) -> Unit = {},
-    onSetDefaultQuizLevel: (QuizLevel) -> Unit = {},
-    onSetDefaultReviewMode: (ReviewMode) -> Unit = {},
     onPurgeInactiveWords: () -> Unit = {},
     onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
@@ -459,158 +437,6 @@ fun SettingsScreen(
                         isSelected = true,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { onSetUiLanguage("fa") }
-                    )
-                }
-            }
-        }
-
-        // Section: TTS Audio Settings
-        YadinCard(
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = colors.surface
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
-                    Text("تنظیمات تلفظ صوتی (TTS)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("فعال بودن تلفظ صوتی واژه‌ها", style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
-                    Switch(
-                        checked = ttsEnabled,
-                        onCheckedChange = onToggleTtsEnabled,
-                        colors = SwitchDefaults.colors(checkedThumbColor = colors.primary)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("پخش خودکار تلفظ در شروع کارت", style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
-                    Switch(
-                        checked = ttsAutoPlay,
-                        onCheckedChange = onToggleTtsAutoPlay,
-                        colors = SwitchDefaults.colors(checkedThumbColor = colors.primary)
-                    )
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("سرعت گفتار تلفظ:", style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
-                        Text("${"%.1f".format(ttsSpeechRate)}x", fontWeight = FontWeight.Bold, color = colors.primary)
-                    }
-                    Slider(
-                        value = ttsSpeechRate,
-                        onValueChange = onSetTtsSpeechRate,
-                        valueRange = 0.5f..2.0f,
-                        steps = 5
-                    )
-                }
-            }
-        }
-
-        // Section: Quiz & Review Preferences
-        YadinCard(
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = colors.surface
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(Icons.Default.Quiz, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
-                    Text("تنظیمات مرور و آزمون ۴گزینه‌ای", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
-                }
-
-                // Default Review Mode
-                Text("حالت پیش‌فرض مرور:", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    LanguageDirectionPill(
-                        title = "فلش‌کارت",
-                        subtitle = "مرور سنتی لایتنر",
-                        isSelected = defaultReviewMode == ReviewMode.FLASHCARD,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSetDefaultReviewMode(ReviewMode.FLASHCARD) }
-                    )
-                    LanguageDirectionPill(
-                        title = "آزمون ۴گزینه‌ای",
-                        subtitle = "تست چندگزینه‌ای",
-                        isSelected = defaultReviewMode == ReviewMode.QUIZ,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSetDefaultReviewMode(ReviewMode.QUIZ) }
-                    )
-                }
-
-                // Default Quiz Level
-                Text("سطح سختی پیش‌فرض گزینه‌های آزمون:", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    LanguageDirectionPill(
-                        title = "آسان",
-                        subtitle = "گزینه‌های متباین",
-                        isSelected = defaultQuizLevel == QuizLevel.EASY,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSetDefaultQuizLevel(QuizLevel.EASY) }
-                    )
-                    LanguageDirectionPill(
-                        title = "متوسط",
-                        subtitle = "گزینه‌های استاندارد",
-                        isSelected = defaultQuizLevel == QuizLevel.MEDIUM,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSetDefaultQuizLevel(QuizLevel.MEDIUM) }
-                    )
-                    LanguageDirectionPill(
-                        title = "حرفه‌ای",
-                        subtitle = "انحرافی‌های شبیه",
-                        isSelected = defaultQuizLevel == QuizLevel.HARD,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSetDefaultQuizLevel(QuizLevel.HARD) }
-                    )
-                }
-
-                // Auto Advance Seconds
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("تأخیر انتقال خودکار سؤالات آزمون:", style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
-                        Text("$quizAutoAdvanceSeconds ثانیه", fontWeight = FontWeight.Bold, color = colors.primary)
-                    }
-                    Slider(
-                        value = quizAutoAdvanceSeconds.toFloat(),
-                        onValueChange = { onSetQuizAutoAdvanceSeconds(it.toInt()) },
-                        valueRange = 1f..10f,
-                        steps = 8
                     )
                 }
             }
