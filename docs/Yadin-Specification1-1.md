@@ -2,7 +2,7 @@
 
 نسخه سند: 1.1 — تاریخ به‌روزرسانی: 2026-10-10  
 مخزن: github.com/manidigit/Yadin  
-نسخه اجرایی منطبق: `1.20.0` (کد نسخه: `28`)
+نسخه اجرایی منطبق: `1.21.0` (کد نسخه: `29`)
 
 این سند تنها مرجع لازم برای ساخت برنامه از صفر است.
 یک برنامه‌نویس یا یک هوش مصنوعی باید بتواند فقط با این سند و فایل بانک اولیه واژگان، برنامه را بنویسد.
@@ -366,11 +366,9 @@ enum class ImportReviewReason { LOW_CONFIDENCE, CONFLICT, ORPHAN_SOURCE, ORPHAN_
 کلید اصلی: (conceptId، categoryId). هر دو کلید خارجی. ایندکس (categoryId، conceptId).
 یک مفهوم می‌تواند 0 یا چند دسته داشته باشد.
 
-### tags و concept_tags
+### tags و concept_tags (منسوخ و حذف‌شده طبق دستور کارفرما — ISS-98 / ISS-119)
 
-tags: id، name (یکتا).
-concept_tags: (conceptId، tagId) کلید اصلی.
-برچسب با دسته یکی نیست.
+> **نکته معماری (نسخه دیتابیس ۳):** طبق دستور صریح کارفرما، سیستم برچسب‌گذاری (Tag) و آیتم‌های بازبینی به‌طور کامل از معماری و پایگاه داده حذف گردید. جداول `tags`، `concept_tags` و `import_review_items` از طریق میگریشن `MIGRATION_2_3` پاکسازی شده و دسته‌بندی واژگان صرفاً از طریق جدول استاندارد `categories` انجام می‌پذیرد.
 
 ### learning_states
 
@@ -916,7 +914,6 @@ data class ReviewFilters(
     val activePair: LanguagePair,         // مبدأ و مقصد
     val difficulties: Set<VocabularyDifficulty> = emptySet(),  // خالی یعنی همه
     val categoryIds: Set<String> = emptySet(),                 // خالی یعنی همه
-    val tagId: String? = null,
     val maxCards: Int = 30
 )
 ```
@@ -941,7 +938,7 @@ LEARNED : stage = LEARNED
 ۳. مفهوم هم برای زبان مبدأ و هم برای زبان مقصد جفت فعال، حداقل یک محتوای غیرخالی داشته باشد
 ۴. اگر difficulties خالی نیست: difficulty کارت (همان جهت) در مجموعه باشد
 ۵. اگر categoryIds خالی نیست: مفهوم حداقل یکی از آن دسته‌ها را داشته باشد
-۶. اگر tagId خالی نیست: مفهوم آن برچسب را داشته باشد
+(توضیح: شرط برچسب/tagId طبق دستور کارفرما در ISS-98/ISS-119 منسوخ و حذف گردید)
 ```
 
 ### ترتیب و برش
@@ -1858,7 +1855,7 @@ resolveLocal(backupConcept):
 
 ```text
 حذف مفاهیم موجود و جایگزینی با مفاهیم فایل پشتیبان
-حذف categories و tags و جایگزینی با پشتیبان
+حذف categories و جایگزینی با پشتیبان
 درج همه داده پشتیبان
 ```
 
@@ -1898,7 +1895,7 @@ settings پشتیبان جایگزین شود (به‌جز seedImported)
 ### ترتیب درج (برای رعایت کلید خارجی)
 
 ```text
-languages → language_pairs → categories → tags → concepts → contents → concept_categories → concept_tags
+languages → language_pairs → categories → concepts → contents → concept_categories
 → review_sessions → review_history → learning_states → difficulty_states → settings → achievements
 ```
 

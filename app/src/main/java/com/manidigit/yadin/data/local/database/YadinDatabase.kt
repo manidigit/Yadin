@@ -93,7 +93,7 @@ abstract class YadinDatabase : RoomDatabase() {
 
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // حذف کامل جداول متروکه تگ و بررسی ایمپورت طبق دستور کارفرما (ISS-119)
+                // حذف کامل جداول متروکه تگ و بررسی ایمپورت طبق دستور کارفرما (ISS-98 / ISS-119)
                 db.execSQL("DROP TABLE IF EXISTS `tags`")
                 db.execSQL("DROP TABLE IF EXISTS `concept_tags`")
                 db.execSQL("DROP TABLE IF EXISTS `import_review_items`")
