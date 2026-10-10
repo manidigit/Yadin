@@ -26,11 +26,6 @@ data class Category(
     val isDefault: Boolean
 )
 
-data class Tag(
-    val id: String,
-    val name: String
-)
-
 data class LearningState(
     val id: String,
     val conceptId: String,
@@ -98,7 +93,6 @@ data class WordDetail(
     val sourceContent: Content,
     val targetContents: List<Content>,
     val categories: List<Category>,
-    val tags: List<Tag>,
     val normalLearning: LearningState?,
     val reverseLearning: LearningState?,
     val normalDifficulty: DifficultyState?,
@@ -204,24 +198,6 @@ data class ImportSummary(
     val updatedCount: Int,
     val skippedCount: Int,
     val categoryName: String? = null
-)
-
-data class ImportReviewItem(
-    val id: String,
-    val sessionTag: String,
-    val sourceText: String,
-    val translationsText: String?,
-    val note: String?,
-    val categoryNames: String?,
-    val entryType: String?,
-    val confidence: Double,
-    val reason: String,
-    val status: ImportItemStatus,
-    val lineNumber: Int?,
-    val rawText: String,
-    val policy: DuplicatePolicy,
-    val targetConceptId: String? = null,
-    val createdAt: Long
 )
 
 data class StatisticsSummary(

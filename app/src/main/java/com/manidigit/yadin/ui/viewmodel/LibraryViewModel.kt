@@ -41,6 +41,8 @@ class LibraryViewModel(
         get() = externalScope ?: viewModelScope
 
     private var searchJob: Job? = null
+    private var loadMoreJob: Job? = null
+    private var currentDbOffset: Int = 0
 
     // --- وضعیت جستجو و فیلترها ---
     private val _searchQuery = MutableStateFlow("")
@@ -156,13 +158,14 @@ class LibraryViewModel(
         debounceMs: Long = 0L
     ) {
         searchJob?.cancel()
+        loadMoreJob?.cancel()
         searchJob = scope.launch {
             if (debounceMs > 0) {
                 delay(debounceMs)
             }
             try {
                 _libraryErrorMessage.value = null
-                val results = vocabularyRepo.searchFiltered(
+                val (results, hasMore) = vocabularyRepo.searchFilteredPaged(
                     query = query,
                     categoryId = categoryId,
                     stage = stage,
@@ -172,8 +175,9 @@ class LibraryViewModel(
                     limit = 60,
                     offset = 0
                 )
+                currentDbOffset = 60
                 _searchResults.value = results
-                _hasMoreResults.value = (results.size >= 60)
+                _hasMoreResults.value = hasMore
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -187,11 +191,12 @@ class LibraryViewModel(
      */
     fun loadNextPage(direction: CardDirection = CardDirection.NORMAL) {
         if (!_hasMoreResults.value || _isLoadingMore.value) return
-        scope.launch {
+        loadMoreJob?.cancel()
+        loadMoreJob = scope.launch {
             try {
                 _isLoadingMore.value = true
-                val currentSize = _searchResults.value.size
-                val nextBatch = vocabularyRepo.searchFiltered(
+                val offset = currentDbOffset
+                val (nextBatch, hasMore) = vocabularyRepo.searchFilteredPaged(
                     query = _searchQuery.value,
                     categoryId = _selectedCategoryFilter.value,
                     stage = _selectedStageFilter.value,
@@ -199,12 +204,13 @@ class LibraryViewModel(
                     difficulty = _selectedDifficultyFilter.value,
                     onlyInactive = _showOnlyInactiveFilter.value,
                     limit = 60,
-                    offset = currentSize
+                    offset = offset
                 )
-                if (nextBatch.isEmpty() || nextBatch.size < 60) {
-                    _hasMoreResults.value = false
-                }
+                currentDbOffset = offset + 60
+                _hasMoreResults.value = hasMore
                 _searchResults.value = (_searchResults.value + nextBatch).distinctBy { it.concept.id }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _libraryErrorMessage.value = "خطا در بارگذاری موارد بیشتر: ${e.message}"
             } finally {

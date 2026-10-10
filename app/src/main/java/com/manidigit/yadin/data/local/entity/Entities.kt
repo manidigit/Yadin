@@ -4,9 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.manidigit.yadin.domain.model.CardDirection
-import com.manidigit.yadin.domain.model.DuplicatePolicy
 import com.manidigit.yadin.domain.model.EntryType
-import com.manidigit.yadin.domain.model.ImportItemStatus
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
@@ -66,22 +64,6 @@ data class CategoryEntity(
 data class ConceptCategoryEntity(
     val conceptId: String,
     val categoryId: String
-)
-
-@Entity(tableName = "tags")
-data class TagEntity(
-    @PrimaryKey val id: String,
-    val name: String
-)
-
-@Entity(
-    tableName = "concept_tags",
-    primaryKeys = ["conceptId", "tagId"],
-    indices = [Index("conceptId"), Index("tagId")]
-)
-data class ConceptTagEntity(
-    val conceptId: String,
-    val tagId: String
 )
 
 @Entity(
@@ -187,26 +169,4 @@ data class AchievementEntity(
     @PrimaryKey val id: String,
     val unlockedAt: Long? = null,
     val progress: Int = 0
-)
-
-@Entity(
-    tableName = "import_review_items",
-    indices = [Index("sessionTag"), Index("status")]
-)
-data class ImportReviewItemEntity(
-    @PrimaryKey val id: String,
-    val sessionTag: String,
-    val sourceText: String,
-    val translationsText: String?,
-    val note: String?,
-    val categoryNames: String?,
-    val entryType: String?,
-    val confidence: Double,
-    val reason: String,
-    val status: ImportItemStatus,
-    val lineNumber: Int?,
-    val rawText: String,
-    val policy: DuplicatePolicy,
-    val targetConceptId: String? = null,
-    val createdAt: Long = System.currentTimeMillis()
 )

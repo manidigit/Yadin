@@ -163,7 +163,6 @@ class VocabularyRepository(
                 )
             },
             categories = listOfNotNull(category),
-            tags = emptyList(),
             normalLearning = normalLearning,
             reverseLearning = reverseLearning,
             normalDifficulty = normalDiff,
@@ -171,7 +170,7 @@ class VocabularyRepository(
         )
     }
 
-    suspend fun searchFiltered(
+    suspend fun searchFilteredPaged(
         query: String = "",
         categoryId: String? = null,
         stage: Stage? = null,
@@ -180,7 +179,7 @@ class VocabularyRepository(
         onlyInactive: Boolean = false,
         limit: Int = 50,
         offset: Int = 0
-    ): List<WordDetail> {
+    ): Pair<List<WordDetail>, Boolean> {
         val trimmed = query.trim()
         val searchQuery = if (trimmed.isEmpty()) "" else TextUtilities.searchKey(trimmed)
         val entities = conceptDao.searchConceptsFiltered(
@@ -193,7 +192,31 @@ class VocabularyRepository(
             limit = limit,
             offset = offset
         )
-        return entities.mapNotNull { getWordDetail(it.id) }
+        val details = entities.mapNotNull { getWordDetail(it.id) }
+        val hasMore = entities.size >= limit
+        return Pair(details, hasMore)
+    }
+
+    suspend fun searchFiltered(
+        query: String = "",
+        categoryId: String? = null,
+        stage: Stage? = null,
+        direction: CardDirection = CardDirection.NORMAL,
+        difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty? = null,
+        onlyInactive: Boolean = false,
+        limit: Int = 50,
+        offset: Int = 0
+    ): List<WordDetail> {
+        return searchFilteredPaged(
+            query = query,
+            categoryId = categoryId,
+            stage = stage,
+            direction = direction,
+            difficulty = difficulty,
+            onlyInactive = onlyInactive,
+            limit = limit,
+            offset = offset
+        ).first
     }
 
     suspend fun reactivateWord(conceptId: String): Result<Unit> {

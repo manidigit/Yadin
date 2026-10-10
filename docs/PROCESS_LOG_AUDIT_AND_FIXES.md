@@ -623,3 +623,24 @@
   5. **صیانت از پیشرفت دستاوردها در ادغام بکاپ (ISS-37):** در `BackupRepository`، پیشرفت دستاوردها با `maxOf(currentLocalProgress, progress)` ادغام می‌شود تا هیچ‌گونه افت یا پس‌رفتی در دستاوردهای کاربر هنگام بازیابی رخ ندهد.
   6. **تثبیت و اعتبارسنجی قاعده سراسری جهت زبان (ISS-58):** عدم وجود هرگونه سوئیچ محلی در سایر صفحات و کنترل ۱۰۰٪ متمرکز جهت مطالعه از صفحه تنظیمات تایید و علامت‌گذاری گردید.
   7. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 23` و `versionName = "1.15.0"`.
+
+---
+
+### ۳.۴. گزارش به‌روزرسانی نسخه ۱.۱۷.۰ (اصلاح ایمپورت فایل، حل صفحه‌بندی کتابخانه، پاکسازی جداول Tag و تدوین فرآیند اجباری ریلیز)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/FileReaders.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/LibraryViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/database/YadinDatabase.kt`
+  * `app/build.gradle.kts`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+  * `docs/RELEASE_ROUTINE_CHECKLIST.md`
+* **شرح اقدامات انجام‌شده:**
+  1. **اصلاح تشخیص هدر و ستون ردیف در ایمپورت CSV/Excel (`ISS-72`, `ISS-73`):** کلیدواژه‌های «ردیف»، «row»، «id» و «شناسه» به متد `isHeaderRow` اضافه شد؛ همچنین برای فایل‌های فاقد هدر که با شماره ردیف عددی شروع می‌شوند، فیلد مبدأ و ترجمه به صورت خودکار از ستون‌های بعدی نگاشت می‌شوند تا جابه‌جایی ستونی رخ ندهد.
+  2. **اصلاح کامل صفحه‌بندی اسکرول نامحدود کتابخانه (`ISS-77`, `ISS-78`):** متغیر `currentDbOffset` بر اساس تعداد رکوردهای ارزیابی‌شده دیتابیس در `LibraryViewModel.kt` به‌روزرسانی می‌شود و حذف مقادیر نال از مانع شدن نوبت‌های بعدی بارگذاری جلوگیری می‌نماید.
+  3. **پاکسازی کامل جداول متروکه Tag و ارتقای دیتابیس به نسخه ۳ (`ISS-119`):** انتیتی‌ها و جداول `tags`، `concept_tags` و `import_review_items` به‌طور کامل حذف شده و نسخه دیتابیس به ۳ همراه با میگریشن `MIGRATION_2_3` ارتقا یافت.
+  4. **تدوین و ثبت سند چک‌لیست اجباری داکیومنت‌نویسی و به‌روزرسانی (`RELEASE_ROUTINE_CHECKLIST.md`):** تدوین لیست کامل الزام‌آور ۶ گام شامل ارتقای نسخه، آپدیت مشخصات فنی (`Yadin-Specification1-1.md`)، به‌روزرسانی بک‌لاگ مشکلات، چنج‌لاگ و گزارش فرآیند جهت انجام خودکار پس از هر به‌روزرسانی.
+  5. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 25` و `versionName = "1.17.0"`.

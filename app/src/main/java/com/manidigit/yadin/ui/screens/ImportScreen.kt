@@ -66,6 +66,9 @@ import androidx.compose.ui.platform.LocalContext
 import android.provider.OpenableColumns
 import android.net.Uri
 import com.manidigit.yadin.domain.algorithm.FileReaders
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun ImportScreen(
@@ -101,39 +104,49 @@ fun ImportScreen(
         feliz: خوشحال، شاد
     """.trimIndent()
 
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            try {
-                fileLoadError = null
-                val contentResolver = context.contentResolver
-                val inputStream = contentResolver.openInputStream(uri)
-                if (inputStream != null) {
-                    var displayName = ""
-                    contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                        if (nameIndex != -1 && cursor.moveToFirst()) {
-                            displayName = cursor.getString(nameIndex) ?: ""
+            coroutineScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        fileLoadError = null
+                    }
+                    val contentResolver = context.contentResolver
+                    val inputStream = contentResolver.openInputStream(uri)
+                    if (inputStream != null) {
+                        var displayName = ""
+                        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                            if (nameIndex != -1 && cursor.moveToFirst()) {
+                                displayName = cursor.getString(nameIndex) ?: ""
+                            }
+                        }
+                        val lowerName = displayName.lowercase()
+                        val result = when {
+                            lowerName.endsWith(".csv") || lowerName.endsWith(".tsv") -> FileReaders.readCsv(inputStream)
+                            lowerName.endsWith(".json") -> FileReaders.readJson(inputStream)
+                            lowerName.endsWith(".xlsx") -> FileReaders.readXlsx(inputStream)
+                            else -> FileReaders.readText(inputStream)
+                        }
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            if (onParseResult != null) {
+                                onParseResult(result)
+                            } else {
+                                inputText = result.entries.joinToString("\n") { e ->
+                                    "${e.sourceText}: ${e.translations.joinToString("، ")}"
+                                }
+                            }
                         }
                     }
-                    val lowerName = displayName.lowercase()
-                    val result = when {
-                        lowerName.endsWith(".csv") || lowerName.endsWith(".tsv") -> FileReaders.readCsv(inputStream)
-                        lowerName.endsWith(".json") -> FileReaders.readJson(inputStream)
-                        lowerName.endsWith(".xlsx") -> FileReaders.readXlsx(inputStream)
-                        else -> FileReaders.readText(inputStream)
-                    }
-                    if (onParseResult != null) {
-                        onParseResult(result)
-                    } else {
-                        inputText = result.entries.joinToString("\n") { e ->
-                            "${e.sourceText}: ${e.translations.joinToString("، ")}"
-                        }
+                } catch (e: Exception) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        fileLoadError = "خطا در خواندن فایل: ${e.message}"
                     }
                 }
-            } catch (e: Exception) {
-                fileLoadError = "خطا در خواندن فایل: ${e.message}"
             }
         }
     }

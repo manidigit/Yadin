@@ -66,4 +66,40 @@ class VocabularyParserTest {
         assertEquals("todo", entry.breakdowns[1].sourcePart)
         assertEquals("همه‌چیز", entry.breakdowns[1].translationPart)
     }
+
+    @Test
+    fun parseCsvWithYadinExportHeadersAndRowNumbers() {
+        val csv = """
+            ردیف,واژه یا عبارت (اسپانیایی),ترجمه‌های فارسی,دسته‌بندی,توضیحات و یادداشت
+            1,hola,سلام,عمومی,احوالپرسی
+            2,gracias,"ممنون ، تشکر",عمومی,
+        """.trimIndent()
+        val stream = csv.byteInputStream(Charsets.UTF_8)
+        val result = FileReaders.readCsv(stream)
+        assertEquals(2, result.entries.size)
+        assertEquals("hola", result.entries[0].sourceText)
+        assertEquals(listOf("سلام"), result.entries[0].translations)
+        assertEquals("gracias", result.entries[1].sourceText)
+        assertTrue(result.entries[1].translations.contains("ممنون"))
+    }
+
+    @Test
+    fun parseCsvWithBomAndMasterExportBanners() {
+        val csv = "\uFEFF" + """
+            =========================================
+               خروجی جامع پایگاه داده و آمار یادین (MASTER EXPORT)   
+               تاریخ استخراج: 2026-10-10 12:00:00   
+            =========================================
+
+            === بخش ۱: بانک واژگان و دسته‌بندی‌ها ===
+            ردیف,واژه یا عبارت (اسپانیایی),ترجمه‌های فارسی,دسته‌بندی
+            1,amigo,دوست,عمومی
+        """.trimIndent()
+        val stream = csv.byteInputStream(Charsets.UTF_8)
+        val result = FileReaders.readCsv(stream)
+        assertEquals(1, result.entries.size)
+        assertEquals("amigo", result.entries[0].sourceText)
+        assertEquals(listOf("دوست"), result.entries[0].translations)
+    }
 }
+

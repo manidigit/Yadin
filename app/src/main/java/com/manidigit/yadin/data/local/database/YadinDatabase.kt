@@ -9,7 +9,6 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.manidigit.yadin.data.local.dao.AchievementDao
 import com.manidigit.yadin.data.local.dao.ConceptDao
-import com.manidigit.yadin.data.local.dao.ImportReviewDao
 import com.manidigit.yadin.data.local.dao.LearningDao
 import com.manidigit.yadin.data.local.dao.ReviewSessionDao
 import com.manidigit.yadin.data.local.dao.SettingsDao
@@ -17,16 +16,13 @@ import com.manidigit.yadin.data.local.entity.AchievementEntity
 import com.manidigit.yadin.data.local.entity.CategoryEntity
 import com.manidigit.yadin.data.local.entity.ConceptCategoryEntity
 import com.manidigit.yadin.data.local.entity.ConceptEntity
-import com.manidigit.yadin.data.local.entity.ConceptTagEntity
 import com.manidigit.yadin.data.local.entity.ContentEntity
 import com.manidigit.yadin.data.local.entity.DifficultyStateEntity
-import com.manidigit.yadin.data.local.entity.ImportReviewItemEntity
 import com.manidigit.yadin.data.local.entity.LearningStateEntity
 import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
 import com.manidigit.yadin.data.local.entity.SettingEntity
-import com.manidigit.yadin.data.local.entity.TagEntity
 
 @Database(
     entities = [
@@ -34,18 +30,15 @@ import com.manidigit.yadin.data.local.entity.TagEntity
         ContentEntity::class,
         CategoryEntity::class,
         ConceptCategoryEntity::class,
-        TagEntity::class,
-        ConceptTagEntity::class,
         LearningStateEntity::class,
         DifficultyStateEntity::class,
         ReviewSessionEntity::class,
         ReviewSessionItemEntity::class,
         ReviewHistoryEntity::class,
         SettingEntity::class,
-        AchievementEntity::class,
-        ImportReviewItemEntity::class
+        AchievementEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -56,7 +49,6 @@ abstract class YadinDatabase : RoomDatabase() {
     abstract fun reviewSessionDao(): ReviewSessionDao
     abstract fun settingsDao(): SettingsDao
     abstract fun achievementDao(): AchievementDao
-    abstract fun importReviewDao(): ImportReviewDao
 
     companion object {
         @Volatile
@@ -99,6 +91,15 @@ abstract class YadinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // حذف کامل جداول متروکه تگ و بررسی ایمپورت طبق دستور کارفرما (ISS-119)
+                db.execSQL("DROP TABLE IF EXISTS `tags`")
+                db.execSQL("DROP TABLE IF EXISTS `concept_tags`")
+                db.execSQL("DROP TABLE IF EXISTS `import_review_items`")
+            }
+        }
+
         fun getInstance(context: Context): YadinDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -106,7 +107,7 @@ abstract class YadinDatabase : RoomDatabase() {
                     YadinDatabase::class.java,
                     "yadin_database.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_1)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_1, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance
