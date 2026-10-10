@@ -52,7 +52,8 @@ fun WordDetailScreen(
     word: WordDetail?,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onReactivate: (() -> Unit)? = null
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
@@ -133,13 +134,70 @@ fun WordDetailScreen(
                     color = colors.onSurface
                 )
 
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (!word.concept.active) {
+                        Text(
+                            text = "غیرفعال (حذف‌شده)",
+                            color = colors.error,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(colors.error.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "حذف",
                             tint = colors.error
                         )
+                    }
+                }
+            }
+
+            // Inactive Word Alert Banner
+            if (!word.concept.active) {
+                YadinCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = colors.error.copy(alpha = 0.1f)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "این واژه به سطل زباله منتقل شده است",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.error
+                            )
+                            Text(
+                                text = "در جلسات مرور و آزمون قرار نخواهد گرفت مگر اینکه آن را احیا کنید.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
+                        }
+                        if (onReactivate != null) {
+                            Button(
+                                onClick = onReactivate,
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.success,
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text("احیا و فعال‌سازی", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -309,10 +367,16 @@ fun WordDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("تاریخ سررسید مرور بعدی:", color = colors.onSurfaceVariant)
+                        val normalDueText = when {
+                            word.normalLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> "تثبیت‌شده در حافظه دائم"
+                            word.normalLearning?.nextReviewDay != null -> word.normalLearning.nextReviewDay
+                            word.normalLearning != null -> "سررسید امروز"
+                            else -> "در صف مرور قرار نگرفته"
+                        }
                         Text(
-                            text = word.normalLearning?.nextReviewDay ?: "سررسید امروز",
+                            text = normalDueText,
                             fontWeight = FontWeight.Bold,
-                            color = colors.primary
+                            color = if (word.normalLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED) colors.success else colors.primary
                         )
                     }
                 }
@@ -374,10 +438,16 @@ fun WordDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("تاریخ سررسید مرور بعدی:", color = colors.onSurfaceVariant)
+                        val reverseDueText = when {
+                            word.reverseLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> "تثبیت‌شده در حافظه دائم"
+                            word.reverseLearning?.nextReviewDay != null -> word.reverseLearning.nextReviewDay
+                            word.reverseLearning != null -> "سررسید امروز"
+                            else -> "در صف مرور قرار نگرفته"
+                        }
                         Text(
-                            text = word.reverseLearning?.nextReviewDay ?: "سررسید امروز",
+                            text = reverseDueText,
                             fontWeight = FontWeight.Bold,
-                            color = colors.primary
+                            color = if (word.reverseLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED) colors.success else colors.primary
                         )
                     }
                 }

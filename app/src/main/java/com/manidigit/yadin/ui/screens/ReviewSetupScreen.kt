@@ -464,6 +464,17 @@ fun ReviewSetupScreen(
 
         // Bottom CTA Bar
         val isReady = candidateCount > 0
+        val actualSessionCards = minOf(candidateCount, selectedMaxCards)
+        val buttonText = if (isReady) {
+            if (candidateCount > selectedMaxCards) {
+                "شروع مرور ($actualSessionCards از $candidateCount واژه)"
+            } else {
+                "شروع مرور ($actualSessionCards واژه)"
+            }
+        } else {
+            "واژه‌ای با این فیلتر یافت نشد"
+        }
+
         Button(
             onClick = {
                 if (isReady) onStartReview(buildFilters())
@@ -488,7 +499,7 @@ fun ReviewSetupScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (isReady) "شروع مرور ($candidateCount واژه)" else "واژه‌ای با این فیلتر یافت نشد",
+                text = buttonText,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )

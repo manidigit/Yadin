@@ -59,6 +59,7 @@ fun LibraryScreen(
     showOnlyInactive: Boolean = false,
     hasMoreResults: Boolean = false,
     isLoadingMore: Boolean = false,
+    appLanguageDirection: com.manidigit.yadin.domain.model.CardDirection = com.manidigit.yadin.domain.model.CardDirection.NORMAL,
     onSearchChange: (String) -> Unit,
     onCategoryFilterChange: (String?) -> Unit,
     onStageFilterChange: (Stage?) -> Unit,
@@ -251,6 +252,7 @@ fun LibraryScreen(
                     items(words, key = { it.concept.id }) { word ->
                         WordItemCard(
                             word = word,
+                            direction = appLanguageDirection,
                             onClick = { onSelectWord(word.concept.id) },
                             onReactivate = if (!word.concept.active && onReactivateWord != null) {
                                 { onReactivateWord(word.concept.id) }
@@ -347,6 +349,7 @@ private fun getLanguageFlag(langCode: String?): String {
 @Composable
 fun WordItemCard(
     word: WordDetail,
+    direction: com.manidigit.yadin.domain.model.CardDirection = com.manidigit.yadin.domain.model.CardDirection.NORMAL,
     onClick: () -> Unit,
     onReactivate: (() -> Unit)? = null
 ) {
@@ -354,6 +357,18 @@ fun WordItemCard(
 
     val sourceFlag = getLanguageFlag(word.sourceContent.languageCode)
     val targetFlag = "🇮🇷"
+
+    val activeLearning = if (direction == com.manidigit.yadin.domain.model.CardDirection.NORMAL) {
+        word.normalLearning
+    } else {
+        word.reverseLearning
+    }
+
+    val activeDifficulty = if (direction == com.manidigit.yadin.domain.model.CardDirection.NORMAL) {
+        word.normalDifficulty
+    } else {
+        word.reverseDifficulty
+    }
 
     YadinCard(
         modifier = Modifier.fillMaxWidth(),
@@ -408,8 +423,8 @@ fun WordItemCard(
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         } else {
-                            word.normalLearning?.stage?.let { StageBadge(stage = it) }
-                            word.normalDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
+                            activeLearning?.stage?.let { StageBadge(stage = it) }
+                            activeDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
                         }
                     }
                 }

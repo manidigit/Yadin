@@ -90,13 +90,19 @@ class ReviewViewModel(
     private var isSubmittingFlashcard = false
     private var lastSubmitQuizJob: Job? = null
 
+    private var countJob: Job? = null
+
     /**
      * به‌روزرسانی تعداد کلمات واجد شرایط برای فیلترهای تنظیمی کاربر.
+     * با لغو کار قبلی (Debounce / Job cancellation) جهت جلوگیری از Race Condition.
      */
     fun updateSetupFilters(filters: ReviewFilters) {
-        scope.launch {
+        countJob?.cancel()
+        countJob = scope.launch {
             try {
                 _setupCandidateCount.value = reviewRepo.countCandidates(filters)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Ignore cancellation
             } catch (e: Exception) {
                 _reviewErrorMessage.value = "خطا در شمارش کارت‌های آماده: ${e.message}"
             }

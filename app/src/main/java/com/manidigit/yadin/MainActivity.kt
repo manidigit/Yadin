@@ -322,6 +322,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val hasMore by viewModel.hasMoreResults.collectAsStateWithLifecycle()
             val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
 
+            val appDir by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
+
             LibraryScreen(
                 words = results,
                 searchQuery = query,
@@ -332,6 +334,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 showOnlyInactive = onlyInactive,
                 hasMoreResults = hasMore,
                 isLoadingMore = isLoadingMore,
+                appLanguageDirection = appDir,
                 onSearchChange = { viewModel.onSearchQueryChanged(it) },
                 onCategoryFilterChange = { viewModel.onCategoryFilterChanged(it) },
                 onStageFilterChange = { viewModel.onStageFilterChanged(it) },
@@ -356,7 +359,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                     if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Library)
                 },
                 onEdit = { viewModel.navigateTo(Screen.EditWordScreen(screen.conceptId)) },
-                onDelete = { viewModel.deleteWord(screen.conceptId) }
+                onDelete = { viewModel.deleteWord(screen.conceptId) },
+                onReactivate = { viewModel.reactivateWord(screen.conceptId) }
             )
         }
 
