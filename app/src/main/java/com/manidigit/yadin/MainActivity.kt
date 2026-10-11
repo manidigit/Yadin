@@ -346,6 +346,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onInactiveFilterToggle = { viewModel.onInactiveFilterToggled(it) },
                 onLoadMore = { viewModel.loadNextLibraryPage() },
                 onReactivateWord = { viewModel.reactivateWord(it) },
+                onAddNewCategory = { name -> viewModel.createCategory(name) },
+                onEditCategory = { id, name -> viewModel.updateCategory(id, name) },
+                onDeleteCategory = { id -> viewModel.deleteCategory(id) },
                 onSelectWord = { conceptId -> viewModel.selectWordDetail(conceptId) },
                 onAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
                 onBack = {
@@ -477,7 +480,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
                 onSetLanguageDirection = { viewModel.setAppLanguageDirection(it) },
                 onSetUiLanguage = { viewModel.setUiLanguage(it) },
-                onPurgeInactiveWords = { viewModel.purgeInactiveWords() },
+                onPurgeInactiveWords = { onComplete -> viewModel.purgeInactiveWords(onComplete) },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },
                 onOpenAbout = { viewModel.navigateTo(Screen.About) },

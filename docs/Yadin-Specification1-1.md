@@ -252,7 +252,7 @@ Yadin/
   docs/
     Yadin-Specification1-1.md       (همین سند)
     Vocabulary.json                 (بانک اولیه، کپی در assets)
-    CHANGELOG.md  ISSUES_AND_DEFECTS_BACKLOG.md  README.md
+    CHANGELOG.md  README.md
   samples/
     import/sample.txt  sample.csv  sample.json  sample.xlsx
     backup/sample_backup.json
@@ -1656,7 +1656,7 @@ LIMIT 1;
 
 ### منبع
 
-فایل `assets/seed/vocabulary_seed.json` (همگام با `docs/vocabulary.json` و `docs/yadin-vocabulary.csv`).
+فایل `assets/seed/vocabulary_seed.json` به عنوان بانک اولیه واژگان درون برنامه قرار دارد.
 ساختار فایل (قالب استاندارد یادین):
 
 ```text
@@ -2350,12 +2350,14 @@ endedAt جلسه هنگام ورود به این صفحه (یا خروج زود�
 مرجع بصری اصلی: کد فلش‌لرن در مسیر app/src/main/java/com/flashlearn/app/ui/theme (فایل‌های FlashLearnThemeSpec.kt و FlashLearnThemeTokens.kt و FlashLearnTheme.kt).
 پیاده‌ساز موظف است آن فایل‌ها را بخواند و رفتار را در یادین بازسازی کند. جدول‌های زیر مقادیر آن کد هستند.
 
-### 8.1 تم‌های برنامه (GTP و Gemini)
+### 8.1 تم‌های چهارگانه برنامه (GTP, Gemini, Claude, Googoli)
 
-برنامه دارای دو تم متمایز و مدرن است که هر کدام دارای دو حالت روشن (Light) و تاریک (Dark) هستند:
+برنامه دارای چهار تم متمایز و مدرن است که هر کدام دارای دو حالت روشن (Light) و تاریک (Dark) هستند:
 
 ۱. **GTP (`gtp`)**: تم بر پایه طیف بنفش و ارغوانی نئونی، مدرن، متراکم و شارپ.
-۲. **Gemini (`gemini`)**: تم آینده‌نگرانه و بسیار خلاقانه با الهام از طراحی هوش مصنوعی، بر پایه رنگ‌های سرمه‌ای اعماق فضا (Cosmic Deep Space)، فیروزه‌ای ستاره‌ای (Electric Cyan)، گرادیان‌های نئونی، شیشه‌ای و کارت‌های شناور مدرن.
+۲. **Gemini (`gemini`)**: تم آینده‌نگرانه با الهام از طراحی هوش مصنوعی، بر پایه رنگ‌های سرمه‌ای اعماق فضا، فیروزه‌ای ستاره‌ای، گرادیان‌های نئونی و کارت‌های شیشه‌ای.
+۳. **Claude (`claude`)**: تم متین، آکادمیک، انسان‌محور و سرمقاله‌ای (Editorial & Academic) بر پایه رنگ‌های سفالی گرم و سبز مریم‌گلی با پس‌زمینه عاجی/کلاغی گرم.
+۴. **Googoli (`googoli`)**: تم شاداب، بازی‌وار (Gamified)، آبنباتی و پاستلی با هندسه حباب‌گون نرم و صمیمیت بصری بالا.
 
 ### ۱. تم GTP (gtp)
 
@@ -2393,6 +2395,39 @@ endedAt جلسه هنگام ورود به این صفحه (یا خروج زود�
 - کارت‌ها: عمق بصری لطیف با حاشیه ظریف شیشه‌ای (`cardBorderAlpha 0.35`).
 - افکت‌های بصری: گرادیان‌های نوری و فضایی بین `primary` و `secondary` در سربرگ‌ها و نشان‌ها.
 
+### ۳. تم Claude (claude)
+
+| توکن | روشن | تاریک |
+|------|------|-------|
+| primary | C15F3D | E08466 |
+| secondary | 4A7C59 | 7CB88F |
+| background | FAF7F2 | 161412 |
+| surface | FFFFFF | 221F1C |
+| surfaceVariant | F1EBE1 | 2F2A24 |
+| onSurface | 262320 | F5EFEA |
+| onSurfaceVariant | 6B6258 | B8ADA3 |
+| outline | E2D9CC | 3E362E |
+
+ویژگی‌ها و ابعاد Claude:
+- ارگونومی بصری: پس‌زمینه پوستی/عاجی گرم (Warm Ivory) در حالت روشن و ابسیدین/اسپرسو در حالت تیره برای راحتی چشم در مطالعه طولانی.
+- گوشه‌ها و ابعاد: cornerSmall 10, cornerMedium 16, cornerLarge 22؛ cardElevation 2.dp, cardBorderAlpha 0.80f.
+- ساختار چیدمان (`ClaudeHomeContent`): هدر سرمقاله‌ای، بنر پیشرفت و حفظ ماندگار، شبکه آماری ۴ قسمتی، صف مرور زمان‌بندی‌شده، پروفایل سطوح دشواری و مرکز ابزارهای سریع.
+
+### ۴. تم Googoli (googoli)
+
+| توکن | روشن | تاریک |
+|------|------|-------|
+| primary | 14B8A6 | 2DD4BF |
+| secondary | FF8B66 | FFA07A |
+| background | F0FDF9 | 0F1B18 |
+| surface | BBEFDF | 162823 |
+| surfaceVariant | E6F7F3 | 1F3831 |
+
+ویژگی‌ها و ابعاد Googoli:
+- هندسه حباب‌گون (Bubble & Rounded): شعاع گوشه‌های بسیار نرم و ارگانیک (20.dp تا 36.dp).
+- پالت رنگی آبنباتی و پاستلی: ترکیب صورتی پاستلی، نعنایی روشن، هلویی و یاسی.
+- ساختار چیدمان (`GoogoliHomeContent`): هدر شاداب با درود صمیمانه، کارت جادویی یادگیری (Hero Card)، حباب‌های مراحل تثبیت واژه‌ها (🌸 daily, 🌼 weekly, 🌺 monthly, 🏆 learned) و طیف دشواری آبنباتی.
+
 ## 8.2 رنگ‌های معنایی مشترک
 
 | معنی | روشن | تاریک |
@@ -2413,6 +2448,12 @@ gtp:    همه مقادیر پایه × 0.88 ، سپس screenPadding 16 ، conte
 gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
         navHeight 76 ، cardElevationBase 3 ، cardBorderAlpha 0.35 ، cardBorderStrongAlpha 0.60
         accentSurfaceAlpha 0.12 ، hierarchyBoost 1.05 ، cornerSmall 12 ، cornerMedium 20 ، cornerLarge 28
+
+claude: screenPadding 16 ، contentGap 12 ، sectionGap 16 ، cornerSmall 10 ، cornerMedium 16
+        cornerLarge 22 ، cardElevation 2 ، cardBorderAlpha 0.80
+
+googoli: screenPadding 16 ، contentGap 12 ، sectionGap 16 ، cornerSmall 20 ، cornerMedium 28
+         cornerLarge 36 ، cardElevation 3 ، cardBorderAlpha 0.50
 ```
 
 ## 8.4 قواعد
@@ -2425,7 +2466,7 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 ۶. ممنوع: Color(0x...) مستقیم یا dp مستقیم در کد صفحه‌ها (باید از توکن تم).
 ۷. تغییر تم و حالت روشن / تاریک بدون راه‌اندازی مجدد و به صورت بلادرنگ اعمال می‌شود.
 ۸. رنگ‌های مرتبط با مرحله و سختی (نشان‌ها): سختی EASY با success ، MEDIUM با info ، HARD با warning ، VERY_HARD با error ؛ مرحله DAILY با primary ، WEEKLY با info ، MONTHLY با warning ، LEARNED با success.
-۹. برنامه دارای ۴ پوسته رسمی و متمایز (`GTP Cyber`, `Gemini Future AI`, `Claude`, `Googoli`) با پشتیبانی کامل از هر دو حالت دارک و لایت است (تصمیم D36 و مستندات `THEME_CLAUDE.md` و `THEME_GOOGOLI.md`).
+۹. برنامه دارای ۴ پوسته رسمی و متمایز (`GTP Cyber`, `Gemini Future AI`, `Claude`, `Googoli`) با پشتیبانی کامل از هر دو حالت دارک و لایت است که تمامی مشخصات، توکن‌های رنگی و چیدمان‌های اختصاصی آن‌ها در همین بخش ۸ تثبیت شده‌اند.
 
 ---
 

@@ -117,6 +117,12 @@ interface ConceptDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCategories(categories: List<CategoryEntity>)
 
+    @Query("UPDATE categories SET name = :newName WHERE id = :id")
+    suspend fun updateCategoryName(id: String, newName: String)
+
+    @Query("DELETE FROM categories WHERE id = :id AND isDefault = 0")
+    suspend fun deleteCategory(id: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertConceptCategory(item: ConceptCategoryEntity)
 

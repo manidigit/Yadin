@@ -20,7 +20,9 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Home
@@ -88,13 +90,18 @@ fun ExposedCategoryDropdown(
     onSelectCategory: (String?) -> Unit,
     modifier: Modifier = Modifier,
     label: String = "دسته‌بندی موضوعی",
-    onAddNewCategory: ((String) -> Unit)? = null
+    onAddNewCategory: ((String) -> Unit)? = null,
+    onEditCategory: ((String, String) -> Unit)? = null,
+    onDeleteCategory: ((String) -> Unit)? = null
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     var expanded by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
     var newCategoryText by remember { mutableStateOf("") }
+    var categoryToEdit by remember { mutableStateOf<Category?>(null) }
+    var editCategoryText by remember { mutableStateOf("") }
+    var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
     val displayText = selectedCategory?.name ?: "همه دسته‌ها (عمومی)"
@@ -149,6 +156,74 @@ fun ExposedCategoryDropdown(
             },
             dismissButton = {
                 OutlinedButton(onClick = { showAddDialog = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
+    }
+
+    if (categoryToEdit != null) {
+        AlertDialog(
+            onDismissRequest = { categoryToEdit = null },
+            title = { Text("ویرایش عنوان دسته‌بندی", fontWeight = FontWeight.Bold, color = colors.onSurface) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = editCategoryText,
+                        onValueChange = { editCategoryText = it },
+                        label = { Text("عنوان جدید دسته‌بندی") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val name = editCategoryText.trim()
+                        categoryToEdit?.let { cat ->
+                            if (name.isNotBlank()) {
+                                onEditCategory?.invoke(cat.id, name)
+                            }
+                        }
+                        categoryToEdit = null
+                    },
+                    enabled = editCategoryText.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                ) {
+                    Text("ذخیره", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { categoryToEdit = null }) {
+                    Text("انصراف")
+                }
+            }
+        )
+    }
+
+    if (categoryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { categoryToDelete = null },
+            title = { Text("حذف دسته‌بندی", fontWeight = FontWeight.Bold, color = colors.onSurface) },
+            text = {
+                Text("آیا از حذف دسته‌بندی «${categoryToDelete?.name}» اطمینان دارید؟ واژه‌های مرتبط با این دسته‌بندی به دسته عمومی منتقل خواهند شد.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        categoryToDelete?.let { cat ->
+                            onDeleteCategory?.invoke(cat.id)
+                        }
+                        categoryToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.error)
+                ) {
+                    Text("حذف دسته", fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { categoryToDelete = null }) {
                     Text("انصراف")
                 }
             }
@@ -233,7 +308,8 @@ fun ExposedCategoryDropdown(
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Icon(
                                     imageVector = catIcon,
@@ -247,13 +323,51 @@ fun ExposedCategoryDropdown(
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = colors.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                if (!cat.isDefault && onEditCategory != null) {
+                                    IconButton(
+                                        onClick = {
+                                            categoryToEdit = cat
+                                            editCategoryText = cat.name
+                                            expanded = false
+                                        },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "ویرایش دسته",
+                                            tint = colors.onSurfaceVariant,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                if (!cat.isDefault && onDeleteCategory != null) {
+                                    IconButton(
+                                        onClick = {
+                                            categoryToDelete = cat
+                                            expanded = false
+                                        },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "حذف دسته",
+                                            tint = colors.error,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
                     },

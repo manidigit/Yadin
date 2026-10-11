@@ -75,6 +75,17 @@ class VocabularyRepository(
         return Category(id = id, name = cleanName, sortOrder = maxSort + 1, isDefault = false)
     }
 
+    suspend fun updateCategory(id: String, name: String) {
+        val cleanName = name.trim()
+        if (cleanName.isNotBlank()) {
+            conceptDao.updateCategoryName(id, cleanName)
+        }
+    }
+
+    suspend fun deleteCategory(id: String) {
+        conceptDao.deleteCategory(id)
+    }
+
     fun getAllActiveConceptsFlow(): Flow<List<ConceptEntity>> {
         return conceptDao.getAllActiveConceptsFlow()
     }

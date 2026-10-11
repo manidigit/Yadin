@@ -30,9 +30,8 @@ class DomainAlgorithmLogicTest {
 
     @Test
     fun testVocabularyParser_BasicParsing() {
-        val parser = VocabularyParser()
-        val text = "hola\nسلام"
-        val result = parser.parseText(text)
+        val text = "hola - سلام"
+        val result = VocabularyParser.parse(text)
         assertEquals(1, result.entries.size)
         assertEquals("hola", result.entries[0].sourceText)
         assertEquals("سلام", result.entries[0].translations.first())
@@ -41,7 +40,7 @@ class DomainAlgorithmLogicTest {
     @Test
     fun testStageTransition_Logic() {
         val initialStage = Stage.DAILY
-        val nextStage = Stage.STAGE_2
+        val nextStage = Stage.WEEKLY
         assertTrue(nextStage.ordinal > initialStage.ordinal)
     }
 }

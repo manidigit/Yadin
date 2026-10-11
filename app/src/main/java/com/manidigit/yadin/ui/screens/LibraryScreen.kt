@@ -67,6 +67,9 @@ fun LibraryScreen(
     onInactiveFilterToggle: (Boolean) -> Unit = {},
     onLoadMore: () -> Unit = {},
     onReactivateWord: ((String) -> Unit)? = null,
+    onAddNewCategory: ((String) -> Unit)? = null,
+    onEditCategory: ((String, String) -> Unit)? = null,
+    onDeleteCategory: ((String) -> Unit)? = null,
     onSelectWord: (String) -> Unit,
     onAddWord: () -> Unit,
     onBack: () -> Unit
@@ -222,7 +225,10 @@ fun LibraryScreen(
                     categories = categories,
                     selectedCategoryId = selectedCategory,
                     onSelectCategory = { onCategoryFilterChange(it) },
-                    label = "دسته‌بندی موضوعی کلمات"
+                    label = "دسته‌بندی موضوعی کلمات",
+                    onAddNewCategory = onAddNewCategory,
+                    onEditCategory = onEditCategory,
+                    onDeleteCategory = onDeleteCategory
                 )
             }
 

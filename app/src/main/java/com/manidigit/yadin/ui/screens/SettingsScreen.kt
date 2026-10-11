@@ -78,7 +78,7 @@ fun SettingsScreen(
     onSetDifficultyThreshold: (Int) -> Unit = {},
     onSetLanguageDirection: (CardDirection) -> Unit = {},
     onSetUiLanguage: (String) -> Unit = {},
-    onPurgeInactiveWords: () -> Unit = {},
+    onPurgeInactiveWords: (onComplete: (Int) -> Unit) -> Unit = {},
     onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -88,6 +88,8 @@ fun SettingsScreen(
     val dimensions = LocalYadinDimensions.current
     var themeMenuExpanded by remember { mutableStateOf(false) }
     var showPurgeConfirmDialog by remember { mutableStateOf(false) }
+    var showPurgeReportDialog by remember { mutableStateOf(false) }
+    var purgedCountResult by remember { mutableStateOf(0) }
 
     val currentThemeTitle = when (currentThemeId.lowercase()) {
         "googoli" -> "تم گوگولی (Googoli)"
@@ -477,22 +479,49 @@ fun SettingsScreen(
         if (showPurgeConfirmDialog) {
             AlertDialog(
                 onDismissRequest = { showPurgeConfirmDialog = false },
-                title = { Text("تأیید پاک‌سازی دائمی") },
+                title = { Text("تأیید پاک‌سازی دائمی", fontWeight = FontWeight.Bold) },
                 text = { Text("آیا مطمئن هستید؟ با این کار تمامی واژگانی که پیش‌تر حذف کرده‌اید برای همیشه از پایگاه داده پاک خواهند شد و قابل احیا نخواهند بود.") },
                 confirmButton = {
                     Button(
                         onClick = {
                             showPurgeConfirmDialog = false
-                            onPurgeInactiveWords()
+                            onPurgeInactiveWords { count ->
+                                purgedCountResult = count
+                                showPurgeReportDialog = true
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                     ) {
-                        Text("بله، پاک شود")
+                        Text("بله، پاک شود", fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showPurgeConfirmDialog = false }) {
                         Text("انصراف")
+                    }
+                }
+            )
+        }
+
+        if (showPurgeReportDialog) {
+            AlertDialog(
+                onDismissRequest = { showPurgeReportDialog = false },
+                title = { Text("گزارش پاک‌سازی دیتابیس", fontWeight = FontWeight.Bold, color = colors.onSurface) },
+                text = {
+                    Text(
+                        text = if (purgedCountResult > 0)
+                            "عملیات با موفقیت انجام شد.\nتعداد $purgedCountResult واژه غیرفعال به‌طور کامل و دائمی از پایگاه داده حذف گردید."
+                        else
+                            "هیچ واژه غیرفعالی در سطل بازیافت جهت پاک‌سازی پیدا نشد.",
+                        color = colors.onSurface
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showPurgeReportDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                    ) {
+                        Text("تأیید و بستن", fontWeight = FontWeight.Bold)
                     }
                 }
             )

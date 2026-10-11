@@ -359,6 +359,36 @@ class LibraryViewModel(
     }
 
     /**
+     * به‌روزرسانی نام دسته‌بندی.
+     */
+    fun updateCategory(id: String, name: String) {
+        val clean = name.trim()
+        if (clean.isBlank()) return
+        scope.launch {
+            try {
+                _libraryErrorMessage.value = null
+                vocabularyRepo.updateCategory(id, clean)
+            } catch (e: Exception) {
+                _libraryErrorMessage.value = "خطا در به‌روزرسانی دسته: ${e.message}"
+            }
+        }
+    }
+
+    /**
+     * حذف دسته‌بندی سفارشی.
+     */
+    fun deleteCategory(id: String) {
+        scope.launch {
+            try {
+                _libraryErrorMessage.value = null
+                vocabularyRepo.deleteCategory(id)
+            } catch (e: Exception) {
+                _libraryErrorMessage.value = "خطا در حذف دسته: ${e.message}"
+            }
+        }
+    }
+
+    /**
      * پاکسازی گزارش خلاصه ورود گروهی.
      */
     fun clearImportSummary() {

@@ -429,6 +429,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setParseResult(result: ParseResult) = libraryVm.setParseResult(result)
     fun clearParseResult() = libraryVm.clearParseResult()
     fun createCategory(name: String, onCreated: (String) -> Unit = {}) = libraryVm.createCategory(name, onCreated)
+    fun updateCategory(id: String, name: String) = libraryVm.updateCategory(id, name)
+    fun deleteCategory(id: String) = libraryVm.deleteCategory(id)
     fun clearImportSummary() = libraryVm.clearImportSummary()
 
     /**
