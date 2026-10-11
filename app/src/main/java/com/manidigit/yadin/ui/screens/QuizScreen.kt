@@ -61,6 +61,7 @@ import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.toPersianDigits
 
 @Composable
 fun QuizScreen(
@@ -142,7 +143,7 @@ fun QuizScreen(
                 }
 
                 Text(
-                    text = "سؤال ${currentIndex + 1} از ${questions.size}",
+                    text = "سؤال ${(currentIndex + 1).toPersianDigits()} از ${questions.size.toPersianDigits()}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -204,7 +205,7 @@ fun QuizScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "${idx + 1}",
+                            text = (idx + 1).toPersianDigits(),
                             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
                             fontSize = 11.sp,
                             color = textColor

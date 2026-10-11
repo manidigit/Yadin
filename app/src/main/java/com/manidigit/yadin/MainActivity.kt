@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -72,9 +73,21 @@ class MainActivity : ComponentActivity() {
             val uiLanguage by viewModel.uiLanguage.collectAsStateWithLifecycle()
 
             val layoutDirection = if (uiLanguage == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
+            val targetLocale = if (uiLanguage == "en") java.util.Locale.ENGLISH else java.util.Locale("fa")
+
+            val currentContext = LocalContext.current
+            val localizedContext = remember(uiLanguage) {
+                val config = android.content.res.Configuration(currentContext.resources.configuration)
+                config.setLocale(targetLocale)
+                config.setLayoutDirection(targetLocale)
+                currentContext.createConfigurationContext(config)
+            }
 
             YadinTheme(themeId = themeId, isDark = isDark) {
-                CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                CompositionLocalProvider(
+                    LocalContext provides localizedContext,
+                    LocalLayoutDirection provides layoutDirection
+                ) {
                     val shouldShowBottomBar = screen is Screen.Home ||
                             screen is Screen.ReviewSetup ||
                             screen is Screen.Library ||

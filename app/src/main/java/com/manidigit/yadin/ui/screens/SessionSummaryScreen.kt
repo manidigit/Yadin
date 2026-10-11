@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.toPersianDigits
 
 @Composable
 fun SessionSummaryScreen(
@@ -114,7 +115,7 @@ fun SessionSummaryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("کل واژگان مرور شده:", color = colors.onSurfaceVariant)
-                    Text("$total کارت", fontWeight = FontWeight.Bold, color = colors.onSurface)
+                    Text("${total.toPersianDigits()} کارت", fontWeight = FontWeight.Bold, color = colors.onSurface)
                 }
 
                 Row(
@@ -122,7 +123,7 @@ fun SessionSummaryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("پاسخ‌های صحیح:", color = colors.onSurfaceVariant)
-                    Text("$correctCount", fontWeight = FontWeight.Bold, color = colors.success)
+                    Text(correctCount.toPersianDigits(), fontWeight = FontWeight.Bold, color = colors.success)
                 }
 
                 Row(
@@ -130,7 +131,7 @@ fun SessionSummaryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("پاسخ‌های نادرست:", color = colors.onSurfaceVariant)
-                    Text("$wrongCount", fontWeight = FontWeight.Bold, color = colors.error)
+                    Text(wrongCount.toPersianDigits(), fontWeight = FontWeight.Bold, color = colors.error)
                 }
 
                 Row(
@@ -138,7 +139,7 @@ fun SessionSummaryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("درصد موفقیت:", color = colors.onSurfaceVariant)
-                    Text("$accuracy%", fontWeight = FontWeight.Bold, color = colors.primary)
+                    Text("${accuracy.toPersianDigits()}٪", fontWeight = FontWeight.Bold, color = colors.primary)
                 }
             }
         }

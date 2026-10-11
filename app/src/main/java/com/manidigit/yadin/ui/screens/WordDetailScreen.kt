@@ -43,6 +43,7 @@ import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
+import com.manidigit.yadin.ui.util.toPersianDigits
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -351,8 +352,8 @@ fun WordDetailScreen(
                     ) {
                         Text("شمارنده پاسخ‌های متوالی:", color = colors.onSurfaceVariant)
                         val text = when {
-                            normCorrect > 0 -> "✅ $normCorrect درست متوالی"
-                            normWrong > 0 -> "❌ $normWrong غلط متوالی"
+                            normCorrect > 0 -> "✅ ${normCorrect.toPersianDigits()} درست متوالی"
+                            normWrong > 0 -> "❌ ${normWrong.toPersianDigits()} غلط متوالی"
                             else -> "۰ (بدون تسلسل)"
                         }
                         Text(
@@ -422,8 +423,8 @@ fun WordDetailScreen(
                     ) {
                         Text("شمارنده پاسخ‌های متوالی:", color = colors.onSurfaceVariant)
                         val text = when {
-                            revCorrect > 0 -> "✅ $revCorrect درست متوالی"
-                            revWrong > 0 -> "❌ $revWrong غلط متوالی"
+                            revCorrect > 0 -> "✅ ${revCorrect.toPersianDigits()} درست متوالی"
+                            revWrong > 0 -> "❌ ${revWrong.toPersianDigits()} غلط متوالی"
                             else -> "۰ (بدون تسلسل)"
                         }
                         Text(

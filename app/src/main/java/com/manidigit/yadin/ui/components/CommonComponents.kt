@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import com.manidigit.yadin.ui.util.TtsManager
+import com.manidigit.yadin.ui.util.toPersianDigits
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -132,7 +133,7 @@ fun DifficultyCounterRow(
                     verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     Text(
-                        text = "$count",
+                        text = count.toPersianDigits(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = color
@@ -231,7 +232,7 @@ fun StreakChip(streakDays: Int, modifier: Modifier = Modifier) {
             modifier = Modifier.size(18.dp)
         )
         Text(
-            text = "$streakDays روز",
+            text = "${streakDays.toPersianDigits()} روز",
             color = colors.warning,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold

@@ -82,7 +82,7 @@ class SettingsViewModel(
         .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.QuizLevel.MEDIUM)
 
     val defaultReviewMode: StateFlow<com.manidigit.yadin.domain.model.ReviewMode> = settingsRepo.defaultReviewModeFlow
-        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD)
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.ReviewMode.QUIZ)
 
     val appLanguageDirection: StateFlow<CardDirection> = settingsRepo.appLanguageDirectionFlow
         .stateIn(scope, SharingStarted.Eagerly, CardDirection.NORMAL)

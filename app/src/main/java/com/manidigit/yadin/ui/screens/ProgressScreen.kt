@@ -59,6 +59,7 @@ import com.manidigit.yadin.ui.components.DailyReviewChart
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.toPersianDigits
 
 @Composable
 fun ProgressScreen(
@@ -233,7 +234,7 @@ fun ProgressScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "رگبار متوالی: ${statistics.currentStreakDays} روز تمرین مستمر و پیوسته",
+                        text = "رگبار متوالی: ${statistics.currentStreakDays.toPersianDigits()} روز تمرین مستمر و پیوسته",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.warning
@@ -268,7 +269,7 @@ fun ProgressScreen(
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
-                            text = "$totalAccuracy%",
+                            text = "${totalAccuracy.toPersianDigits()}٪",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.success
@@ -300,7 +301,7 @@ fun ProgressScreen(
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
-                            text = "${statistics.learnedStageCount}",
+                            text = statistics.learnedStageCount.toPersianDigits(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.onSurface
@@ -332,7 +333,7 @@ fun ProgressScreen(
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
-                            text = "$practicedCount",
+                            text = practicedCount.toPersianDigits(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.onSurface
@@ -382,7 +383,7 @@ fun ProgressScreen(
                         }
 
                         Text(
-                            text = "$progressPercent%",
+                            text = "${progressPercent.toInt().toPersianDigits()}٪",
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.primary
@@ -403,10 +404,10 @@ fun ProgressScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        FormulaScorePill("یادگرفته: ۱۰۰+", colors.success, Modifier.weight(1f))
-                        FormulaScorePill("ماهانه: ۸۰+", colors.warning, Modifier.weight(1f))
-                        FormulaScorePill("هفتگی: ۶۰+", colors.info, Modifier.weight(1f))
-                        FormulaScorePill("روزانه: ۳۵+", colors.primary, Modifier.weight(1f))
+                        FormulaScorePill("یادگرفته: ۱۰۰+".toPersianDigits(), colors.success, Modifier.weight(1f))
+                        FormulaScorePill("ماهانه: ۸۰+".toPersianDigits(), colors.warning, Modifier.weight(1f))
+                        FormulaScorePill("هفتگی: ۶۰+".toPersianDigits(), colors.info, Modifier.weight(1f))
+                        FormulaScorePill("روزانه: ۳۵+".toPersianDigits(), colors.primary, Modifier.weight(1f))
                     }
                 }
             }
@@ -438,7 +439,7 @@ fun ProgressScreen(
                                 color = colors.onSurface
                             )
                             Text(
-                                text = "$totalCorrectCount پاسخ درست از مجموع $totalReviewed پاسخ ثبت‌شده",
+                                text = "${totalCorrectCount.toPersianDigits()} پاسخ درست از مجموع ${totalReviewed.toPersianDigits()} پاسخ ثبت‌شده",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 fontSize = 12.sp
@@ -446,7 +447,7 @@ fun ProgressScreen(
                         }
 
                         Text(
-                            text = "$totalAccuracy%",
+                            text = "${totalAccuracy.toPersianDigits()}٪",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Black,
                             color = colors.success
@@ -819,7 +820,7 @@ private fun AccuracyRow(
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "$correct از $total ($percentage٪)",
+                text = "${correct.toPersianDigits()} از ${total.toPersianDigits()} (${percentage.toPersianDigits()}٪)",
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = color
@@ -943,7 +944,7 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = if (group.isMaxLevel) "تکمیل ۱۰۰٪" else "${group.currentProgress} / ${group.targetThreshold}",
+                        text = if (group.isMaxLevel) "تکمیل ۱۰۰٪" else "${group.currentProgress.toPersianDigits()} / ${group.targetThreshold.toPersianDigits()}",
                         style = MaterialTheme.typography.labelSmall,
                         color = if (group.isMaxLevel) colors.success else colors.primary,
                         fontWeight = FontWeight.Bold

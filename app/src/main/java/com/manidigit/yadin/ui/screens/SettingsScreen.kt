@@ -35,6 +35,9 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Quiz
+import androidx.compose.material.icons.filled.Style
+import com.manidigit.yadin.domain.model.ReviewMode
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button

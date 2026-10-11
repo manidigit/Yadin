@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.theme.LocalYadinColors
+import com.manidigit.yadin.ui.util.toPersianDigits
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -88,7 +89,7 @@ fun DailyReviewChart(
                 }
             }
 
-            val label = if (sliceIndex == 0) "۵ روز اخیر" else "${sliceEndOffset + 1}-${sliceStartOffset + 1} روز پیش"
+            val label = if (sliceIndex == 0) "۵ روز اخیر" else "${(sliceEndOffset + 1).toPersianDigits()}-${(sliceStartOffset + 1).toPersianDigits()} روز پیش"
             DayChartModel(
                 dayString = endDay,
                 shortLabel = label,
@@ -132,7 +133,7 @@ fun DailyReviewChart(
                         color = colors.onSurface
                     )
                     Text(
-                        text = "مجموع: $totalReviews مرور در دوره انتخاب‌شده",
+                        text = "مجموع: ${totalReviews.toPersianDigits()} مرور در دوره انتخاب‌شده",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -226,7 +227,7 @@ fun DailyReviewChart(
                                 textAlign = android.graphics.Paint.Align.LEFT
                                 isAntiAlias = true
                             }
-                            drawText("$value", 4.dp.toPx(), y + 3.dp.toPx(), axisPaint)
+                            drawText(value.toPersianDigits(), 4.dp.toPx(), y + 3.dp.toPx(), axisPaint)
                         }
                     }
 
@@ -271,7 +272,7 @@ fun DailyReviewChart(
                                     isAntiAlias = true
                                     isFakeBoldText = item.isToday
                                 }
-                                drawText("${item.totalCount}", centerX, barTop - 5.dp.toPx(), paint)
+                                drawText(item.totalCount.toPersianDigits(), centerX, barTop - 5.dp.toPx(), paint)
                             }
                         }
 

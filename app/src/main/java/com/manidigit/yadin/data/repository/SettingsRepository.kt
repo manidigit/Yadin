@@ -53,9 +53,9 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     val defaultReviewModeFlow: Flow<com.manidigit.yadin.domain.model.ReviewMode> = settingsDao.getSettingFlow("defaultReviewMode")
         .map {
             try {
-                if (it != null) com.manidigit.yadin.domain.model.ReviewMode.valueOf(it) else com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD
+                if (it != null) com.manidigit.yadin.domain.model.ReviewMode.valueOf(it) else com.manidigit.yadin.domain.model.ReviewMode.QUIZ
             } catch (e: Exception) {
-                com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD
+                com.manidigit.yadin.domain.model.ReviewMode.QUIZ
             }
         }
 

@@ -60,6 +60,7 @@ import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.toPersianDigits
 
 private data class ReviewTypeItem(val type: ReviewType, val title: String, val icon: ImageVector)
 private data class DiffItem(val diff: VocabularyDifficulty, val label: String, val color: Color)
@@ -272,13 +273,14 @@ fun ReviewSetupScreen(
                             reviewTypeItems.forEach { item ->
                                 val isSelected = (selectedType == item.type)
                                 val countBadge = statistics?.let { stats ->
-                                    when (item.type) {
+                                    val badgeText = when (item.type) {
                                         ReviewType.DAILY -> "${stats.dueDailyCount}/${stats.dailyStageCount}"
                                         ReviewType.WEEKLY -> "${stats.dueWeeklyCount}/${stats.weeklyStageCount}"
                                         ReviewType.MONTHLY -> "${stats.dueMonthlyCount}/${stats.monthlyStageCount}"
                                         ReviewType.LEARNED -> "${stats.availableLearnedCount}/${stats.learnedStageCount}"
                                         ReviewType.RANDOM -> "${stats.dueTodayCount}/${stats.totalWords}"
                                     }
+                                    badgeText.toPersianDigits()
                                 }
                                 Box(
                                     modifier = Modifier
@@ -449,7 +451,7 @@ fun ReviewSetupScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "$limit",
+                                        text = limit.toPersianDigits(),
                                         fontSize = 12.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                         color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
@@ -471,9 +473,9 @@ fun ReviewSetupScreen(
         val actualSessionCards = minOf(candidateCount, selectedMaxCards)
         val buttonText = if (isReady) {
             if (candidateCount > selectedMaxCards) {
-                "شروع مرور ($actualSessionCards از $candidateCount واژه)"
+                "شروع مرور (${actualSessionCards.toPersianDigits()} از ${candidateCount.toPersianDigits()} واژه)"
             } else {
-                "شروع مرور ($actualSessionCards واژه)"
+                "شروع مرور (${actualSessionCards.toPersianDigits()} واژه)"
             }
         } else {
             "واژه‌ای با این فیلتر یافت نشد"
@@ -580,7 +582,7 @@ fun CompactDiffBadge(
                     .background(color)
             )
             Text(
-                text = "$label ($count)",
+                text = "$label (${count.toPersianDigits()})",
                 fontSize = 11.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 color = if (isSelected) colors.onSurface else colors.onSurfaceVariant

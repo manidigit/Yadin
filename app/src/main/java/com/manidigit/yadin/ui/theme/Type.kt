@@ -9,10 +9,7 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 
 val VazirmatnFontFamily = FontFamily(
-    Font(R.font.vazirmatn, FontWeight.Normal),
-    Font(R.font.vazirmatn, FontWeight.Medium),
-    Font(R.font.vazirmatn, FontWeight.SemiBold),
-    Font(R.font.vazirmatn, FontWeight.Bold)
+    Font(R.font.vazirmatn, FontWeight.Normal)
 )
 
 val AppTypography = Typography(

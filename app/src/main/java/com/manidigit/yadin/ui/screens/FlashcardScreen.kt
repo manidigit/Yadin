@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.ReviewCard
+import com.manidigit.yadin.ui.util.toPersianDigits
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
@@ -191,7 +192,7 @@ fun FlashcardScreen(
                 }
 
                 Text(
-                    text = "کارت ${currentIndex + 1} از ${cards.size}",
+                    text = "کارت ${(currentIndex + 1).toPersianDigits()} از ${cards.size.toPersianDigits()}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface

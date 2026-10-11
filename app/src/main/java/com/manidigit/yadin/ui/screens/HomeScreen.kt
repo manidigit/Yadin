@@ -59,6 +59,7 @@ import com.manidigit.yadin.ui.components.StreakChip
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.toPersianDigits
 
 @Composable
 fun HomeScreen(
@@ -350,7 +351,7 @@ fun HomeScreen(
                                     color = colors.onSurface
                                 )
                                 Text(
-                                    text = if (isDue) "$dueCount واژه آماده مرور در صف لایتنر" else "همه واژه‌ها مرور شده‌اند، آماده تمرین آزاد هستید",
+                                    text = if (isDue) "${dueCount.toPersianDigits()} واژه آماده مرور در صف لایتنر" else "همه واژه‌ها مرور شده‌اند، آماده تمرین آزاد هستید",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = colors.onSurfaceVariant
                                 )
@@ -365,7 +366,7 @@ fun HomeScreen(
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "$dueCount واژه",
+                                    text = "${dueCount.toPersianDigits()} واژه",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     color = colors.primary
@@ -469,7 +470,7 @@ fun HomeScreen(
                             color = colors.onSurface
                         )
                         Text(
-                            text = "${statistics.totalWords} واژه",
+                            text = "${statistics.totalWords.toPersianDigits()} واژه",
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant
                         )
@@ -628,14 +629,14 @@ fun StageMetricPill(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "$dueCount",
+                    text = dueCount.toPersianDigits(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (dueCount > 0) colors.onSurface else colors.onSurfaceVariant.copy(alpha = 0.6f),
                     fontSize = 13.sp
                 )
                 Text(
-                    text = "/$totalCount",
+                    text = "/${totalCount.toPersianDigits()}",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Normal,
                     color = colors.onSurfaceVariant.copy(alpha = 0.7f),
