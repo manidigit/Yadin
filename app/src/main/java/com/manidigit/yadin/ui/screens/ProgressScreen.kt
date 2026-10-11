@@ -784,7 +784,7 @@ private fun ProgressRow(
                 )
                 Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
             }
-            Text("$count واژه ($percent٪)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
+            Text("${count.toPersianDigits()} واژه (${percent.toPersianDigits()}٪)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
         }
         LinearProgressIndicator(
             progress = { fraction },

@@ -89,6 +89,7 @@ import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.toPersianDigits
 
 @Composable
 fun BackupScreen(
@@ -167,7 +168,7 @@ fun BackupScreen(
                     withContext(Dispatchers.Main) {
                         if (!text.isNullOrBlank()) {
                             loadedFileContent = text
-                            loadedFileName = "فایل انتخاب‌شده (${text.length / 1024} کیلوبایت)"
+                            loadedFileName = "فایل انتخاب‌شده (${(text.length / 1024).toPersianDigits()} کیلوبایت)"
                             Toast.makeText(context, "فایل با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
                         }
                     }
