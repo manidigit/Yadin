@@ -399,24 +399,50 @@ object VocabularyParser {
     }
 
     fun splitPair(s: String): Pair<String, String>? {
-        // Priority 1: Arrow symbols
-        for (arrow in listOf("→", "➜")) {
+        // Priority 1: Arrow symbols & text arrows
+        for (arrow in listOf("→", "➜", "->", "=>")) {
             val idx = s.indexOf(arrow)
-            if (idx in 1 until s.length - 1) {
-                return Pair(s.substring(0, idx).trim(), s.substring(idx + 1).trim())
+            if (idx in 1 until s.length - arrow.length) {
+                val left = s.substring(0, idx).trim()
+                val right = s.substring(idx + arrow.length).trim()
+                if (left.isNotBlank() && right.isNotBlank()) {
+                    return Pair(left, right)
+                }
             }
         }
-        // Priority 2: Dash enclosed in spaces
+        // Priority 2: Equal sign (e.g. "casa = خانه")
+        val equalsIdx = s.indexOf('=')
+        if (equalsIdx in 1 until s.length - 1) {
+            val left = s.substring(0, equalsIdx).trim()
+            val right = s.substring(equalsIdx + 1).trim()
+            if (left.isNotBlank() && right.isNotBlank()) {
+                return Pair(left, right)
+            }
+        }
+        // Priority 3: Parentheses pair (e.g. "casa (خانه)")
+        val parenMatch = Regex("^([^(（]+)\\s*[(（]([^)）]+)[)）]\\s*$").find(s)
+        if (parenMatch != null) {
+            val left = parenMatch.groupValues[1].trim()
+            val right = parenMatch.groupValues[2].trim()
+            if (left.isNotBlank() && right.isNotBlank()) {
+                return Pair(left, right)
+            }
+        }
+        // Priority 4: Dash enclosed in spaces or dash delimiter
         val dashMatch = REGEX_DASH_SPLIT.find(s)
         if (dashMatch != null && dashMatch.range.first > 0 && dashMatch.range.last < s.length - 1) {
-            return Pair(s.substring(0, dashMatch.range.first).trim(), s.substring(dashMatch.range.last + 1).trim())
+            val left = s.substring(0, dashMatch.range.first).trim()
+            val right = s.substring(dashMatch.range.last + 1).trim()
+            if (left.isNotBlank() && right.isNotBlank()) {
+                return Pair(left, right)
+            }
         }
-        // Priority 3: Colon if left is Latin and right is Persian
+        // Priority 5: Colon
         val colonIdx = s.indexOf(':')
         if (colonIdx in 1 until s.length - 1) {
             val left = s.substring(0, colonIdx).trim()
             val right = s.substring(colonIdx + 1).trim()
-            if (hasLatin(left) && hasPersian(right)) {
+            if (left.isNotBlank() && right.isNotBlank()) {
                 return Pair(left, right)
             }
         }
