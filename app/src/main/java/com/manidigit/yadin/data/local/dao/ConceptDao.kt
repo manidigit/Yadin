@@ -24,6 +24,14 @@ data class ConceptWithContents(
     val targetTranslations: String?
 )
 
+data class ConceptCategoryJoin(
+    val conceptId: String,
+    val id: String,
+    val name: String,
+    val sortOrder: Int,
+    val isDefault: Boolean
+)
+
 @Dao
 interface ConceptDao {
 
@@ -119,6 +127,15 @@ interface ConceptDao {
         ORDER BY cat.sortOrder ASC, cat.name ASC
     """)
     suspend fun getCategoriesForConcept(conceptId: String): List<CategoryEntity>
+
+    @Query("""
+        SELECT cc.conceptId, cat.id, cat.name, cat.sortOrder, cat.isDefault 
+        FROM categories cat
+        INNER JOIN concept_categories cc ON cat.id = cc.categoryId
+        WHERE cc.conceptId IN (:conceptIds)
+        ORDER BY cat.sortOrder ASC, cat.name ASC
+    """)
+    suspend fun getCategoriesForConcepts(conceptIds: List<String>): List<ConceptCategoryJoin>
 
     @Query("UPDATE concepts SET active = 0, updatedAt = :timestamp WHERE id = :conceptId")
     suspend fun softDeleteConcept(conceptId: String, timestamp: Long = System.currentTimeMillis())

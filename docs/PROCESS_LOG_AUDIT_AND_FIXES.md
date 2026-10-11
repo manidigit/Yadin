@@ -731,3 +731,66 @@
   2. **همگام‌سازی و بازبینی سند مشخصات فنی (`Yadin-Specification1-1.md`):** بخش‌های ۳.۲، الگوریتم فیلتر کاندیدای مرور و دیاگرام بازیابی دیتابیس بازبینی و ویرایش شدند تا حذف سیستم برچسب‌گذاری به صورت کامل در مستندات فنی منعکس گردد.
   3. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 29` و `versionName = "1.21.0"`.
 
+---
+
+### ۳.۹. گزارش به‌روزرسانی نسخه ۱.۲۲.۰ (حل ۱۰ مسئله مهم بک‌لاگ: پشتیبان‌گیری تفکیکی، اشتراک‌گذاری فایل‌ها، فرم واژه چنددسته‌ای، پایداری شناسه، گارد نشست مرور و ارتقای ورود گروهی)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/data/repository/BackupRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/VocabularyParser.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/time/ClockAndDayMath.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/AddEditWordScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/BackupScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/SettingsViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+  * `app/src/test/java/com/manidigit/yadin/data/repository/BackupRepositoryTest.kt`
+* **شرح اقدامات انجام‌شده:**
+  1. **بازیابی تفکیکی جایگزین در فایل‌های بکاپ (`ISS-36`):** اصلاح اعتبارسنجی و تشکیل لیست `validConceptIds` در حالت REPLACE؛ در فایل‌های صرفاً پیشرفت، شناسه‌های مفاهیم موجود محلی مبنا قرار گرفته و پیشرفت بدون حذف واژگان جایگزین می‌شود. در فایل‌های صرفاً واژگان، رکوردهای یتیم یادگیری و تاریخچه به طور خودکار پاکسازی می‌شوند.
+  2. **مدیریت، لیست و اشتراک‌گذاری مستقیم بکاپ‌های داخلی و اکسل (`ISS-35`):** طراحی لیست کارت‌های فایل‌های ذخیره‌شده در حافظه داخلی برنامه در `BackupScreen.kt` به همراه امکان اشتراک‌گذاری مستقیم عمومی (`ACTION_SEND` با `FileProvider`) و حذف.
+  3. **فرم افزودن/ویرایش واژه چنددسته‌ای (`ISS-10`):** جایگزینی منوی تک‌دسته با چیپ‌های تعاملی انتخاب چندگانه (`Multi-select Chips`) در `AddEditWordScreen.kt` و ذخیره در جدول رابط `concept_categories`.
+  4. **پایداری شناسه‌ها در ویرایش واژه (`ISS-21`):** بازنویسی متد `updateWord` جهت به‌روزرسانی درجا و حفظ شناسه‌های پایدار محتواها (Stable IDs) به جای حذف و تولید مجدد UUID.
+  5. **گارد وضعیت نشست مرور و پاکسازی نشست‌های معلق (`ISS-42` & `ISS-43`):** افزودن گارد وضعیت `ACTIVE` در ثبت پاسخ، لغو خودکار نشست‌های فعال معلق قبلی در زمان اجرای برنامه و ممانعت از ایجاد نشست‌های خالی با `totalItems = 0`.
+  6. **یکسان‌سازی کوئری‌های واژگان تمرین‌شده (`ISS-44`):** هماهنگ‌سازی کامل شروط استخراج واژگان تمرین‌شده بر پایه وضعیت فعال بودن و ثبت تاریخ آخرین مرور.
+  7. **اصلاح محاسبات رگبار در برابر تاریخ‌های آینده (`ISS-46`):** فیلتر کردن تاریخ‌های فراتر از امروز در `ClockAndDayMath.calculateStreakDays` برای جلوگیری از قطع کاذب رگبار روزانه.
+  8. **حفظ نوع ورودی و انتساب هوشمند دسته‌ها در ایمپورت (`ISS-48` & `ISS-49`):** انتقال صریح `entry.entryType` و استخراج و ایجاد/انتساب خودکار دسته‌بندی‌های فایل‌های ورودی به جدول `concept_categories`.
+  9. **پشتیبانی از خطوط ترجمه متوالی در پارسر (`ISS-50`):** تبدیل متغیر نگهداری ترجمه‌های سرگردان به لیست `pendingOrphanTranslations` جهت اتصال کامل تمام خطوط فارسی.
+  10. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 30` و `versionName = "1.22.0"`.
+
+---
+
+### ۳.۱۰. گزارش به‌روزرسانی نسخه ۱.۲۳.۰ (حل ۵ مسئله اولویت‌دار سطح متوسط: پاکسازی معماری دامنه، حذف مشکل N+1 کوئری، پویاسازی کدهای زبان، هماهنگ‌سازی پاسخ‌ها و بارگذاری تنظیمات کاربر)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/FileReaders.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/util/Coroutines.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/model/Enums.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/ConceptDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/LearningDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/VocabularyRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/ReviewViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ReviewSetupScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+* **شرح اقدامات انجام‌شده:**
+  1. **پاکسازی معماری دامنه از وابستگی‌های اندروید (`ISS-33`):** حذف `android.util.Xml` در `FileReaders.kt` و جایگزینی با `XmlPullParserFactory.newInstance().newPullParser()` و پاکسازی `android.util.Log` از `Coroutines.kt`؛ دستیابی به خلوص ۱۰۰ درصدی Pure Kotlin در پکیج `domain/`.
+  2. **حذف مشکل N+1 کوئری در جستجو و کتابخانه (`ISS-32`):** افزودن متدهای واکشی دسته‌ای در `ConceptDao` و `LearningDao` و تجمیع داده‌ها در متد `batchLoadWordDetails` در `VocabularyRepository.kt`؛ تقلیل صدها کوئری پیاپی به تنها ۴ کوئری گروهی سریع.
+  3. **پویاسازی کدهای زبان و رفع رشته‌های هاردکد (`ISS-45`):** تعریف کلاس متمرکز `LanguageConstants` و اکستنشن‌های `resolveSourceAndTarget()`، `sourceLanguage()` و `targetLanguage()` روی `CardDirection` و حذف رشته‌های ثابت `"es"` و `"fa"` از متدهای واژگان و آزمون.
+  4. **هماهنگ‌سازی زمان‌بندی شمارش پاسخ‌ها و پایان نشست بین آزمون و فلش‌کارت (`ISS-90`, `ISS-86`):** انتقال افزایش شمارنده‌های پاسخ در `submitQuizAnswer` به پس از تأیید ثبت موفق در دیتابیس درون کورتین، و تضمین اجرای امن کالبک `onSessionCompleted` روی نخ اصلی (`Dispatchers.Main`).
+  5. **بارگذاری تنظیمات کاربر در پیکربندی مرور (`ISS-106`):** افزودن پارامترهای `initialMode` و `initialQuizLevel` به `ReviewSetupScreen` و انتقال مقادیر ذخیره‌شده کاربر از تنظیمات به صفحه پیکربندی در `MainActivity.kt`.
+  6. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 31` و `versionName = "1.23.0"`.
+
+
+

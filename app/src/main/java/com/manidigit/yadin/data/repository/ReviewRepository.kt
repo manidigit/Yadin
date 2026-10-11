@@ -223,8 +223,8 @@ class ReviewRepository(
         val cards = fetchCardsForSession(sessionId)
         if (cards.isEmpty()) return@withContext emptyList()
 
-        // Distractor candidate entries
-        val targetLang = if (session?.direction == CardDirection.REVERSE) "es" else "fa"
+        // Distractor candidate entries (ISS-45: Dynamic target language resolution)
+        val targetLang = (session?.direction ?: CardDirection.NORMAL).targetLanguage()
         val sessionConceptIds = cards.map { it.conceptId }.toSet()
 
         // Fast random candidate sampling (500 items) to ensure wide pool and instant load time

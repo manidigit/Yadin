@@ -228,7 +228,9 @@ class ReviewViewModel(
                     _isCardFlipped.value = false
                 } else {
                     reviewRepo.completeSession(session.id)
-                    onSessionCompleted?.invoke()
+                    withContext(Dispatchers.Main) {
+                        onSessionCompleted?.invoke()
+                    }
                 }
             } catch (e: Exception) {
                 _reviewErrorMessage.value = "خطا در ثبت پاسخ فلش‌کارت: ${e.message}"
@@ -267,12 +269,6 @@ class ReviewViewModel(
         _quizSelectedOption.value = optionIndex
         _quizUserAnswers.value = _quizUserAnswers.value + (idx to optionIndex)
 
-        if (isCorrect) {
-            _sessionCorrectCount.value += 1
-        } else {
-            _sessionWrongCount.value += 1
-        }
-
         val attemptId = "${session.id}_${q.conceptId}_${q.direction}_$idx"
         lastSubmitQuizJob = scope.launch {
             try {
@@ -288,6 +284,12 @@ class ReviewViewModel(
                     difficultyThreshold = difficultyThreshold,
                     reviewAttemptId = attemptId
                 )
+                // حل نقص ISS-90: هماهنگ‌سازی زمان‌بندی افزایش شمارنده‌ها دقیقاً پس از ثبت موفق در هر دو حالت
+                if (isCorrect) {
+                    _sessionCorrectCount.value += 1
+                } else {
+                    _sessionWrongCount.value += 1
+                }
             } catch (e: Exception) {
                 _reviewErrorMessage.value = "خطا در ثبت پاسخ آزمون: ${e.message}"
             }

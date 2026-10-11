@@ -1,6 +1,5 @@
 package com.manidigit.yadin.domain.algorithm
 
-import android.util.Xml
 import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.domain.model.ParseResult
@@ -10,6 +9,7 @@ import com.manidigit.yadin.domain.text.TextUtilities
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 
@@ -377,7 +377,7 @@ object FileReaders {
     }
 
     private fun parseSharedStrings(stream: InputStream, list: MutableList<String>) {
-        val parser = Xml.newPullParser()
+        val parser = XmlPullParserFactory.newInstance().newPullParser()
         parser.setInput(stream, "UTF-8")
         var eventType = parser.eventType
         var currentString = StringBuilder()
@@ -402,7 +402,7 @@ object FileReaders {
     }
 
     private fun parseSheet(stream: InputStream, sharedStrings: List<String>, rows: MutableList<List<String>>) {
-        val parser = Xml.newPullParser()
+        val parser = XmlPullParserFactory.newInstance().newPullParser()
         parser.setInput(stream, "UTF-8")
         var eventType = parser.eventType
 

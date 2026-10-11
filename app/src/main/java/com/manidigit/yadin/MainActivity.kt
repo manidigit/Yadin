@@ -238,10 +238,14 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val candidateCount by viewModel.setupCandidateCount.collectAsStateWithLifecycle()
             val statistics by viewModel.statistics.collectAsStateWithLifecycle()
             val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
+            val defaultReviewMode by viewModel.defaultReviewMode.collectAsStateWithLifecycle()
+            val defaultQuizLevel by viewModel.defaultQuizLevel.collectAsStateWithLifecycle()
 
             ReviewSetupScreen(
                 initialType = screen.initialType,
                 initialDifficulties = screen.initialDifficulties,
+                initialMode = defaultReviewMode,
+                initialQuizLevel = defaultQuizLevel,
                 categories = categories,
                 difficultyCounts = difficultyCounts,
                 candidateCount = candidateCount,

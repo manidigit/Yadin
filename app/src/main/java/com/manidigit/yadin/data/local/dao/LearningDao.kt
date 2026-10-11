@@ -45,6 +45,9 @@ interface LearningDao {
     @Query("SELECT * FROM learning_states WHERE conceptId = :conceptId")
     suspend fun getLearningStatesForConcept(conceptId: String): List<LearningStateEntity>
 
+    @Query("SELECT * FROM learning_states WHERE conceptId IN (:conceptIds)")
+    suspend fun getLearningStatesForConcepts(conceptIds: List<String>): List<LearningStateEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDifficultyState(state: DifficultyStateEntity)
 
@@ -59,6 +62,9 @@ interface LearningDao {
 
     @Query("SELECT * FROM difficulty_states WHERE conceptId = :conceptId")
     suspend fun getDifficultyStatesForConcept(conceptId: String): List<DifficultyStateEntity>
+
+    @Query("SELECT * FROM difficulty_states WHERE conceptId IN (:conceptIds)")
+    suspend fun getAllDifficultyStatesForConcepts(conceptIds: List<String>): List<DifficultyStateEntity>
 
     @Query("SELECT * FROM difficulty_states WHERE conceptId IN (:conceptIds) AND direction = :direction")
     suspend fun getDifficultyStatesForConcepts(conceptIds: List<String>, direction: CardDirection): List<DifficultyStateEntity>

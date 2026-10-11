@@ -9,9 +9,47 @@ enum class EntryType {
     STRUCTURE
 }
 
+object LanguageConstants {
+    const val DEFAULT_SOURCE_LANGUAGE = "es"
+    const val DEFAULT_TARGET_LANGUAGE = "fa"
+    const val DEFAULT_LANGUAGE_PAIR = "es-fa"
+
+    fun getSourceLanguage(pair: String = DEFAULT_LANGUAGE_PAIR): String {
+        val parts = pair.split("-")
+        return if (parts.isNotEmpty() && parts[0].isNotBlank()) parts[0] else DEFAULT_SOURCE_LANGUAGE
+    }
+
+    fun getTargetLanguage(pair: String = DEFAULT_LANGUAGE_PAIR): String {
+        val parts = pair.split("-")
+        return if (parts.size > 1 && parts[1].isNotBlank()) parts[1] else DEFAULT_TARGET_LANGUAGE
+    }
+
+    fun resolveLanguages(
+        direction: CardDirection,
+        pair: String = DEFAULT_LANGUAGE_PAIR
+    ): Pair<String, String> {
+        val source = getSourceLanguage(pair)
+        val target = getTargetLanguage(pair)
+        return if (direction == CardDirection.REVERSE) {
+            Pair(target, source)
+        } else {
+            Pair(source, target)
+        }
+    }
+}
+
 enum class CardDirection {
     NORMAL,  // Source -> Target (e.g. Spanish -> Persian)
-    REVERSE  // Target -> Source (e.g. Persian -> Spanish)
+    REVERSE; // Target -> Source (e.g. Persian -> Spanish)
+
+    fun resolveSourceAndTarget(pair: String = LanguageConstants.DEFAULT_LANGUAGE_PAIR): Pair<String, String> =
+        LanguageConstants.resolveLanguages(this, pair)
+
+    fun sourceLanguage(pair: String = LanguageConstants.DEFAULT_LANGUAGE_PAIR): String =
+        resolveSourceAndTarget(pair).first
+
+    fun targetLanguage(pair: String = LanguageConstants.DEFAULT_LANGUAGE_PAIR): String =
+        resolveSourceAndTarget(pair).second
 }
 
 enum class Stage {

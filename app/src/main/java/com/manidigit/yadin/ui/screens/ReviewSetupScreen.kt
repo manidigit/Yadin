@@ -69,6 +69,9 @@ private data class DiffItem(val diff: VocabularyDifficulty, val label: String, v
 fun ReviewSetupScreen(
     initialType: ReviewType = ReviewType.RANDOM,
     initialDifficulties: Set<VocabularyDifficulty> = emptySet(),
+    initialMode: ReviewMode = ReviewMode.QUIZ,
+    initialQuizLevel: QuizLevel = QuizLevel.MEDIUM,
+    initialMaxCards: Int = 20,
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,
@@ -81,14 +84,15 @@ fun ReviewSetupScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
-    var selectedType by remember { mutableStateOf(initialType) }
-    var selectedMode by remember { mutableStateOf(ReviewMode.QUIZ) }
-    var selectedQuizLevel by remember { mutableStateOf(QuizLevel.MEDIUM) }
-    var selectedDifficulties by remember {
+    // حل نقص ISS-106: بارگذاری مقادیر پیش‌فرض کاربر از تنظیمات ذخیره‌شده
+    var selectedType by remember(initialType) { mutableStateOf(initialType) }
+    var selectedMode by remember(initialMode) { mutableStateOf(initialMode) }
+    var selectedQuizLevel by remember(initialQuizLevel) { mutableStateOf(initialQuizLevel) }
+    var selectedDifficulties by remember(initialDifficulties) {
         mutableStateOf(if (initialDifficulties.isNotEmpty()) initialDifficulties else VocabularyDifficulty.entries.toSet())
     }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
-    var selectedMaxCards by remember { mutableStateOf(20) }
+    var selectedMaxCards by remember(initialMaxCards) { mutableStateOf(initialMaxCards) }
 
     fun buildFilters() = ReviewFilters(
         reviewType = selectedType,

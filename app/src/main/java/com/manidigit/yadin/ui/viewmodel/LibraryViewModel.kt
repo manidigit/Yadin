@@ -383,7 +383,7 @@ class LibraryViewModel(
             _importProgress.value = 0f
             _libraryErrorMessage.value = null
             try {
-                val summary = vocabularyRepo.importParsedEntries(result.entries, policy, categoryId) { done, total ->
+                val summary = vocabularyRepo.importParsedEntries(result.entries, policy, categoryId, direction) { done, total ->
                     if (total > 0) {
                         _importProgress.value = done.toFloat() / total
                     }

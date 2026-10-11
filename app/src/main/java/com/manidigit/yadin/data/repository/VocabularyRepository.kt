@@ -202,9 +202,119 @@ class VocabularyRepository(
             limit = limit,
             offset = offset
         )
-        val details = entities.mapNotNull { getWordDetail(it.id) }
+        if (entities.isEmpty()) return Pair(emptyList(), false)
+        val details = batchLoadWordDetails(entities)
         val hasMore = entities.size >= limit
         return Pair(details, hasMore)
+    }
+
+    private suspend fun batchLoadWordDetails(entities: List<ConceptEntity>): List<WordDetail> {
+        if (entities.isEmpty()) return emptyList()
+        val conceptIds = entities.map { it.id }
+
+        // بهینه‌سازی ISS-32: واکشی دسته‌ای (Batch Fetch) جهت حذف کامل مشکل N+1 کوئری
+        val contentsMap = conceptDao.getContentsForConcepts(conceptIds).groupBy { it.conceptId }
+        val learningStatesMap = learningDao.getLearningStatesForConcepts(conceptIds).groupBy { it.conceptId }
+        val difficultyStatesMap = learningDao.getAllDifficultyStatesForConcepts(conceptIds).groupBy { it.conceptId }
+        val categoriesJoinMap = conceptDao.getCategoriesForConcepts(conceptIds).groupBy { it.conceptId }
+
+        return entities.mapNotNull { conceptEntity ->
+            val contents = contentsMap[conceptEntity.id] ?: emptyList()
+            val sourceContentEntity = contents.firstOrNull { it.languageCode != "fa" } ?: contents.firstOrNull() ?: return@mapNotNull null
+            val targetContentEntities = contents.filter { it.languageCode == "fa" || it.id != sourceContentEntity.id }
+
+            val lStates = learningStatesMap[conceptEntity.id] ?: emptyList()
+            val normalLearning = lStates.firstOrNull { it.direction == CardDirection.NORMAL }?.let {
+                LearningState(
+                    id = it.id,
+                    conceptId = it.conceptId,
+                    direction = it.direction,
+                    stage = it.stage,
+                    nextReviewDay = it.nextReviewDay,
+                    lastReviewedDay = it.lastReviewedDay,
+                    createdAt = it.createdAt,
+                    updatedAt = it.updatedAt
+                )
+            }
+            val reverseLearning = lStates.firstOrNull { it.direction == CardDirection.REVERSE }?.let {
+                LearningState(
+                    id = it.id,
+                    conceptId = it.conceptId,
+                    direction = it.direction,
+                    stage = it.stage,
+                    nextReviewDay = it.nextReviewDay,
+                    lastReviewedDay = it.lastReviewedDay,
+                    createdAt = it.createdAt,
+                    updatedAt = it.updatedAt
+                )
+            }
+
+            val dStates = difficultyStatesMap[conceptEntity.id] ?: emptyList()
+            val normalDiff = dStates.firstOrNull { it.direction == CardDirection.NORMAL }?.let {
+                DifficultyState(
+                    id = it.id,
+                    conceptId = it.conceptId,
+                    direction = it.direction,
+                    current = it.current,
+                    consecutiveCorrect = it.consecutiveCorrect,
+                    consecutiveWrong = it.consecutiveWrong,
+                    hasReachedVeryHard = it.hasReachedVeryHard
+                )
+            }
+            val reverseDiff = dStates.firstOrNull { it.direction == CardDirection.REVERSE }?.let {
+                DifficultyState(
+                    id = it.id,
+                    conceptId = it.conceptId,
+                    direction = it.direction,
+                    current = it.current,
+                    consecutiveCorrect = it.consecutiveCorrect,
+                    consecutiveWrong = it.consecutiveWrong,
+                    hasReachedVeryHard = it.hasReachedVeryHard
+                )
+            }
+
+            val categoriesList = categoriesJoinMap[conceptEntity.id]?.map {
+                Category(id = it.id, name = it.name, sortOrder = it.sortOrder, isDefault = it.isDefault)
+            } ?: emptyList()
+
+            val domainConcept = Concept(
+                id = conceptEntity.id,
+                entryType = conceptEntity.entryType,
+                categoryId = conceptEntity.categoryId,
+                active = conceptEntity.active,
+                createdAt = conceptEntity.createdAt,
+                updatedAt = conceptEntity.updatedAt
+            )
+
+            WordDetail(
+                concept = domainConcept,
+                sourceContent = Content(
+                    id = sourceContentEntity.id,
+                    conceptId = sourceContentEntity.conceptId,
+                    languageCode = sourceContentEntity.languageCode,
+                    text = sourceContentEntity.text,
+                    canonicalKey = sourceContentEntity.canonicalKey,
+                    note = sourceContentEntity.note,
+                    translationIndex = sourceContentEntity.translationIndex
+                ),
+                targetContents = targetContentEntities.map {
+                    Content(
+                        id = it.id,
+                        conceptId = it.conceptId,
+                        languageCode = it.languageCode,
+                        text = it.text,
+                        canonicalKey = it.canonicalKey,
+                        note = it.note,
+                        translationIndex = it.translationIndex
+                    )
+                },
+                categories = categoriesList,
+                normalLearning = normalLearning,
+                reverseLearning = reverseLearning,
+                normalDifficulty = normalDiff,
+                reverseDifficulty = reverseDiff
+            )
+        }
     }
 
     suspend fun searchFiltered(
@@ -258,12 +368,12 @@ class VocabularyRepository(
         } else {
             conceptDao.searchConcepts(normalized, limit)
         }
-        return entities.mapNotNull { getWordDetail(it.id) }
+        return batchLoadWordDetails(entities)
     }
 
     suspend fun getRecentWords(limit: Int = 50): List<WordDetail> {
         val entities = conceptDao.searchConcepts("", limit)
-        return entities.mapNotNull { getWordDetail(it.id) }
+        return batchLoadWordDetails(entities)
     }
 
     suspend fun addWord(
@@ -284,8 +394,7 @@ class VocabularyRepository(
             return Result.failure(IllegalArgumentException("حداقل یک ترجمه باید وارد شود"))
         }
 
-        val sourceLang = if (direction == CardDirection.REVERSE) "fa" else "es"
-        val targetLang = if (direction == CardDirection.REVERSE) "es" else "fa"
+        val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
         val conceptId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
         val effectivePrimaryCategory = categoryIds.firstOrNull() ?: categoryId
@@ -408,8 +517,7 @@ class VocabularyRepository(
                 conceptDao.insertConceptCategory(ConceptCategoryEntity(conceptId, catId))
             }
 
-            val sourceLang = if (direction == CardDirection.REVERSE) "fa" else "es"
-            val targetLang = if (direction == CardDirection.REVERSE) "es" else "fa"
+            val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
 
             // ISS-21: Preserve stable IDs instead of deleting all contents and generating random UUIDs
             val existingContents = conceptDao.getContentsForConcept(conceptId)
@@ -591,6 +699,7 @@ class VocabularyRepository(
         entries: List<ParsedEntry>,
         policy: DuplicatePolicy,
         targetCategoryId: String? = null,
+        direction: CardDirection = CardDirection.NORMAL,
         onProgress: (Int, Int) -> Unit
     ): com.manidigit.yadin.domain.model.ImportSummary {
         val total = entries.size
@@ -599,12 +708,13 @@ class VocabularyRepository(
         var skippedCount = 0
 
         database.withTransaction {
+            val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
             val allCategories = conceptDao.getAllCategories().toMutableList()
 
             entries.forEachIndexed { index, entry ->
                 val cleanSource = entry.sourceText.trim()
                 val canonical = TextUtilities.toCanonicalKey(cleanSource)
-                val existingContent = conceptDao.findActiveContentByCanonicalKey("es", canonical)
+                val existingContent = conceptDao.findActiveContentByCanonicalKey(sourceLang, canonical)
                 val enrichedNote = formatEnrichedNote(entry)
 
                 // ISS-49: Resolve categories from entry or fallback to targetCategoryId
@@ -639,6 +749,7 @@ class VocabularyRepository(
                                 translations = entry.translations,
                                 categoryId = effectiveCat,
                                 note = enrichedNote,
+                                direction = direction,
                                 entryType = entry.entryType
                             )
                             if (res.isSuccess) {
@@ -652,16 +763,17 @@ class VocabularyRepository(
                         }
                         DuplicatePolicy.MERGE -> {
                             val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
-                            val existingTranslations = currentContents.filter { it.languageCode == "fa" }.map { it.text }
+                            val existingTranslations = currentContents.filter { it.languageCode == targetLang }.map { it.text }
                             val merged = (existingTranslations + entry.translations).distinct()
-                            val currentEs = currentContents.firstOrNull { it.languageCode == "es" }
-                            val mergedNote = listOfNotNull(currentEs?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
+                            val currentSourceContent = currentContents.firstOrNull { it.languageCode == sourceLang }
+                            val mergedNote = listOfNotNull(currentSourceContent?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
                             val res = updateWord(
                                 conceptId = existingContent.conceptId,
                                 sourceText = cleanSource,
                                 translations = merged,
                                 categoryId = effectiveCat,
                                 note = mergedNote,
+                                direction = direction,
                                 entryType = entry.entryType
                             )
                             if (res.isSuccess) {
