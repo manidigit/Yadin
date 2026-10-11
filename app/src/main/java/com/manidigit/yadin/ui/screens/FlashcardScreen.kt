@@ -2,9 +2,12 @@ package com.manidigit.yadin.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -140,7 +143,15 @@ fun FlashcardScreen(
     val frontScrollState = rememberScrollState()
     val backScrollState = rememberScrollState()
 
+    var dragOffset by remember { mutableStateOf(0f) }
+    val animatedOffsetX by animateFloatAsState(
+        targetValue = dragOffset,
+        animationSpec = spring(),
+        label = "dragOffset"
+    )
+
     LaunchedEffect(currentIndex) {
+        dragOffset = 0f
         frontScrollState.scrollTo(0)
         backScrollState.scrollTo(0)
     }
@@ -216,7 +227,29 @@ fun FlashcardScreen(
                     .fillMaxSize()
                     .graphicsLayer {
                         rotationY = rotation
-                        cameraDistance = 12f * density
+                        translationX = animatedOffsetX
+                        rotationZ = (animatedOffsetX / 25f).coerceIn(-12f, 12f)
+                        cameraDistance = 16f * density
+                    }
+                    .pointerInput(currentIndex, isFlipped) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                if (dragOffset > 150f) {
+                                    dragOffset = 0f
+                                    onAnswer(true)
+                                } else if (dragOffset < -150f) {
+                                    dragOffset = 0f
+                                    onAnswer(false)
+                                } else {
+                                    dragOffset = 0f
+                                }
+                            },
+                            onDragCancel = { dragOffset = 0f },
+                            onHorizontalDrag = { change, dragAmount ->
+                                change.consume()
+                                dragOffset += dragAmount
+                            }
+                        )
                     }
                     .clickable { onFlip() },
                 shape = RoundedCornerShape(dimensions.cornerLarge),

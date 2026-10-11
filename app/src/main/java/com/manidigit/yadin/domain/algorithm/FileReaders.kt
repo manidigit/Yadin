@@ -357,7 +357,9 @@ object FileReaders {
             }
 
             val targetSheetBytes = sheetMap["xl/worksheets/sheet1.xml"]
-                ?: sheetMap.entries.sortedBy { it.key }.firstOrNull()?.value
+                ?: sheetMap.entries.minByOrNull { entry ->
+                    entry.key.removePrefix("xl/worksheets/sheet").removeSuffix(".xml").toIntOrNull() ?: 999
+                }?.value
 
             if (targetSheetBytes != null) {
                 parseSheet(targetSheetBytes.inputStream(), sharedStrings, sheetRows)

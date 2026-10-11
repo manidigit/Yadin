@@ -69,10 +69,12 @@ class MainActivity : ComponentActivity() {
             val themeId by viewModel.themeId.collectAsStateWithLifecycle()
             val isDark by viewModel.isDark.collectAsStateWithLifecycle()
             val screen by viewModel.currentScreen.collectAsStateWithLifecycle()
+            val uiLanguage by viewModel.uiLanguage.collectAsStateWithLifecycle()
+
+            val layoutDirection = if (uiLanguage == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
 
             YadinTheme(themeId = themeId, isDark = isDark) {
-                // Persian is RTL
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
                     val shouldShowBottomBar = screen is Screen.Home ||
                             screen is Screen.ReviewSetup ||
                             screen is Screen.Library ||
@@ -116,11 +118,11 @@ fun YadinBottomBar(
     val dimensions = LocalYadinDimensions.current
 
     val items = listOf(
-        Triple(Screen.Home, "خانه", Icons.Default.Home),
-        Triple(Screen.ReviewSetup(), "مرور", Icons.Default.History),
-        Triple(Screen.Library, "کتابخانه", Icons.AutoMirrored.Filled.MenuBook),
-        Triple(Screen.ProgressStats, "پیشرفت", Icons.Default.BarChart),
-        Triple(Screen.Settings, "تنظیمات", Icons.Default.Settings)
+        Triple(Screen.Home, androidx.compose.ui.res.stringResource(R.string.nav_home), Icons.Default.Home),
+        Triple(Screen.ReviewSetup(), androidx.compose.ui.res.stringResource(R.string.nav_review), Icons.Default.History),
+        Triple(Screen.Library, androidx.compose.ui.res.stringResource(R.string.nav_library), Icons.AutoMirrored.Filled.MenuBook),
+        Triple(Screen.ProgressStats, androidx.compose.ui.res.stringResource(R.string.nav_progress), Icons.Default.BarChart),
+        Triple(Screen.Settings, androidx.compose.ui.res.stringResource(R.string.nav_settings), Icons.Default.Settings)
     )
 
     NavigationBar(

@@ -792,5 +792,59 @@
   5. **بارگذاری تنظیمات کاربر در پیکربندی مرور (`ISS-106`):** افزودن پارامترهای `initialMode` و `initialQuizLevel` به `ReviewSetupScreen` و انتقال مقادیر ذخیره‌شده کاربر از تنظیمات به صفحه پیکربندی در `MainActivity.kt`.
   6. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 31` و `versionName = "1.23.0"`.
 
+---
+
+### ۳.۱۱. گزارش به‌روزرسانی نسخه ۱.۲۴.۰ (حل ۵ مسئله اولویت‌دار سطح متوسط: صف بررسی ورودی‌ها، آموزش اولیه، اعلان یادآور روزانه، تبدیل زمان به Epoch و تست‌های واقعی الگوریتم)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/ImportReviewScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/TutorialScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/notification/ReminderNotificationManager.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/time/ClockAndDayMath.kt`
+  * `app/src/test/java/com/manidigit/yadin/domain/algorithm/DomainAlgorithmLogicTest.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+* **شرح اقدامات انجام‌شده:**
+  1. **پیاده‌سازی صفحه صف بررسی ورودی‌ها (`ISS-04`):** طراحی `ImportReviewScreen.kt` جهت ویرایش، تایید و رد دستی واژگان دارای درصد اطمینان پایین در فرآیند ایمپورت.
+  2. **طراحی پیجر آموزش اولیه کاربر (`ISS-05`):** ساخت `TutorialScreen.kt` با ۶ صفحه تعاملی برای معرفی سیستم لایتنر، آزمون، درجه سختی و رگبار.
+  3. **سیستم یادآور روزانه (`ISS-14`):** پیاده‌سازی `ReminderNotificationManager.kt` جهت ساخت کانال نوتیفیکیشن و اطلاع‌رسانی واژگان سررسیدشده.
+  4. **تبدیل تاریخ/زمان به Epoch Millis (`ISS-11`):** افزودن توابع `dayToEpochMillis` و `epochMillisToDayString` در `ClockAndDayMath.kt` برای پشتیبانی ایمن عددی.
+  5. **تست‌های واحد واقعی دامنه (`ISS-24`):** افزودن کلاس `DomainAlgorithmLogicTest.kt` برای اعتبارسنجی الگوریتم‌های زمانی، استریک و پارسر واژگان.
+  6. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 32` و `versionName = "1.24.0"`.
+
+---
+
+### ۳.۱۲. گزارش به‌روزرسانی نسخه ۱.۲۵.۰ (حل ۵ مسئله نهایی بک‌لاگ: پشته ناوبری، بین‌المللی‌سازی i18n، انیمیشن ۳ بعدی و سوایپ فلش‌کارت، پاکسازی Dead Code و انتخاب شیت اکسل)
+* **فایل‌های درگیر:**
+  * `app/src/main/java/com/manidigit/yadin/ui/viewmodel/MainViewModel.kt`
+  * `app/src/main/java/com/manidigit/yadin/MainActivity.kt`
+  * `app/src/main/res/values/strings.xml`
+  * `app/src/main/res/values-en/strings.xml`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/FlashcardScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/repository/ReviewRepository.kt`
+  * `app/src/main/java/com/manidigit/yadin/data/local/dao/LearningDao.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/components/CommonComponents.kt`
+  * `app/src/main/java/com/manidigit/yadin/ui/screens/AddEditWordScreen.kt`
+  * `app/src/main/java/com/manidigit/yadin/domain/algorithm/FileReaders.kt`
+  * `app/build.gradle.kts`
+  * `README.md`
+  * `docs/Yadin-Specification1-1.md`
+  * `docs/CHANGELOG.md`
+  * `docs/ISSUES_AND_DEFECTS_BACKLOG.md`
+  * `docs/PROCESS_LOG_AUDIT_AND_FIXES.md`
+* **شرح اقدامات انجام‌شده:**
+  1. **مدیریت پشته ناوبری (`ISS-25`):** به‌روزرسانی متد `navigateTo` در `MainViewModel` جهت پاکسازی پشته ناوبری تب‌های اصلی و جلوگیری از تجمع تکراری در تاریخچه.
+  2. **بین‌المللی‌سازی کامل i18n (`ISS-28`):** استخراج کلیدواژه‌ها به `res/values/strings.xml` و `res/values-en/strings.xml` و تنظیم داینامیک `LayoutDirection` (RTL/LTR) در `MainActivity.kt`.
+  3. **انیمیشن ۳ بعدی و ژست سوایپ افقی در فلش‌کارت (`ISS-30`):** ارتقای `FlashcardScreen.kt` به انیمیشن ۳ بعدی واقعی با `cameraDistance = 16f * density` و افزودن درگ/سوایپ افقی برای ثبت پاسخ.
+  4. **پاکسازی کدهای مرده (`ISS-47`):** حذف توابع و کامپوننت‌های بلااستفاده `createSession`, `getDueConceptIds`, `getConceptIdsByStage`, `getRandomConceptIds`, `StatCard`, `CategoryPill`.
+  5. **انتخاب قطعی شیت اکسل (`ISS-51`):** مرتب‌سازی عددی شیت‌های اکسل زیپ و اولویت‌دهی به `sheet1.xml` در `FileReaders.kt`.
+  6. **اصلاح عنوان آزمون (`ISS-116`):** اصلاح عنوان به صورت «آزمون ۴ گزینه‌ای».
+  7. **ارتقای نسخه:** ارتقای رسمی به `versionCode = 33` و `versionName = "1.25.0"`.
+
+
+
 
 

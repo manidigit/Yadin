@@ -161,23 +161,6 @@ class ReviewRepository(
         reviewSessionDao.abandonAllActiveSessions(System.currentTimeMillis())
     }
 
-    suspend fun createSession(
-        reviewType: ReviewType,
-        mode: ReviewMode,
-        direction: CardDirection,
-        quizLevel: QuizLevel? = null,
-        limit: Int = 20
-    ): ReviewSession {
-        return createFilteredSession(
-            ReviewFilters(
-                reviewType = reviewType,
-                mode = mode,
-                direction = direction,
-                quizLevel = quizLevel,
-                maxCards = limit
-            )
-        )
-    }
 
     suspend fun fetchCardsForSession(sessionId: String): List<ReviewCard> {
         val items = reviewSessionDao.getItemsForSession(sessionId)

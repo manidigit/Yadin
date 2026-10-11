@@ -1,3 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Yadin</string>
+    <string name="app_name">یادین</string>
+    <string name="nav_home">خانه</string>
+    <string name="nav_review">مرور</string>
+    <string name="nav_library">کتابخانه</string>
+    <string name="nav_progress">پیشرفت</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="nav_backup">پشتیبان‌گیری</string>
+    <string name="nav_help">راهنما</string>
+    <string name="nav_about">درباره یادین</string>
+    <string name="nav_import">ورود اطلاعات</string>
+    <string name="nav_import_review">صف بررسی ورودی‌ها</string>
+    
+    <string name="home_due_today">کارت‌های سررسید امروز</string>
+    <string name="home_start_review">شروع مرور</string>
+    <string name="home_quiz_4options">آزمون ۴ گزینه‌ای</string>
+    <string name="home_leitner_box">جعبه لایتنر</string>
+    <string name="home_total_words">کل واژه‌ها</string>
+    <string name="home_mastered_words">یادگرفته‌شده</string>
+    <string name="home_learning_words">در حال یادگیری</string>
+    <string name="home_streak_days">تسلسل مطالعه (روز)</string>
+    <string name="home_quick_actions">دسترسی سریع</string>
+    
+    <string name="difficulty_easy">آسان</string>
+    <string name="difficulty_medium">متوسط</string>
+    <string name="difficulty_hard">سخت</string>
+
+    <string name="action_add_word">افزودن واژه جدید</string>
+    <string name="action_save">ذخیره</string>
+    <string name="action_cancel">انصراف</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_edit">ویرایش</string>
+    <string name="action_confirm">تأیید</string>
+    <string name="action_back">بازگشت</string>
+
+    <string name="quiz_title">آزمون ۴ گزینه‌ای</string>
+    <string name="flashcard_title">فلش‌کارت لایتنر</string>
+    <string name="flashcard_flip_hint">برای مشاهده پاسخ لمس کنید یا کارت را بچرخانید</string>
+    <string name="flashcard_remembered">یادم بود (سوایپ راست)</string>
+    <string name="flashcard_forgot">فراموش کردم (سوایپ چپ)</string>
+
+    <string name="settings_ui_language">زبان رابط کاربری</string>
+    <string name="settings_theme">تم ظاهری</string>
+    <string name="settings_dark_mode">حالت تاریک</string>
+    <string name="settings_daily_reminder">یادآور مطالعه روزانه</string>
+
+    <string name="tutorial_skip">رد شدن</string>
+    <string name="tutorial_next">بعدی</string>
+    <string name="tutorial_finish">شروع کار با یادین</string>
 </resources>

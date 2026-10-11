@@ -84,33 +84,6 @@ interface LearningDao {
     // Due cards for review:
     // Respects same-day lock (lastReviewedDay != today) and Leitner scheduling
     @Query("""
-        SELECT ls.conceptId FROM learning_states ls
-        INNER JOIN concepts c ON ls.conceptId = c.id
-        WHERE c.active = 1
-        AND ls.direction = :direction
-        AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)
-        AND (
-            (ls.stage = 'DAILY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-            (ls.stage = 'WEEKLY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-            (ls.stage = 'MONTHLY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
-        )
-        ORDER BY 
-            CASE ls.stage 
-                WHEN 'DAILY' THEN 1 
-                WHEN 'WEEKLY' THEN 2 
-                WHEN 'MONTHLY' THEN 3 
-                ELSE 4 
-            END ASC,
-            ls.nextReviewDay ASC
-        LIMIT :limit
-    """)
-    suspend fun getDueConceptIds(
-        direction: CardDirection,
-        todayDayString: String,
-        limit: Int
-    ): List<String>
-
-    @Query("""
         SELECT COUNT(DISTINCT ls.conceptId) FROM learning_states ls
         INNER JOIN concepts c ON ls.conceptId = c.id
         WHERE c.active = 1
@@ -124,29 +97,6 @@ interface LearningDao {
         )
     """)
     fun getDueCountFlow(direction: CardDirection, todayDayString: String): Flow<Int>
-
-    @Query("""
-        SELECT ls.conceptId FROM learning_states ls
-        INNER JOIN concepts c ON ls.conceptId = c.id
-        WHERE c.active = 1
-        AND ls.direction = :direction
-        AND ls.stage = :stage
-        ORDER BY ls.updatedAt ASC
-        LIMIT :limit
-    """)
-    suspend fun getConceptIdsByStage(
-        stage: Stage,
-        direction: CardDirection,
-        limit: Int
-    ): List<String>
-
-    @Query("""
-        SELECT c.id FROM concepts c
-        WHERE c.active = 1
-        ORDER BY RANDOM()
-        LIMIT :limit
-    """)
-    suspend fun getRandomConceptIds(limit: Int): List<String>
 
     @Query("""
         SELECT COUNT(*) 

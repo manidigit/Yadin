@@ -273,27 +273,4 @@ fun AddEditWordScreen(
     }
 }
 
-@Composable
-fun CategoryPill(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
 
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(dimensions.cornerSmall))
-            .background(if (isSelected) colors.primary else colors.surfaceVariant)
-            .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = label,
-            color = if (isSelected) colors.onPrimary else colors.onSurface,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}

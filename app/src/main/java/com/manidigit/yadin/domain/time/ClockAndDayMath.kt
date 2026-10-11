@@ -60,5 +60,27 @@ object ClockAndDayMath {
         }
         return streak
     }
+
+    fun dayToEpochMillis(dayString: String?): Long {
+        if (dayString.isNullOrBlank()) return 0L
+        return try {
+            val date = LocalDate.parse(dayString, DATE_FORMATTER)
+            date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        } catch (_: Exception) {
+            0L
+        }
+    }
+
+    fun epochMillisToDayString(epochMillis: Long): String {
+        if (epochMillis <= 0L) return todayDayString()
+        return try {
+            val date = java.time.Instant.ofEpochMilli(epochMillis)
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDate()
+            date.format(DATE_FORMATTER)
+        } catch (_: Exception) {
+            todayDayString()
+        }
+    }
 }
 

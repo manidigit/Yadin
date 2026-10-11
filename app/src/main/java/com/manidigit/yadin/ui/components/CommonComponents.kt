@@ -239,71 +239,7 @@ fun StreakChip(streakDays: Int, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun StatCard(
-    title: String,
-    value: String,
-    subtitle: String? = null,
-    icon: ImageVector,
-    accentColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
-) {
-    val dimensions = LocalYadinDimensions.current
-    val colors = LocalYadinColors.current
 
-    YadinCard(
-        modifier = modifier,
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(14.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(RoundedCornerShape(dimensions.cornerSmall))
-                        .background(accentColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = accentColor,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = accentColor,
-                    fontSize = 11.sp
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun SpeakButton(
