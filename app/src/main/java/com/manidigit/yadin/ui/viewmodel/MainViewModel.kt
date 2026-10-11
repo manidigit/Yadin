@@ -1,7 +1,9 @@
 package com.manidigit.yadin.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
+import java.io.File
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.manidigit.yadin.data.local.dao.DayCountRaw
@@ -200,6 +202,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val backupProgressMessage: StateFlow<String> get() = settingsVm.backupProgressMessage
     val backupLastResult: StateFlow<String?> get() = settingsVm.backupLastResult
     val isBackupError: StateFlow<Boolean> get() = settingsVm.isBackupError
+    val internalBackups: StateFlow<List<File>> get() = settingsVm.internalBackups
 
     init {
         initializeDatabase()
@@ -399,6 +402,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         categoryId: String?,
         note: String?,
         direction: CardDirection = appLanguageDirection.value,
+        categoryIds: List<String> = emptyList(),
         onError: ((String) -> Unit)? = null,
         onSuccess: () -> Unit
     ) {
@@ -409,6 +413,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             categoryId = categoryId,
             note = note,
             direction = direction,
+            categoryIds = categoryIds,
             onError = onError,
             onSuccess = onSuccess
         )
@@ -453,6 +458,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         settingsVm.exportCustomBackup(format, options)
     fun exportBackupToUri(type: BackupType, uri: Uri) = settingsVm.exportBackupToUri(type, uri)
     fun exportBackup(type: BackupType) = settingsVm.exportBackup(type)
+    fun shareBackupFile(file: File, context: Context) = settingsVm.shareBackupFile(file, context)
+    fun deleteInternalBackup(file: File) = settingsVm.deleteInternalBackup(file)
+    fun loadInternalBackups() = settingsVm.loadInternalBackups()
     fun restoreBackup(jsonString: String, isReplace: Boolean) {
         settingsVm.restoreBackup(jsonString, isReplace) {
             loadRecentWords()

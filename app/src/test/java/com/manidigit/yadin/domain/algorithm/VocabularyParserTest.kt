@@ -101,5 +101,19 @@ class VocabularyParserTest {
         assertEquals("amigo", result.entries[0].sourceText)
         assertEquals(listOf("دوست"), result.entries[0].translations)
     }
+
+    @Test
+    fun parseMultipleConsecutiveOrphanPersianTranslationsBeforeWord() {
+        val raw = """
+            سلام
+            درود
+            hola
+        """.trimIndent()
+        val result = VocabularyParser.parse(raw)
+        assertEquals(1, result.entries.size)
+        assertEquals("hola", result.entries[0].sourceText)
+        assertTrue(result.entries[0].translations.contains("سلام"))
+        assertTrue(result.entries[0].translations.contains("درود"))
+    }
 }
 

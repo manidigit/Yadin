@@ -72,7 +72,7 @@ object VocabularyParser {
         var currentLineNumber = 1
         var currentConfidence = 1.0
 
-        var pendingOrphanTranslation: Pair<String, Int>? = null
+        val pendingOrphanTranslations = mutableListOf<Pair<String, Int>>()
 
         fun flushEntry() {
             val src = currentSource?.let { TextUtilities.cleanText(it) }
@@ -235,11 +235,13 @@ object VocabularyParser {
                                 currentConfidence = 0.9
                                 currentEvidence.add("numbered")
                             }
-                            if (pendingOrphanTranslation != null) {
-                                currentTranslations.add(pendingOrphanTranslation.first)
+                            if (pendingOrphanTranslations.isNotEmpty()) {
+                                pendingOrphanTranslations.forEach { orphan ->
+                                    currentTranslations.add(orphan.first)
+                                }
                                 currentEvidence.add("orphanPersianPaired")
                                 currentConfidence += 0.1
-                                pendingOrphanTranslation = null
+                                pendingOrphanTranslations.clear()
                             }
                         } else if (currentTranslations.isEmpty()) {
                             // Multiline source continuation
@@ -266,8 +268,8 @@ object VocabularyParser {
                         currentEvidence.add("adjacentPersianTranslation")
                         currentConfidence = (currentConfidence + 0.15).coerceAtMost(1.0)
                     } else {
-                        // Persian translation before Spanish word
-                        pendingOrphanTranslation = Pair(extracted.first, lineNum)
+                        // Persian translation before Spanish word (support multiple consecutive orphan lines)
+                        pendingOrphanTranslations.add(Pair(extracted.first, lineNum))
                         extracted.second?.let { currentNotes.add(it) }
                     }
                 }
@@ -291,12 +293,12 @@ object VocabularyParser {
 
         flushEntry()
 
-        if (pendingOrphanTranslation != null) {
+        for (orphan in pendingOrphanTranslations) {
             warnings.add(
                 ParseWarning(
                     type = ParseWarningType.ORPHAN_TRANSLATION,
-                    lineNumber = pendingOrphanTranslation.second,
-                    rawText = pendingOrphanTranslation.first,
+                    lineNumber = orphan.second,
+                    rawText = orphan.first,
                     message = "ترجمه فارسی بدون واژه مبدأ باقی ماند"
                 )
             )

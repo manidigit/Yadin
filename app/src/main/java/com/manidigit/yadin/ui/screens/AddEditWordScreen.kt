@@ -53,7 +53,7 @@ fun AddEditWordScreen(
     initialWord: WordDetail? = null,
     categories: List<Category>,
     languageDirection: CardDirection = CardDirection.NORMAL,
-    onSave: (sourceText: String, translations: List<String>, categoryId: String?, note: String?) -> Unit,
+    onSave: (sourceText: String, translations: List<String>, categoryId: String?, note: String?, categoryIds: List<String>) -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -90,6 +90,16 @@ fun AddEditWordScreen(
         )
     }
     var selectedCategoryId by remember { mutableStateOf(initialWord?.concept?.categoryId) }
+    val initialCategoryIds = remember(initialWord) {
+        if (initialWord != null && initialWord.categories.isNotEmpty()) {
+            initialWord.categories.map { it.id }.toSet()
+        } else if (initialWord?.concept?.categoryId != null) {
+            setOf(initialWord.concept.categoryId)
+        } else {
+            emptySet()
+        }
+    }
+    var selectedCategoryIds by remember { mutableStateOf(initialCategoryIds) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -166,13 +176,43 @@ fun AddEditWordScreen(
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             )
 
-            // Category Dropdown with associated icon (per user request)
-            ExposedCategoryDropdown(
-                categories = categories,
-                selectedCategoryId = selectedCategoryId,
-                onSelectCategory = { selectedCategoryId = it },
-                label = "دسته‌بندی موضوعی واژه"
-            )
+            // Multi-Category Selection Chips (ISS-10)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "دسته‌بندی‌های موضوعی (امکان انتخاب هم‌زمان چند دسته):",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(categories) { cat ->
+                        val isSelected = selectedCategoryIds.contains(cat.id)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(dimensions.cornerSmall))
+                                .background(if (isSelected) colors.primary else colors.surfaceVariant)
+                                .clickable {
+                                    selectedCategoryIds = if (isSelected) {
+                                        selectedCategoryIds - cat.id
+                                    } else {
+                                        selectedCategoryIds + cat.id
+                                    }
+                                }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = cat.name,
+                                color = if (isSelected) colors.onPrimary else colors.onSurface,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
 
             // Note Input
             OutlinedTextField(
@@ -211,8 +251,9 @@ fun AddEditWordScreen(
                     onSave(
                         cleanSrc,
                         translationsList,
-                        selectedCategoryId,
-                        note.trim().ifEmpty { null }
+                        selectedCategoryIds.firstOrNull(),
+                        note.trim().ifEmpty { null },
+                        selectedCategoryIds.toList()
                     )
                 }
             },

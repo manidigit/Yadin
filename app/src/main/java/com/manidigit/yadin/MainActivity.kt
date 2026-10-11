@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
@@ -371,8 +372,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 initialWord = targetWord,
                 categories = categories,
                 languageDirection = appLanguageDirection,
-                onSave = { src, trans, cat, note ->
-                    viewModel.saveWord(screen.conceptId, src, trans, cat, note, appLanguageDirection) {
+                onSave = { src, trans, cat, note, catIds ->
+                    viewModel.saveWord(screen.conceptId, src, trans, cat, note, appLanguageDirection, categoryIds = catIds) {
                         if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Library)
                     }
                 },
@@ -489,6 +490,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val lastResult by viewModel.backupLastResult.collectAsStateWithLifecycle()
             val isError by viewModel.isBackupError.collectAsStateWithLifecycle()
             val backupOptions by viewModel.backupOptions.collectAsStateWithLifecycle()
+            val internalBackups by viewModel.internalBackups.collectAsStateWithLifecycle()
+            val context = LocalContext.current
 
             BackupScreen(
                 totalConcepts = statistics.totalWords,
@@ -499,6 +502,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 lastResult = lastResult,
                 isError = isError,
                 backupOptions = backupOptions,
+                internalBackups = internalBackups,
                 onUpdateBackupOptions = { viewModel.updateBackupOptions(it) },
                 onToggleFullBackup = { viewModel.setFullBackup(it) },
                 onToggleOption = { key, value -> viewModel.toggleBackupOption(key, value) },
@@ -506,6 +510,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onExportCustomBackupToUri = { format, uri, options -> viewModel.exportCustomBackupToUri(format, uri, options) },
                 onExportBackup = { type -> viewModel.exportBackup(type) },
                 onExportBackupToUri = { type, uri -> viewModel.exportBackupToUri(type, uri) },
+                onShareBackupFile = { file -> viewModel.shareBackupFile(file, context) },
+                onDeleteBackupFile = { file -> viewModel.deleteInternalBackup(file) },
                 onRestoreBackup = { json, replace -> viewModel.restoreBackup(json, replace) },
                 onBack = {
                     if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Settings)

@@ -409,7 +409,7 @@ fun HomeScreen(
                             ) {
                                 Icon(Icons.Default.Quiz, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("آزمون ۴ گزینه", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("آزمون ۴ گزینه‌ای", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
 
                             IconButton(

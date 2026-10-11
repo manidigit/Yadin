@@ -112,6 +112,14 @@ interface ConceptDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertConceptCategory(item: ConceptCategoryEntity)
 
+    @Query("""
+        SELECT cat.* FROM categories cat
+        INNER JOIN concept_categories cc ON cat.id = cc.categoryId
+        WHERE cc.conceptId = :conceptId
+        ORDER BY cat.sortOrder ASC, cat.name ASC
+    """)
+    suspend fun getCategoriesForConcept(conceptId: String): List<CategoryEntity>
+
     @Query("UPDATE concepts SET active = 0, updatedAt = :timestamp WHERE id = :conceptId")
     suspend fun softDeleteConcept(conceptId: String, timestamp: Long = System.currentTimeMillis())
 
@@ -123,6 +131,12 @@ interface ConceptDao {
 
     @Query("DELETE FROM contents WHERE conceptId IN (:conceptIds)")
     suspend fun deleteContentsForConcepts(conceptIds: List<String>)
+
+    @Query("DELETE FROM contents WHERE id IN (:contentIds)")
+    suspend fun deleteContents(contentIds: List<String>)
+
+    @Query("DELETE FROM concept_categories WHERE conceptId = :conceptId")
+    suspend fun deleteConceptCategories(conceptId: String)
 
     @Query("DELETE FROM concepts WHERE id = :conceptId")
     suspend fun deleteConceptPermanently(conceptId: String)

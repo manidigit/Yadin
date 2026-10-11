@@ -290,15 +290,16 @@ class LibraryViewModel(
         categoryId: String?,
         note: String?,
         direction: CardDirection = CardDirection.NORMAL,
+        categoryIds: List<String> = emptyList(),
         onError: ((String) -> Unit)? = null,
         onSuccess: () -> Unit
     ) {
         scope.launch {
             _libraryErrorMessage.value = null
             val result = if (conceptId != null) {
-                vocabularyRepo.updateWord(conceptId, sourceText, translations, categoryId, note, direction)
+                vocabularyRepo.updateWord(conceptId, sourceText, translations, categoryId, note, direction, categoryIds = categoryIds)
             } else {
-                vocabularyRepo.addWord(sourceText, translations, categoryId, note, direction)
+                vocabularyRepo.addWord(sourceText, translations, categoryId, note, direction, categoryIds = categoryIds)
             }
 
             if (result.isSuccess) {

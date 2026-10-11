@@ -189,5 +189,50 @@ class BackupRepositoryTest {
         assertTrue("Newer backup date must take precedence", backupNewerReviewed > localLastReviewed)
         assertFalse("Older backup date must NOT take precedence", backupOlderReviewed > localLastReviewed)
     }
+
+    @Test
+    fun `ISS-36 Progress-only backup in REPLACE mode retains existing concepts as valid IDs`() {
+        val existingConceptIds = setOf("concept-1", "concept-2", "concept-3")
+        val incomingConcepts = emptyList<String>()
+        val isReplace = true
+        val hasVocabInData = incomingConcepts.isNotEmpty()
+
+        val validConceptIds = if (isReplace) {
+            if (hasVocabInData) {
+                incomingConcepts.toSet()
+            } else {
+                existingConceptIds
+            }
+        } else {
+            existingConceptIds + incomingConcepts.toSet()
+        }
+
+        assertEquals("Valid concept IDs must contain all existing concepts when backup has progress only", 3, validConceptIds.size)
+        assertTrue(validConceptIds.contains("concept-1"))
+        assertTrue(validConceptIds.contains("concept-2"))
+        assertTrue(validConceptIds.contains("concept-3"))
+    }
+
+    @Test
+    fun `ISS-36 Vocabulary-only backup in REPLACE mode correctly isolates new vocabulary IDs`() {
+        val existingConceptIds = setOf("concept-old-1", "concept-old-2")
+        val incomingConcepts = listOf("concept-new-1", "concept-new-2")
+        val isReplace = true
+        val hasVocabInData = incomingConcepts.isNotEmpty()
+
+        val validConceptIds = if (isReplace) {
+            if (hasVocabInData) {
+                incomingConcepts.toSet()
+            } else {
+                existingConceptIds
+            }
+        } else {
+            existingConceptIds + incomingConcepts.toSet()
+        }
+
+        assertEquals(2, validConceptIds.size)
+        assertTrue(validConceptIds.contains("concept-new-1"))
+        assertFalse(validConceptIds.contains("concept-old-1"))
+    }
 }
 

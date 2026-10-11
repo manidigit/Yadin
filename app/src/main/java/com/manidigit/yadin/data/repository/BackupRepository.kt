@@ -1127,8 +1127,13 @@ class BackupRepository(
             val finalDifficultyStatesToInsert = mutableListOf<DifficultyStateEntity>()
 
             // شناسه‌های معتبر مفاهیم (موجود یا در حال اضافه شدن) جهت جلوگیری از درج رکوردهای بی‌سرپرست
+            // ISS-36: در حالت REPLACE، اگر فایل حاوی واژگان نبود (صرفاً پیشرفت)، شناسه‌های معتبر همان مفاهیم محلی موجودند
             val validConceptIds = if (isReplace) {
-                finalConceptsToInsert.map { it.id }.toSet()
+                if (hasVocabInData) {
+                    finalConceptsToInsert.map { it.id }.toSet()
+                } else {
+                    existingConcepts.keys
+                }
             } else {
                 existingConcepts.keys + finalConceptsToInsert.map { it.id }.toSet()
             }
@@ -1230,6 +1235,13 @@ class BackupRepository(
                         reviewSessionDao.clearHistory()
                         reviewSessionDao.clearSessions()
                         reviewSessionDao.clearSessionItems()
+                    } else if (hasVocabInData) {
+                        // ISS-36: در صورتی که فایل صرفاً شامل واژگان بود، پیشرفت مفاهیم حذف‌شده
+                        // باید پاکسازی شوند تا رکوردهای بی‌پناه (Orphaned) با شناسه نامعتبر باقی نمانند
+                        learningDao.deleteOrphanLearningStates()
+                        learningDao.deleteOrphanDifficultyStates()
+                        reviewSessionDao.deleteOrphanHistory()
+                        reviewSessionDao.deleteOrphanSessionItems()
                     }
                 }
 

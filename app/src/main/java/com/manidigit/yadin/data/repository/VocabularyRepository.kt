@@ -26,8 +26,12 @@ import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.domain.model.toPersianLabel
 import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.domain.time.ClockAndDayMath
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import androidx.room.withTransaction
 import com.manidigit.yadin.data.local.database.YadinDatabase
@@ -128,8 +132,13 @@ class VocabularyRepository(
             )
         }
 
-        val category = conceptEntity.categoryId?.let { conceptDao.getCategoryById(it) }?.let {
-            Category(id = it.id, name = it.name, sortOrder = it.sortOrder, isDefault = it.isDefault)
+        val conceptCategories = conceptDao.getCategoriesForConcept(conceptId)
+        val categoriesList = if (conceptCategories.isNotEmpty()) {
+            conceptCategories.map { Category(id = it.id, name = it.name, sortOrder = it.sortOrder, isDefault = it.isDefault) }
+        } else {
+            conceptEntity.categoryId?.let { conceptDao.getCategoryById(it) }?.let {
+                listOf(Category(id = it.id, name = it.name, sortOrder = it.sortOrder, isDefault = it.isDefault))
+            } ?: emptyList()
         }
 
         val domainConcept = Concept(
@@ -163,7 +172,7 @@ class VocabularyRepository(
                     translationIndex = it.translationIndex
                 )
             },
-            categories = listOfNotNull(category),
+            categories = categoriesList,
             normalLearning = normalLearning,
             reverseLearning = reverseLearning,
             normalDifficulty = normalDiff,
@@ -263,7 +272,8 @@ class VocabularyRepository(
         categoryId: String? = null,
         note: String? = null,
         direction: CardDirection = CardDirection.NORMAL,
-        entryType: EntryType = EntryType.WORD
+        entryType: EntryType = EntryType.WORD,
+        categoryIds: List<String> = emptyList()
     ): Result<String> {
         val cleanSource = sourceText.trim()
         if (cleanSource.isEmpty()) {
@@ -278,12 +288,13 @@ class VocabularyRepository(
         val targetLang = if (direction == CardDirection.REVERSE) "es" else "fa"
         val conceptId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
+        val effectivePrimaryCategory = categoryIds.firstOrNull() ?: categoryId
 
         return database.withTransaction {
             val concept = ConceptEntity(
                 id = conceptId,
                 entryType = entryType,
-                categoryId = categoryId,
+                categoryId = effectivePrimaryCategory,
                 active = true,
                 createdAt = now,
                 updatedAt = now
@@ -353,9 +364,12 @@ class VocabularyRepository(
 
             conceptDao.insertConcept(concept)
             conceptDao.insertContents(contents)
-            if (categoryId != null) {
-                conceptDao.insertConceptCategory(ConceptCategoryEntity(conceptId, categoryId))
+
+            val allCatsToInsert = (categoryIds + listOfNotNull(categoryId)).distinct()
+            allCatsToInsert.forEach { catId ->
+                conceptDao.insertConceptCategory(ConceptCategoryEntity(conceptId, catId))
             }
+
             learningDao.insertLearningStates(listOf(normalLearning, reverseLearning))
             learningDao.insertDifficultyStates(listOf(normalDiff, reverseDiff))
 
@@ -369,45 +383,73 @@ class VocabularyRepository(
         translations: List<String>,
         categoryId: String?,
         note: String?,
-        direction: CardDirection = CardDirection.NORMAL
+        direction: CardDirection = CardDirection.NORMAL,
+        entryType: EntryType? = null,
+        categoryIds: List<String> = emptyList()
     ): Result<Unit> {
         return database.withTransaction {
             val existing = conceptDao.getConceptById(conceptId)
                 ?: return@withTransaction Result.failure(IllegalArgumentException("مفهوم یافت نشد"))
             val now = System.currentTimeMillis()
-            conceptDao.updateConcept(existing.copy(categoryId = categoryId, active = true, updatedAt = now))
+            val effectivePrimaryCategory = categoryIds.firstOrNull() ?: categoryId
+            conceptDao.updateConcept(
+                existing.copy(
+                    categoryId = effectivePrimaryCategory,
+                    entryType = entryType ?: existing.entryType,
+                    active = true,
+                    updatedAt = now
+                )
+            )
+
+            // ISS-21 & ISS-10: Synchronize concept_categories join table
+            conceptDao.deleteConceptCategories(conceptId)
+            val allCatsToInsert = (categoryIds + listOfNotNull(categoryId)).distinct()
+            allCatsToInsert.forEach { catId ->
+                conceptDao.insertConceptCategory(ConceptCategoryEntity(conceptId, catId))
+            }
 
             val sourceLang = if (direction == CardDirection.REVERSE) "fa" else "es"
             val targetLang = if (direction == CardDirection.REVERSE) "es" else "fa"
 
-            // Recreate contents
-            conceptDao.deleteContentsForConcept(conceptId)
-            val contents = mutableListOf<ContentEntity>()
-            contents.add(
-                ContentEntity(
-                    id = UUID.randomUUID().toString(),
-                    conceptId = conceptId,
-                    languageCode = sourceLang,
-                    text = sourceText.trim(),
-                    canonicalKey = TextUtilities.toCanonicalKey(sourceText.trim()),
-                    note = note?.trim()?.ifEmpty { null },
-                    translationIndex = 0
-                )
+            // ISS-21: Preserve stable IDs instead of deleting all contents and generating random UUIDs
+            val existingContents = conceptDao.getContentsForConcept(conceptId)
+            val existingSource = existingContents.firstOrNull { it.languageCode == sourceLang }
+            val existingTargets = existingContents.filter { it.languageCode == targetLang }.sortedBy { it.translationIndex }
+
+            val cleanSource = sourceText.trim()
+            val cleanTranslations = translations.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+
+            val sourceId = existingSource?.id ?: UUID.randomUUID().toString()
+            val updatedSource = ContentEntity(
+                id = sourceId,
+                conceptId = conceptId,
+                languageCode = sourceLang,
+                text = cleanSource,
+                canonicalKey = TextUtilities.toCanonicalKey(cleanSource),
+                note = note?.trim()?.ifEmpty { null },
+                translationIndex = 0
             )
-            translations.filter { it.isNotBlank() }.forEachIndexed { idx, trans ->
-                contents.add(
-                    ContentEntity(
-                        id = UUID.randomUUID().toString(),
-                        conceptId = conceptId,
-                        languageCode = targetLang,
-                        text = trans.trim(),
-                        canonicalKey = TextUtilities.toCanonicalKey(trans.trim()),
-                        note = null,
-                        translationIndex = idx
-                    )
+
+            val updatedTargets = cleanTranslations.mapIndexed { idx, trans ->
+                val targetId = if (idx < existingTargets.size) existingTargets[idx].id else UUID.randomUUID().toString()
+                ContentEntity(
+                    id = targetId,
+                    conceptId = conceptId,
+                    languageCode = targetLang,
+                    text = trans,
+                    canonicalKey = TextUtilities.toCanonicalKey(trans),
+                    note = null,
+                    translationIndex = idx
                 )
             }
-            conceptDao.insertContents(contents)
+
+            // Remove excess obsolete target translations if count decreased
+            if (existingTargets.size > cleanTranslations.size) {
+                val toDelete = existingTargets.drop(cleanTranslations.size).map { it.id }
+                conceptDao.deleteContents(toDelete)
+            }
+
+            conceptDao.insertContents(listOf(updatedSource) + updatedTargets)
             Result.success(Unit)
         }
     }
@@ -436,77 +478,86 @@ class VocabularyRepository(
         }
     }
 
+    // ISS-23: Dynamic current date ticker flow so day transition across midnight updates due and streak queries reactively
+    private val currentDateFlow: Flow<String> = flow {
+        while (true) {
+            emit(ClockAndDayMath.todayDayString())
+            delay(30_000)
+        }
+    }.distinctUntilChanged()
+
     fun getStatisticsSummary(direction: CardDirection = CardDirection.NORMAL): Flow<StatisticsSummary> {
-        val today = ClockAndDayMath.todayDayString()
-        data class StageCountsHolder(val daily: Int, val weekly: Int, val monthly: Int, val learned: Int)
-        val stageCountsFlow: Flow<StageCountsHolder> = combine(
-            learningDao.getCountByStageFlow(direction, Stage.DAILY),
-            learningDao.getCountByStageFlow(direction, Stage.WEEKLY),
-            learningDao.getCountByStageFlow(direction, Stage.MONTHLY),
-            learningDao.getCountByStageFlow(direction, Stage.LEARNED)
-        ) { daily, weekly, monthly, learned ->
-            StageCountsHolder(daily, weekly, monthly, learned)
-        }
+        return currentDateFlow.flatMapLatest { today ->
+            data class StageCountsHolder(val daily: Int, val weekly: Int, val monthly: Int, val learned: Int)
+            val stageCountsFlow: Flow<StageCountsHolder> = combine(
+                learningDao.getCountByStageFlow(direction, Stage.DAILY),
+                learningDao.getCountByStageFlow(direction, Stage.WEEKLY),
+                learningDao.getCountByStageFlow(direction, Stage.MONTHLY),
+                learningDao.getCountByStageFlow(direction, Stage.LEARNED)
+            ) { daily, weekly, monthly, learned ->
+                StageCountsHolder(daily, weekly, monthly, learned)
+            }
 
-        data class StageDuesHolder(val dueDaily: Int, val dueWeekly: Int, val dueMonthly: Int, val availLearned: Int)
-        val stageDueFlow: Flow<StageDuesHolder> = combine(
-            learningDao.getDueCountByStageFlow(direction, Stage.DAILY, today),
-            learningDao.getDueCountByStageFlow(direction, Stage.WEEKLY, today),
-            learningDao.getDueCountByStageFlow(direction, Stage.MONTHLY, today),
-            learningDao.getLearnedAvailableCountFlow(direction, today)
-        ) { dueDaily, dueWeekly, dueMonthly, availLearned ->
-            StageDuesHolder(dueDaily, dueWeekly, dueMonthly, availLearned)
-        }
+            data class StageDuesHolder(val dueDaily: Int, val dueWeekly: Int, val dueMonthly: Int, val availLearned: Int)
+            val stageDueFlow: Flow<StageDuesHolder> = combine(
+                learningDao.getDueCountByStageFlow(direction, Stage.DAILY, today),
+                learningDao.getDueCountByStageFlow(direction, Stage.WEEKLY, today),
+                learningDao.getDueCountByStageFlow(direction, Stage.MONTHLY, today),
+                learningDao.getLearnedAvailableCountFlow(direction, today)
+            ) { dueDaily, dueWeekly, dueMonthly, availLearned ->
+                StageDuesHolder(dueDaily, dueWeekly, dueMonthly, availLearned)
+            }
 
-        data class ReviewsHolder(val dueToday: Int, val reviewedToday: Int, val totalReviews: Int)
-        val reviewsFlow: Flow<ReviewsHolder> = combine(
-            learningDao.getDueCountFlow(direction, today),
-            reviewSessionDao.getReviewCountForDayFlow(today),
-            reviewSessionDao.getTotalReviewsCountFlow()
-        ) { dueToday, reviewedToday, totalReviews ->
-            ReviewsHolder(dueToday, reviewedToday, totalReviews)
-        }
+            data class ReviewsHolder(val dueToday: Int, val reviewedToday: Int, val totalReviews: Int)
+            val reviewsFlow: Flow<ReviewsHolder> = combine(
+                learningDao.getDueCountFlow(direction, today),
+                reviewSessionDao.getReviewCountForDayFlow(today),
+                reviewSessionDao.getTotalReviewsCountFlow()
+            ) { dueToday, reviewedToday, totalReviews ->
+                ReviewsHolder(dueToday, reviewedToday, totalReviews)
+            }
 
-        return combine(
-            stageCountsFlow,
-            stageDueFlow,
-            reviewsFlow,
-            learningDao.getDifficultyBreakdownFlow(direction)
-        ) { stageCounts, stageDues, reviews, diffList ->
-            val daily = stageCounts.daily
-            val weekly = stageCounts.weekly
-            val monthly = stageCounts.monthly
-            val learned = stageCounts.learned
+            combine(
+                stageCountsFlow,
+                stageDueFlow,
+                reviewsFlow,
+                learningDao.getDifficultyBreakdownFlow(direction)
+            ) { stageCounts, stageDues, reviews, diffList ->
+                val daily = stageCounts.daily
+                val weekly = stageCounts.weekly
+                val monthly = stageCounts.monthly
+                val learned = stageCounts.learned
 
-            val dueDaily = stageDues.dueDaily
-            val dueWeekly = stageDues.dueWeekly
-            val dueMonthly = stageDues.dueMonthly
-            val availLearned = stageDues.availLearned
+                val dueDaily = stageDues.dueDaily
+                val dueWeekly = stageDues.dueWeekly
+                val dueMonthly = stageDues.dueMonthly
+                val availLearned = stageDues.availLearned
 
-            val totalWords = daily + weekly + monthly + learned
+                val totalWords = daily + weekly + monthly + learned
 
-            val diffBreakdown = diffList.associate { it.current to it.count }
+                val diffBreakdown = diffList.associate { it.current to it.count }
 
-            StatisticsSummary(
-                totalWords = totalWords,
-                activeWords = totalWords,
-                dailyStageCount = daily,
-                weeklyStageCount = weekly,
-                monthlyStageCount = monthly,
-                learnedStageCount = learned,
-                dueTodayCount = reviews.dueToday,
-                reviewedTodayCount = reviews.reviewedToday,
-                currentStreakDays = calculateStreakDays(reviewSessionDao.getDistinctReviewedDays(), today),
-                totalReviewsCount = reviews.totalReviews,
-                easyCount = diffBreakdown[VocabularyDifficulty.EASY] ?: 0,
-                mediumCount = diffBreakdown[VocabularyDifficulty.MEDIUM] ?: 0,
-                hardCount = diffBreakdown[VocabularyDifficulty.HARD] ?: 0,
-                veryHardCount = diffBreakdown[VocabularyDifficulty.VERY_HARD] ?: 0,
-                dueDailyCount = dueDaily,
-                dueWeeklyCount = dueWeekly,
-                dueMonthlyCount = dueMonthly,
-                availableLearnedCount = availLearned
-            )
+                StatisticsSummary(
+                    totalWords = totalWords,
+                    activeWords = totalWords,
+                    dailyStageCount = daily,
+                    weeklyStageCount = weekly,
+                    monthlyStageCount = monthly,
+                    learnedStageCount = learned,
+                    dueTodayCount = reviews.dueToday,
+                    reviewedTodayCount = reviews.reviewedToday,
+                    currentStreakDays = calculateStreakDays(reviewSessionDao.getDistinctReviewedDays(), today),
+                    totalReviewsCount = reviews.totalReviews,
+                    easyCount = diffBreakdown[VocabularyDifficulty.EASY] ?: 0,
+                    mediumCount = diffBreakdown[VocabularyDifficulty.MEDIUM] ?: 0,
+                    hardCount = diffBreakdown[VocabularyDifficulty.HARD] ?: 0,
+                    veryHardCount = diffBreakdown[VocabularyDifficulty.VERY_HARD] ?: 0,
+                    dueDailyCount = dueDaily,
+                    dueWeeklyCount = dueWeekly,
+                    dueMonthlyCount = dueMonthly,
+                    availableLearnedCount = availLearned
+                )
+            }
         }
     }
 
@@ -548,15 +599,35 @@ class VocabularyRepository(
         var skippedCount = 0
 
         database.withTransaction {
+            val allCategories = conceptDao.getAllCategories().toMutableList()
+
             entries.forEachIndexed { index, entry ->
                 val cleanSource = entry.sourceText.trim()
                 val canonical = TextUtilities.toCanonicalKey(cleanSource)
                 val existingContent = conceptDao.findActiveContentByCanonicalKey("es", canonical)
                 val enrichedNote = formatEnrichedNote(entry)
 
+                // ISS-49: Resolve categories from entry or fallback to targetCategoryId
+                val entryCategoryIds = mutableListOf<String>()
+                entry.categoryNames.forEach { catName ->
+                    val clean = catName.trim()
+                    if (clean.isNotBlank()) {
+                        val matched = allCategories.find { it.name.equals(clean, ignoreCase = true) }
+                        val catId = matched?.id ?: run {
+                            val newCatId = UUID.randomUUID().toString()
+                            val newCat = CategoryEntity(id = newCatId, name = clean, sortOrder = allCategories.size, isDefault = false)
+                            conceptDao.insertCategory(newCat)
+                            allCategories.add(newCat)
+                            newCatId
+                        }
+                        entryCategoryIds.add(catId)
+                    }
+                }
+                val primaryCatId = entryCategoryIds.firstOrNull() ?: targetCategoryId
+
                 if (existingContent != null) {
                     val existingConcept = conceptDao.getConceptById(existingContent.conceptId)
-                    val effectiveCat = targetCategoryId ?: existingConcept?.categoryId
+                    val effectiveCat = primaryCatId ?: existingConcept?.categoryId
                     when (policy) {
                         DuplicatePolicy.SKIP -> {
                             skippedCount++
@@ -567,9 +638,17 @@ class VocabularyRepository(
                                 sourceText = cleanSource,
                                 translations = entry.translations,
                                 categoryId = effectiveCat,
-                                note = enrichedNote
+                                note = enrichedNote,
+                                entryType = entry.entryType
                             )
-                            if (res.isSuccess) updatedCount++ else skippedCount++
+                            if (res.isSuccess) {
+                                updatedCount++
+                                if (entryCategoryIds.size > 1) {
+                                    entryCategoryIds.drop(1).forEach { extraCat ->
+                                        conceptDao.insertConceptCategory(ConceptCategoryEntity(existingContent.conceptId, extraCat))
+                                    }
+                                }
+                            } else skippedCount++
                         }
                         DuplicatePolicy.MERGE -> {
                             val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
@@ -582,28 +661,56 @@ class VocabularyRepository(
                                 sourceText = cleanSource,
                                 translations = merged,
                                 categoryId = effectiveCat,
-                                note = mergedNote
+                                note = mergedNote,
+                                entryType = entry.entryType
                             )
-                            if (res.isSuccess) updatedCount++ else skippedCount++
+                            if (res.isSuccess) {
+                                updatedCount++
+                                if (entryCategoryIds.size > 1) {
+                                    entryCategoryIds.drop(1).forEach { extraCat ->
+                                        conceptDao.insertConceptCategory(ConceptCategoryEntity(existingContent.conceptId, extraCat))
+                                    }
+                                }
+                            } else skippedCount++
                         }
                         DuplicatePolicy.KEEP_SEPARATE -> {
                             val res = addWord(
                                 sourceText = cleanSource,
                                 translations = entry.translations,
-                                categoryId = targetCategoryId,
-                                note = enrichedNote
+                                categoryId = primaryCatId,
+                                note = enrichedNote,
+                                entryType = entry.entryType
                             )
-                            if (res.isSuccess) addedCount++ else skippedCount++
+                            if (res.isSuccess) {
+                                addedCount++
+                                res.getOrNull()?.let { newConceptId ->
+                                    if (entryCategoryIds.size > 1) {
+                                        entryCategoryIds.drop(1).forEach { extraCat ->
+                                            conceptDao.insertConceptCategory(ConceptCategoryEntity(newConceptId, extraCat))
+                                        }
+                                    }
+                                }
+                            } else skippedCount++
                         }
                     }
                 } else {
                     val res = addWord(
                         sourceText = cleanSource,
                         translations = entry.translations,
-                        categoryId = targetCategoryId,
-                        note = enrichedNote
+                        categoryId = primaryCatId,
+                        note = enrichedNote,
+                        entryType = entry.entryType
                     )
-                    if (res.isSuccess) addedCount++ else skippedCount++
+                    if (res.isSuccess) {
+                        addedCount++
+                        res.getOrNull()?.let { newConceptId ->
+                            if (entryCategoryIds.size > 1) {
+                                entryCategoryIds.drop(1).forEach { extraCat ->
+                                    conceptDao.insertConceptCategory(ConceptCategoryEntity(newConceptId, extraCat))
+                                }
+                            }
+                        }
+                    } else skippedCount++
                 }
                 onProgress(index + 1, total)
             }

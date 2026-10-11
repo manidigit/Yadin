@@ -40,7 +40,9 @@ object ClockAndDayMath {
 
     fun calculateStreakDays(days: List<String>, today: String = todayDayString()): Int {
         if (days.isEmpty()) return 0
-        val sortedDays = days.distinct().sortedDescending()
+        // ISS-46: Filter out any future dates to avoid incorrect streak disruption
+        val sortedDays = days.filter { it <= today }.distinct().sortedDescending()
+        if (sortedDays.isEmpty()) return 0
         var streak = 0
         var expectedDay = if (sortedDays.first() == today) today else addDays(today, -1)
         if (sortedDays.first() != today && sortedDays.first() != expectedDay) {

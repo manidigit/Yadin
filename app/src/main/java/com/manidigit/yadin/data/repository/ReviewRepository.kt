@@ -82,6 +82,9 @@ class ReviewRepository(
     }
 
     suspend fun createFilteredSession(filters: ReviewFilters): ReviewSession {
+        // ISS-42: Clean up any prior orphan active sessions before starting a new session
+        abandonOrphanActiveSessions()
+
         val today = ClockAndDayMath.todayDayString()
         val conceptIds = learningDao.getFilteredCandidateConceptIds(
             direction = filters.direction,
@@ -96,6 +99,22 @@ class ReviewRepository(
 
         val sessionId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
+
+        // ISS-43: If no candidate words found, do not persist an empty ACTIVE session into database
+        if (conceptIds.isEmpty()) {
+            return ReviewSession(
+                id = sessionId,
+                startedAt = now,
+                endedAt = now,
+                reviewType = filters.reviewType,
+                mode = filters.mode,
+                direction = filters.direction,
+                quizLevel = filters.quizLevel,
+                status = SessionStatus.COMPLETED,
+                currentPosition = 0,
+                totalItems = 0
+            )
+        }
 
         val sessionEntity = ReviewSessionEntity(
             id = sessionId,
@@ -136,6 +155,10 @@ class ReviewRepository(
             currentPosition = 0,
             totalItems = conceptIds.size
         )
+    }
+
+    suspend fun abandonOrphanActiveSessions() {
+        reviewSessionDao.abandonAllActiveSessions(System.currentTimeMillis())
     }
 
     suspend fun createSession(
@@ -395,6 +418,19 @@ class ReviewRepository(
                 nextReviewDay = curLearning?.nextReviewDay,
                 newDifficulty = curDiff?.current ?: VocabularyDifficulty.EASY,
                 isCorrect = existingAttempt.isCorrect
+            )
+        }
+
+        // ISS-42: Session status guard - do not submit answers to ended/abandoned sessions
+        val sessionCheck = reviewSessionDao.getSessionById(sessionId)
+        if (sessionCheck != null && sessionCheck.status != SessionStatus.ACTIVE) {
+            val curLearning = learningDao.getLearningState(conceptId, direction)
+            val curDiff = learningDao.getDifficultyState(conceptId, direction)
+            return SubmitResult(
+                newStage = curLearning?.stage ?: Stage.DAILY,
+                nextReviewDay = curLearning?.nextReviewDay,
+                newDifficulty = curDiff?.current ?: VocabularyDifficulty.EASY,
+                isCorrect = isCorrect
             )
         }
 

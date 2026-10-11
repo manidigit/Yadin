@@ -47,4 +47,11 @@ class StreakCalculationTest {
         val streak = ClockAndDayMath.calculateStreakDays(days, today)
         assertEquals(0, streak)
     }
+
+    @Test
+    fun datesInFuture_doNotBreakStreak() {
+        val days = listOf("2026-10-10", "2026-10-06", "2026-10-05", "2026-10-04")
+        val streak = ClockAndDayMath.calculateStreakDays(days, today)
+        assertEquals(2, streak)
+    }
 }

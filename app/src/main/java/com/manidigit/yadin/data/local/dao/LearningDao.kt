@@ -300,7 +300,7 @@ interface LearningDao {
         FROM learning_states ls
         INNER JOIN concepts c ON ls.conceptId = c.id
         WHERE c.active = 1 AND ls.direction = :direction
-        AND ls.stage != 'LEARNED' AND ls.lastReviewedDay IS NOT NULL
+        AND ls.lastReviewedDay IS NOT NULL
     """)
     fun getPracticedWordsCountFlow(direction: CardDirection): Flow<Int>
 
@@ -333,4 +333,10 @@ interface LearningDao {
 
     @Query("DELETE FROM difficulty_states WHERE conceptId IN (:conceptIds)")
     suspend fun deleteDifficultyStatesForConcepts(conceptIds: List<String>)
+
+    @Query("DELETE FROM learning_states WHERE conceptId NOT IN (SELECT id FROM concepts)")
+    suspend fun deleteOrphanLearningStates()
+
+    @Query("DELETE FROM difficulty_states WHERE conceptId NOT IN (SELECT id FROM concepts)")
+    suspend fun deleteOrphanDifficultyStates()
 }

@@ -42,9 +42,12 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.TableChart
+import java.io.File
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -97,6 +100,7 @@ fun BackupScreen(
     lastResult: String?,
     isError: Boolean,
     backupOptions: BackupOptions = BackupOptions(),
+    internalBackups: List<File> = emptyList(),
     onUpdateBackupOptions: (BackupOptions) -> Unit = {},
     onToggleFullBackup: (Boolean) -> Unit = {},
     onToggleOption: (String, Boolean) -> Unit = { _, _ -> },
@@ -104,6 +108,8 @@ fun BackupScreen(
     onExportCustomBackupToUri: ((BackupExportFormat, android.net.Uri, BackupOptions) -> Unit)? = null,
     onExportBackup: (BackupType) -> Unit = {},
     onExportBackupToUri: ((BackupType, android.net.Uri) -> Unit)? = null,
+    onShareBackupFile: ((File) -> Unit)? = null,
+    onDeleteBackupFile: ((File) -> Unit)? = null,
     onRestoreBackup: (String, Boolean) -> Unit,
     onBack: () -> Unit
 ) {
@@ -644,6 +650,51 @@ fun BackupScreen(
                     }
                 }
 
+                // ISS-35: Saved Backups and Reports in internal storage with direct Share and Delete
+                YadinCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FolderOpen,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "فایل‌های ذخیره‌شده در حافظه (${internalBackups.size})",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                        }
+
+                        if (internalBackups.isEmpty()) {
+                            Text(
+                                text = "هنوز فایل پشتیبان یا خروجی در حافظه داخلی ایجاد نشده است. با زدن دکمه «ایجاد فایل پشتیبان» یا «دریافت فایل اکسل»، فایل‌ها در این بخش ذخیره شده و می‌توانید مستقیماً آن‌ها را با سایر برنامه‌ها (مانند پیام‌رسان‌ها یا درایو) به اشتراک بگذارید.",
+                                fontSize = 12.sp,
+                                color = colors.onSurfaceVariant,
+                                lineHeight = 18.sp
+                            )
+                        } else {
+                            internalBackups.forEach { file ->
+                                SavedBackupItemRow(
+                                    file = file,
+                                    onShare = { onShareBackupFile?.invoke(file) },
+                                    onDelete = { onDeleteBackupFile?.invoke(file) }
+                                )
+                            }
+                        }
+                    }
+                }
+
             } else {
                 // RESTORE TAB CONTENT
                 YadinCard(modifier = Modifier.fillMaxWidth()) {
@@ -1041,3 +1092,81 @@ private fun FormatChoiceCard(
         )
     }
 }
+
+@Composable
+private fun SavedBackupItemRow(
+    file: File,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val isCsv = file.name.endsWith(".csv", ignoreCase = true)
+    val sizeKb = (file.length() / 1024).coerceAtLeast(1)
+    val dateStr = try {
+        java.text.SimpleDateFormat("yyyy/MM/dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(file.lastModified()))
+    } catch (_: Exception) {
+        ""
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.surfaceVariant.copy(alpha = 0.6f))
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(if (isCsv) colors.secondary.copy(alpha = 0.15f) else colors.primary.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isCsv) Icons.Default.TableChart else Icons.Default.Description,
+                contentDescription = null,
+                tint = if (isCsv) colors.secondary else colors.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = file.name,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface,
+                maxLines = 1
+            )
+            Text(
+                text = "$sizeKb کیلوبایت • $dateStr",
+                fontSize = 10.sp,
+                color = colors.onSurfaceVariant
+            )
+        }
+        IconButton(
+            onClick = onShare,
+            modifier = Modifier.size(34.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = "اشتراک‌گذاری",
+                tint = colors.primary,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier.size(34.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "حذف",
+                tint = colors.error,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+

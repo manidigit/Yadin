@@ -124,4 +124,13 @@ interface ReviewSessionDao {
 
     @Query("DELETE FROM review_history WHERE conceptId IN (:conceptIds)")
     suspend fun deleteHistoryForConcepts(conceptIds: List<String>)
+
+    @Query("UPDATE review_sessions SET status = 'ABANDONED', endedAt = :now WHERE status = 'ACTIVE'")
+    suspend fun abandonAllActiveSessions(now: Long = System.currentTimeMillis())
+
+    @Query("DELETE FROM review_session_items WHERE conceptId NOT IN (SELECT id FROM concepts)")
+    suspend fun deleteOrphanSessionItems()
+
+    @Query("DELETE FROM review_history WHERE conceptId NOT IN (SELECT id FROM concepts)")
+    suspend fun deleteOrphanHistory()
 }

@@ -1,7 +1,10 @@
 package com.manidigit.yadin.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.manidigit.yadin.data.repository.BackupExportFormat
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 /**
  * مدیریت تنظیمات برنامه، تم، جهت مطالعه و پشتیبان‌گیری/بازیابی - SettingsViewModel
@@ -107,6 +111,58 @@ class SettingsViewModel(
     private val _isBackupError = MutableStateFlow(false)
     /** آیا آخرین عملیات با خطا متوقف شده است */
     val isBackupError: StateFlow<Boolean> = _isBackupError.asStateFlow()
+
+    private val _internalBackups = MutableStateFlow<List<File>>(emptyList())
+    /** لیست فایل‌های پشتیبان و خروجی ذخیره‌شده در پوشه backups برنامه */
+    val internalBackups: StateFlow<List<File>> = _internalBackups.asStateFlow()
+
+    init {
+        loadInternalBackups()
+    }
+
+    /** بارگذاری و بروزرسانی لیست فایل‌های پشتیبان داخلی */
+    fun loadInternalBackups() {
+        scope.launch {
+            val list = backupRepo.getInternalBackups()
+            _internalBackups.value = list
+        }
+    }
+
+    /** حذف یک فایل پشتیبان داخلی */
+    fun deleteInternalBackup(file: File) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                if (file.exists()) {
+                    file.delete()
+                }
+            } catch (_: Exception) {}
+            loadInternalBackups()
+        }
+    }
+
+    /** اشتراک‌گذاری عمومی فایل خروجی/بکاپ با استفاده از FileProvider */
+    fun shareBackupFile(file: File, context: Context) {
+        try {
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+            val mimeType = if (file.name.endsWith(".csv", ignoreCase = true)) "text/csv" else "application/json"
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = mimeType
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(shareIntent, "اشتراک‌گذاری فایل پشتیبان").apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+        } catch (e: Exception) {
+            _backupLastResult.value = "خطا در اشتراک‌گذاری: ${e.message}"
+            _isBackupError.value = true
+        }
+    }
 
     /**
      * تغییر چرخشی تم‌های رنگی برنامه (GTP -> Gemini -> Claude -> Googoli -> GTP).
@@ -336,6 +392,7 @@ class SettingsViewModel(
                 _isBackupError.value = true
             } finally {
                 _isBackupProcessing.value = false
+                loadInternalBackups()
             }
         }
     }
@@ -402,6 +459,7 @@ class SettingsViewModel(
                 _isBackupError.value = true
             } finally {
                 _isBackupProcessing.value = false
+                loadInternalBackups()
             }
         }
     }

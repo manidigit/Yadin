@@ -30,7 +30,8 @@ class SeedImporter(
     private val database: YadinDatabase,
     private val conceptDao: ConceptDao,
     private val learningDao: LearningDao,
-    private val achievementDao: AchievementDao
+    private val achievementDao: AchievementDao,
+    private val settingsDao: com.manidigit.yadin.data.local.dao.SettingsDao = database.settingsDao()
 ) {
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -38,6 +39,11 @@ class SeedImporter(
     }
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
+        // ISS-53: If seed was already imported previously, do not re-import upon user deliberate wipe
+        val alreadyImported = settingsDao.getSetting("seedImported") == "true"
+        if (alreadyImported) {
+            return@withContext false
+        }
         conceptDao.getTotalConceptCount() == 0
     }
 
@@ -256,6 +262,7 @@ class SeedImporter(
                 }
 
                 ensureDefaultAchievements()
+                settingsDao.setSetting(com.manidigit.yadin.data.local.entity.SettingEntity("seedImported", "true"))
             }
 
             onProgress(1.0f, "آماده‌سازی با موفقیت پایان یافت.")

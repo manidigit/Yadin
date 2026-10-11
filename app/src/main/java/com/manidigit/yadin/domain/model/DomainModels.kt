@@ -179,11 +179,7 @@ data class ParseWarning(
 enum class ParseWarningType {
     ORPHAN_SOURCE,
     ORPHAN_TRANSLATION,
-    ORPHAN_LINE,
     UNKNOWN_FORMAT,
-    NOTE_TOO_LONG,
-    TOO_MANY_TRANSLATIONS,
-    POSSIBLE_TYPO,
     CONFLICT
 }
 
