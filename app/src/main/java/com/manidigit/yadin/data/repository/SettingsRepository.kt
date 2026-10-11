@@ -50,6 +50,10 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
             }
         }
 
+    /**
+     * جریان داده حالت پیش‌فرض مرور واژگان برنامه.
+     * به صورت تثبیت‌شده و سراسری روی آزمون ۴ گزینه‌ای ([com.manidigit.yadin.domain.model.ReviewMode.QUIZ]) تنظیم شده است.
+     */
     val defaultReviewModeFlow: Flow<com.manidigit.yadin.domain.model.ReviewMode> = settingsDao.getSettingFlow("defaultReviewMode")
         .map {
             try {

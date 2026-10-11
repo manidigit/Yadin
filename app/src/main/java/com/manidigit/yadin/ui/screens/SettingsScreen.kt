@@ -69,6 +69,18 @@ import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.YadinPalette
 
+/**
+ * صفحه تنظیمات اصلی برنامه یادین.
+ *
+ * شامل تنظیم پوسته ظاهری (GTP، Gemini، Claude، گوگولی)، حالت شب/روز،
+ * آستانه پاسخ‌های متوالی تغییر سختی، جهت زبان یادگیری، پاک‌سازی سطل بازیافت و دسترسی به پشتیبان‌گیری.
+ *
+ * @param currentThemeId شناسه پوسته فعال
+ * @param isDark آیا حالت شب فعال است
+ * @param difficultyThreshold آستانه پاسخ متوالی جهت تغییر سطح سختی
+ * @param languageDirection جهت زبان فعال مطالعه
+ * @param uiLanguage زبان رابط کاربری
+ */
 @Composable
 fun SettingsScreen(
     currentThemeId: String,

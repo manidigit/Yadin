@@ -61,6 +61,19 @@ import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.toPersianDigits
 
+/**
+ * صفحه اصلی (Home) برنامه یادین.
+ *
+ * نمایش‌دهنده هدر پوسته فعال، وضعیت کارت سررسید لایتنر، دکمه‌های مرور سریع (آزمون ۴ گزینه‌ای و فلش‌کارت)،
+ * مراحل تثبیت لایتنر، طیف دشواری واژگان و میان‌برهای سریع برنامه.
+ *
+ * @param dueCount تعداد واژگان سررسیدشده امروز
+ * @param statistics خلاصه آمار لایتنر و رگبار
+ * @param difficultyCounts توزیع واژگان در سطوح مختلف دشواری
+ * @param themeId شناسه پوسته فعال
+ * @param isDark وضعیت حالت شب
+ * @param activePair جفت زبان فعال
+ */
 @Composable
 fun HomeScreen(
     dueCount: Int,

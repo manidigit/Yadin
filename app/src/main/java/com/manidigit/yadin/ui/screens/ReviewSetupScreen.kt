@@ -65,6 +65,18 @@ import com.manidigit.yadin.ui.util.toPersianDigits
 private data class ReviewTypeItem(val type: ReviewType, val title: String, val icon: ImageVector)
 private data class DiffItem(val diff: VocabularyDifficulty, val label: String, val color: Color)
 
+/**
+ * صفحه تنظیم و سفارشی‌سازی جلسه مرور و تمرینات.
+ *
+ * امکان تعیین حالت تمرین (پیش‌فرض: آزمون ۴ گزینه‌ای)، منبع واژگان (روزانه، هفتگی، آزاد)،
+ * دسته‌بندی موضوعی، فیلتر سطوح دشواری و سقف تعداد کلمات جلسه.
+ *
+ * @param initialType نوع مرور اولیه
+ * @param initialDifficulties فیلتر اولیه سطوح دشواری
+ * @param initialMode حالت تمرین اولیه (پیش‌فرض [ReviewMode.QUIZ])
+ * @param initialQuizLevel سطح اولیه سختی گزینه‌های کوییز
+ * @param initialMaxCards سقف اولیه تعداد کارت‌های جلسه
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ReviewSetupScreen(
