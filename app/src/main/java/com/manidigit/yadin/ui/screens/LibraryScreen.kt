@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -21,15 +24,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,7 +55,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.domain.model.AuditActionDetail
+import com.manidigit.yadin.domain.model.AuditActionType
 import com.manidigit.yadin.domain.model.Category
+import com.manidigit.yadin.domain.model.LibraryAuditReport
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.ui.components.DifficultyBadge
@@ -72,10 +93,19 @@ fun LibraryScreen(
     onDeleteCategory: ((String) -> Unit)? = null,
     onSelectWord: (String) -> Unit,
     onAddWord: () -> Unit,
+    onBatchImport: () -> Unit = {},
+    isAuditing: Boolean = false,
+    auditProgress: Float = 0f,
+    auditReport: LibraryAuditReport? = null,
+    onRunAuditAndMerge: () -> Unit = {},
+    onClearAuditReport: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+
+    var showAddOptionsDialog by remember { mutableStateOf(false) }
+    var showAuditDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -93,7 +123,7 @@ fun LibraryScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 IconButton(
                     onClick = onBack,
@@ -109,7 +139,7 @@ fun LibraryScreen(
                     )
                 }
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (showOnlyInactive) "سطل بازیافت (واژگان غیرفعال)" else "کتابخانه واژگان",
                         style = MaterialTheme.typography.titleLarge,
@@ -121,6 +151,26 @@ fun LibraryScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
+                }
+
+                if (!showOnlyInactive) {
+                    FilledTonalButton(
+                        onClick = { showAuditDialog = true },
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "پالایش و ادغام هوشمند",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "پالایش و ادغام",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -301,7 +351,7 @@ fun LibraryScreen(
 
         // Floating Action Button
         FloatingActionButton(
-            onClick = onAddWord,
+            onClick = { showAddOptionsDialog = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
@@ -310,6 +360,35 @@ fun LibraryScreen(
             shape = CircleShape
         ) {
             Icon(Icons.Default.Add, contentDescription = "افزودن واژه جدید")
+        }
+
+        // دیالوگ انتخاب شیوه افزودن واژه (تکی یا گروهی)
+        if (showAddOptionsDialog) {
+            AddWordChoiceDialog(
+                onDismiss = { showAddOptionsDialog = false },
+                onAddSingle = {
+                    showAddOptionsDialog = false
+                    onAddWord()
+                },
+                onAddBatch = {
+                    showAddOptionsDialog = false
+                    onBatchImport()
+                }
+            )
+        }
+
+        // دیالوگ بررسی، پالایش، ادغام واژگان تکراری و رفرش
+        if (showAuditDialog) {
+            LibraryAuditDialog(
+                isAuditing = isAuditing,
+                auditProgress = auditProgress,
+                auditReport = auditReport,
+                onDismiss = {
+                    showAuditDialog = false
+                    onClearAuditReport()
+                },
+                onRunAudit = onRunAuditAndMerge
+            )
         }
     }
 }
@@ -485,4 +564,379 @@ fun WordItemCard(
             }
         }
     }
+}
+
+@Composable
+fun AddWordChoiceDialog(
+    onDismiss: () -> Unit,
+    onAddSingle: () -> Unit,
+    onAddBatch: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = colors.primary
+                )
+                Text(
+                    text = "افزودن واژه به کتابخانه",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = "شیوه افزودن واژگان را انتخاب کنید:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant
+                )
+
+                // گزینه ۱: افزودن تکی
+                YadinCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(dimensions.cornerMedium))
+                        .clickable { onAddSingle() }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(colors.primary.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "افزودن تکی واژه",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = colors.onSurface
+                            )
+                            Text(
+                                text = "ورود دستی یک لغت با ترجمه‌ها، دسته‌بندی و یادداشت",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                // گزینه ۲: افزودن گروهی
+                YadinCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(dimensions.cornerMedium))
+                        .clickable { onAddBatch() }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(colors.success.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FileUpload,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "افزودن گروهی واژگان",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = colors.onSurface
+                            )
+                            Text(
+                                text = "ورود دسته‌ای از متن کپی‌شده، فایل متنی، اکسل، یا فایل پشتیبان",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("انصراف")
+            }
+        }
+    )
+}
+
+@Composable
+fun LibraryAuditDialog(
+    isAuditing: Boolean,
+    auditProgress: Float,
+    auditReport: LibraryAuditReport?,
+    onDismiss: () -> Unit,
+    onRunAudit: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!isAuditing) onDismiss()
+        },
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = colors.primary
+                )
+                Text(
+                    text = "بررسی، پالایش و ادغام واژگان",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 440.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (isAuditing) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            color = colors.primary,
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Text(
+                            text = "در حال بررسی واژگان، ادغام تکراری‌ها و پالایش یادداشت‌ها...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (auditProgress > 0f) {
+                            LinearProgressIndicator(
+                                progress = { auditProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = colors.primary
+                            )
+                        }
+                    }
+                } else if (auditReport != null) {
+                    // کارت آمار نتیجه
+                    YadinCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "گزارش نتیجه پالایش و ادغام:",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = colors.onSurface
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("کل واژگان بررسی‌شده:", fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text("${auditReport.totalScanned} واژه", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("واژگان تکراری ادغام‌شده:", fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text("${auditReport.mergedCount} مورد", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.primary)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("واژگان پالایش‌شده (پرانتز و علائم):", fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text("${auditReport.cleanedCount} مورد", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.success)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("تعداد خالص نهایی در کتابخانه:", fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text("${auditReport.totalRemaining} واژه", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)
+                            }
+                        }
+                    }
+
+                    if (auditReport.actions.isEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.success.copy(alpha = 0.12f))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success)
+                            Text(
+                                text = "تمامی واژگان کتابخانه بررسی شدند و هیچ مورد تکراری یا نیازمند پالایش یافت نشد. کتابخانه کاملاً مرتب و استاندارد است.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurface
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "جزئیات اصلاحات و ادغام‌های انجام‌شده (${auditReport.actions.size} مورد):",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                        auditReport.actions.take(30).forEach { act ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.surfaceVariant.copy(alpha = 0.5f))
+                                    .padding(8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = when (act.actionType) {
+                                            AuditActionType.MERGED -> "ادغام تکراری"
+                                            AuditActionType.CLEANED -> "پالایش کاراکتر"
+                                            AuditActionType.NOTE_EXTRACTED -> "انتقال به یادداشت"
+                                        },
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = when (act.actionType) {
+                                            AuditActionType.MERGED -> colors.primary
+                                            else -> colors.success
+                                        },
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(colors.surface)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                    Text(
+                                        text = "${act.originalText} ➔ ${act.cleanedText}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.onSurface
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = act.description,
+                                    fontSize = 11.sp,
+                                    color = colors.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // توضیحات اولیه قبل از اجرا
+                    Text(
+                        text = "این عملیات تمامی واژگان کتابخانه را به طور هوشمند بررسی و یکپارچه می‌کند:\n\n" +
+                                "• شناسایی و ادغام (Merge) کلیه واژه‌های تکراری با حفظ بالاترین مرحله لایتنر و ترکیب تمام ترجمه‌ها\n" +
+                                "• انتقال کاراکترهای اضافی، پرانتزها و توضیحات چسبیده به واژه به بخش یادداشت‌ها\n" +
+                                "• جداسازی ترجمه‌های چسبیده با علامت‌های دوطرفه (:، -، =)\n" +
+                                "• حذف شماره‌گذاری‌های آغازین، نشانه‌ها و گیومه‌های زائد\n" +
+                                "• رفرش و به‌روزرسانی کامل پایگاه داده کتابخانه",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (!isAuditing) {
+                if (auditReport == null) {
+                    Button(
+                        onClick = onRunAudit,
+                        shape = RoundedCornerShape(dimensions.cornerMedium)
+                    ) {
+                        Text("شروع بررسی و ادغام هوشمند")
+                    }
+                } else {
+                    Button(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(dimensions.cornerMedium)
+                    ) {
+                        Text("تأیید و بستن")
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            if (!isAuditing) {
+                if (auditReport != null) {
+                    TextButton(onClick = onRunAudit) {
+                        Text("بررسی مجدد")
+                    }
+                } else {
+                    TextButton(onClick = onDismiss) {
+                        Text("انصراف")
+                    }
+                }
+            }
+        }
+    )
 }

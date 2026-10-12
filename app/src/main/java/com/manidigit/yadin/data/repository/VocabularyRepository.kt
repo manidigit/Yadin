@@ -866,4 +866,15 @@ class VocabularyRepository(
     fun getPracticedWordsCountFlow(direction: CardDirection): Flow<Int> {
         return learningDao.getPracticedWordsCountFlow(direction)
     }
+
+    private val auditService by lazy {
+        com.manidigit.yadin.domain.algorithm.VocabularyAuditService(database, conceptDao, learningDao, reviewSessionDao)
+    }
+
+    suspend fun auditAndMergeLibrary(
+        direction: CardDirection = CardDirection.NORMAL,
+        onProgress: (Int, Int) -> Unit = { _, _ -> }
+    ): com.manidigit.yadin.domain.model.LibraryAuditReport {
+        return auditService.auditAndMergeLibrary(direction, onProgress)
+    }
 }

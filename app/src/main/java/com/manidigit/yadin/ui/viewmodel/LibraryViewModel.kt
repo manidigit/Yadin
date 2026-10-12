@@ -105,6 +105,16 @@ class LibraryViewModel(
     /** پیام خطای آخرین عملیات جهت نمایش به کاربر */
     val libraryErrorMessage: StateFlow<String?> = _libraryErrorMessage.asStateFlow()
 
+    // --- وضعیت بررسی، پالایش و ادغام واژگان (Audit & Merge) ---
+    private val _isAuditing = MutableStateFlow(false)
+    val isAuditing: StateFlow<Boolean> = _isAuditing.asStateFlow()
+
+    private val _auditProgress = MutableStateFlow(0f)
+    val auditProgress: StateFlow<Float> = _auditProgress.asStateFlow()
+
+    private val _auditReport = MutableStateFlow<com.manidigit.yadin.domain.model.LibraryAuditReport?>(null)
+    val auditReport: StateFlow<com.manidigit.yadin.domain.model.LibraryAuditReport?> = _auditReport.asStateFlow()
+
     /**
      * تغییر عبارت جستجو و به‌روزرسانی نتایج کتابخانه با debounce.
      */
@@ -428,6 +438,38 @@ class LibraryViewModel(
                 onComplete()
             }
         }
+    }
+
+    /**
+     * اجرای کامل عملیات بررسی، پالایش، ادغام واژگان تکراری و رفرش پایگاه داده
+     */
+    fun runLibraryAuditAndMerge(direction: CardDirection = CardDirection.NORMAL) {
+        scope.launch {
+            _isAuditing.value = true
+            _auditProgress.value = 0f
+            _libraryErrorMessage.value = null
+            try {
+                val report = vocabularyRepo.auditAndMergeLibrary(direction) { done, total ->
+                    if (total > 0) {
+                        _auditProgress.value = done.toFloat() / total
+                    }
+                }
+                _auditReport.value = report
+                // بلافاصله نتایج جستجو و لیست کتابخانه رفرش شوند
+                performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
+            } catch (e: Exception) {
+                _libraryErrorMessage.value = "خطا در بررسی و ادغام واژگان: ${e.message}"
+            } finally {
+                _isAuditing.value = false
+            }
+        }
+    }
+
+    /**
+     * پاکسازی گزارش بررسی و ادغام.
+     */
+    fun clearAuditReport() {
+        _auditReport.value = null
     }
 
     /**

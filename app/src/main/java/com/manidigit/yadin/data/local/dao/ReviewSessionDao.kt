@@ -54,6 +54,12 @@ interface ReviewSessionDao {
     @Query("SELECT * FROM review_session_items WHERE sessionId = :sessionId AND conceptId = :conceptId LIMIT 1")
     suspend fun getItemForSessionAndConcept(sessionId: String, conceptId: String): ReviewSessionItemEntity?
 
+    @Query("UPDATE review_history SET conceptId = :newConceptId WHERE conceptId IN (:oldConceptIds)")
+    suspend fun repointReviewHistory(oldConceptIds: List<String>, newConceptId: String)
+
+    @Query("UPDATE review_session_items SET conceptId = :newConceptId WHERE conceptId IN (:oldConceptIds)")
+    suspend fun repointReviewSessionItems(oldConceptIds: List<String>, newConceptId: String)
+
     @Query("SELECT COUNT(*) FROM review_history WHERE reviewedDay = :dayString")
     fun getReviewCountForDayFlow(dayString: String): Flow<Int>
 

@@ -222,3 +222,24 @@ data class DailyReviewCount(
     val totalCount: Int,
     val correctCount: Int
 )
+
+enum class AuditActionType {
+    MERGED,
+    CLEANED,
+    NOTE_EXTRACTED
+}
+
+data class AuditActionDetail(
+    val originalText: String,
+    val cleanedText: String,
+    val actionType: AuditActionType,
+    val description: String
+)
+
+data class LibraryAuditReport(
+    val totalScanned: Int,
+    val mergedCount: Int,
+    val cleanedCount: Int,
+    val totalRemaining: Int,
+    val actions: List<AuditActionDetail>
+)

@@ -161,6 +161,9 @@ interface ConceptDao {
     @Query("DELETE FROM concept_categories WHERE conceptId = :conceptId")
     suspend fun deleteConceptCategories(conceptId: String)
 
+    @Query("DELETE FROM concept_categories WHERE conceptId IN (:conceptIds)")
+    suspend fun deleteConceptCategoriesForConcepts(conceptIds: List<String>)
+
     @Query("DELETE FROM concepts WHERE id = :conceptId")
     suspend fun deleteConceptPermanently(conceptId: String)
 

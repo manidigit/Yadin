@@ -345,6 +345,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val onlyInactive by viewModel.showOnlyInactiveFilter.collectAsStateWithLifecycle()
             val hasMore by viewModel.hasMoreResults.collectAsStateWithLifecycle()
             val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
+            val isAuditing by viewModel.isAuditing.collectAsStateWithLifecycle()
+            val auditProgress by viewModel.auditProgress.collectAsStateWithLifecycle()
+            val auditReport by viewModel.auditReport.collectAsStateWithLifecycle()
 
             val appDir by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
 
@@ -359,6 +362,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 hasMoreResults = hasMore,
                 isLoadingMore = isLoadingMore,
                 appLanguageDirection = appDir,
+                isAuditing = isAuditing,
+                auditProgress = auditProgress,
+                auditReport = auditReport,
                 onSearchChange = { viewModel.onSearchQueryChanged(it) },
                 onCategoryFilterChange = { viewModel.onCategoryFilterChanged(it) },
                 onStageFilterChange = { viewModel.onStageFilterChanged(it) },
@@ -371,6 +377,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onDeleteCategory = { id -> viewModel.deleteCategory(id) },
                 onSelectWord = { conceptId -> viewModel.selectWordDetail(conceptId) },
                 onAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
+                onBatchImport = { viewModel.navigateTo(Screen.ImportPreview) },
+                onRunAuditAndMerge = { viewModel.runLibraryAuditAndMerge() },
+                onClearAuditReport = { viewModel.clearAuditReport() },
                 onBack = {
                     if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
                 }

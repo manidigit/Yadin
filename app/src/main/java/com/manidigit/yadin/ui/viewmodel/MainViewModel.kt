@@ -177,6 +177,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val importProgress: StateFlow<Float> get() = libraryVm.importProgress
     val importSummary: StateFlow<ImportSummary?> get() = libraryVm.importSummary
     val libraryErrorMessage: StateFlow<String?> get() = libraryVm.libraryErrorMessage
+    val isAuditing: StateFlow<Boolean> get() = libraryVm.isAuditing
+    val auditProgress: StateFlow<Float> get() = libraryVm.auditProgress
+    val auditReport: StateFlow<com.manidigit.yadin.domain.model.LibraryAuditReport?> get() = libraryVm.auditReport
 
     // ==========================================
     // تفویض وضعیت مرور و نشست‌ها (ReviewViewModel)
@@ -379,6 +382,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun loadNextLibraryPage() = libraryVm.loadNextPage(appLanguageDirection.value)
     fun reactivateWord(conceptId: String) = libraryVm.reactivateWord(conceptId, appLanguageDirection.value)
     fun loadRecentWords() = libraryVm.loadRecentWords(appLanguageDirection.value)
+
+    fun runLibraryAuditAndMerge() = libraryVm.runLibraryAuditAndMerge(appLanguageDirection.value)
+    fun clearAuditReport() = libraryVm.clearAuditReport()
 
     fun selectWordDetail(conceptId: String) {
         libraryVm.selectWordDetail(conceptId) {
