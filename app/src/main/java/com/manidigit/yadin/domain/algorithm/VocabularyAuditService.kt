@@ -42,110 +42,115 @@ class VocabularyAuditService(
         val modifications: List<String>
     )
 
-    /**
-     * پالایش واژه و جداسازی کاراکترهای نامناسب، پرانتزها، جداکننده‌ها و علائم زائد
-     */
-    fun cleanAndExtractWord(originalSource: String): CleanedWordResult {
-        var text = originalSource.trim()
-        val modifications = mutableListOf<String>()
-        val extractedTranslations = mutableListOf<String>()
-        val extractedNotes = mutableListOf<String>()
+    fun cleanAndExtractWord(originalSource: String): CleanedWordResult =
+        Companion.cleanAndExtractWord(originalSource)
 
-        // ۱. استانداردسازی فاصله و حذف نویسه‌های نامرئی
-        val normalized = TextUtilities.cleanText(text)
-        if (normalized != text) {
-            text = normalized
-            modifications.add("حذف کاراکترهای نامرئی و استانداردسازی فاصله")
-        }
+    companion object {
+        /**
+         * پالایش واژه و جداسازی کاراکترهای نامناسب، پرانتزها، جداکننده‌ها و علائم زائد
+         */
+        fun cleanAndExtractWord(originalSource: String): CleanedWordResult {
+            var text = originalSource.trim()
+            val modifications = mutableListOf<String>()
+            val extractedTranslations = mutableListOf<String>()
+            val extractedNotes = mutableListOf<String>()
 
-        // ۲. حذف شماره‌گذاری آغازین یا گلوله‌های نگارشی (مانند 1. یا - یا •)
-        val strippedNumbering = stripNumberingAndBullets(text)
-        if (strippedNumbering != text && strippedNumbering.isNotBlank()) {
-            modifications.add("حذف شماره‌گذاری یا علامت آغازین")
-            text = strippedNumbering
-        }
+            // ۱. استانداردسازی فاصله و حذف نویسه‌های نامرئی
+            val normalized = TextUtilities.cleanText(text)
+            if (normalized != text) {
+                text = normalized
+                modifications.add("حذف کاراکترهای نامرئی و استانداردسازی فاصله")
+            }
 
-        // ۳. حذف گیومه و نقل‌قول‌های احاطه‌کننده (مانند "word" یا «word»)
-        val strippedQuotes = stripSurroundingQuotes(text)
-        if (strippedQuotes != text && strippedQuotes.isNotBlank()) {
-            modifications.add("حذف گیومه یا نشانه‌های نقل‌قول")
-            text = strippedQuotes
-        }
+            // ۲. حذف شماره‌گذاری آغازین یا گلوله‌های نگارشی (مانند 1. یا - یا •)
+            val strippedNumbering = stripNumberingAndBullets(text)
+            if (strippedNumbering != text && strippedNumbering.isNotBlank()) {
+                modifications.add("حذف شماره‌گذاری یا علامت آغازین")
+                text = strippedNumbering
+            }
 
-        // ۴. بررسی وجود جداکننده دوطرفه (مانند "casa : خانه" یا "run - دویدن")
-        val pair = VocabularyParser.splitPair(text)
-        if (pair != null) {
-            val left = pair.first.trim()
-            val right = pair.second.trim()
-            if (left.isNotBlank() && right.isNotBlank()) {
-                text = left
-                if (VocabularyParser.hasPersian(right)) {
-                    extractedTranslations.addAll(TextUtilities.splitTranslations(right))
-                    modifications.add("جداسازی ترجمه چسبیده به واژه ($right)")
-                } else {
-                    extractedNotes.add("توضیح جداشده: $right")
-                    modifications.add("انتقال متن دوم به یادداشت ($right)")
+            // ۳. حذف گیومه و نقل‌قول‌های احاطه‌کننده (مانند "word" یا «word»)
+            val strippedQuotes = stripSurroundingQuotes(text)
+            if (strippedQuotes != text && strippedQuotes.isNotBlank()) {
+                modifications.add("حذف گیومه یا نشانه‌های نقل‌قول")
+                text = strippedQuotes
+            }
+
+            // ۴. بررسی وجود جداکننده دوطرفه (مانند "casa : خانه" یا "run - دویدن")
+            val pair = VocabularyParser.splitPair(text)
+            if (pair != null) {
+                val left = pair.first.trim()
+                val right = pair.second.trim()
+                if (left.isNotBlank() && right.isNotBlank()) {
+                    text = left
+                    if (VocabularyParser.hasPersian(right)) {
+                        extractedTranslations.addAll(TextUtilities.splitTranslations(right))
+                        modifications.add("جداسازی ترجمه چسبیده به واژه ($right)")
+                    } else {
+                        extractedNotes.add("توضیح جداشده: $right")
+                        modifications.add("انتقال متن دوم به یادداشت ($right)")
+                    }
                 }
             }
-        }
 
-        // ۵. استخراج پرانتزها و کروشه‌ها (مانند "apple (n.)" یا "correr (دویدن)" یا "good [adj]")
-        var keepExtracting = true
-        var loopCount = 0
-        while (keepExtracting && loopCount < 5) {
-            loopCount++
-            val parenMatch = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""").find(text)
-            if (parenMatch != null) {
-                val main = parenMatch.groupValues[1].trim()
-                val inside = parenMatch.groupValues[2].trim()
-                if (main.isNotBlank() && inside.isNotBlank()) {
-                    text = main
-                    if (VocabularyParser.hasPersian(inside)) {
-                        extractedTranslations.addAll(TextUtilities.splitTranslations(inside))
-                        modifications.add("استخراج ترجمه فارسی داخل پرانتز ($inside)")
+            // ۵. استخراج پرانتزها و کروشه‌ها (مانند "apple (n.)" یا "correr (دویدن)" یا "good [adj]")
+            var keepExtracting = true
+            var loopCount = 0
+            while (keepExtracting && loopCount < 5) {
+                loopCount++
+                val parenMatch = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""").find(text)
+                if (parenMatch != null) {
+                    val main = parenMatch.groupValues[1].trim()
+                    val inside = parenMatch.groupValues[2].trim()
+                    if (main.isNotBlank() && inside.isNotBlank()) {
+                        text = main
+                        if (VocabularyParser.hasPersian(inside)) {
+                            extractedTranslations.addAll(TextUtilities.splitTranslations(inside))
+                            modifications.add("استخراج ترجمه فارسی داخل پرانتز ($inside)")
+                        } else {
+                            extractedNotes.add("نقش/توضیح: $inside")
+                            modifications.add("انتقال توضیحات داخل پرانتز به یادداشت ($inside)")
+                        }
                     } else {
-                        extractedNotes.add("نقش/توضیح: $inside")
-                        modifications.add("انتقال توضیحات داخل پرانتز به یادداشت ($inside)")
+                        keepExtracting = false
                     }
                 } else {
                     keepExtracting = false
                 }
-            } else {
-                keepExtracting = false
             }
+
+            text = TextUtilities.cleanText(text)
+            val wasModified = text != originalSource.trim() || extractedTranslations.isNotEmpty() || extractedNotes.isNotEmpty()
+
+            return CleanedWordResult(
+                cleanSourceText = if (text.isNotBlank()) text else originalSource.trim(),
+                extractedTranslations = extractedTranslations.distinct(),
+                extractedNotes = extractedNotes.distinct(),
+                wasModified = wasModified,
+                modifications = modifications
+            )
         }
 
-        text = TextUtilities.cleanText(text)
-        val wasModified = text != originalSource.trim() || extractedTranslations.isNotEmpty() || extractedNotes.isNotEmpty()
-
-        return CleanedWordResult(
-            cleanSourceText = if (text.isNotBlank()) text else originalSource.trim(),
-            extractedTranslations = extractedTranslations.distinct(),
-            extractedNotes = extractedNotes.distinct(),
-            wasModified = wasModified,
-            modifications = modifications
-        )
-    }
-
-    private fun stripNumberingAndBullets(s: String): String {
-        val regexNum = Regex("""^\s*[0-9۰-۹٠-٩]+\s*(?:[.)-]|:|[-—])\s*""")
-        val regexBullet = Regex("""^[-—*•#»«➜→\s]+""")
-        val withoutNum = regexNum.replaceFirst(s, "").trim()
-        return regexBullet.replaceFirst(withoutNum, "").trim()
-    }
-
-    private fun stripSurroundingQuotes(s: String): String {
-        var res = s.trim()
-        if ((res.startsWith("\"") && res.endsWith("\"")) ||
-            (res.startsWith("'") && res.endsWith("'")) ||
-            (res.startsWith("«") && res.endsWith("»")) ||
-            (res.startsWith("“") && res.endsWith("”"))
-        ) {
-            if (res.length >= 2) {
-                res = res.substring(1, res.length - 1).trim()
-            }
+        fun stripNumberingAndBullets(s: String): String {
+            val regexNum = Regex("""^\s*[0-9۰-۹٠-٩]+\s*(?:[.)-]|:|[-—])\s*""")
+            val regexBullet = Regex("""^[-—*•#»«➜→\s]+""")
+            val withoutNum = regexNum.replaceFirst(s, "").trim()
+            return regexBullet.replaceFirst(withoutNum, "").trim()
         }
-        return res
+
+        fun stripSurroundingQuotes(s: String): String {
+            var res = s.trim()
+            if ((res.startsWith("\"") && res.endsWith("\"")) ||
+                (res.startsWith("'") && res.endsWith("'")) ||
+                (res.startsWith("«") && res.endsWith("»")) ||
+                (res.startsWith("“") && res.endsWith("”"))
+            ) {
+                if (res.length >= 2) {
+                    res = res.substring(1, res.length - 1).trim()
+                }
+            }
+            return res
+        }
     }
 
     private data class ConceptWorkingData(
