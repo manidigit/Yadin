@@ -162,50 +162,52 @@ fun ImportScreen(
             .fillMaxSize()
             .background(colors.background)
             .padding(dimensions.screenPadding),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            IconButton(
+                onClick = {
+                    if (importSummary != null) {
+                        onResetParse?.invoke()
+                    } else if (parseResult != null && onResetParse != null) {
+                        onResetParse()
+                    } else {
+                        onBack()
+                    }
+                },
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(colors.surfaceVariant)
             ) {
-                IconButton(
-                    onClick = {
-                        if (importSummary != null) {
-                            onResetParse?.invoke()
-                        } else if (parseResult != null && onResetParse != null) {
-                            onResetParse()
-                        } else {
-                            onBack()
-                        }
-                    },
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.surfaceVariant)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
-                        tint = colors.onSurface
-                    )
-                }
-
-                Text(
-                    text = "ورود متنی واژگان (پارسر هوشمند)",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "بازگشت",
+                    tint = colors.onSurface
                 )
             }
 
-            if (importSummary != null) {
-                // SUCCESS REPORT CARD
+            Text(
+                text = "ورود متنی واژگان (پارسر هوشمند)",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = colors.onSurface
+            )
+        }
+
+        if (importSummary != null) {
+            // SUCCESS REPORT CARD inside scrollable container
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
                     backgroundColor = colors.surface
@@ -329,8 +331,16 @@ fun ImportScreen(
                         }
                     }
                 }
-            } else if (parseResult == null) {
-                // Input area
+            }
+        } else if (parseResult == null) {
+            // Input Form Area with Scroll
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
                 Text(
                     text = "متن واژگان را در کادر زیر وارد کنید (پشتیبانی از فرمت دو نقطه : یا خط تیره - و جداکننده کاما):",
                     style = MaterialTheme.typography.bodyMedium,
@@ -487,175 +497,175 @@ fun ImportScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("پردازش و استخراج واژگان", fontWeight = FontWeight.Bold)
                 }
-            } else {
-                // Preview parsed entries
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "پیش‌نمایش استخراج (${parseResult.entries.size} مدخل)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    if (onResetParse != null) {
-                        OutlinedButton(
-                            onClick = onResetParse,
-                            shape = RoundedCornerShape(dimensions.cornerSmall)
-                        ) {
-                            Text("ویرایش مجدد متن", fontSize = 11.sp)
-                        }
-                    }
-                }
-
-                // Category selection for imported words
-                ExposedCategoryDropdown(
-                    categories = categories,
-                    selectedCategoryId = selectedCategoryId,
-                    onSelectCategory = { selectedCategoryId = it },
-                    onAddNewCategory = { newName ->
-                        onAddNewCategory?.invoke(newName) { newId ->
-                            selectedCategoryId = newId
-                        }
-                    },
-                    label = "دسته‌بندی موضوعی واژگان واردشده (اختیاری)"
-                )
-
-                // Duplicate policy selection
+            }
+        } else {
+            // Preview parsed entries: Top Header & Options
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "سیاست برخورد با واژگان تکراری:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    text = "پیش‌نمایش استخراج (${parseResult.entries.size} مدخل)",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    PolicyChip(
-                        label = "ادغام (MERGE)",
-                        isSelected = selectedPolicy == DuplicatePolicy.MERGE,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedPolicy = DuplicatePolicy.MERGE }
-                    )
-                    PolicyChip(
-                        label = "مدخل جدید (SEPARATE)",
-                        isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
-                        modifier = Modifier.weight(1.1f),
-                        onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
-                    )
-                    PolicyChip(
-                        label = "صرف‌نظر (SKIP)",
-                        isSelected = selectedPolicy == DuplicatePolicy.SKIP,
-                        modifier = Modifier.weight(0.9f),
-                        onClick = { selectedPolicy = DuplicatePolicy.SKIP }
-                    )
-                    PolicyChip(
-                        label = "جایگزینی (REPLACE)",
-                        isSelected = selectedPolicy == DuplicatePolicy.REPLACE,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedPolicy = DuplicatePolicy.REPLACE }
-                    )
-                }
-
-                // Warning Card for discarded lines / parse warnings
-                if (parseResult.warnings.isNotEmpty()) {
-                    YadinCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = colors.warning.copy(alpha = 0.12f)
+                if (onResetParse != null) {
+                    OutlinedButton(
+                        onClick = onResetParse,
+                        shape = RoundedCornerShape(dimensions.cornerSmall)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        Text("ویرایش مجدد متن", fontSize = 11.sp)
+                    }
+                }
+            }
+
+            // Category selection for imported words
+            ExposedCategoryDropdown(
+                categories = categories,
+                selectedCategoryId = selectedCategoryId,
+                onSelectCategory = { selectedCategoryId = it },
+                onAddNewCategory = { newName ->
+                    onAddNewCategory?.invoke(newName) { newId ->
+                        selectedCategoryId = newId
+                    }
+                },
+                label = "دسته‌بندی موضوعی واژگان واردشده (اختیاری)"
+            )
+
+            // Duplicate policy selection
+            Text(
+                text = "سیاست برخورد با واژگان تکراری:",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                PolicyChip(
+                    label = "ادغام (MERGE)",
+                    isSelected = selectedPolicy == DuplicatePolicy.MERGE,
+                    modifier = Modifier.weight(1f),
+                    onClick = { selectedPolicy = DuplicatePolicy.MERGE }
+                )
+                PolicyChip(
+                    label = "مدخل جدید (SEPARATE)",
+                    isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
+                    modifier = Modifier.weight(1.1f),
+                    onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
+                )
+                PolicyChip(
+                    label = "صرف‌نظر (SKIP)",
+                    isSelected = selectedPolicy == DuplicatePolicy.SKIP,
+                    modifier = Modifier.weight(0.9f),
+                    onClick = { selectedPolicy = DuplicatePolicy.SKIP }
+                )
+                PolicyChip(
+                    label = "جایگزینی (REPLACE)",
+                    isSelected = selectedPolicy == DuplicatePolicy.REPLACE,
+                    modifier = Modifier.weight(1f),
+                    onClick = { selectedPolicy = DuplicatePolicy.REPLACE }
+                )
+            }
+
+            // Warning Card for discarded lines / parse warnings
+            if (parseResult.warnings.isNotEmpty()) {
+                YadinCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = colors.warning.copy(alpha = 0.12f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Warning,
-                                    contentDescription = null,
-                                    tint = colors.warning,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = "هشدار و خطوط کنارگذاشته‌شده (${parseResult.warnings.size} مورد):",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.warning
-                                )
-                            }
-                            parseResult.warnings.take(5).forEach { warn ->
-                                Text(
-                                    text = "• $warn",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.onSurface
-                                )
-                            }
-                            if (parseResult.warnings.size > 5) {
-                                Text(
-                                    text = "... و ${parseResult.warnings.size - 5} مورد دیگر",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = colors.onSurfaceVariant
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = colors.warning,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "هشدار و خطوط کنارگذاشته‌شده (${parseResult.warnings.size} مورد):",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.warning
+                            )
+                        }
+                        parseResult.warnings.take(5).forEach { warn ->
+                            Text(
+                                text = "• $warn",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurface
+                            )
+                        }
+                        if (parseResult.warnings.size > 5) {
+                            Text(
+                                text = "... و ${parseResult.warnings.size - 5} مورد دیگر",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSurfaceVariant
+                            )
                         }
                     }
                 }
+            }
 
-                // Parsed entries list with performance key
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(
-                        items = parseResult.entries,
-                        key = { index, entry -> "${index}_${entry.lineNumber}_${entry.sourceText.hashCode()}" }
-                    ) { _, entry ->
-                        ParsedEntryCard(
-                            entry = entry,
-                            categoryName = selectedCategory?.name
-                        )
-                    }
+            // Parsed entries LazyColumn
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                itemsIndexed(
+                    items = parseResult.entries,
+                    key = { index, entry -> "${index}_${entry.lineNumber}_${entry.sourceText.hashCode()}" }
+                ) { _, entry ->
+                    ParsedEntryCard(
+                        entry = entry,
+                        categoryName = selectedCategory?.name
+                    )
                 }
+            }
 
-                if (isImporting) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        LinearProgressIndicator(
-                            progress = { importProgress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
-                            color = colors.primary,
-                            trackColor = colors.surfaceVariant
-                        )
-                        Text(
-                            text = "در حال ذخیره‌سازی... ${(importProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.primary
-                        )
-                    }
-                } else {
-                    Button(
-                        onClick = { onConfirmImport(selectedPolicy, selectedCategoryId) },
+            if (isImporting) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    LinearProgressIndicator(
+                        progress = { importProgress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(dimensions.cornerMedium),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.success,
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("تأیید و ذخیره در پایگاه داده", fontWeight = FontWeight.Bold)
-                    }
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = colors.primary,
+                        trackColor = colors.surfaceVariant
+                    )
+                    Text(
+                        text = "در حال ذخیره‌سازی... ${(importProgress * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.primary
+                    )
+                }
+            } else {
+                Button(
+                    onClick = { onConfirmImport(selectedPolicy, selectedCategoryId) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(dimensions.cornerMedium),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.success,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("تأیید و ذخیره در پایگاه داده", fontWeight = FontWeight.Bold)
                 }
             }
         }

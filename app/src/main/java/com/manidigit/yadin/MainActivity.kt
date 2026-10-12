@@ -76,17 +76,24 @@ class MainActivity : ComponentActivity() {
             val targetLocale = if (uiLanguage == "en") java.util.Locale.ENGLISH else java.util.Locale("fa")
 
             val currentContext = LocalContext.current
-            val localizedContext = remember(uiLanguage) {
+            val localizedContext = remember(uiLanguage, currentContext) {
                 val config = android.content.res.Configuration(currentContext.resources.configuration)
                 config.setLocale(targetLocale)
                 config.setLayoutDirection(targetLocale)
-                currentContext.createConfigurationContext(config)
+                val base = currentContext.createConfigurationContext(config)
+                object : android.content.ContextWrapper(currentContext) {
+                    override fun getResources(): android.content.res.Resources = base.resources
+                    override fun createConfigurationContext(overrideConfiguration: android.content.res.Configuration): android.content.Context {
+                        return base.createConfigurationContext(overrideConfiguration)
+                    }
+                }
             }
 
             YadinTheme(themeId = themeId, isDark = isDark) {
                 CompositionLocalProvider(
                     LocalContext provides localizedContext,
-                    LocalLayoutDirection provides layoutDirection
+                    LocalLayoutDirection provides layoutDirection,
+                    androidx.activity.compose.LocalActivityResultRegistryOwner provides this@MainActivity
                 ) {
                     val shouldShowBottomBar = screen is Screen.Home ||
                             screen is Screen.ReviewSetup ||

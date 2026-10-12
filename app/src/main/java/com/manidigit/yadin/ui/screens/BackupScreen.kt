@@ -593,16 +593,20 @@ fun BackupScreen(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            if (selectedFormat == BackupExportFormat.JSON) {
-                                val fname = if (backupOptions.fullBackup) "yadin-full-backup.json" else "yadin-custom-backup.json"
-                                exportJsonLauncher.launch(fname)
-                            } else {
-                                val fname = when (selectedFormat) {
-                                    BackupExportFormat.EXCEL_CSV_PROGRESS -> "yadin-progress-report.csv"
-                                    BackupExportFormat.EXCEL_CSV_COMPLETE -> "yadin-master-export.csv"
-                                    else -> "yadin-vocabulary.csv"
+                            try {
+                                if (selectedFormat == BackupExportFormat.JSON) {
+                                    val fname = if (backupOptions.fullBackup) "yadin-full-backup.json" else "yadin-custom-backup.json"
+                                    exportJsonLauncher.launch(fname)
+                                } else {
+                                    val fname = when (selectedFormat) {
+                                        BackupExportFormat.EXCEL_CSV_PROGRESS -> "yadin-progress-report.csv"
+                                        BackupExportFormat.EXCEL_CSV_COMPLETE -> "yadin-master-export.csv"
+                                        else -> "yadin-vocabulary.csv"
+                                    }
+                                    exportCsvLauncher.launch(fname)
                                 }
-                                exportCsvLauncher.launch(fname)
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "عدم امکان باز کردن مدیریت فایل: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
                             }
                         },
                         modifier = Modifier.weight(1f),
@@ -732,7 +736,13 @@ fun BackupScreen(
 
                         // File picker button
                         OutlinedButton(
-                            onClick = { importFileLauncher.launch("*/*") },
+                            onClick = {
+                                try {
+                                    importFileLauncher.launch("*/*")
+                                } catch (e: Exception) {
+                                    android.widget.Toast.makeText(context, "عدم امکان باز کردن انتخابگر فایل: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(1.dp, if (loadedFileContent != null) colors.success else colors.primary)
