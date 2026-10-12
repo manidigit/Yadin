@@ -1,0 +1,35 @@
+# Built application files
+*.apk
+*.aar
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+build/
+app/build/
+.gradle/
+.build-outputs/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+.shelf/
+
+# Keystore files (optional - debug keystore is tracked for CI via base64)
+# *.keystore
+# !debug.keystore
+
+# OS-specific files
+.DS_Store
+Thumbs.db
