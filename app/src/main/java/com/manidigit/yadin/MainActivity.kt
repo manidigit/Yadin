@@ -417,6 +417,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val isImporting by viewModel.isImporting.collectAsStateWithLifecycle()
             val importProgress by viewModel.importProgress.collectAsStateWithLifecycle()
             val importSummary by viewModel.importSummary.collectAsStateWithLifecycle()
+            val libraryErrorMessage by viewModel.libraryErrorMessage.collectAsStateWithLifecycle()
 
             ImportScreen(
                 parseResult = parseResult,
@@ -424,6 +425,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 isImporting = isImporting,
                 importProgress = importProgress,
                 importSummary = importSummary,
+                errorMessage = libraryErrorMessage,
                 onParseText = { text -> viewModel.parseInputText(text) },
                 onParseResult = { result -> viewModel.setParseResult(result) },
                 onResetParse = {

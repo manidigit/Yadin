@@ -410,25 +410,16 @@ object VocabularyParser {
                 }
             }
         }
-        // Priority 2: Equal sign (e.g. "casa = خانه")
-        val equalsIdx = s.indexOf('=')
-        if (equalsIdx in 1 until s.length - 1) {
-            val left = s.substring(0, equalsIdx).trim()
-            val right = s.substring(equalsIdx + 1).trim()
+        // Priority 2: Colon (e.g. "casa: خانه")
+        val colonIdx = s.indexOf(':')
+        if (colonIdx in 1 until s.length - 1) {
+            val left = s.substring(0, colonIdx).trim()
+            val right = s.substring(colonIdx + 1).trim()
             if (left.isNotBlank() && right.isNotBlank()) {
                 return Pair(left, right)
             }
         }
-        // Priority 3: Parentheses pair (e.g. "casa (خانه)")
-        val parenMatch = Regex("^([^(（]+)\\s*[(（]([^)）]+)[)）]\\s*$").find(s)
-        if (parenMatch != null) {
-            val left = parenMatch.groupValues[1].trim()
-            val right = parenMatch.groupValues[2].trim()
-            if (left.isNotBlank() && right.isNotBlank()) {
-                return Pair(left, right)
-            }
-        }
-        // Priority 4: Dash enclosed in spaces or dash delimiter
+        // Priority 3: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه")
         val dashMatch = REGEX_DASH_SPLIT.find(s)
         if (dashMatch != null && dashMatch.range.first > 0 && dashMatch.range.last < s.length - 1) {
             val left = s.substring(0, dashMatch.range.first).trim()
@@ -437,11 +428,20 @@ object VocabularyParser {
                 return Pair(left, right)
             }
         }
-        // Priority 5: Colon
-        val colonIdx = s.indexOf(':')
-        if (colonIdx in 1 until s.length - 1) {
-            val left = s.substring(0, colonIdx).trim()
-            val right = s.substring(colonIdx + 1).trim()
+        // Priority 4: Equal sign (e.g. "casa = خانه")
+        val equalsIdx = s.indexOf('=')
+        if (equalsIdx in 1 until s.length - 1) {
+            val left = s.substring(0, equalsIdx).trim()
+            val right = s.substring(equalsIdx + 1).trim()
+            if (left.isNotBlank() && right.isNotBlank()) {
+                return Pair(left, right)
+            }
+        }
+        // Priority 5: Parentheses pair (e.g. "casa (خانه)") - only when no explicit delimiter exists
+        val parenMatch = Regex("^([^(（]+)\\s*[(（]([^)）]+)[)）]\\s*$").find(s)
+        if (parenMatch != null) {
+            val left = parenMatch.groupValues[1].trim()
+            val right = parenMatch.groupValues[2].trim()
             if (left.isNotBlank() && right.isNotBlank()) {
                 return Pair(left, right)
             }

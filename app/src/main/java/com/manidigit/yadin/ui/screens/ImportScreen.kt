@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -71,6 +72,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 @Composable
 fun ImportScreen(
     parseResult: ParseResult?,
@@ -78,6 +82,7 @@ fun ImportScreen(
     isImporting: Boolean,
     importProgress: Float,
     importSummary: ImportSummary? = null,
+    errorMessage: String? = null,
     onParseText: (String) -> Unit,
     onParseResult: ((ParseResult) -> Unit)? = null,
     onResetParse: (() -> Unit)? = null,
@@ -339,10 +344,14 @@ fun ImportScreen(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            val clip = clipboardManager.getText()?.text
-                            if (!clip.isNullOrBlank()) {
-                                inputText = clip
-                                isShowingSample = false
+                            try {
+                                val clip = clipboardManager.getText()?.text
+                                if (!clip.isNullOrBlank()) {
+                                    inputText = clip
+                                    isShowingSample = false
+                                }
+                            } catch (e: Exception) {
+                                fileLoadError = "خطا در خواندن کلیپ‌بورد: ${e.message}"
                             }
                         },
                         modifier = Modifier.weight(1f),
@@ -355,7 +364,11 @@ fun ImportScreen(
 
                     OutlinedButton(
                         onClick = {
-                            filePickerLauncher.launch(arrayOf("*/*"))
+                            try {
+                                filePickerLauncher.launch(arrayOf("*/*"))
+                            } catch (e: Exception) {
+                                fileLoadError = "عدم امکان باز کردن انتخابگر فایل روی این دستگاه: ${e.localizedMessage ?: "برنامه مناسبی یافت نشد"}"
+                            }
                         },
                         modifier = Modifier.weight(1.3f),
                         shape = RoundedCornerShape(dimensions.cornerSmall)
@@ -405,6 +418,19 @@ fun ImportScreen(
                     )
                 }
 
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = colors.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(dimensions.cornerSmall))
+                            .background(colors.error.copy(alpha = 0.1f))
+                            .padding(8.dp)
+                    )
+                }
+
                 // Category selection BEFORE parsing
                 ExposedCategoryDropdown(
                     categories = categories,
@@ -426,7 +452,7 @@ fun ImportScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .heightIn(min = 160.dp, max = 280.dp),
                     placeholder = {
                         Text(
                             "متن واژگان را اینجا کپی یا بنویسید...\nمثال:\namigo: دوست\ncasa: خانه\nlibro: کتاب"
