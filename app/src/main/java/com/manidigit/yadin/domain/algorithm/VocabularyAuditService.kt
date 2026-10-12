@@ -46,6 +46,10 @@ class VocabularyAuditService(
         Companion.cleanAndExtractWord(originalSource)
 
     companion object {
+        private val REGEX_PAREN_BRACKET = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""")
+        private val REGEX_NUM_PREFIX = Regex("""^\s*[0-9۰-۹٠-٩]+\s*(?:[.)-]|:|[-—])\s*""")
+        private val REGEX_BULLET_PREFIX = Regex("""^[-—*•#»«➜→\s]+""")
+
         /**
          * پالایش واژه و جداسازی کاراکترهای نامناسب، پرانتزها، جداکننده‌ها و علائم زائد
          */
@@ -98,7 +102,7 @@ class VocabularyAuditService(
             var loopCount = 0
             while (keepExtracting && loopCount < 5) {
                 loopCount++
-                val parenMatch = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""").find(text)
+                val parenMatch = REGEX_PAREN_BRACKET.find(text)
                 if (parenMatch != null) {
                     val main = parenMatch.groupValues[1].trim()
                     val inside = parenMatch.groupValues[2].trim()
@@ -132,10 +136,8 @@ class VocabularyAuditService(
         }
 
         fun stripNumberingAndBullets(s: String): String {
-            val regexNum = Regex("""^\s*[0-9۰-۹٠-٩]+\s*(?:[.)-]|:|[-—])\s*""")
-            val regexBullet = Regex("""^[-—*•#»«➜→\s]+""")
-            val withoutNum = regexNum.replaceFirst(s, "").trim()
-            return regexBullet.replaceFirst(withoutNum, "").trim()
+            val withoutNum = REGEX_NUM_PREFIX.replaceFirst(s, "").trim()
+            return REGEX_BULLET_PREFIX.replaceFirst(withoutNum, "").trim()
         }
 
         fun stripSurroundingQuotes(s: String): String {

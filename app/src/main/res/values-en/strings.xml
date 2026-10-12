@@ -43,9 +43,27 @@
     <string name="settings_ui_language">UI Language</string>
     <string name="settings_theme">Visual Theme</string>
     <string name="settings_dark_mode">Dark Mode</string>
-    <string name="settings_daily_reminder">Daily Study Reminder</string>
+    <string name="settings_difficulty_threshold">Difficulty Threshold</string>
+    <string name="settings_tts">Text to Speech (TTS)</string>
+    <string name="settings_study_direction">Default Study Direction</string>
 
     <string name="tutorial_skip">Skip</string>
     <string name="tutorial_next">Next</string>
     <string name="tutorial_finish">Get Started with Yadin</string>
+
+    <string name="backup_export_title">Export Backup</string>
+    <string name="backup_restore_title">Restore Backup</string>
+    <string name="backup_full_json">Full Database Backup (JSON)</string>
+    <string name="backup_excel_csv">Vocabulary Export (CSV)</string>
+    <string name="backup_restore_button">Restore Data</string>
+    <string name="backup_processing">Processing operation...</string>
+
+    <string name="library_search_hint">Search vocabulary...</string>
+    <string name="library_all_categories">All Categories</string>
+    <string name="library_empty_state">No words found</string>
+
+    <string name="progress_title">Learning Progress &amp; Statistics</string>
+    <string name="progress_accuracy">Accuracy Rate</string>
+    <string name="progress_leitner_boxes">Leitner Box Stages</string>
+    <string name="progress_achievements">Achievements &amp; Badges</string>
 </resources>

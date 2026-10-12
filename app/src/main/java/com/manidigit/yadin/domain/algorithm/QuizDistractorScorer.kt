@@ -10,6 +10,10 @@ object QuizDistractorScorer {
     private val PARENTHESIS_REGEX = Regex("\\s*\\([^)]*\\)|\\s*\\[[^]]*\\]|\\s*\\{[^}]*\\}")
     private val WHITESPACE_REGEX = Regex("\\s+")
     private val PUNCTUATION_REGEX = Regex("[!؟?¡¿.:;؛'\"«»’“”\\-_~*]")
+    private val REGEX_PREFIX_MI = Regex("(^|\\s)می[\\s\u200c]+")
+    private val REGEX_PREFIX_NEMI = Regex("(^|\\s)نمی[\\s\u200c]+")
+    private val REGEX_SUFFIX_EI = Regex("[\\s\u200c]+ای(?=$|[\\s,،.!?])")
+    private val REGEX_ZWNJ = Regex("\u200c")
 
     private val GRAMMAR_CLARIFIERS = listOf(
         "برای مونث", "برای مؤنث", "برای مذکر",
@@ -86,12 +90,12 @@ object QuizDistractorScorer {
         t = t.replace(PUNCTUATION_REGEX, " ")
 
         // Unify verb prefixes "می‌" and "نمی‌" to "می" and "نمی" attached (using Unicode whitespace boundaries)
-        t = t.replace(Regex("(^|\\s)می[\\s\u200c]+"), "$1می")
-        t = t.replace(Regex("(^|\\s)نمی[\\s\u200c]+"), "$1نمی")
+        t = t.replace(REGEX_PREFIX_MI, "$1می")
+        t = t.replace(REGEX_PREFIX_NEMI, "$1نمی")
 
         // Strip indefinite suffix "‌ای" / " ای"
-        t = t.replace(Regex("[\\s\u200c]+ای(?=$|[\\s,،.!?])"), " ")
-        t = t.replace(Regex("\u200c"), " ")
+        t = t.replace(REGEX_SUFFIX_EI, " ")
+        t = t.replace(REGEX_ZWNJ, " ")
 
         val tokens = t.split(WHITESPACE_REGEX).filter { it.isNotBlank() }.map { token ->
             when (token) {

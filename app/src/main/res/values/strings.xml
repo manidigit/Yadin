@@ -43,9 +43,27 @@
     <string name="settings_ui_language">زبان رابط کاربری</string>
     <string name="settings_theme">تم ظاهری</string>
     <string name="settings_dark_mode">حالت تاریک</string>
-    <string name="settings_daily_reminder">یادآور مطالعه روزانه</string>
+    <string name="settings_difficulty_threshold">آستانه سختی کلمات</string>
+    <string name="settings_tts">پخش تلفظ صوتی (TTS)</string>
+    <string name="settings_study_direction">جهت پیش‌فرض مطالعه</string>
 
     <string name="tutorial_skip">رد شدن</string>
     <string name="tutorial_next">بعدی</string>
     <string name="tutorial_finish">شروع کار با یادین</string>
+
+    <string name="backup_export_title">تهیه خروجی پشتیبان</string>
+    <string name="backup_restore_title">بازیابی نسخه پشتیبان</string>
+    <string name="backup_full_json">پشتیبان کامل دیتابیس (JSON)</string>
+    <string name="backup_excel_csv">خروجی اکسل واژگان (CSV)</string>
+    <string name="backup_restore_button">بازیابی اطلاعات</string>
+    <string name="backup_processing">در حال پردازش عملیات...</string>
+
+    <string name="library_search_hint">جستجو در واژگان...</string>
+    <string name="library_all_categories">همه دسته‌ها</string>
+    <string name="library_empty_state">هیچ واژه‌ای یافت نشد</string>
+
+    <string name="progress_title">آمار و پیشرفت یادگیری</string>
+    <string name="progress_accuracy">درصد پاسخ صحیح</string>
+    <string name="progress_leitner_boxes">مراحل جعبه لایتنر</string>
+    <string name="progress_achievements">دستاوردها و نشان‌ها</string>
 </resources>

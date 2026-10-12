@@ -188,7 +188,7 @@ fun AddEditWordScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(categories) { cat ->
+                    items(categories, key = { it.id }) { cat ->
                         val isSelected = selectedCategoryIds.contains(cat.id)
                         Box(
                             modifier = Modifier

@@ -19,6 +19,8 @@ private val REGEX_NUMBERED = Regex("^\\s*[0-9۰-۹٠-٩]+\\s*(?:[.)-]|:|[-—])\
 private val REGEX_DASH_SPLIT = Regex("\\s+[-—]\\s+")
 private val REGEX_STRIP_DECORATIONS = Regex("^[-—*•#»«➜→\\s]+")
 private val REGEX_PARENTHETICAL_NOTE = Regex("^(.*?)\\s*[(（]([^)）]{4,})[)）]\\s*$")
+private val REGEX_PAREN_PAIR = Regex("^([^(（]+)\\s*[(（]([^)）]+)[)）]\\s*$")
+private val REGEX_SPACES = Regex("\\s+")
 private val REGEX_EXAMPLE_MARKER = Regex("^(example|examples|note|notes|usage|ejemplo|ejemplos|nota|uso)\\s+[^:]{1,60}:", RegexOption.IGNORE_CASE)
 
 private enum class LineType {
@@ -186,7 +188,8 @@ object VocabularyParser {
                 LineType.ENTRY_HEADER -> {
                     currentRawLines.add(trimmed)
                     val stripped = stripNumbering(trimmed)
-                    val pair = splitPair(stripped)
+                    val detailedPair = splitPairDetailed(stripped)
+                    val pair = detailedPair?.let { Pair(it.first, it.second) }
 
                     if (pair != null) {
                         // Check if this is a breakdown item of the current entry (Spec Rule 4 & 6.10):
@@ -221,9 +224,12 @@ object VocabularyParser {
                             val extracted = extractParentheticalNote(pair.second)
                             currentTranslations.add(extracted.first)
                             extracted.second?.let { currentNotes.add(it) }
-                            currentConfidence = 1.0
-                            currentEvidence.add("inlineTranslationMarker")
-                            if (isNumbered(trimmed)) currentEvidence.add("numbered")
+                            currentConfidence = detailedPair.baseConfidence
+                            currentEvidence.add("${detailedPair.delimiterType}Delimiter")
+                            if (isNumbered(trimmed)) {
+                                currentConfidence = minOf(1.0, currentConfidence + 0.05)
+                                currentEvidence.add("numbered")
+                            }
                         }
                     } else {
                         // Multi-line source or standalone source header
@@ -398,56 +404,66 @@ object VocabularyParser {
         }
     }
 
-    fun splitPair(s: String): Pair<String, String>? {
-        // Priority 1: Arrow symbols & text arrows
+    data class SplitResult(
+        val first: String,
+        val second: String,
+        val delimiterType: String,
+        val baseConfidence: Double
+    )
+
+    fun splitPairDetailed(s: String): SplitResult? {
+        // Priority 1: Arrow symbols & text arrows (Highest confidence 1.0)
         for (arrow in listOf("→", "➜", "->", "=>")) {
             val idx = s.indexOf(arrow)
             if (idx in 1 until s.length - arrow.length) {
                 val left = s.substring(0, idx).trim()
                 val right = s.substring(idx + arrow.length).trim()
                 if (left.isNotBlank() && right.isNotBlank()) {
-                    return Pair(left, right)
+                    return SplitResult(left, right, "arrow", 1.0)
                 }
             }
         }
-        // Priority 2: Colon (e.g. "casa: خانه")
+        // Priority 2: Colon (e.g. "casa: خانه", confidence 0.95)
         val colonIdx = s.indexOf(':')
         if (colonIdx in 1 until s.length - 1) {
             val left = s.substring(0, colonIdx).trim()
             val right = s.substring(colonIdx + 1).trim()
             if (left.isNotBlank() && right.isNotBlank()) {
-                return Pair(left, right)
+                return SplitResult(left, right, "colon", 0.95)
             }
         }
-        // Priority 3: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه")
+        // Priority 3: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه", confidence 0.90)
         val dashMatch = REGEX_DASH_SPLIT.find(s)
         if (dashMatch != null && dashMatch.range.first > 0 && dashMatch.range.last < s.length - 1) {
             val left = s.substring(0, dashMatch.range.first).trim()
             val right = s.substring(dashMatch.range.last + 1).trim()
             if (left.isNotBlank() && right.isNotBlank()) {
-                return Pair(left, right)
+                return SplitResult(left, right, "dash", 0.90)
             }
         }
-        // Priority 4: Equal sign (e.g. "casa = خانه")
+        // Priority 4: Equal sign (e.g. "casa = خانه", confidence 0.95)
         val equalsIdx = s.indexOf('=')
         if (equalsIdx in 1 until s.length - 1) {
             val left = s.substring(0, equalsIdx).trim()
             val right = s.substring(equalsIdx + 1).trim()
             if (left.isNotBlank() && right.isNotBlank()) {
-                return Pair(left, right)
+                return SplitResult(left, right, "equals", 0.95)
             }
         }
-        // Priority 5: Parentheses pair (e.g. "casa (خانه)") - only when no explicit delimiter exists
-        val parenMatch = Regex("^([^(（]+)\\s*[(（]([^)）]+)[)）]\\s*$").find(s)
+        // Priority 5: Parentheses pair (e.g. "casa (خانه)", confidence 0.85) - only when no explicit delimiter exists
+        val parenMatch = REGEX_PAREN_PAIR.find(s)
         if (parenMatch != null) {
             val left = parenMatch.groupValues[1].trim()
             val right = parenMatch.groupValues[2].trim()
             if (left.isNotBlank() && right.isNotBlank()) {
-                return Pair(left, right)
+                return SplitResult(left, right, "parentheses", 0.85)
             }
         }
         return null
     }
+
+    fun splitPair(s: String): Pair<String, String>? =
+        splitPairDetailed(s)?.let { Pair(it.first, it.second) }
 
     private fun extractParentheticalNote(translation: String): Pair<String, String?> {
         val match = REGEX_PARENTHETICAL_NOTE.find(translation) ?: return Pair(translation, null)
@@ -469,7 +485,7 @@ object VocabularyParser {
     }
 
     fun classifyEntry(source: String): EntryType {
-        val words = source.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+        val words = source.trim().split(REGEX_SPACES).filter { it.isNotBlank() }
         return when {
             words.size <= 1 -> EntryType.WORD
             words.size in 2..5 -> EntryType.PHRASE

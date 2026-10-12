@@ -168,11 +168,11 @@ fun QuizScreen(
             // Question review & navigation strip
             LazyRow(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
+                .fillMaxWidth()
+                .padding(vertical = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(questions.size) { idx ->
+                items(questions.size, key = { idx -> questions[idx].conceptId }) { idx ->
                     val isCurrent = (idx == currentIndex)
                     val answeredOption = userAnswers[idx]
                     val isAnswered = (answeredOption != null)

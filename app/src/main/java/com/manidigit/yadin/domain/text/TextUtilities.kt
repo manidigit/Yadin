@@ -8,6 +8,8 @@ object TextUtilities {
     private val WHITESPACE_REGEX = Regex("\\s+")
     private val TRANSLATION_DELIMITERS = Regex("[/،,;]")
     private val DIACRITICS_REGEX = Regex("\\p{InCombiningDiacriticalMarks}+")
+    private val PRIMARY_SEGMENTS_REGEX = Regex("[،,;\n]")
+    private val SLASH_SURROUNDED_BY_SPACE = Regex("""\s+/\s*|\s*/\s+""")
 
     fun cleanText(text: String?): String {
         if (text.isNullOrBlank()) return ""
@@ -41,7 +43,7 @@ object TextUtilities {
     fun splitTranslations(text: String?): List<String> {
         if (text.isNullOrBlank()) return emptyList()
         // First split by commas, semicolons, and newlines
-        val primarySegments = text.split(Regex("[،,;\n]"))
+        val primarySegments = text.split(PRIMARY_SEGMENTS_REGEX)
             .map { cleanText(it) }
             .filter { it.isNotBlank() }
 
@@ -49,15 +51,15 @@ object TextUtilities {
         for (seg in primarySegments) {
             if (seg.contains('/')) {
                 // If slash is surrounded by whitespace, e.g. "سیب / گلابی"
-                if (Regex("""\s+/\s*|\s*/\s+""").containsMatchIn(seg)) {
-                    val sub = seg.split(Regex("""\s+/\s*|\s*/\s+"""))
+                if (SLASH_SURROUNDED_BY_SPACE.containsMatchIn(seg)) {
+                    val sub = seg.split(SLASH_SURROUNDED_BY_SPACE)
                         .map { cleanText(it) }
                         .filter { it.isNotBlank() }
                     result.addAll(sub)
                 } else {
                     // Slash without spaces. Check word count.
                     // If multi-word phrase like "روی کسی/چیزی حساب کردن" (more than 2 tokens), keep intact!
-                    val tokens = seg.split(Regex("""\s+""")).filter { it.isNotBlank() }
+                    val tokens = seg.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
                     if (tokens.size > 2) {
                         result.add(seg)
                     } else {
