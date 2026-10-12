@@ -1,7 +1,21 @@
+import java.util.Base64
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+}
+
+val rootKeystoreFile = rootProject.file("debug.keystore")
+val base64KeystoreFile = rootProject.file("debug.keystore.base64")
+if (!rootKeystoreFile.exists() && base64KeystoreFile.exists()) {
+    try {
+        val cleanBase64 = base64KeystoreFile.readText().replace("\r", "").replace("\n", "").replace(" ", "")
+        val decodedBytes = Base64.getDecoder().decode(cleanBase64)
+        rootKeystoreFile.writeBytes(decodedBytes)
+    } catch (e: Exception) {
+        logger.warn("Could not auto-decode debug.keystore.base64: ${e.message}")
+    }
 }
 
 android {
@@ -12,8 +26,8 @@ android {
         applicationId = "com.manidigit.yadin"
         minSdk = 26
         targetSdk = 34
-        versionCode = 39
-        versionName = "1.31.0"
+        versionCode = 40
+        versionName = "1.32.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

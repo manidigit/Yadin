@@ -40,10 +40,11 @@ jobs:
     - name: Materialize debug keystore
       run: |
         if [ ! -s debug.keystore ] && [ -f debug.keystore.base64 ]; then
-          tr -d '\r\n ' < debug.keystore.base64 | base64 -d > debug.keystore 2>/dev/null || base64 -d debug.keystore.base64 > debug.keystore 2>/dev/null || true
+          echo "Decoding canonical debug keystore from debug.keystore.base64..."
+          tr -d '\r\n ' < debug.keystore.base64 | base64 -d > debug.keystore
         fi
         if [ ! -s debug.keystore ]; then
-          echo "Generating valid debug keystore with keytool..."
+          echo "Warning: debug.keystore.base64 not found or failed, generating fallback..."
           keytool -genkeypair -v \
             -keystore debug.keystore \
             -alias androiddebugkey \
