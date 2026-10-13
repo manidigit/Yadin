@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -88,6 +89,7 @@ fun ImportScreen(
     onResetParse: (() -> Unit)? = null,
     onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
     onConfirmImport: (DuplicatePolicy, String?) -> Unit,
+    onNavigateToReview: (() -> Unit)? = null,
     onGoToLibrary: () -> Unit = {},
     onBack: () -> Unit
 ) {
@@ -652,6 +654,24 @@ fun ImportScreen(
                     )
                 }
             } else {
+                if (onNavigateToReview != null && parseResult.entries.isNotEmpty()) {
+                    OutlinedButton(
+                        onClick = onNavigateToReview,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(dimensions.cornerMedium)
+                    ) {
+                        Icon(Icons.Default.RateReview, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "بازبینی و ویرایش لغات قبل از ذخیره (${parseResult.entries.size} مورد)",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 Button(
                     onClick = { onConfirmImport(selectedPolicy, selectedCategoryId) },
                     modifier = Modifier

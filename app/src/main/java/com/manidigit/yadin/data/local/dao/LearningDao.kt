@@ -280,7 +280,10 @@ interface LearningDao {
         SELECT COUNT(DISTINCT ds.conceptId)
         FROM difficulty_states ds
         INNER JOIN concepts c ON ds.conceptId = c.id
-        WHERE c.active = 1 AND ds.hasReachedVeryHard = 1 AND (ds.current = 'EASY' OR ds.current = 'MEDIUM')
+        LEFT JOIN learning_states ls ON ds.conceptId = ls.conceptId
+        WHERE c.active = 1
+          AND (ds.hasReachedVeryHard = 1 OR ds.current = 'VERY_HARD' OR ds.current = 'HARD')
+          AND (ds.current = 'EASY' OR ds.current = 'MEDIUM' OR ls.stage = 'LEARNED')
     """)
     suspend fun getMasteredHardWordsCount(): Int
 

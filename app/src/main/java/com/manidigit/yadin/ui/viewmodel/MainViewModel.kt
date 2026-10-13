@@ -55,6 +55,7 @@ sealed class Screen {
     data class WordDetailScreen(val conceptId: String) : Screen()
     data class EditWordScreen(val conceptId: String? = null) : Screen()
     object ImportPreview : Screen()
+    object ImportReview : Screen()
     object ProgressStats : Screen()
     object Settings : Screen()
     object Backup : Screen()

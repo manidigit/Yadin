@@ -61,6 +61,8 @@ fun ImportReviewScreen(
     onApproveItems: (List<ParsedEntry>) -> Unit,
     onBack: () -> Unit
 ) {
+    androidx.activity.compose.BackHandler(onBack = onBack)
+
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 

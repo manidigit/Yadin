@@ -454,6 +454,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onConfirmImport = { policy, categoryId ->
                     viewModel.executeImport(policy, categoryId)
                 },
+                onNavigateToReview = {
+                    viewModel.navigateTo(Screen.ImportReview)
+                },
                 onGoToLibrary = {
                     viewModel.clearImportSummary()
                     viewModel.navigateTo(Screen.Library)
@@ -465,6 +468,43 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                         viewModel.clearParseResult()
                     } else {
                         if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
+                    }
+                }
+            )
+        }
+
+        is Screen.ImportReview -> {
+            val parseResult by viewModel.parseResult.collectAsStateWithLifecycle()
+            val currentResult = parseResult
+            val reviewItems = remember(currentResult) {
+                currentResult?.entries?.mapIndexed { index, entry ->
+                    com.manidigit.yadin.ui.screens.ReviewItem(
+                        id = "${index}_${entry.lineNumber}_${entry.sourceText.hashCode()}",
+                        sourceText = entry.sourceText,
+                        translationText = entry.translations.joinToString("، "),
+                        confidence = (entry.confidence * 100).toInt(),
+                        reason = entry.note ?: if (entry.confidence < 0.8f) "نیازمند بازبینی دستی" else "استخراج خودکار"
+                    )
+                } ?: emptyList()
+            }
+
+            com.manidigit.yadin.ui.screens.ImportReviewScreen(
+                itemsToReview = reviewItems,
+                onApproveItems = { approvedEntries ->
+                    if (currentResult != null) {
+                        viewModel.setParseResult(
+                            currentResult.copy(
+                                entries = approvedEntries
+                            )
+                        )
+                    }
+                    if (!viewModel.navigateBack()) {
+                        viewModel.navigateTo(Screen.ImportPreview)
+                    }
+                },
+                onBack = {
+                    if (!viewModel.navigateBack()) {
+                        viewModel.navigateTo(Screen.ImportPreview)
                     }
                 }
             )

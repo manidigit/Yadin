@@ -448,12 +448,20 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val isFa = (uiLanguage == "fa")
                     LanguageDirectionPill(
-                        title = "فارسی (ایران) 🇮🇷",
-                        subtitle = "رابط کاربری راست‌به‌چپ (پیش‌فرض استاندارد)",
-                        isSelected = true,
-                        modifier = Modifier.fillMaxWidth(),
+                        title = "فارسی 🇮🇷",
+                        subtitle = "راست‌به‌چپ (RTL)",
+                        isSelected = isFa,
+                        modifier = Modifier.weight(1f),
                         onClick = { onSetUiLanguage("fa") }
+                    )
+                    LanguageDirectionPill(
+                        title = "English 🇬🇧",
+                        subtitle = "Left-to-Right (LTR)",
+                        isSelected = !isFa,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSetUiLanguage("en") }
                     )
                 }
             }

@@ -524,6 +524,12 @@ class ReviewRepository(
     }
 
     suspend fun checkAchievements(sessionId: String = "") {
+        // اطمینان از وجود تمام انوم‌های دستاورد در پایگاه داده جهت جلوگیری از عدم ثبت
+        val defaultAchievements = AchievementId.values().map {
+            com.manidigit.yadin.data.local.entity.AchievementEntity(id = it.name, unlockedAt = null, progress = 0)
+        }
+        achievementDao.insertAchievements(defaultAchievements)
+
         val today = ClockAndDayMath.todayDayString()
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
         val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
