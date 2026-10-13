@@ -711,8 +711,9 @@ class VocabularyRepository(
                 stageCountsFlow,
                 stageDueFlow,
                 reviewsFlow,
-                learningDao.getDifficultyBreakdownFlow(direction)
-            ) { stageCounts, stageDues, reviews, diffList ->
+                learningDao.getDifficultyBreakdownFlow(direction),
+                learningDao.getUnstartedCountFlow(direction)
+            ) { stageCounts, stageDues, reviews, diffList, unstarted ->
                 val daily = stageCounts.daily
                 val weekly = stageCounts.weekly
                 val monthly = stageCounts.monthly
@@ -745,7 +746,8 @@ class VocabularyRepository(
                     dueDailyCount = dueDaily,
                     dueWeeklyCount = dueWeekly,
                     dueMonthlyCount = dueMonthly,
-                    availableLearnedCount = availLearned
+                    availableLearnedCount = availLearned,
+                    unpracticedCount = unstarted
                 )
             }
         }

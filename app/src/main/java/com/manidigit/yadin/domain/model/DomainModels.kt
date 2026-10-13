@@ -214,7 +214,8 @@ data class StatisticsSummary(
     val dueDailyCount: Int = 0,
     val dueWeeklyCount: Int = 0,
     val dueMonthlyCount: Int = 0,
-    val availableLearnedCount: Int = 0
+    val availableLearnedCount: Int = 0,
+    val unpracticedCount: Int = 0
 )
 
 data class DailyReviewCount(

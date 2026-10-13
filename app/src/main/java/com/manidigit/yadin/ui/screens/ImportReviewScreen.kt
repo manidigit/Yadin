@@ -46,6 +46,7 @@ import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.toPersianDigits
 
 data class ReviewItem(
     val id: String,
@@ -67,6 +68,7 @@ fun ImportReviewScreen(
     val dimensions = LocalYadinDimensions.current
 
     val pendingList = remember { mutableStateListOf(*itemsToReview.toTypedArray()) }
+    val approvedList = remember { mutableStateListOf<ParsedEntry>() }
 
     Column(
         modifier = Modifier
@@ -121,7 +123,10 @@ fun ImportReviewScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "هیچ واژه نیاز به بررسی در صف وجود ندارد",
+                        text = if (approvedList.isNotEmpty())
+                            "تمام موارد بررسی شدند (${approvedList.size.toPersianDigits()} واژه آماده ثبت)"
+                        else
+                            "هیچ واژه نیاز به بررسی در صف وجود ندارد",
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.onSurface
                     )
@@ -138,6 +143,13 @@ fun ImportReviewScreen(
                     ReviewItemCard(
                         item = item,
                         onApprove = { approved ->
+                            approvedList.add(
+                                ParsedEntry(
+                                    sourceText = approved.sourceText,
+                                    translations = listOf(approved.translationText),
+                                    note = null
+                                )
+                            )
                             pendingList.remove(item)
                         },
                         onReject = {
@@ -167,22 +179,30 @@ fun ImportReviewScreen(
 
             Button(
                 onClick = {
-                    val approvedEntries = pendingList.map {
+                    val remainingEntries = pendingList.map {
                         ParsedEntry(
                             sourceText = it.sourceText,
                             translations = listOf(it.translationText),
                             note = null
                         )
                     }
-                    onApproveItems(approvedEntries)
+                    val finalApproved = approvedList + remainingEntries
+                    onApproveItems(finalApproved)
                 },
+                enabled = approvedList.isNotEmpty() || pendingList.isNotEmpty(),
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
                 shape = RoundedCornerShape(dimensions.cornerMedium),
                 colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
             ) {
-                Text("تایید همه و ثبت")
+                val totalApprovedCount = approvedList.size + pendingList.size
+                Text(
+                    text = if (totalApprovedCount > 0)
+                        "تایید و ثبت (${totalApprovedCount.toPersianDigits()} واژه)"
+                    else
+                        "تایید و ثبت"
+                )
             }
         }
     }

@@ -9,7 +9,10 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 
 val VazirmatnFontFamily = FontFamily(
-    Font(R.font.vazirmatn, FontWeight.Normal)
+    Font(R.font.vazirmatn, FontWeight.Normal),
+    Font(R.font.vazirmatn_medium, FontWeight.Medium),
+    Font(R.font.vazirmatn_semibold, FontWeight.SemiBold),
+    Font(R.font.vazirmatn_bold, FontWeight.Bold)
 )
 
 val AppTypography = Typography(
@@ -25,27 +28,39 @@ val AppTypography = Typography(
         fontSize = 24.sp,
         lineHeight = 32.sp
     ),
-    titleLarge = TextStyle(
+    headlineSmall = TextStyle(
         fontFamily = VazirmatnFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
         lineHeight = 28.sp
     ),
+    titleLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = 28.sp
+    ),
     titleMedium = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 24.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+    bodyLarge = TextStyle(
         fontFamily = VazirmatnFontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
         lineHeight = 24.sp
     ),
-    bodyLarge = TextStyle(
-        fontFamily = VazirmatnFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp
-    ),
     bodyMedium = TextStyle(
         fontFamily = VazirmatnFontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp
     ),
@@ -54,6 +69,12 @@ val AppTypography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
     ),
     labelMedium = TextStyle(
         fontFamily = VazirmatnFontFamily,

@@ -1,6 +1,7 @@
 package com.manidigit.yadin.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -198,71 +199,134 @@ fun LibraryScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Filter Chips Row 1: Active vs Inactive & Stage
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
+            // Active vs Inactive Toggle Bar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                item {
-                    FilterChip(
-                        label = if (showOnlyInactive) "🗑️ واژگان حذف‌شده" else "✅ واژگان فعال",
-                        isSelected = showOnlyInactive,
-                        onClick = { onInactiveFilterToggle(!showOnlyInactive) }
-                    )
-                }
-                if (!showOnlyInactive) {
-                    item {
-                        FilterChip(
-                            label = "همه مراحل",
-                            isSelected = selectedStage == null,
-                            onClick = { onStageFilterChange(null) }
+                FilterChip(
+                    label = if (showOnlyInactive) "🗑️ سطل زباله (غیرفعال)" else "✅ واژگان فعال کتابخانه",
+                    isSelected = showOnlyInactive,
+                    onClick = { onInactiveFilterToggle(!showOnlyInactive) }
+                )
+                if (selectedStage != null || selectedDifficulty != null) {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            onStageFilterChange(null)
+                            onDifficultyFilterChange(null)
+                        },
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "حذف فیلترها",
+                            fontSize = 11.sp,
+                            color = colors.primary,
+                            fontWeight = FontWeight.Bold
                         )
-                    }
-                    Stage.values().forEach { st ->
-                        val name = when (st) {
-                            Stage.DAILY -> "روزانه"
-                            Stage.WEEKLY -> "هفتگی"
-                            Stage.MONTHLY -> "ماهانه"
-                            Stage.LEARNED -> "یادگرفته"
-                        }
-                        item {
-                            FilterChip(
-                                label = name,
-                                isSelected = selectedStage == st,
-                                onClick = { onStageFilterChange(if (selectedStage == st) null else st) }
-                            )
-                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Filter Chips Row 2: Difficulty Filter (ISS-02)
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                item {
-                    FilterChip(
-                        label = "همه سختی‌ها",
-                        isSelected = selectedDifficulty == null,
-                        onClick = { onDifficultyFilterChange(null) }
-                    )
-                }
-                com.manidigit.yadin.domain.model.VocabularyDifficulty.values().forEach { diff ->
-                    val diffName = when (diff) {
-                        com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> "آسان"
-                        com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> "متوسط"
-                        com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> "سخت"
-                        com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
-                    }
-                    item {
-                        FilterChip(
-                            label = diffName,
-                            isSelected = selectedDifficulty == diff,
-                            onClick = { onDifficultyFilterChange(if (selectedDifficulty == diff) null else diff) }
+            if (!showOnlyInactive) {
+                // Structured Filter Panel for Spaced Repetition Stages and Difficulties
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(dimensions.cornerSmall))
+                        .background(colors.surface)
+                        .border(
+                            width = 1.dp,
+                            color = colors.outline.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(dimensions.cornerSmall)
                         )
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Row 1: Leitner Spaced Repetition Stages
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "مرحله مرور:",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurfaceVariant,
+                            modifier = Modifier.width(68.dp)
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            item {
+                                FilterChip(
+                                    label = "همه",
+                                    isSelected = selectedStage == null,
+                                    onClick = { onStageFilterChange(null) }
+                                )
+                            }
+                            Stage.values().forEach { st ->
+                                val (name, color) = when (st) {
+                                    Stage.DAILY -> "روزانه" to colors.primary
+                                    Stage.WEEKLY -> "هفتگی" to colors.info
+                                    Stage.MONTHLY -> "ماهانه" to colors.warning
+                                    Stage.LEARNED -> "یادگرفته" to colors.success
+                                }
+                                item {
+                                    FilterChip(
+                                        label = name,
+                                        isSelected = selectedStage == st,
+                                        indicatorColor = if (selectedStage != st) color else null,
+                                        onClick = { onStageFilterChange(if (selectedStage == st) null else st) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Row 2: Difficulty Levels
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "سطح سختی:",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurfaceVariant,
+                            modifier = Modifier.width(68.dp)
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            item {
+                                FilterChip(
+                                    label = "همه",
+                                    isSelected = selectedDifficulty == null,
+                                    onClick = { onDifficultyFilterChange(null) }
+                                )
+                            }
+                            com.manidigit.yadin.domain.model.VocabularyDifficulty.values().forEach { diff ->
+                                val (diffName, diffColor) = when (diff) {
+                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> "آسان" to colors.success
+                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> "متوسط" to colors.info
+                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> "سخت" to colors.warning
+                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> "خیلی سخت" to colors.error
+                                }
+                                item {
+                                    FilterChip(
+                                        label = diffName,
+                                        isSelected = selectedDifficulty == diff,
+                                        indicatorColor = if (selectedDifficulty != diff) diffColor else null,
+                                        onClick = { onDifficultyFilterChange(if (selectedDifficulty == diff) null else diff) }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -397,23 +461,46 @@ fun LibraryScreen(
 fun FilterChip(
     label: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    indicatorColor: Color? = null
 ) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+    val shape = RoundedCornerShape(dimensions.cornerSmall)
 
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) colors.primary else colors.surfaceVariant)
+        modifier = modifier
+            .clip(shape)
+            .background(if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.5f))
+            .border(
+                width = 1.dp,
+                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.25f),
+                shape = shape
+            )
             .clickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = label,
-            color = if (isSelected) colors.onPrimary else colors.onSurface,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            if (indicatorColor != null) {
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(indicatorColor)
+                )
+            }
+            Text(
+                text = label,
+                color = if (isSelected) colors.onPrimary else colors.onSurface,
+                fontSize = 12.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            )
+        }
     }
 }
 

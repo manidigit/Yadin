@@ -168,11 +168,6 @@ fun ReviewSetupScreen(
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
-                        Text(
-                            text = "انتخاب حالت، منبع و تنظیمات جلسه مرور",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
-                        )
                     }
                 }
             }
@@ -194,10 +189,14 @@ fun ReviewSetupScreen(
                             color = colors.onSurface
                         )
 
-                        // Mode selector (Quiz vs Flashcard)
+                        // Mode selector: Segmented Control
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             ModeSelectButton(
                                 title = "آزمون ۴ گزینه‌ای",
@@ -214,39 +213,6 @@ fun ReviewSetupScreen(
                                 onClick = { selectedMode = ReviewMode.FLASHCARD }
                             )
                         }
-
-                        // نشانگر جهت مطالعه فعال (تنظیم‌شده در تنظیمات سراسری طبق دستور کارفرما)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(colors.surfaceVariant.copy(alpha = 0.6f))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = "جهت مطالعه فعال:",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = colors.onSurfaceVariant
-                                )
-                                Text(
-                                    text = if (appLanguageDirection == CardDirection.NORMAL)
-                                        "🇪🇸 اسپانیایی ← 🇮🇷 فارسی"
-                                    else
-                                        "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.primary
-                                )
-                            }
-                            Text(
-                                text = "تنظیم در منوی تنظیمات",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.onSurfaceVariant.copy(alpha = 0.8f)
-                            )
-                        }
                     }
                 }
             }
@@ -259,7 +225,7 @@ fun ReviewSetupScreen(
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
                             text = "منبع واژگان و تکرار فاصله‌دار",
@@ -268,72 +234,84 @@ fun ReviewSetupScreen(
                             color = colors.onSurface
                         )
 
-                        // Type selector chips
-                        val reviewTypeItems = listOf(
-                            ReviewTypeItem(ReviewType.DAILY, "مرور روزانه", Icons.Default.Today),
-                            ReviewTypeItem(ReviewType.WEEKLY, "مرور هفتگی", Icons.Default.AutoAwesome),
-                            ReviewTypeItem(ReviewType.MONTHLY, "مرور ماهانه", Icons.Default.AutoAwesome),
-                            ReviewTypeItem(ReviewType.RANDOM, "تصادفی (آزاد)", Icons.Default.Shuffle),
-                            ReviewTypeItem(ReviewType.LEARNED, "یادگرفته‌ها", Icons.Default.DoneAll)
-                        )
+                        // Category A: چرخه تکرار فاصله‌دار (لایتنر)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "چرخه تکرار فاصله‌دار (لایتنر):",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onSurfaceVariant
+                            )
 
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            reviewTypeItems.forEach { item ->
-                                val isSelected = (selectedType == item.type)
-                                val countBadge = statistics?.let { stats ->
-                                    val badgeText = when (item.type) {
-                                        ReviewType.DAILY -> "${stats.dueDailyCount}/${stats.dailyStageCount}"
-                                        ReviewType.WEEKLY -> "${stats.dueWeeklyCount}/${stats.weeklyStageCount}"
-                                        ReviewType.MONTHLY -> "${stats.dueMonthlyCount}/${stats.monthlyStageCount}"
-                                        ReviewType.LEARNED -> "${stats.availableLearnedCount}/${stats.learnedStageCount}"
-                                        ReviewType.RANDOM -> "${stats.dueTodayCount}/${stats.totalWords}"
-                                    }
-                                    badgeText.toPersianDigits()
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isSelected) colors.primary else colors.surfaceVariant)
-                                        .clickable { selectedType = item.type }
-                                        .padding(horizontal = 10.dp, vertical = 7.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = item.icon,
-                                            contentDescription = null,
-                                            tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Text(
-                                            text = item.title,
-                                            fontSize = 12.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isSelected) colors.onPrimary else colors.onSurface
-                                        )
-                                        if (countBadge != null) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(if (isSelected) colors.onPrimary.copy(alpha = 0.2f) else colors.surface)
-                                                    .padding(horizontal = 4.dp, vertical = 1.dp)
-                                            ) {
-                                                Text(
-                                                    text = countBadge,
-                                                    fontSize = 10.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
-                                                )
-                                            }
+                            val leitnerItems = listOf(
+                                ReviewTypeItem(ReviewType.DAILY, "مرور روزانه", Icons.Default.Today),
+                                ReviewTypeItem(ReviewType.WEEKLY, "مرور هفتگی", Icons.Default.AutoAwesome),
+                                ReviewTypeItem(ReviewType.MONTHLY, "مرور ماهانه", Icons.Default.AutoAwesome)
+                            )
+
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                leitnerItems.forEach { item ->
+                                    val isSelected = (selectedType == item.type)
+                                    val countBadge = statistics?.let { stats ->
+                                        val badgeText = when (item.type) {
+                                            ReviewType.DAILY -> "${stats.dueDailyCount} از ${stats.dailyStageCount}"
+                                            ReviewType.WEEKLY -> "${stats.dueWeeklyCount} از ${stats.weeklyStageCount}"
+                                            ReviewType.MONTHLY -> "${stats.dueMonthlyCount} از ${stats.monthlyStageCount}"
+                                            else -> ""
                                         }
+                                        badgeText.toPersianDigits()
                                     }
+
+                                    ReviewSourceChip(
+                                        item = item,
+                                        countBadge = countBadge,
+                                        isSelected = isSelected,
+                                        onClick = { selectedType = item.type }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Category B: حالات تکمیلی و آزاد
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "حالات تکمیلی و آزاد:",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onSurfaceVariant
+                            )
+
+                            val freeItems = listOf(
+                                ReviewTypeItem(ReviewType.RANDOM, "تصادفی (آزاد)", Icons.Default.Shuffle),
+                                ReviewTypeItem(ReviewType.LEARNED, "یادگرفته‌ها", Icons.Default.DoneAll)
+                            )
+
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                freeItems.forEach { item ->
+                                    val isSelected = (selectedType == item.type)
+                                    val countBadge = statistics?.let { stats ->
+                                        val badgeText = when (item.type) {
+                                            ReviewType.LEARNED -> "${stats.availableLearnedCount} از ${stats.learnedStageCount}"
+                                            ReviewType.RANDOM -> "${stats.dueTodayCount} از ${stats.totalWords}"
+                                            else -> ""
+                                        }
+                                        badgeText.toPersianDigits()
+                                    }
+
+                                    ReviewSourceChip(
+                                        item = item,
+                                        countBadge = countBadge,
+                                        isSelected = isSelected,
+                                        onClick = { selectedType = item.type }
+                                    )
                                 }
                             }
                         }
@@ -558,6 +536,65 @@ fun ModeSelectButton(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 color = if (isSelected) colors.onPrimary else colors.onSurface
             )
+        }
+    }
+}
+
+@Composable
+private fun ReviewSourceChip(
+    item: ReviewTypeItem,
+    countBadge: String?,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+    val shape = RoundedCornerShape(dimensions.cornerSmall)
+
+    Box(
+        modifier = Modifier
+            .clip(shape)
+            .background(if (isSelected) colors.primary else colors.surfaceVariant)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.2f),
+                shape = shape
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = null,
+                tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                modifier = Modifier.size(15.dp)
+            )
+            Text(
+                text = item.title,
+                fontSize = 12.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) colors.onPrimary else colors.onSurface
+            )
+            if (!countBadge.isNullOrEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isSelected) colors.onPrimary.copy(alpha = 0.2f) else colors.surface.copy(alpha = 0.8f))
+                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = countBadge,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.manidigit.yadin.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -151,17 +152,24 @@ fun FlashcardScreen(
         label = "dragOffset"
     )
 
+    val rotationAnimatable = remember { Animatable(0f) }
+
     LaunchedEffect(currentIndex) {
         dragOffset = 0f
         frontScrollState.scrollTo(0)
         backScrollState.scrollTo(0)
+        rotationAnimatable.snapTo(0f)
     }
 
-    val rotation by animateFloatAsState(
-        targetValue = if (isFlipped) 180f else 0f,
-        animationSpec = tween(durationMillis = 350),
-        label = "cardFlip"
-    )
+    LaunchedEffect(isFlipped) {
+        val target = if (isFlipped) 180f else 0f
+        if (rotationAnimatable.targetValue != target) {
+            rotationAnimatable.animateTo(
+                targetValue = target,
+                animationSpec = tween(durationMillis = 300)
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -227,7 +235,7 @@ fun FlashcardScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        rotationY = rotation
+                        rotationY = rotationAnimatable.value
                         translationX = animatedOffsetX
                         rotationZ = (animatedOffsetX / 25f).coerceIn(-12f, 12f)
                         cameraDistance = 16f * density
@@ -252,11 +260,11 @@ fun FlashcardScreen(
                             }
                         )
                     }
-                    .clickable { onFlip() },
+                    .clickable(enabled = !rotationAnimatable.isRunning) { onFlip() },
                 shape = RoundedCornerShape(dimensions.cornerLarge),
                 backgroundColor = colors.surface
             ) {
-                if (rotation <= 90f) {
+                if (rotationAnimatable.value <= 90f) {
                     // Front Face
                     Column(
                         modifier = Modifier

@@ -352,7 +352,8 @@ fun ImportScreen(
                 // Quick Action Bar: Clear & Paste & File Picker & Sample buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
                         onClick = {
@@ -366,12 +367,15 @@ fun ImportScreen(
                                 fileLoadError = "خطا در خواندن کلیپ‌بورد: ${e.message}"
                             }
                         },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(dimensions.cornerSmall)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(42.dp),
+                        shape = RoundedCornerShape(dimensions.cornerSmall),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                     ) {
                         Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text("Paste", fontSize = 11.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Paste", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -382,12 +386,15 @@ fun ImportScreen(
                                 fileLoadError = "عدم امکان باز کردن انتخابگر فایل روی این دستگاه: ${e.localizedMessage ?: "برنامه مناسبی یافت نشد"}"
                             }
                         },
-                        modifier = Modifier.weight(1.3f),
-                        shape = RoundedCornerShape(dimensions.cornerSmall)
+                        modifier = Modifier
+                            .weight(1.1f)
+                            .height(42.dp),
+                        shape = RoundedCornerShape(dimensions.cornerSmall),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                     ) {
                         Icon(Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text("انتخاب فایل", fontSize = 11.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("انتخاب فایل", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 
                     if (inputText.isNotEmpty()) {
@@ -396,12 +403,15 @@ fun ImportScreen(
                                 inputText = ""
                                 isShowingSample = false
                             },
-                            modifier = Modifier.weight(0.9f),
-                            shape = RoundedCornerShape(dimensions.cornerSmall)
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .height(42.dp),
+                            shape = RoundedCornerShape(dimensions.cornerSmall),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                         ) {
                             Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(2.dp))
-                            Text("پاک", fontSize = 11.sp)
+                            Text("پاک", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         OutlinedButton(
@@ -409,10 +419,13 @@ fun ImportScreen(
                                 inputText = sampleText
                                 isShowingSample = true
                             },
-                            modifier = Modifier.weight(0.9f),
-                            shape = RoundedCornerShape(dimensions.cornerSmall)
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .height(42.dp),
+                            shape = RoundedCornerShape(dimensions.cornerSmall),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                         ) {
-                            Text("نمونه", fontSize = 11.sp)
+                            Text("نمونه", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -543,34 +556,44 @@ fun ImportScreen(
                 fontWeight = FontWeight.SemiBold,
                 color = colors.onSurface
             )
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                PolicyChip(
-                    label = "ادغام (MERGE)",
-                    isSelected = selectedPolicy == DuplicatePolicy.MERGE,
-                    modifier = Modifier.weight(1f),
-                    onClick = { selectedPolicy = DuplicatePolicy.MERGE }
-                )
-                PolicyChip(
-                    label = "مدخل جدید (SEPARATE)",
-                    isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
-                    modifier = Modifier.weight(1.1f),
-                    onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
-                )
-                PolicyChip(
-                    label = "صرف‌نظر (SKIP)",
-                    isSelected = selectedPolicy == DuplicatePolicy.SKIP,
-                    modifier = Modifier.weight(0.9f),
-                    onClick = { selectedPolicy = DuplicatePolicy.SKIP }
-                )
-                PolicyChip(
-                    label = "جایگزینی (REPLACE)",
-                    isSelected = selectedPolicy == DuplicatePolicy.REPLACE,
-                    modifier = Modifier.weight(1f),
-                    onClick = { selectedPolicy = DuplicatePolicy.REPLACE }
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PolicyChip(
+                        label = "ادغام (MERGE)",
+                        isSelected = selectedPolicy == DuplicatePolicy.MERGE,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedPolicy = DuplicatePolicy.MERGE }
+                    )
+                    PolicyChip(
+                        label = "مدخل جدید (SEPARATE)",
+                        isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PolicyChip(
+                        label = "صرف‌نظر (SKIP)",
+                        isSelected = selectedPolicy == DuplicatePolicy.SKIP,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedPolicy = DuplicatePolicy.SKIP }
+                    )
+                    PolicyChip(
+                        label = "جایگزینی (REPLACE)",
+                        isSelected = selectedPolicy == DuplicatePolicy.REPLACE,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedPolicy = DuplicatePolicy.REPLACE }
+                    )
+                }
             }
 
             // Warning Card for discarded lines / parse warnings
@@ -704,22 +727,24 @@ fun PolicyChip(
 
     Box(
         modifier = modifier
+            .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(dimensions.cornerSmall))
             .background(if (isSelected) colors.primary.copy(alpha = 0.15f) else colors.surface)
             .border(
                 width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.4f),
+                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.35f),
                 shape = RoundedCornerShape(dimensions.cornerSmall)
             )
             .clickable { onClick() }
-            .padding(vertical = 8.dp, horizontal = 4.dp),
+            .padding(vertical = 10.dp, horizontal = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) colors.primary else colors.onSurface
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) colors.primary else colors.onSurface,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
