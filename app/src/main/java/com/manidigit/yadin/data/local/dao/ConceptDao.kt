@@ -173,7 +173,20 @@ interface ConceptDao {
         LEFT JOIN learning_states ls ON (c.id = ls.conceptId AND ls.direction = :direction)
         LEFT JOIN difficulty_states ds ON (c.id = ds.conceptId AND ds.direction = :direction)
         WHERE ((:onlyInactive = 0 AND c.active = 1) OR (:onlyInactive = 1 AND c.active = 0))
-        AND (:query = '' OR cnt.text LIKE '%' || :query || '%' OR cnt.canonicalKey LIKE '%' || :query || '%' OR cnt.note LIKE '%' || :query || '%')
+        AND (:query = '' 
+             OR cnt.text LIKE '%' || :query || '%' 
+             OR cnt.canonicalKey LIKE '%' || :query || '%' 
+             OR cnt.note LIKE '%' || :query || '%'
+             OR (:searchKey != '' AND (
+                 cnt.canonicalKey LIKE '%' || :searchKey || '%'
+                 OR cnt.text LIKE '%' || :searchKey || '%'
+                 OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                    LOWER(cnt.canonicalKey),
+                    'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ü', 'u'), 'ñ', 'n'),
+                    'ي', 'ی'), 'ك', 'ک'), 'آ', 'ا'), 'أ', 'ا'), 'إ', 'ا'), '${'\u200C'}', '')
+                    LIKE '%' || :searchKey || '%'
+             ))
+        )
         AND (:categoryId IS NULL OR c.categoryId = :categoryId)
         AND (:stage IS NULL OR ls.stage = :stage)
         AND (:difficulty IS NULL OR ds.current = :difficulty)
@@ -182,6 +195,7 @@ interface ConceptDao {
     """)
     suspend fun searchConceptsFiltered(
         query: String,
+        searchKey: String = "",
         categoryId: String?,
         stage: String?,
         direction: CardDirection,
@@ -195,11 +209,28 @@ interface ConceptDao {
         SELECT DISTINCT c.* FROM concepts c
         INNER JOIN contents cnt ON c.id = cnt.conceptId
         WHERE c.active = 1
-        AND (cnt.text LIKE '%' || :query || '%' OR cnt.canonicalKey LIKE '%' || :query || '%' OR cnt.note LIKE '%' || :query || '%')
+        AND (:query = '' 
+             OR cnt.text LIKE '%' || :query || '%' 
+             OR cnt.canonicalKey LIKE '%' || :query || '%' 
+             OR cnt.note LIKE '%' || :query || '%'
+             OR (:searchKey != '' AND (
+                 cnt.canonicalKey LIKE '%' || :searchKey || '%'
+                 OR cnt.text LIKE '%' || :searchKey || '%'
+                 OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                    LOWER(cnt.canonicalKey),
+                    'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ü', 'u'), 'ñ', 'n'),
+                    'ي', 'ی'), 'ك', 'ک'), 'آ', 'ا'), 'أ', 'ا'), 'إ', 'ا'), '${'\u200C'}', '')
+                    LIKE '%' || :searchKey || '%'
+             ))
+        )
         ORDER BY c.updatedAt DESC
         LIMIT :limit
     """)
-    suspend fun searchConcepts(query: String, limit: Int = 100): List<ConceptEntity>
+    suspend fun searchConcepts(
+        query: String,
+        searchKey: String = "",
+        limit: Int = 100
+    ): List<ConceptEntity>
 
     @Query("""
         SELECT c.* FROM concepts c

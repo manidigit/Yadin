@@ -205,7 +205,8 @@ class VocabularyRepository(
         val trimmed = query.trim()
         val searchQuery = if (trimmed.isEmpty()) "" else TextUtilities.searchKey(trimmed)
         val entities = conceptDao.searchConceptsFiltered(
-            query = searchQuery,
+            query = trimmed,
+            searchKey = searchQuery,
             categoryId = categoryId,
             stage = stage?.name,
             direction = direction,
@@ -376,17 +377,18 @@ class VocabularyRepository(
     }
 
     suspend fun search(query: String, limit: Int = 100): List<WordDetail> {
-        val normalized = query.trim()
-        val entities = if (normalized.isEmpty()) {
+        val trimmed = query.trim()
+        val entities = if (trimmed.isEmpty()) {
             emptyList()
         } else {
-            conceptDao.searchConcepts(normalized, limit)
+            val searchKey = TextUtilities.searchKey(trimmed)
+            conceptDao.searchConcepts(query = trimmed, searchKey = searchKey, limit = limit)
         }
         return batchLoadWordDetails(entities)
     }
 
     suspend fun getRecentWords(limit: Int = 50): List<WordDetail> {
-        val entities = conceptDao.searchConcepts("", limit)
+        val entities = conceptDao.searchConcepts(query = "", searchKey = "", limit = limit)
         return batchLoadWordDetails(entities)
     }
 
@@ -421,11 +423,43 @@ class VocabularyRepository(
             Pair(cleanSource, cleanTranslations)
         }
 
-        val conceptId = UUID.randomUUID().toString()
+        val sourceCanonicalKey = TextUtilities.toCanonicalKey(finalSourceText)
         val now = System.currentTimeMillis()
         val effectivePrimaryCategory = categoryIds.firstOrNull() ?: categoryId
 
         return database.withTransaction {
+            // بررسی عدم وجود واژه فعال تکراری با همین کلید قانونی (Issue 1.1)
+            val existingActive = conceptDao.findActiveContentByCanonicalKey(canonicalSourceLang, sourceCanonicalKey)
+            if (existingActive != null) {
+                return@withTransaction Result.failure(
+                    IllegalStateException("این واژه («$finalSourceText») قبلاً در واژه‌نامه ثبت شده است.")
+                )
+            }
+
+            // در صورت وجود واژه غیرفعال، فعال‌سازی مجدد و به‌روزرسانی آن
+            val existingAny = conceptDao.findContentByCanonicalKey(canonicalSourceLang, sourceCanonicalKey)
+            if (existingAny != null) {
+                val existingConcept = conceptDao.getConceptById(existingAny.conceptId)
+                if (existingConcept != null && !existingConcept.active) {
+                    val updateRes = updateWord(
+                        conceptId = existingConcept.id,
+                        sourceText = finalSourceText,
+                        translations = finalTranslations,
+                        categoryId = effectivePrimaryCategory,
+                        note = note,
+                        direction = CardDirection.NORMAL,
+                        entryType = entryType,
+                        categoryIds = categoryIds
+                    )
+                    return@withTransaction if (updateRes.isSuccess) {
+                        Result.success(existingConcept.id)
+                    } else {
+                        Result.failure(updateRes.exceptionOrNull() ?: Exception("خطا در فعال‌سازی مجدد واژه"))
+                    }
+                }
+            }
+
+            val conceptId = UUID.randomUUID().toString()
             val concept = ConceptEntity(
                 id = conceptId,
                 entryType = entryType,
@@ -558,6 +592,15 @@ class VocabularyRepository(
                 Pair(spanishWord, persianTranslations)
             } else {
                 Pair(cleanSource, cleanTranslations)
+            }
+
+            // بررسی عدم تداخل کلید قانونی با واژه‌های فعال دیگر (Issue 1.1)
+            val newCanonicalKey = TextUtilities.toCanonicalKey(finalSourceText)
+            val conflict = conceptDao.findActiveContentByCanonicalKey(canonicalSourceLang, newCanonicalKey)
+            if (conflict != null && conflict.conceptId != conceptId) {
+                return@withTransaction Result.failure(
+                    IllegalStateException("این واژه («$finalSourceText») قبلاً در واژه‌نامه ثبت شده است.")
+                )
             }
 
             // ISS-21: Preserve stable IDs instead of deleting all contents and generating random UUIDs
