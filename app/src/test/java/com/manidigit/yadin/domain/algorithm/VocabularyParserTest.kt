@@ -103,17 +103,53 @@ class VocabularyParserTest {
     }
 
     @Test
-    fun parseMultipleConsecutiveOrphanPersianTranslationsBeforeWord() {
+    fun parseConsecutiveLinesWithoutTranslationDoNotMerge() {
         val raw = """
-            سلام
-            درود
-            hola
+            casa
+            perro
         """.trimIndent()
         val result = VocabularyParser.parse(raw)
+        assertEquals(2, result.entries.size)
+        assertEquals("casa", result.entries[0].sourceText)
+        assertEquals("perro", result.entries[1].sourceText)
+    }
+
+    @Test
+    fun parseCsvWithMadridDoesNotTreatMadridAsHeader() {
+        val csv = "Madrid,مادرید"
+        val result = FileReaders.readCsv(csv.byteInputStream(Charsets.UTF_8))
         assertEquals(1, result.entries.size)
-        assertEquals("hola", result.entries[0].sourceText)
-        assertTrue(result.entries[0].translations.contains("سلام"))
-        assertTrue(result.entries[0].translations.contains("درود"))
+        assertEquals("Madrid", result.entries[0].sourceText)
+        assertEquals(listOf("مادرید"), result.entries[0].translations)
+    }
+
+    @Test
+    fun parseCsvWithComplexStatsHeadersResolvesCorrectSourceAndTargetColumns() {
+        val csv = """
+            ردیف,واژه یا عبارت (اسپانیایی),ترجمه‌های فارسی,دسته‌بندی,مرحله عادی (اسپانیایی به فارسی),مرحله برعکس (فارسی به اسپانیایی),دشواری (عادی),توضیحات و یادداشت
+            1,hola,سلام,عمومی,مرحله 1,مرحله 1,ساده,احوالپرسی
+        """.trimIndent()
+        val result = FileReaders.readCsv(csv.byteInputStream(Charsets.UTF_8))
+        assertEquals(1, result.entries.size)
+        val entry = result.entries.first()
+        assertEquals("hola", entry.sourceText)
+        assertEquals(listOf("سلام"), entry.translations)
+        assertEquals("احوالپرسی", entry.note)
+    }
+
+    @Test
+    fun parseCsvPreservesAccurateWarningLineNumbersWithBanner() {
+        val csv = """
+            === خروجی جامع ===
+            ردیف,واژه یا عبارت (اسپانیایی),ترجمه‌های فارسی
+            1,hola,سلام
+            2,,بدون مبدأ
+        """.trimIndent()
+        val result = FileReaders.readCsv(csv.byteInputStream(Charsets.UTF_8))
+        assertEquals(1, result.entries.size)
+        assertEquals(1, result.warnings.size)
+        // Row 4 in file has the invalid entry
+        assertEquals(4, result.warnings.first().lineNumber)
     }
 }
 

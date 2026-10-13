@@ -20,6 +20,11 @@ object FileReaders {
         return VocabularyParser.parse(text)
     }
 
+    private data class CsvRecord(
+        val originalLineNumber: Int,
+        val fields: List<String>
+    )
+
     fun readCsv(inputStream: InputStream): ParseResult {
         val raw = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         val text = raw.removePrefix("\uFEFF").trim()
@@ -31,7 +36,8 @@ object FileReaders {
         if (allRecords.isEmpty()) return ParseResult(emptyList(), emptyList())
 
         // Skip banner / master export title lines that are not table rows
-        val records = allRecords.filter { tokens ->
+        val records = allRecords.filter { record ->
+            val tokens = record.fields
             if (tokens.isEmpty() || tokens.all { it.isBlank() }) return@filter false
             val first = tokens[0].trim()
             !(first.startsWith("===") || first.startsWith("---") ||
@@ -49,26 +55,38 @@ object FileReaders {
         var typeCol = 4
         var startIndex = 0
 
-        val headerIndex = records.indexOfFirst { isHeaderRow(it) }
+        val headerIndex = records.indexOfFirst { isHeaderRow(it.fields) }
         if (headerIndex >= 0) {
             startIndex = headerIndex + 1
-            val headerRow = records[headerIndex]
+            val headerRow = records[headerIndex].fields
             var explicitSourceFound = false
             var explicitTransFound = false
 
             for ((idx, colName) in headerRow.withIndex()) {
                 val clean = colName.trim().lowercase()
+
+                // Check if this column is statistics, status, stage, difficulty, or date/id (Issue 2.3)
+                val isStatOrMetaCol = clean.contains("مرحله") || clean.contains("دشواری") ||
+                        clean.contains("stage") || clean.contains("level") || clean.contains("difficulty") ||
+                        clean.contains("تاریخ") || clean.contains("date") || clean.contains("شناسه") ||
+                        clean.contains("جهت") || clean.contains("نتیجه") || clean.contains("آمار") ||
+                        clean.contains("stat")
+
                 when {
-                    clean.contains("ردیف") || clean.contains("row") || clean == "id" -> {
+                    clean.contains("ردیف") || clean.contains("row") || clean == "id" || clean == "_id" -> {
                         // Row index column, explicitly ignore for words/translations
                     }
-                    clean.contains("واژه") || clean.contains("کلمه") || clean.contains("اسپانیایی") ||
-                    clean.contains("spanish") || clean.contains("word") || clean.contains("source") -> {
+                    !isStatOrMetaCol && (
+                        clean.contains("واژه") || clean.contains("کلمه") || clean == "spanish" ||
+                        clean == "word" || clean == "source" || clean.contains("اسپانیایی")
+                    ) -> {
                         sourceCol = idx
                         explicitSourceFound = true
                     }
-                    clean.contains("ترجمه") || clean.contains("معنی") || clean.contains("فارسی") ||
-                    clean.contains("translation") || clean.contains("meaning") -> {
+                    !isStatOrMetaCol && (
+                        clean.contains("ترجمه") || clean.contains("معنی") || clean == "translation" ||
+                        clean == "meaning" || clean.contains("فارسی")
+                    ) -> {
                         transCol = idx
                         explicitTransFound = true
                     }
@@ -93,7 +111,7 @@ object FileReaders {
             }
         } else {
             // If no explicit header row found, but first record column 0 is a row number (e.g., 1, 2, 3...), offset column indices
-            val firstRecord = records.firstOrNull()
+            val firstRecord = records.firstOrNull()?.fields
             if (firstRecord != null && firstRecord.size >= 2) {
                 val firstColVal = firstRecord[0].trim()
                 if (firstColVal.toIntOrNull() != null) {
@@ -107,7 +125,9 @@ object FileReaders {
         }
 
         for (i in startIndex until records.size) {
-            val tokens = records[i]
+            val record = records[i]
+            val tokens = record.fields
+            val lineNum = record.originalLineNumber
             if (tokens.all { it.isBlank() }) continue
             // Skip section headers in multi-section master files
             if (tokens.size == 1 && (tokens[0].startsWith("===") || tokens[0].contains("بخش"))) continue
@@ -128,7 +148,7 @@ object FileReaders {
                 warnings.add(
                     ParseWarning(
                         type = ParseWarningType.UNKNOWN_FORMAT,
-                        lineNumber = i + 1,
+                        lineNumber = lineNum,
                         rawText = tokens.joinToString(","),
                         message = "ردیف فاقد مبدأ یا ترجمه معتبر است"
                     )
@@ -142,7 +162,7 @@ object FileReaders {
                         categoryNames = categories,
                         entryType = entryType,
                         confidence = 1.0,
-                        lineNumber = i + 1,
+                        lineNumber = lineNum,
                         rawLines = listOf(tokens.joinToString(","))
                     )
                 )
@@ -178,19 +198,48 @@ object FileReaders {
     }
 
     private fun isHeaderRow(tokens: List<String>): Boolean {
-        val keywords = setOf("source", "word", "spanish", "translation", "meaning", "ترجمه", "واژه", "کلمه", "معنی", "اسپانیایی", "فارسی", "ردیف", "row", "id", "شناسه")
-        return tokens.any { token ->
+        var headerScore = 0
+        for (token in tokens) {
             val clean = token.trim().lowercase()
-            keywords.any { clean.contains(it) }
+            if (clean.isBlank()) continue
+            when {
+                // Exact short identifier columns (Issue 2.4 - do NOT match substring "id" inside "Madrid" or "idea")
+                clean == "id" || clean == "_id" || clean == "row" || clean == "ردیف" || clean == "شناسه" || clean == "no" || clean == "#" -> {
+                    headerScore += 2
+                }
+                // Persian header keywords
+                clean.contains("واژه") || clean.contains("کلمه") || clean.contains("ترجمه") ||
+                clean.contains("معنی") || clean.contains("دسته‌بندی") || clean.contains("دسته") ||
+                clean.contains("یادداشت") || clean.contains("توضیح") || clean.contains("نکته") ||
+                clean.contains("مرحله") || clean.contains("دشواری") || clean.contains("نوع") -> {
+                    headerScore += 2
+                }
+                // English header keywords (exact or boundary)
+                clean == "source" || clean == "target" || clean == "word" || clean == "spanish" ||
+                clean == "translation" || clean == "meaning" || clean == "category" ||
+                clean == "note" || clean == "notes" || clean == "type" || clean == "stage" ||
+                clean == "difficulty" || clean == "level" || clean == "status" -> {
+                    headerScore += 2
+                }
+                clean.startsWith("spanish") || clean.endsWith("spanish") ||
+                clean.startsWith("translation") || clean.endsWith("translation") ||
+                clean.startsWith("source") || clean.endsWith("source") ||
+                clean.startsWith("word") || clean.endsWith("word") -> {
+                    headerScore += 1
+                }
+            }
         }
+        return headerScore >= 2
     }
 
-    private fun parseCsvRecords(text: String, delimiter: Char): List<List<String>> {
-        val records = mutableListOf<List<String>>()
+    private fun parseCsvRecords(text: String, delimiter: Char): List<CsvRecord> {
+        val records = mutableListOf<CsvRecord>()
         var currentRecord = mutableListOf<String>()
         val currentField = StringBuilder()
         var inQuotes = false
         var i = 0
+        var currentLineNumber = 1
+        var recordStartLine = 1
 
         while (i < text.length) {
             val c = text[i]
@@ -211,8 +260,10 @@ object FileReaders {
                 currentRecord.add(currentField.toString().trim())
                 currentField.clear()
                 if (currentRecord.any { it.isNotBlank() }) {
-                    records.add(currentRecord)
+                    records.add(CsvRecord(recordStartLine, currentRecord))
                 }
+                currentLineNumber++
+                recordStartLine = currentLineNumber
                 currentRecord = mutableListOf()
             } else {
                 currentField.append(c)
@@ -222,7 +273,7 @@ object FileReaders {
         if (currentField.isNotEmpty() || currentRecord.isNotEmpty()) {
             currentRecord.add(currentField.toString().trim())
             if (currentRecord.any { it.isNotBlank() }) {
-                records.add(currentRecord)
+                records.add(CsvRecord(recordStartLine, currentRecord))
             }
         }
         return records
@@ -340,29 +391,31 @@ object FileReaders {
     fun readXlsx(inputStream: InputStream): ParseResult {
         val sharedStrings = mutableListOf<String>()
         val sheetRows = mutableListOf<List<String>>()
+        val maxEntryBytes = 20 * 1024 * 1024 // 20 MB safety cap per sheet
 
         try {
-            val zip = ZipInputStream(inputStream)
-            var entry = zip.nextEntry
-            val sheetMap = mutableMapOf<String, ByteArray>()
+            ZipInputStream(inputStream).use { zip ->
+                var entry = zip.nextEntry
+                var targetSheetBytes: ByteArray? = null
 
-            while (entry != null) {
-                if (entry.name == "xl/sharedStrings.xml") {
-                    parseSharedStrings(zip, sharedStrings)
-                } else if (entry.name.startsWith("xl/worksheets/sheet") && entry.name.endsWith(".xml")) {
-                    sheetMap[entry.name] = zip.readBytes()
+                while (entry != null) {
+                    val name = entry.name
+                    if (name == "xl/sharedStrings.xml") {
+                        parseSharedStrings(zip, sharedStrings)
+                    } else if (name == "xl/worksheets/sheet1.xml") {
+                        targetSheetBytes = readBoundedBytes(zip, maxEntryBytes)
+                    } else if (name.startsWith("xl/worksheets/sheet") && name.endsWith(".xml") && targetSheetBytes == null) {
+                        targetSheetBytes = readBoundedBytes(zip, maxEntryBytes)
+                    }
+                    zip.closeEntry()
+                    entry = zip.nextEntry
                 }
-                zip.closeEntry()
-                entry = zip.nextEntry
-            }
 
-            val targetSheetBytes = sheetMap["xl/worksheets/sheet1.xml"]
-                ?: sheetMap.entries.minByOrNull { entry ->
-                    entry.key.removePrefix("xl/worksheets/sheet").removeSuffix(".xml").toIntOrNull() ?: 999
-                }?.value
-
-            if (targetSheetBytes != null) {
-                parseSheet(targetSheetBytes.inputStream(), sharedStrings, sheetRows)
+                if (targetSheetBytes != null) {
+                    targetSheetBytes.inputStream().use { stream ->
+                        parseSheet(stream, sharedStrings, sheetRows)
+                    }
+                }
             }
         } catch (e: Exception) {
             return ParseResult(
@@ -376,6 +429,22 @@ object FileReaders {
             row.joinToString(",") { "\"${it.replace("\"", "\"\"")}\"" }
         }
         return readCsv(csvSimulated.byteInputStream(Charsets.UTF_8))
+    }
+
+    private fun readBoundedBytes(stream: InputStream, maxBytes: Int): ByteArray {
+        val buffer = java.io.ByteArrayOutputStream()
+        val data = ByteArray(8192)
+        var total = 0
+        var n = stream.read(data)
+        while (n != -1) {
+            total += n
+            if (total > maxBytes) {
+                throw IllegalStateException("حجم برگه فایل اکسل بیش از سقف مجاز است")
+            }
+            buffer.write(data, 0, n)
+            n = stream.read(data)
+        }
+        return buffer.toByteArray()
     }
 
     private fun parseSharedStrings(stream: InputStream, list: MutableList<String>) {

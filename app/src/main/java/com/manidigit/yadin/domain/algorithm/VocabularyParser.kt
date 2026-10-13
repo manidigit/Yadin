@@ -249,11 +249,13 @@ object VocabularyParser {
                                 currentConfidence += 0.1
                                 pendingOrphanTranslations.clear()
                             }
-                        } else if (currentTranslations.isEmpty()) {
-                            // Multiline source continuation
-                            currentSource = "$currentSource $stripped"
+                        } else if (currentTranslations.isEmpty() && isContinuationLine(currentSource!!, trimmed)) {
+                            // Legitimate multiline source continuation (e.g. hyphenated or unclosed parenthetical)
+                            val separator = if (currentSource!!.endsWith("-")) "" else " "
+                            currentSource = "${currentSource!!.removeSuffix("-")}$separator$stripped"
                             currentEvidence.add("multilineSource")
                         } else {
+                            // Separate standalone source line: flush previous entry as orphan and start new entry
                             flushEntry()
                             currentLineNumber = lineNum
                             currentSource = stripped
@@ -371,6 +373,17 @@ object VocabularyParser {
     fun isSeparator(s: String): Boolean = REGEX_SEPARATOR.matches(s)
 
     fun isNumbered(s: String): Boolean = REGEX_NUMBERED.containsMatchIn(s)
+
+    private fun isContinuationLine(prev: String, current: String): Boolean {
+        val trimmedPrev = prev.trim()
+        val trimmedCurrent = current.trim()
+        if (isNumbered(trimmedCurrent)) return false
+        if (trimmedPrev.endsWith("-") || trimmedPrev.endsWith(",") || trimmedPrev.endsWith("...")) return true
+        if (trimmedCurrent.startsWith("...")) return true
+        val openParen = trimmedPrev.count { it == '(' } - trimmedPrev.count { it == ')' }
+        val openBracket = trimmedPrev.count { it == '[' } - trimmedPrev.count { it == ']' }
+        return openParen > 0 || openBracket > 0
+    }
 
     fun stripNumbering(s: String): String {
         val withoutNum = REGEX_NUMBERED.replaceFirst(s, "").trim()
