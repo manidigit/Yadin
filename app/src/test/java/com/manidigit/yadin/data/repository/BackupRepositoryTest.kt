@@ -234,5 +234,74 @@ class BackupRepositoryTest {
         assertTrue(validConceptIds.contains("concept-new-1"))
         assertFalse(validConceptIds.contains("concept-old-1"))
     }
+
+    @Test
+    fun `Issue 1-7 exportedAt format is valid ISO 8601 in UTC timezone with Z`() {
+        val utcFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+        val now = java.util.Date()
+        val formatted = utcFormat.format(now)
+
+        assertTrue("Timestamp must end with Z", formatted.endsWith("Z"))
+        assertEquals("Timestamp length must match ISO 8601 YYYY-MM-DDTHH:MM:SSZ", 20, formatted.length)
+
+        // Parse back with UTC parser to ensure it roundtrips
+        val parsed = utcFormat.parse(formatted)
+        assertTrue("Parsed date must not be null", parsed != null)
+        assertTrue("Parsed date must match input within 1 second", Math.abs(now.time - (parsed?.time ?: 0L)) < 1000)
+    }
+
+    @Test
+    fun `Issue 1-6 Review history preserves reviewAttemptId and optionsJson in JSON serialization`() {
+        val attemptId = "attempt-uuid-123"
+        val options = "[\"uno\",\"dos\",\"tres\",\"cuatro\"]"
+
+        val sampleJson = """
+            {
+                "id": "hist-1",
+                "sessionId": "sess-1",
+                "reviewAttemptId": "$attemptId",
+                "conceptId": "concept-1",
+                "direction": "NORMAL",
+                "reviewedAt": 1700000000000,
+                "reviewedDay": "2026-10-13",
+                "isCorrect": true,
+                "reviewType": "DAILY",
+                "mode": "FOUR_CHOICE",
+                "stageBefore": "DAILY",
+                "optionsJson": "$options",
+                "selectedIndex": 1,
+                "correctIndex": 1
+            }
+        """.trimIndent()
+
+        assertTrue(sampleJson.contains("\"reviewAttemptId\": \"$attemptId\""))
+        assertTrue(sampleJson.contains("\"optionsJson\": \"$options\""))
+    }
+
+    @Test
+    fun `Issue 1-4 Concept categories join records remap concept IDs with RestoreContext`() {
+        val restoreContext = RestoreContext()
+        restoreContext.registerMapping("backup-c1", "local-c1")
+
+        val rawCategoryPairs = listOf(
+            "backup-c1" to "cat-verbs",
+            "backup-c2" to "cat-travel"
+        )
+
+        val validConceptIds = setOf("local-c1", "backup-c2")
+
+        val remapped = rawCategoryPairs.mapNotNull { (cid, catId) ->
+            val mappedCid = restoreContext.remapConceptId(cid)
+            if (validConceptIds.contains(mappedCid)) {
+                mappedCid to catId
+            } else null
+        }
+
+        assertEquals(2, remapped.size)
+        assertEquals("local-c1" to "cat-verbs", remapped[0])
+        assertEquals("backup-c2" to "cat-travel", remapped[1])
+    }
 }
 

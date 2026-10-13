@@ -143,7 +143,10 @@ class BackupRepository(
         val root = JSONObject()
         root.put("format", "yadin-backup")
         root.put("schemaVersion", 2)
-        root.put("exportedAt", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date()))
+        val utcFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+        root.put("exportedAt", utcFormat.format(Date()))
         root.put("backupType", if (options.fullBackup) "FULL" else "CUSTOM")
 
         val optsJson = JSONObject()
@@ -204,6 +207,16 @@ class BackupRepository(
             }
             data.put("concepts", conceptsArray)
             data.put("contents", contentsArray)
+
+            val conceptCategories = conceptDao.getAllConceptCategories()
+            val ccArray = JSONArray()
+            conceptCategories.forEach { cc ->
+                val cco = JSONObject()
+                cco.put("conceptId", cc.conceptId)
+                cco.put("categoryId", cc.categoryId)
+                ccArray.put(cco)
+            }
+            data.put("conceptCategories", ccArray)
         }
 
         if (options.includeReviewStats) {
@@ -250,6 +263,7 @@ class BackupRepository(
                 val o = JSONObject()
                 o.put("id", h.id)
                 o.put("sessionId", h.sessionId)
+                o.put("reviewAttemptId", h.reviewAttemptId)
                 o.put("conceptId", h.conceptId)
                 o.put("direction", h.direction.name)
                 o.put("reviewedAt", h.reviewedAt)
@@ -259,6 +273,9 @@ class BackupRepository(
                 o.put("mode", h.mode.name)
                 o.put("stageBefore", h.stageBefore.name)
                 o.put("quizLevel", h.quizLevel?.name)
+                if (h.optionsJson != null) {
+                    o.put("optionsJson", h.optionsJson)
+                }
                 o.put("selectedIndex", h.selectedIndex)
                 o.put("correctIndex", h.correctIndex)
                 histArray.put(o)
@@ -716,8 +733,10 @@ class BackupRepository(
             try {
                 createSafetyBackup()
             } catch (e: Exception) {
-                // ثبت لاگ هشدار؛ در صورت دسترسی به دیتابیس ادامه می‌دهیم
-                android.util.Log.w("BackupRepository", "Safety backup creation warning: ${e.message}")
+                android.util.Log.e("BackupRepository", "Safety backup creation failed before restore: ${e.message}", e)
+                return@withContext Result.failure(
+                    IllegalStateException("خطا در ایجاد نسخه پشتیبان اضطراری پیش از بازیابی: ${e.message ?: "خطای ناشناخته"}. عملیات بازیابی جهت حفظ ایمنی داده‌ها متوقف شد.")
+                )
             }
 
             // گام ۱: اعتبارسنجی اولیه ساختار، نسخه و نوع
@@ -845,6 +864,37 @@ class BackupRepository(
                 }
             }
 
+            // ۲.۱. جدول واسط دسته‌بندی مفاهیم (Concept Categories - Issue 1.4)
+            val ccJson = data.optJSONArray("conceptCategories")
+            val incomingConceptCategories = mutableListOf<com.manidigit.yadin.data.local.entity.ConceptCategoryEntity>()
+            if (ccJson != null) {
+                for (i in 0 until ccJson.length()) {
+                    val cco = ccJson.getJSONObject(i)
+                    val cid = cco.optString("conceptId", "")
+                    val catId = cco.optString("categoryId", "")
+                    if (cid.isNotEmpty() && catId.isNotEmpty()) {
+                        incomingConceptCategories.add(
+                            com.manidigit.yadin.data.local.entity.ConceptCategoryEntity(
+                                conceptId = cid,
+                                categoryId = catId
+                            )
+                        )
+                    }
+                }
+            } else {
+                for (c in incomingConcepts) {
+                    val catId = c.categoryId
+                    if (!catId.isNullOrEmpty()) {
+                        incomingConceptCategories.add(
+                            com.manidigit.yadin.data.local.entity.ConceptCategoryEntity(
+                                conceptId = c.id,
+                                categoryId = catId
+                            )
+                        )
+                    }
+                }
+            }
+
             // ۳. مراحل لایتنر (Learning States)
             val lsJson = data.optJSONArray("learningStates")
             val incomingLearningStates = mutableListOf<LearningStateEntity>()
@@ -920,11 +970,14 @@ class BackupRepository(
                     val revDay = parseIsoDay(o.optString("reviewedDay", ""))
                         ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(revAt))
 
+                    val optJson = if (o.has("optionsJson") && !o.isNull("optionsJson")) o.optString("optionsJson") else null
+                    val revAttemptId = o.optString("reviewAttemptId", "").ifEmpty { UUID.randomUUID().toString() }
+
                     incomingHistoryList.add(
                         ReviewHistoryEntity(
                             id = o.optString("id", UUID.randomUUID().toString()),
                             sessionId = o.optString("sessionId", UUID.randomUUID().toString()),
-                            reviewAttemptId = o.optString("reviewAttemptId", UUID.randomUUID().toString()),
+                            reviewAttemptId = revAttemptId,
                             conceptId = o.getString("conceptId"),
                             direction = dir,
                             reviewedAt = revAt,
@@ -934,7 +987,7 @@ class BackupRepository(
                             mode = m,
                             stageBefore = sb,
                             quizLevel = ql,
-                            optionsJson = null,
+                            optionsJson = optJson,
                             selectedIndex = if (o.has("selectedIndex")) o.getInt("selectedIndex") else null,
                             correctIndex = if (o.has("correctIndex")) o.getInt("correctIndex") else null
                         )
@@ -1138,6 +1191,20 @@ class BackupRepository(
                 existingConcepts.keys + finalConceptsToInsert.map { it.id }.toSet()
             }
 
+            // آماده‌سازی جدول واسط concept_categories با اعمال RestoreContext (Issue 1.4)
+            val finalConceptCategoriesToInsert = mutableListOf<com.manidigit.yadin.data.local.entity.ConceptCategoryEntity>()
+            for (cc in incomingConceptCategories) {
+                val mappedCid = restoreContext.remapConceptId(cc.conceptId)
+                if (validConceptIds.contains(mappedCid)) {
+                    finalConceptCategoriesToInsert.add(
+                        com.manidigit.yadin.data.local.entity.ConceptCategoryEntity(
+                            conceptId = mappedCid,
+                            categoryId = cc.categoryId
+                        )
+                    )
+                }
+            }
+
             val bDiffMap = incomingDifficultyStates.associateBy { it.conceptId to it.direction }
 
             for (bLs in incomingLearningStates) {
@@ -1224,6 +1291,7 @@ class BackupRepository(
                     // پاک‌سازی واژگان صرفاً در صورتی که فایل حاوی واژگان باشد
                     if (hasVocabInData) {
                         conceptDao.clearContents()
+                        conceptDao.clearConceptCategories()
                         conceptDao.clearConcepts()
                         conceptDao.clearCustomCategories()
                     }
@@ -1252,6 +1320,7 @@ class BackupRepository(
                 categoriesList.chunked(500).forEach { conceptDao.insertCategories(it) }
                 finalConceptsToInsert.chunked(500).forEach { conceptDao.insertConcepts(it) }
                 finalContentsToInsert.chunked(500).forEach { conceptDao.insertContents(it) }
+                finalConceptCategoriesToInsert.distinct().chunked(500).forEach { conceptDao.insertConceptCategories(it) }
 
                 // درج مراحل لایتنر و دشواری
                 finalLearningStatesToInsert.chunked(500).forEach { learningDao.insertLearningStates(it) }

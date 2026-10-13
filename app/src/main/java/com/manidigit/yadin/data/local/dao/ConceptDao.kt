@@ -251,6 +251,15 @@ interface ConceptDao {
     @Query("DELETE FROM concepts")
     suspend fun clearConcepts()
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertConceptCategories(items: List<ConceptCategoryEntity>)
+
+    @Query("SELECT * FROM concept_categories")
+    suspend fun getAllConceptCategories(): List<ConceptCategoryEntity>
+
+    @Query("DELETE FROM concept_categories")
+    suspend fun clearConceptCategories()
+
     @Query("DELETE FROM categories WHERE isDefault = 0")
     suspend fun clearCustomCategories()
 }
