@@ -37,25 +37,21 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Materialize debug keystore
+    - name: Materialize canonical debug keystore
       run: |
         if [ ! -s debug.keystore ] && [ -f debug.keystore.base64 ]; then
           echo "Decoding canonical debug keystore from debug.keystore.base64..."
           tr -d '\r\n ' < debug.keystore.base64 | base64 -d > debug.keystore
         fi
         if [ ! -s debug.keystore ]; then
-          echo "Warning: debug.keystore.base64 not found or failed, generating fallback..."
-          keytool -genkeypair -v \
-            -keystore debug.keystore \
-            -alias androiddebugkey \
-            -keypass android \
-            -storepass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          echo "ERROR: Canonical debug.keystore could not be materialized. Refusing to generate random key to prevent broken APK updates."
+          exit 1
         fi
-        cp -f debug.keystore app/debug.keystore 2>/dev/null || true
+        mkdir -p ~/.android app
+        cp -f debug.keystore app/debug.keystore
+        cp -f debug.keystore ~/.android/debug.keystore
+        echo "Verifying keystore fingerprint..."
+        keytool -list -v -keystore debug.keystore -storepass android | grep -E "SHA1|SHA256"
 
     - name: Build and Test with Gradle
       run: ./gradlew testDebugUnitTest assembleDebug --no-daemon --stacktrace || gradle testDebugUnitTest assembleDebug --no-daemon --stacktrace
