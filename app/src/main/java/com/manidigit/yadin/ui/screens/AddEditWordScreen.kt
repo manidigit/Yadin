@@ -66,7 +66,7 @@ fun AddEditWordScreen(
             if (isNormal) {
                 initialWord?.sourceContent?.text ?: ""
             } else {
-                initialWord?.targetContents?.firstOrNull()?.text ?: ""
+                initialWord?.targetContents?.joinToString("، ") { it.text } ?: ""
             }
         )
     }

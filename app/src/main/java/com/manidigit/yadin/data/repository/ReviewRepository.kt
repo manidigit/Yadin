@@ -81,7 +81,7 @@ class ReviewRepository(
         )
     }
 
-    suspend fun createFilteredSession(filters: ReviewFilters): ReviewSession {
+    suspend fun createFilteredSession(filters: ReviewFilters): ReviewSession = runInTransaction {
         // ISS-42: Clean up any prior orphan active sessions before starting a new session
         abandonOrphanActiveSessions()
 
@@ -102,7 +102,7 @@ class ReviewRepository(
 
         // ISS-43: If no candidate words found, do not persist an empty ACTIVE session into database
         if (conceptIds.isEmpty()) {
-            return ReviewSession(
+            return@runInTransaction ReviewSession(
                 id = sessionId,
                 startedAt = now,
                 endedAt = now,
@@ -143,7 +143,7 @@ class ReviewRepository(
         reviewSessionDao.insertSession(sessionEntity)
         reviewSessionDao.insertSessionItems(sessionItems)
 
-        return ReviewSession(
+        ReviewSession(
             id = sessionEntity.id,
             startedAt = sessionEntity.startedAt,
             endedAt = sessionEntity.endedAt,
@@ -546,8 +546,16 @@ class ReviewRepository(
             achievementDao.updateProgress(ach.name, streak.coerceAtMost(target))
         }
 
+        // استخراج مشخصات نشست و جهت مرور در صورت وجود
+        val session = if (sessionId.isNotBlank()) reviewSessionDao.getSessionById(sessionId) else null
+        val sessionDirection = session?.direction
+
         // ۲. دایره واژگان (VOCABULARY: 10, 50, 200, 1000 words practiced)
-        val practicedCount = learningDao.getTotalPracticedWordsCount()
+        val practicedCount = if (sessionDirection != null) {
+            maxOf(learningDao.getTotalPracticedWordsCount(sessionDirection), learningDao.getTotalPracticedWordsCount())
+        } else {
+            learningDao.getTotalPracticedWordsCount()
+        }
         val vocabTiers = listOf(
             AchievementId.FIRST_TEN_WORDS to 10,
             AchievementId.VOCABULARY_BUILDER to 50,
@@ -560,7 +568,11 @@ class ReviewRepository(
         }
 
         // ۳. تثبیت لایتنر و حافظه دائمی (RETENTION: 5, 25, 100, 500 words in LEARNED)
-        val learnedCount = learningDao.getTotalLearnedWordsCount()
+        val learnedCount = if (sessionDirection != null) {
+            maxOf(learningDao.getTotalLearnedWordsCount(sessionDirection), learningDao.getTotalLearnedWordsCount())
+        } else {
+            learningDao.getTotalLearnedWordsCount()
+        }
         val retentionTiers = listOf(
             AchievementId.LONG_TERM_MEMORY to 5,
             AchievementId.RETENTION_SILVER to 25,
@@ -573,7 +585,11 @@ class ReviewRepository(
         }
 
         // ۴. واژگان سخت (HARD_WORDS: 3, 10, 30, 100 words mastered)
-        val hardMastered = learningDao.getMasteredHardWordsCount()
+        val hardMastered = if (sessionDirection != null) {
+            maxOf(learningDao.getMasteredHardWordsCount(sessionDirection), learningDao.getMasteredHardWordsCount())
+        } else {
+            learningDao.getMasteredHardWordsCount()
+        }
         val hardTiers = listOf(
             AchievementId.HARD_MASTER to 3,
             AchievementId.HARD_SILVER to 10,
@@ -586,7 +602,6 @@ class ReviewRepository(
         }
 
         // ۵. مهارت کوییز (QUIZ: 5, 10, 20, 30 questions 100% correct)
-        val session = reviewSessionDao.getSessionById(sessionId)
         if (session != null && session.mode == ReviewMode.QUIZ) {
             val history = reviewSessionDao.getHistoryForSession(sessionId)
             val isPerfect = history.isNotEmpty() && history.all { it.isCorrect }

@@ -139,4 +139,7 @@ interface ReviewSessionDao {
 
     @Query("DELETE FROM review_history WHERE conceptId NOT IN (SELECT id FROM concepts)")
     suspend fun deleteOrphanHistory()
+
+    @Query("DELETE FROM review_sessions WHERE id NOT IN (SELECT DISTINCT sessionId FROM review_session_items)")
+    suspend fun deleteEmptySessions()
 }

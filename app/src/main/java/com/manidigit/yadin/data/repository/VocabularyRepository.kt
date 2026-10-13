@@ -17,6 +17,7 @@ import com.manidigit.yadin.domain.model.Content
 import com.manidigit.yadin.domain.model.DifficultyState
 import com.manidigit.yadin.domain.model.DuplicatePolicy
 import com.manidigit.yadin.domain.model.EntryType
+import com.manidigit.yadin.domain.model.LanguageConstants
 import com.manidigit.yadin.domain.model.LearningState
 import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.domain.model.Stage
@@ -364,10 +365,12 @@ class VocabularyRepository(
         if (inactives.isEmpty()) return@withTransaction 0
         val ids = inactives.map { it.id }
         conceptDao.deleteContentsForConcepts(ids)
+        conceptDao.deleteConceptCategoriesForConcepts(ids)
         learningDao.deleteLearningStatesForConcepts(ids)
         learningDao.deleteDifficultyStatesForConcepts(ids)
         reviewSessionDao.deleteSessionItemsForConcepts(ids)
         reviewSessionDao.deleteHistoryForConcepts(ids)
+        reviewSessionDao.deleteEmptySessions()
         conceptDao.deleteConceptsPermanently(ids)
         inactives.size
     }
@@ -405,7 +408,19 @@ class VocabularyRepository(
             return Result.failure(IllegalArgumentException("حداقل یک ترجمه باید وارد شود"))
         }
 
-        val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
+        // حفظ نقش اصیل زبان‌ها در پایگاه داده (اسپانیایی: مبدأ، فارسی: مقصد)
+        val canonicalSourceLang = LanguageConstants.DEFAULT_SOURCE_LANGUAGE
+        val canonicalTargetLang = LanguageConstants.DEFAULT_TARGET_LANGUAGE
+        val (finalSourceText, finalTranslations) = if (direction == CardDirection.REVERSE) {
+            val spanishWord = cleanTranslations.firstOrNull { it.isNotBlank() } ?: cleanSource
+            val sourcePersianList = cleanSource.split("،", ",", "\n").map { it.trim() }.filter { it.isNotEmpty() }
+            val extraPersianList = cleanTranslations.drop(1).filter { it.isNotBlank() }
+            val persianTranslations = (sourcePersianList + extraPersianList).distinct()
+            Pair(spanishWord, persianTranslations)
+        } else {
+            Pair(cleanSource, cleanTranslations)
+        }
+
         val conceptId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
         val effectivePrimaryCategory = categoryIds.firstOrNull() ?: categoryId
@@ -425,20 +440,20 @@ class VocabularyRepository(
                 ContentEntity(
                     id = UUID.randomUUID().toString(),
                     conceptId = conceptId,
-                    languageCode = sourceLang,
-                    text = cleanSource,
-                    canonicalKey = TextUtilities.toCanonicalKey(cleanSource),
+                    languageCode = canonicalSourceLang,
+                    text = finalSourceText,
+                    canonicalKey = TextUtilities.toCanonicalKey(finalSourceText),
                     note = note?.trim()?.ifEmpty { null },
                     translationIndex = 0
                 )
             )
 
-            cleanTranslations.forEachIndexed { idx, trans ->
+            finalTranslations.forEachIndexed { idx, trans ->
                 contents.add(
                     ContentEntity(
                         id = UUID.randomUUID().toString(),
                         conceptId = conceptId,
-                        languageCode = targetLang,
+                        languageCode = canonicalTargetLang,
                         text = trans,
                         canonicalKey = TextUtilities.toCanonicalKey(trans),
                         note = null,
@@ -528,33 +543,46 @@ class VocabularyRepository(
                 conceptDao.insertConceptCategory(ConceptCategoryEntity(conceptId, catId))
             }
 
-            val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
-
-            // ISS-21: Preserve stable IDs instead of deleting all contents and generating random UUIDs
-            val existingContents = conceptDao.getContentsForConcept(conceptId)
-            val existingSource = existingContents.firstOrNull { it.languageCode == sourceLang }
-            val existingTargets = existingContents.filter { it.languageCode == targetLang }.sortedBy { it.translationIndex }
+            val canonicalSourceLang = LanguageConstants.DEFAULT_SOURCE_LANGUAGE
+            val canonicalTargetLang = LanguageConstants.DEFAULT_TARGET_LANGUAGE
 
             val cleanSource = sourceText.trim()
             val cleanTranslations = translations.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+
+            // اصلاح جابه‌جایی ناصحیح زبان مبدأ و مقصد در ویرایش از جهت برعکس (REVERSE)
+            val (finalSourceText, finalTranslations) = if (direction == CardDirection.REVERSE) {
+                val spanishWord = cleanTranslations.firstOrNull { it.isNotBlank() } ?: cleanSource
+                val sourcePersianList = cleanSource.split("،", ",", "\n").map { it.trim() }.filter { it.isNotEmpty() }
+                val extraPersianList = cleanTranslations.drop(1).filter { it.isNotBlank() }
+                val persianTranslations = (sourcePersianList + extraPersianList).distinct()
+                Pair(spanishWord, persianTranslations)
+            } else {
+                Pair(cleanSource, cleanTranslations)
+            }
+
+            // ISS-21: Preserve stable IDs instead of deleting all contents and generating random UUIDs
+            val existingContents = conceptDao.getContentsForConcept(conceptId)
+            val existingSource = existingContents.firstOrNull { it.languageCode != canonicalTargetLang }
+                ?: existingContents.firstOrNull { it.languageCode == canonicalSourceLang }
+            val existingTargets = existingContents.filter { it.languageCode == canonicalTargetLang }.sortedBy { it.translationIndex }
 
             val sourceId = existingSource?.id ?: UUID.randomUUID().toString()
             val updatedSource = ContentEntity(
                 id = sourceId,
                 conceptId = conceptId,
-                languageCode = sourceLang,
-                text = cleanSource,
-                canonicalKey = TextUtilities.toCanonicalKey(cleanSource),
+                languageCode = existingSource?.languageCode?.takeIf { it != canonicalTargetLang } ?: canonicalSourceLang,
+                text = finalSourceText,
+                canonicalKey = TextUtilities.toCanonicalKey(finalSourceText),
                 note = note?.trim()?.ifEmpty { null },
                 translationIndex = 0
             )
 
-            val updatedTargets = cleanTranslations.mapIndexed { idx, trans ->
+            val updatedTargets = finalTranslations.mapIndexed { idx, trans ->
                 val targetId = if (idx < existingTargets.size) existingTargets[idx].id else UUID.randomUUID().toString()
                 ContentEntity(
                     id = targetId,
                     conceptId = conceptId,
-                    languageCode = targetLang,
+                    languageCode = canonicalTargetLang,
                     text = trans,
                     canonicalKey = TextUtilities.toCanonicalKey(trans),
                     note = null,
@@ -563,8 +591,8 @@ class VocabularyRepository(
             }
 
             // Remove excess obsolete target translations if count decreased
-            if (existingTargets.size > cleanTranslations.size) {
-                val toDelete = existingTargets.drop(cleanTranslations.size).map { it.id }
+            if (existingTargets.size > finalTranslations.size) {
+                val toDelete = existingTargets.drop(finalTranslations.size).map { it.id }
                 conceptDao.deleteContents(toDelete)
             }
 
