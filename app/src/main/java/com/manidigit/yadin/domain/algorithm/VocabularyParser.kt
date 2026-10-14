@@ -492,7 +492,25 @@ object VocabularyParser {
                 return SplitResult(left, right, "colon", 0.95)
             }
         }
-        // Priority 2.5: Slash, Semicolon, or Newline delimiter (e.g. "casa / خانه" or "casa; خانه")
+        // Priority 2.5: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه", confidence 0.90)
+        val dashMatch = REGEX_DASH_SPLIT.find(s)
+        if (dashMatch != null && dashMatch.range.first > 0 && dashMatch.range.last < s.length - 1) {
+            val left = cleanCsvField(s.substring(0, dashMatch.range.first))
+            val right = cleanCsvField(s.substring(dashMatch.range.last + 1))
+            if (left.isNotBlank() && right.isNotBlank()) {
+                return SplitResult(left, right, "dash", 0.90)
+            }
+        }
+        // Priority 2.8: Equal sign (e.g. "casa = خانه", confidence 0.95)
+        val equalsIdx = s.indexOf('=')
+        if (equalsIdx in 1 until s.length - 1) {
+            val left = cleanCsvField(s.substring(0, equalsIdx))
+            val right = cleanCsvField(s.substring(equalsIdx + 1))
+            if (left.isNotBlank() && right.isNotBlank()) {
+                return SplitResult(left, right, "equals", 0.95)
+            }
+        }
+        // Priority 3: Slash, Semicolon, or Newline delimiter (e.g. "casa / خانه" or "casa; خانه")
         for (delimiter in listOf(" / ", "/", ";", "\n")) {
             val idx = s.indexOf(delimiter)
             if (idx in 1 until s.length - delimiter.length) {
@@ -512,24 +530,6 @@ object VocabularyParser {
                         return SplitResult(left, right, "delimiter", 0.85)
                     }
                 }
-            }
-        }
-        // Priority 3: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه", confidence 0.90)
-        val dashMatch = REGEX_DASH_SPLIT.find(s)
-        if (dashMatch != null && dashMatch.range.first > 0 && dashMatch.range.last < s.length - 1) {
-            val left = cleanCsvField(s.substring(0, dashMatch.range.first))
-            val right = cleanCsvField(s.substring(dashMatch.range.last + 1))
-            if (left.isNotBlank() && right.isNotBlank()) {
-                return SplitResult(left, right, "dash", 0.90)
-            }
-        }
-        // Priority 4: Equal sign (e.g. "casa = خانه", confidence 0.95)
-        val equalsIdx = s.indexOf('=')
-        if (equalsIdx in 1 until s.length - 1) {
-            val left = cleanCsvField(s.substring(0, equalsIdx))
-            val right = cleanCsvField(s.substring(equalsIdx + 1))
-            if (left.isNotBlank() && right.isNotBlank()) {
-                return SplitResult(left, right, "equals", 0.95)
             }
         }
         // Priority 5: Parentheses pair (e.g. "casa (خانه)", confidence 0.85) - only when no explicit delimiter exists
