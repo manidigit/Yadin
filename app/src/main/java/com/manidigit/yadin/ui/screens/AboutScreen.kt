@@ -208,7 +208,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
                     TechRow("پایگاه داده محلی", "Android Room SQLite (Schema v2)")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("سیستم طراحی پوسته", "چهارگانه تطبیقی (Claude, Googoli, Gemini, GTP)")
+                    TechRow("سیستم طراحی پوسته", "پوسته اختصاصی Gemini (تاریک/روشن)")
                 }
             }
 

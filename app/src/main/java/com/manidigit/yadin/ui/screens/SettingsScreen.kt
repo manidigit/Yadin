@@ -101,17 +101,9 @@ fun SettingsScreen(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
-    var themeMenuExpanded by remember { mutableStateOf(false) }
     var showPurgeConfirmDialog by remember { mutableStateOf(false) }
     var showPurgeReportDialog by remember { mutableStateOf(false) }
     var purgedCountResult by remember { mutableStateOf(0) }
-
-    val currentThemeTitle = when (currentThemeId.lowercase()) {
-        "googoli" -> "تم گوگولی (Googoli)"
-        "claude" -> "تم Claude (کلاد)"
-        "gemini" -> "تم Gemini"
-        else -> "تم GTP"
-    }
 
     Column(
         modifier = Modifier
@@ -168,82 +160,35 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Dropdown Menu for Theme
-                Box(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(colors.surfaceVariant)
-                            .clickable { themeMenuExpanded = true }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Palette,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(18.dp)
+                // Gemini Theme Info
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.surfaceVariant)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "پوسته اختصاصی",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.onSurfaceVariant,
+                            fontSize = 10.sp
                         )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "پوسته فعال",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                            Text(
-                                text = currentThemeTitle,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
-                            )
-                        }
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "انتخاب پوسته",
-                            tint = colors.onSurfaceVariant
+                        Text(
+                            text = "تم Gemini (هوش مصنوعی)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
                         )
-                    }
-
-                    DropdownMenu(
-                        expanded = themeMenuExpanded,
-                        onDismissRequest = { themeMenuExpanded = false },
-                        modifier = Modifier.background(colors.surface)
-                    ) {
-                        com.manidigit.yadin.ui.theme.AppTheme.entries.forEach { appTheme ->
-                            val themeColor = when (appTheme) {
-                                com.manidigit.yadin.ui.theme.AppTheme.GOOGOLI -> YadinPalette.GoogoliTeal
-                                com.manidigit.yadin.ui.theme.AppTheme.CLAUDE -> YadinPalette.ClaudeTerracotta
-                                com.manidigit.yadin.ui.theme.AppTheme.GEMINI -> YadinPalette.GeminiBlue
-                                com.manidigit.yadin.ui.theme.AppTheme.GTP -> YadinPalette.GtpPurple
-                            }
-                            DropdownMenuItem(
-                                text = {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(12.dp)
-                                                .clip(CircleShape)
-                                                .background(themeColor)
-                                        )
-                                        Text(
-                                            text = appTheme.titleFa,
-                                            fontWeight = if (currentThemeId == appTheme.id) FontWeight.Bold else FontWeight.Normal,
-                                            color = colors.onSurface
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    onSelectTheme(appTheme.id)
-                                    themeMenuExpanded = false
-                                }
-                            )
-                        }
                     }
                 }
 

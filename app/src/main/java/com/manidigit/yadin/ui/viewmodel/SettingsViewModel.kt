@@ -165,17 +165,11 @@ class SettingsViewModel(
     }
 
     /**
-     * تغییر چرخشی تم‌های رنگی برنامه (GTP -> Gemini -> Claude -> Googoli -> GTP).
+     * تنظیم تم رنگی اختصاصی Gemini برنامه.
      */
     fun toggleTheme() {
         scope.launch {
-            val next = when (themeId.value.lowercase()) {
-                "gtp" -> "gemini"
-                "gemini" -> "claude"
-                "claude" -> "googoli"
-                else -> "gtp"
-            }
-            settingsRepo.setThemeId(next)
+            settingsRepo.setThemeId("gemini")
         }
     }
 

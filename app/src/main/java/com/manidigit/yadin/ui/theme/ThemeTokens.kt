@@ -7,10 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 
 enum class AppTheme(val id: String, val titleFa: String, val descriptionFa: String) {
-    GTP("gtp", "تم GTP", "طیف بنفش و ارغوانی نئونی، متراکم و شارپ با خطوط هندسی دقیق"),
-    GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی آینده‌نگرانه، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم"),
-    CLAUDE("claude", "تم Claude (کلاد)", "طراحی مینیمال، متین و آکادمیک با طیف گرم سفالی، پس‌زمینه کاغذی عاجی، تایپوگرافی چشم‌نواز و کنتراست ارگونومیک"),
-    GOOGOLI("googoli", "تم گوگولی (Googoli)", "طراحی شاداب، دلنشین و بازی‌وار با رنگ آرام نعنایی/فیروزه‌ای پاستلی، رگه‌های هلویی و گوشه‌های حباب‌گون")
+    GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم")
 }
 
 @Immutable
@@ -51,5 +48,5 @@ data class YadinDimensions(
     val cardBorderAlpha: Float
 )
 
-val LocalYadinColors = staticCompositionLocalOf { GtpDarkColors }
-val LocalYadinDimensions = staticCompositionLocalOf { GtpDimensions }
+val LocalYadinColors = staticCompositionLocalOf { GeminiDarkColors }
+val LocalYadinDimensions = staticCompositionLocalOf { GeminiDimensions }

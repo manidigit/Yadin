@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 class SettingsRepository(private val settingsDao: SettingsDao) {
 
     val themeIdFlow: Flow<String> = settingsDao.getSettingFlow("themeId")
-        .map { it ?: "gtp" }
+        .map { it ?: "gemini" }
 
     val isDarkFlow: Flow<Boolean> = settingsDao.getSettingFlow("isDark")
         .map { it?.toBooleanStrictOrNull() ?: true }
@@ -64,13 +64,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         }
 
     suspend fun setThemeId(themeId: String) {
-        val sanitized = when (themeId.lowercase()) {
-            "googoli" -> "googoli"
-            "gemini" -> "gemini"
-            "claude" -> "claude"
-            else -> "gtp"
-        }
-        settingsDao.setSetting(SettingEntity("themeId", sanitized))
+        settingsDao.setSetting(SettingEntity("themeId", "gemini"))
     }
 
     suspend fun setDarkMode(isDark: Boolean) {

@@ -10,30 +10,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 
 @Composable
 fun YadinTheme(
-    themeId: String = "gtp",
+    themeId: String = "gemini",
     isDark: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val cleanTheme = themeId.lowercase()
-    val colors = when {
-        cleanTheme == "googoli" && isDark -> GoogoliDarkColors
-        cleanTheme == "googoli" && !isDark -> GoogoliLightColors
-        cleanTheme == "claude" && isDark -> ClaudeDarkColors
-        cleanTheme == "claude" && !isDark -> ClaudeLightColors
-        cleanTheme == "gemini" && isDark -> GeminiDarkColors
-        cleanTheme == "gemini" && !isDark -> GeminiLightColors
-        cleanTheme == "gtp" && isDark -> GtpDarkColors
-        cleanTheme == "gtp" && !isDark -> GtpLightColors
-        isDark -> GoogoliDarkColors
-        else -> GoogoliLightColors
-    }
-
-    val dimensions = when (cleanTheme) {
-        "googoli" -> GoogoliDimensions
-        "claude" -> ClaudeDimensions
-        "gemini" -> GeminiDimensions
-        else -> GtpDimensions
-    }
+    val colors = if (isDark) GeminiDarkColors else GeminiLightColors
+    val dimensions = GeminiDimensions
 
     val materialColors = if (isDark) {
         darkColorScheme(
