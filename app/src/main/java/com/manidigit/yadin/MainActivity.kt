@@ -62,6 +62,20 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val prefs = newBase.getSharedPreferences("yadin_settings", android.content.Context.MODE_PRIVATE)
+        val uiLanguage = prefs.getString("ui_language", "fa") ?: "fa"
+        val targetLocale = if (uiLanguage == "en") java.util.Locale("en", "US") else java.util.Locale("fa", "IR")
+        java.util.Locale.setDefault(targetLocale)
+        val config = android.content.res.Configuration(newBase.resources.configuration)
+        config.setLocale(targetLocale)
+        config.setLayoutDirection(targetLocale)
+        @Suppress("DEPRECATION")
+        newBase.resources.updateConfiguration(config, newBase.resources.displayMetrics)
+        val context = newBase.createConfigurationContext(config)
+        super.attachBaseContext(context)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -73,20 +87,21 @@ class MainActivity : ComponentActivity() {
             val uiLanguage by viewModel.uiLanguage.collectAsStateWithLifecycle()
 
             val layoutDirection = if (uiLanguage == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
-            val targetLocale = if (uiLanguage == "en") java.util.Locale.ENGLISH else java.util.Locale("fa")
+            val targetLocale = if (uiLanguage == "en") java.util.Locale("en", "US") else java.util.Locale("fa", "IR")
+
+            androidx.compose.runtime.LaunchedEffect(uiLanguage) {
+                java.util.Locale.setDefault(targetLocale)
+            }
 
             val currentContext = LocalContext.current
             val localizedContext = remember(uiLanguage, currentContext) {
+                java.util.Locale.setDefault(targetLocale)
                 val config = android.content.res.Configuration(currentContext.resources.configuration)
                 config.setLocale(targetLocale)
                 config.setLayoutDirection(targetLocale)
-                val base = currentContext.createConfigurationContext(config)
-                object : android.content.ContextWrapper(currentContext) {
-                    override fun getResources(): android.content.res.Resources = base.resources
-                    override fun createConfigurationContext(overrideConfiguration: android.content.res.Configuration): android.content.Context {
-                        return base.createConfigurationContext(overrideConfiguration)
-                    }
-                }
+                @Suppress("DEPRECATION")
+                currentContext.resources.updateConfiguration(config, currentContext.resources.displayMetrics)
+                currentContext.createConfigurationContext(config)
             }
 
             YadinTheme(themeId = themeId, isDark = isDark) {
@@ -96,6 +111,10 @@ class MainActivity : ComponentActivity() {
                     LocalLayoutDirection provides layoutDirection,
                     androidx.activity.compose.LocalActivityResultRegistryOwner provides this@MainActivity
                 ) {
+                    val isAuditing by viewModel.isAuditing.collectAsStateWithLifecycle()
+                    val isImporting by viewModel.isImporting.collectAsStateWithLifecycle()
+                    val isBottomBarEnabled = !isAuditing && !isImporting
+
                     val shouldShowBottomBar = screen is Screen.Home ||
                             screen is Screen.ReviewSetup ||
                             screen is Screen.Library ||
@@ -110,6 +129,7 @@ class MainActivity : ComponentActivity() {
                             if (shouldShowBottomBar) {
                                 YadinBottomBar(
                                     currentScreen = screen,
+                                    enabled = isBottomBarEnabled,
                                     onNavigate = { target -> viewModel.navigateTo(target) }
                                 )
                             }
@@ -133,6 +153,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun YadinBottomBar(
     currentScreen: Screen,
+    enabled: Boolean = true,
     onNavigate: (Screen) -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -163,7 +184,8 @@ fun YadinBottomBar(
 
             NavigationBarItem(
                 selected = isSelected,
-                onClick = { onNavigate(targetScreen) },
+                enabled = enabled,
+                onClick = { if (enabled) onNavigate(targetScreen) },
                 icon = {
                     Icon(
                         imageVector = icon,

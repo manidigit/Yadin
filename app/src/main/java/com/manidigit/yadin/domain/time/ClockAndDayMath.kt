@@ -19,7 +19,11 @@ object ClockAndDayMath {
             val date = LocalDate.parse(dayString, DATE_FORMATTER)
             date.plusDays(daysToAdd.toLong()).format(DATE_FORMATTER)
         } catch (_: Exception) {
-            dayString
+            try {
+                LocalDate.now().plusDays(daysToAdd.toLong()).format(DATE_FORMATTER)
+            } catch (_: Exception) {
+                todayDayString()
+            }
         }
     }
 

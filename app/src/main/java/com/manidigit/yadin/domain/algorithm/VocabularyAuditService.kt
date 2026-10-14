@@ -59,6 +59,24 @@ class VocabularyAuditService(
             val extractedTranslations = mutableListOf<String>()
             val extractedNotes = mutableListOf<String>()
 
+            // ۰. بررسی و تفکیک متون چندخطی چسبیده
+            if (text.contains("\n") || text.contains("\r")) {
+                val lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n").map { it.trim() }.filter { it.isNotBlank() }
+                if (lines.size >= 2) {
+                    text = lines[0]
+                    for (i in 1 until lines.size) {
+                        val line = lines[i]
+                        if (VocabularyParser.hasPersian(line)) {
+                            extractedTranslations.addAll(TextUtilities.splitTranslations(line))
+                            modifications.add("استخراج ترجمه فارسی از سطر بعدی ($line)")
+                        } else {
+                            extractedNotes.add("متن اضافی سطر بعدی: $line")
+                            modifications.add("انتقال سطر اضافی به یادداشت ($line)")
+                        }
+                    }
+                }
+            }
+
             // ۱. استانداردسازی فاصله و حذف نویسه‌های نامرئی
             val normalized = TextUtilities.cleanText(text)
             if (normalized != text) {
@@ -80,7 +98,7 @@ class VocabularyAuditService(
                 text = strippedQuotes
             }
 
-            // ۴. بررسی وجود جداکننده دوطرفه (مانند "casa : خانه" یا "run - دویدن")
+            // ۴. بررسی وجود جداکننده دوطرفه (مانند "casa : خانه" یا "run - دویدن" یا "Dispositivo V-16 / چراغ هشدار V-16")
             val pair = VocabularyParser.splitPair(text)
             if (pair != null) {
                 val left = pair.first.trim()
@@ -120,6 +138,36 @@ class VocabularyAuditService(
                     }
                 } else {
                     keepExtracting = false
+                }
+            }
+
+            // ۶. تفکیک متون فارسی و اسپانیایی متداخل در فیلد واژه (Script Separation هوشمند)
+            if (VocabularyParser.hasLatin(text) && VocabularyParser.hasPersian(text)) {
+                var firstPersian = -1
+                var lastPersian = -1
+                for (i in text.indices) {
+                    val code = text[i].code
+                    if ((code in 0x0600..0x06FF) || (code in 0x0750..0x077F) || (code in 0x08A0..0x08FF)) {
+                        if (firstPersian == -1) firstPersian = i
+                        lastPersian = i
+                    }
+                }
+                if (firstPersian != -1 && lastPersian != -1) {
+                    var start = firstPersian
+                    var end = lastPersian + 1
+                    while (start > 0 && (text[start - 1] == ' ' || text[start - 1] == '-' || text[start - 1] == '(' || text[start - 1].isDigit())) {
+                        start--
+                    }
+                    while (end < text.length && (text[end] == ' ' || text[end] == '-' || text[end] == ')' || text[end].isDigit() || text[end] == 'V' || text[end] == 'v')) {
+                        end++
+                    }
+                    val persianPart = text.substring(start, end).trim()
+                    val remainingText = (text.substring(0, start) + " " + text.substring(end)).trim().replace(Regex("""\s+"""), " ")
+                    if (persianPart.isNotBlank() && remainingText.isNotBlank()) {
+                        text = remainingText
+                        extractedTranslations.addAll(TextUtilities.splitTranslations(persianPart))
+                        modifications.add("تفکیک متن فارسی متداخل ($persianPart)")
+                    }
                 }
             }
 

@@ -424,13 +424,60 @@ object VocabularyParser {
         val baseConfidence: Double
     )
 
+    private fun parseCsvFields(s: String): List<String> {
+        if (!s.contains(",") && !s.contains("\t") && !s.contains(";")) return emptyList()
+        val fields = mutableListOf<String>()
+        val current = StringBuilder()
+        var inQuotes = false
+        var i = 0
+        while (i < s.length) {
+            val c = s[i]
+            if (c == '"' || c == '«' || c == '»' || c == '”' || c == '“') {
+                inQuotes = !inQuotes
+            } else if ((c == ',' || c == '\t' || c == ';') && !inQuotes) {
+                fields.add(cleanCsvField(current.toString()))
+                current.clear()
+            } else {
+                current.append(c)
+            }
+            i++
+        }
+        if (current.isNotEmpty() || fields.isNotEmpty()) {
+            fields.add(cleanCsvField(current.toString()))
+        }
+        val cleaned = fields.map { cleanCsvField(it) }.filter { it.isNotBlank() }
+        return if (cleaned.size >= 2) cleaned else emptyList()
+    }
+
+    private fun cleanCsvField(field: String): String {
+        var trimmed = field.trim()
+        while ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+            (trimmed.startsWith("«") && trimmed.endsWith("»")) ||
+            (trimmed.startsWith("“") && trimmed.endsWith("”")) ||
+            (trimmed.startsWith("'") && trimmed.endsWith("'"))
+        ) {
+            if (trimmed.length < 2) break
+            trimmed = trimmed.substring(1, trimmed.length - 1).trim()
+        }
+        return trimmed.replace("\"\"", "\"")
+    }
+
     fun splitPairDetailed(s: String): SplitResult? {
+        // Priority 0: CSV quoted/tab/comma fields (e.g. "\"hola, amigo\", \"سلام، دوست\"")
+        val csvFields = parseCsvFields(s)
+        if (csvFields.size >= 2) {
+            val left = csvFields[0]
+            val right = csvFields[1]
+            if (left.isNotBlank() && right.isNotBlank() && (hasLatin(left) || hasPersian(right))) {
+                return SplitResult(left, right, "csv", 0.95)
+            }
+        }
         // Priority 1: Arrow symbols & text arrows (Highest confidence 1.0)
         for (arrow in listOf("→", "➜", "->", "=>")) {
             val idx = s.indexOf(arrow)
             if (idx in 1 until s.length - arrow.length) {
-                val left = s.substring(0, idx).trim()
-                val right = s.substring(idx + arrow.length).trim()
+                val left = cleanCsvField(s.substring(0, idx))
+                val right = cleanCsvField(s.substring(idx + arrow.length))
                 if (left.isNotBlank() && right.isNotBlank()) {
                     return SplitResult(left, right, "arrow", 1.0)
                 }
@@ -439,17 +486,39 @@ object VocabularyParser {
         // Priority 2: Colon (e.g. "casa: خانه", confidence 0.95)
         val colonIdx = s.indexOf(':')
         if (colonIdx in 1 until s.length - 1) {
-            val left = s.substring(0, colonIdx).trim()
-            val right = s.substring(colonIdx + 1).trim()
+            val left = cleanCsvField(s.substring(0, colonIdx))
+            val right = cleanCsvField(s.substring(colonIdx + 1))
             if (left.isNotBlank() && right.isNotBlank()) {
                 return SplitResult(left, right, "colon", 0.95)
+            }
+        }
+        // Priority 2.5: Slash, Semicolon, or Newline delimiter (e.g. "casa / خانه" or "casa; خانه")
+        for (delimiter in listOf(" / ", "/", ";", "\n")) {
+            val idx = s.indexOf(delimiter)
+            if (idx in 1 until s.length - delimiter.length) {
+                val left = cleanCsvField(s.substring(0, idx))
+                val right = cleanCsvField(s.substring(idx + delimiter.length))
+                if (left.isNotBlank() && right.isNotBlank()) {
+                    val leftHasLatin = hasLatin(left)
+                    val rightHasPersian = hasPersian(right)
+                    val leftHasPersian = hasPersian(left)
+                    val rightHasLatin = hasLatin(right)
+
+                    if (leftHasLatin && rightHasPersian) {
+                        return SplitResult(left, right, "delimiter", 0.92)
+                    } else if (leftHasPersian && rightHasLatin) {
+                        return SplitResult(right, left, "delimiter", 0.92)
+                    } else if (leftHasLatin && rightHasLatin && delimiter.contains("/")) {
+                        return SplitResult(left, right, "delimiter", 0.85)
+                    }
+                }
             }
         }
         // Priority 3: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه", confidence 0.90)
         val dashMatch = REGEX_DASH_SPLIT.find(s)
         if (dashMatch != null && dashMatch.range.first > 0 && dashMatch.range.last < s.length - 1) {
-            val left = s.substring(0, dashMatch.range.first).trim()
-            val right = s.substring(dashMatch.range.last + 1).trim()
+            val left = cleanCsvField(s.substring(0, dashMatch.range.first))
+            val right = cleanCsvField(s.substring(dashMatch.range.last + 1))
             if (left.isNotBlank() && right.isNotBlank()) {
                 return SplitResult(left, right, "dash", 0.90)
             }
@@ -457,8 +526,8 @@ object VocabularyParser {
         // Priority 4: Equal sign (e.g. "casa = خانه", confidence 0.95)
         val equalsIdx = s.indexOf('=')
         if (equalsIdx in 1 until s.length - 1) {
-            val left = s.substring(0, equalsIdx).trim()
-            val right = s.substring(equalsIdx + 1).trim()
+            val left = cleanCsvField(s.substring(0, equalsIdx))
+            val right = cleanCsvField(s.substring(equalsIdx + 1))
             if (left.isNotBlank() && right.isNotBlank()) {
                 return SplitResult(left, right, "equals", 0.95)
             }
@@ -466,8 +535,8 @@ object VocabularyParser {
         // Priority 5: Parentheses pair (e.g. "casa (خانه)", confidence 0.85) - only when no explicit delimiter exists
         val parenMatch = REGEX_PAREN_PAIR.find(s)
         if (parenMatch != null) {
-            val left = parenMatch.groupValues[1].trim()
-            val right = parenMatch.groupValues[2].trim()
+            val left = cleanCsvField(parenMatch.groupValues[1])
+            val right = cleanCsvField(parenMatch.groupValues[2])
             if (left.isNotBlank() && right.isNotBlank()) {
                 return SplitResult(left, right, "parentheses", 0.85)
             }

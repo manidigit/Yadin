@@ -1022,7 +1022,7 @@ class BackupRepository(
                             direction = dir,
                             quizLevel = ql,
                             status = st,
-                            currentPosition = o.optInt("currentPosition", o.optInt("totalItems", 0)),
+                            currentPosition = o.optInt("currentPosition", 0),
                             totalItems = o.optInt("totalItems", 0)
                         )
                     )
