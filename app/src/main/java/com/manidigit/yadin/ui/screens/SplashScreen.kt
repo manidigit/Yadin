@@ -60,7 +60,7 @@ fun SplashScreen(
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = "Yadin Logo",
-                    tint = Color.White,
+                    tint = colors.onHero,
                     modifier = Modifier.size(44.dp)
                 )
             }

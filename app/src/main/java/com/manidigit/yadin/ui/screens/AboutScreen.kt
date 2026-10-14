@@ -150,7 +150,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     ) {
                         Text(
                             text = "یا",
-                            color = Color.White,
+                            color = colors.onHero,
                             fontWeight = FontWeight.Black,
                             fontSize = 32.sp
                         )

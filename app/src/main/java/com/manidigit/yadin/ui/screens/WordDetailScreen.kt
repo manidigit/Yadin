@@ -193,7 +193,7 @@ fun WordDetailScreen(
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = colors.success,
-                                    contentColor = Color.White
+                                    contentColor = colors.onSuccess
                                 )
                             ) {
                                 Text("احیا و فعال‌سازی", fontSize = 12.sp, fontWeight = FontWeight.Bold)

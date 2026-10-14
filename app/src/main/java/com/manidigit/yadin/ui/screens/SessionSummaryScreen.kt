@@ -75,7 +75,7 @@ fun SessionSummaryScreen(
                 Icon(
                     imageVector = Icons.Default.EmojiEvents,
                     contentDescription = "جشن پایان جلسه",
-                    tint = Color.White,
+                    tint = colors.onHero,
                     modifier = Modifier.size(50.dp)
                 )
             }

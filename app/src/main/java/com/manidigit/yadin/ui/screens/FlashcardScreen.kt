@@ -467,7 +467,7 @@ fun FlashcardScreen(
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.success,
-                        contentColor = Color.White
+                        contentColor = colors.onSuccess
                     )
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -523,7 +523,7 @@ fun FlashcardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                 ) {
-                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = colors.onError)
                 }
             },
             dismissButton = {

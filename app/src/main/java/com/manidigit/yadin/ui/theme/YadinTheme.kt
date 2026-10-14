@@ -1,10 +1,6 @@
 package com.manidigit.yadin.ui.theme
 
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 
@@ -14,53 +10,24 @@ fun YadinTheme(
     isDark: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colors = if (isDark) GeminiDarkColors else GeminiLightColors
-    val dimensions = GeminiDimensions
+    val colors = if (isDark) GeminiTheme.DarkColors else GeminiTheme.LightColors
+    val dimensions = GeminiTheme.Dimensions
+    val shapes = GeminiTheme.Shapes
+    val iconSizes = GeminiTheme.IconSizes
 
-    val materialColors = if (isDark) {
-        darkColorScheme(
-            primary = colors.primary,
-            onPrimary = colors.onPrimary,
-            secondary = colors.secondary,
-            onSecondary = colors.onSecondary,
-            background = colors.background,
-            surface = colors.surface,
-            surfaceVariant = colors.surfaceVariant,
-            onSurface = colors.onSurface,
-            onSurfaceVariant = colors.onSurfaceVariant,
-            outline = colors.outline,
-            error = colors.error
-        )
-    } else {
-        lightColorScheme(
-            primary = colors.primary,
-            onPrimary = colors.onPrimary,
-            secondary = colors.secondary,
-            onSecondary = colors.onSecondary,
-            background = colors.background,
-            surface = colors.surface,
-            surfaceVariant = colors.surfaceVariant,
-            onSurface = colors.onSurface,
-            onSurfaceVariant = colors.onSurfaceVariant,
-            outline = colors.outline,
-            error = colors.error
-        )
-    }
-
-    val shapes = Shapes(
-        small = RoundedCornerShape(dimensions.cornerSmall),
-        medium = RoundedCornerShape(dimensions.cornerMedium),
-        large = RoundedCornerShape(dimensions.cornerLarge)
-    )
+    val materialColors = GeminiTheme.materialColorScheme(isDark)
+    val materialShapes = GeminiTheme.materialShapes()
 
     CompositionLocalProvider(
         LocalYadinColors provides colors,
-        LocalYadinDimensions provides dimensions
+        LocalYadinDimensions provides dimensions,
+        LocalYadinShapes provides shapes,
+        LocalYadinIconSizes provides iconSizes
     ) {
         MaterialTheme(
             colorScheme = materialColors,
             typography = AppTypography,
-            shapes = shapes,
+            shapes = materialShapes,
             content = content
         )
     }

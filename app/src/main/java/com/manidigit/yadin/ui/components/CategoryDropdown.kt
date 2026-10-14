@@ -219,7 +219,7 @@ fun ExposedCategoryDropdown(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                 ) {
-                    Text("حذف دسته", fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color.White)
+                    Text("حذف دسته", fontWeight = FontWeight.Bold, color = colors.onError)
                 }
             },
             dismissButton = {

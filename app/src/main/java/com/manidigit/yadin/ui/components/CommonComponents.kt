@@ -47,6 +47,7 @@ import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.LocalYadinShapes
 import java.util.Locale
 
 @Composable
@@ -60,10 +61,11 @@ fun YadinCard(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
-    val resolvedShape = shape ?: RoundedCornerShape(dimensions.cornerMedium)
+    val shapes = LocalYadinShapes.current
+    val resolvedShape = shape ?: shapes.medium
     val cardColor = backgroundColor ?: colors.card
 
-    val resolvedBorder = borderStroke ?: if (colors.isGemini && colors.cardBorderBrush != null) {
+    val resolvedBorder = borderStroke ?: if (colors.cardBorderBrush != null) {
         BorderStroke(1.2.dp, colors.cardBorderBrush)
     } else {
         BorderStroke(1.dp, colors.outline.copy(alpha = dimensions.cardBorderAlpha))
@@ -94,10 +96,11 @@ fun DifficultyCounterRow(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    val shapes = LocalYadinShapes.current
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapMedium)
     ) {
         val items = listOf(
             Triple(VocabularyDifficulty.EASY, "آسان", colors.success),
@@ -108,16 +111,16 @@ fun DifficultyCounterRow(
 
         items.forEach { (diff, label, color) ->
             val count = counts[diff] ?: 0
-            val shape = RoundedCornerShape(dimensions.cornerSmall)
+            val shape = shapes.small
 
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .clip(shape)
-                    .background(color.copy(alpha = if (colors.isGemini) 0.16f else 0.10f))
+                    .background(color.copy(alpha = 0.16f))
                     .border(
                         width = 1.dp,
-                        color = color.copy(alpha = if (colors.isGemini) 0.50f else 0.30f),
+                        color = color.copy(alpha = 0.50f),
                         shape = shape
                     )
                     .then(
@@ -153,6 +156,7 @@ fun DifficultyCounterRow(
 @Composable
 fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
+    val shapes = LocalYadinShapes.current
     val (title, color) = when (stage) {
         Stage.DAILY -> "روزانه" to colors.primary
         Stage.WEEKLY -> "هفتگی" to colors.info
@@ -160,7 +164,7 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
         Stage.LEARNED -> "یادگرفته" to colors.success
     }
 
-    val shape = RoundedCornerShape(if (colors.isGemini) 12.dp else 6.dp)
+    val shape = shapes.badge
 
     Box(
         modifier = modifier
@@ -183,6 +187,7 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
 @Composable
 fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
+    val shapes = LocalYadinShapes.current
     val (title, color) = when (difficulty) {
         VocabularyDifficulty.EASY -> "آسان" to colors.success
         VocabularyDifficulty.MEDIUM -> "متوسط" to colors.info
@@ -190,7 +195,7 @@ fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modif
         VocabularyDifficulty.VERY_HARD -> "خیلی سخت" to colors.error
     }
 
-    val shape = RoundedCornerShape(if (colors.isGemini) 12.dp else 6.dp)
+    val shape = shapes.badge
 
     Box(
         modifier = modifier
@@ -213,8 +218,8 @@ fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modif
 @Composable
 fun StreakChip(streakDays: Int, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-    val shape = RoundedCornerShape(dimensions.cornerPill)
+    val shapes = LocalYadinShapes.current
+    val shape = shapes.pill
 
     Row(
         modifier = modifier

@@ -49,7 +49,7 @@ class SettingsViewModel(
 
     // --- تنظیمات رابط کاربری و یادگیری ---
     val themeId: StateFlow<String> = settingsRepo.themeIdFlow
-        .stateIn(scope, SharingStarted.Eagerly, "gtp")
+        .stateIn(scope, SharingStarted.Eagerly, "gemini")
 
     val isDark: StateFlow<Boolean> = settingsRepo.isDarkFlow
         .stateIn(scope, SharingStarted.Eagerly, true)

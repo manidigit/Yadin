@@ -589,7 +589,7 @@ fun QuizScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                 ) {
-                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = colors.onError)
                 }
             },
             dismissButton = {

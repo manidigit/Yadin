@@ -643,13 +643,13 @@ fun BackupScreen(
                         Icon(
                             imageVector = Icons.Default.SaveAlt,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = colors.onPrimary,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = if (selectedFormat == BackupExportFormat.JSON) "ایجاد فایل پشتیبان" else "دریافت فایل اکسل",
-                            color = Color.White,
+                            color = colors.onPrimary,
                             fontSize = 13.sp
                         )
                     }
@@ -850,13 +850,13 @@ fun BackupScreen(
                                 Icon(
                                     imageVector = Icons.Default.CloudDownload,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = if (isReplaceMode) colors.onError else colors.onPrimary,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = if (isReplaceMode) "شروع جایگزینی کامل اطلاعات" else "شروع ادغام و بازیابی",
-                                    color = Color.White,
+                                    color = if (isReplaceMode) colors.onError else colors.onPrimary,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
                                 )
@@ -904,7 +904,7 @@ fun BackupScreen(
                         containerColor = if (isReplaceMode) colors.error else colors.primary
                     )
                 ) {
-                    Text("بله، انجام شود", color = Color.White)
+                    Text("بله، انجام شود", color = if (isReplaceMode) colors.onError else colors.onPrimary)
                 }
             },
             dismissButton = {
@@ -939,7 +939,7 @@ private fun BackupOptionCheckboxRow(
             onCheckedChange = onCheckedChange,
             colors = CheckboxDefaults.colors(
                 checkedColor = colors.primary,
-                checkmarkColor = Color.White
+                checkmarkColor = colors.onPrimary
             )
         )
         Spacer(modifier = Modifier.width(6.dp))
@@ -991,14 +991,14 @@ private fun TabButton(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isSelected) Color.White else colors.onSurfaceVariant,
+                tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
                 modifier = Modifier.size(16.dp)
             )
             Text(
                 text = title,
                 fontSize = 13.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) Color.White else colors.onSurfaceVariant
+                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
             )
         }
     }
@@ -1076,7 +1076,7 @@ private fun FormatChoiceCard(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isSelected) Color.White else colors.onSurfaceVariant,
+                tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
         }

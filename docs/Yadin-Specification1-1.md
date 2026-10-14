@@ -240,7 +240,7 @@ app/src/main/java/com/manidigit/yadin/
     screens/          Home, ReviewSetup, Flashcard, Quiz, Library, AddEditWord, ...
     components/       CommonCards, Chips, StatsCharts, Dialogs
     viewmodel/        MainViewModel, ReviewViewModel, LibraryViewModel, ...
-    theme/            YadinTheme, ThemePalettes (GTP, Gemini, Claude, Googoli), Type, Shape
+    theme/            YadinTheme, ThemePalettes (Gemini), Type, Shape
     nav/              Screen, Navigation State
 ```
 
@@ -2390,83 +2390,29 @@ endedAt جلسه هنگام ورود به این صفحه (یا خروج زود�
 مرجع بصری اصلی: کد فلش‌لرن در مسیر app/src/main/java/com/flashlearn/app/ui/theme (فایل‌های FlashLearnThemeSpec.kt و FlashLearnThemeTokens.kt و FlashLearnTheme.kt).
 پیاده‌ساز موظف است آن فایل‌ها را بخواند و رفتار را در یادین بازسازی کند. جدول‌های زیر مقادیر آن کد هستند.
 
-### 8.1 تم‌های چهارگانه برنامه (GTP, Gemini, Claude, Googoli)
+### 8.1 پوسته رسمی برنامه (Gemini)
 
-برنامه دارای چهار تم متمایز و مدرن است که هر کدام دارای دو حالت روشن (Light) و تاریک (Dark) هستند:
+برنامه یادین به طور اختصاصی از پوسته مدرن Gemini با الهام از طراحی هوش مصنوعی بهره می‌برد که دارای دو حالت روشن (Light) و تاریک (Dark) است:
 
-۱. **GTP (`gtp`)**: تم بر پایه طیف بنفش و ارغوانی نئونی، مدرن، متراکم و شارپ.
-۲. **Gemini (`gemini`)**: تم آینده‌نگرانه با الهام از طراحی هوش مصنوعی، بر پایه رنگ‌های سرمه‌ای اعماق فضا، فیروزه‌ای ستاره‌ای، گرادیان‌های نئونی و کارت‌های شیشه‌ای.
-۳. **Claude (`claude`)**: تم متین، آکادمیک، انسان‌محور و سرمقاله‌ای (Editorial & Academic) بر پایه رنگ‌های سفالی گرم و سبز مریم‌گلی با پس‌زمینه عاجی/کلاغی گرم.
-۴. **Googoli (`googoli`)**: تم شاداب، بازی‌وار (Gamified)، آبنباتی و پاستلی با هندسه حباب‌گون نرم و صمیمیت بصری بالا.
-
-### ۱. تم GTP (gtp)
-
-| توکن | روشن | تاریک |
-|------|------|-------|
-| primary | 7C3AED | A78BFA |
-| secondary | 06B6D4 | 22D3EE |
-| background | F6F3FF | 090711 |
-| surface | FFFFFF | 15101F |
-| surfaceVariant | EDE7FF | 21192F |
-| onSurface | 171225 | F7F2FF |
-| onSurfaceVariant | 6F6485 | C4B9D6 |
-| card | FCFAFF | 191222 |
-| outline | D8CFF0 | 49375E |
-
-مقیاس‌ها: elevationScale 1.55 ، گوشه‌ها 6/12/18 ، typographyScale 1.07 ، densityScale 0.94 ، spacingScale 0.88 ؛ آیکن FILLED.
-
-### ۲. تم Gemini (gemini)
+**Gemini (`gemini`)**: تم آینده‌نگرانه با الهام از طراحی هوش مصنوعی، بر پایه رنگ‌های سرمه‌ای اعماق فضا، فیروزه‌ای ستاره‌ای، گرادیان‌های نئونی و کارت‌های شیشه‌ای نرم.
 
 | توکن | روشن | تاریک |
 |------|------|-------|
 | primary | 1A73E8 | 8AB4F8 |
 | secondary | 00B4D8 | 70D6FF |
-| background | F8FAFD | 0B0F19 |
-| surface | FFFFFF | 111827 |
-| surfaceVariant | EDF2F9 | 1F2937 |
+| background | F5F8FF | 060B14 |
+| surface | FFFFFF | 0E1726 |
+| surfaceVariant | E8F1FC | 182337 |
 | onSurface | 1E293B | F1F5F9 |
-| onSurfaceVariant | 64748B | 94A3B8 |
-| card | F1F5F9 | 161F30 |
-| outline | CBD5E1 | 334155 |
+| onSurfaceVariant | 5A6F8C | 94A3B8 |
+| card | FFFFFF | 0E1726 |
+| outline | CBD5E1 | 2E3E5B |
 
 ویژگی‌های Gemini:
-- استایل گوشه‌ها: کاملاً گرد و نرم (Pill & Rounded Shapes: گوشه‌ها 12/20/28).
+- استایل گوشه‌ها: کاملاً گرد و نرم (Pill & Rounded Shapes: گوشه‌ها 16/24/32/40).
 - آیکن‌ها: آیکن‌های به‌روز با جلوه مدرن هوش مصنوعی (طراحی منسجم و لطیف).
-- کارت‌ها: عمق بصری لطیف با حاشیه ظریف شیشه‌ای (`cardBorderAlpha 0.35`).
+- کارت‌ها: عمق بصری لطیف با حاشیه ظریف شیشه‌ای (`cardBorderAlpha 0.45`).
 - افکت‌های بصری: گرادیان‌های نوری و فضایی بین `primary` و `secondary` در سربرگ‌ها و نشان‌ها.
-
-### ۳. تم Claude (claude)
-
-| توکن | روشن | تاریک |
-|------|------|-------|
-| primary | C15F3D | E08466 |
-| secondary | 4A7C59 | 7CB88F |
-| background | FAF7F2 | 161412 |
-| surface | FFFFFF | 221F1C |
-| surfaceVariant | F1EBE1 | 2F2A24 |
-| onSurface | 262320 | F5EFEA |
-| onSurfaceVariant | 6B6258 | B8ADA3 |
-| outline | E2D9CC | 3E362E |
-
-ویژگی‌ها و ابعاد Claude:
-- ارگونومی بصری: پس‌زمینه پوستی/عاجی گرم (Warm Ivory) در حالت روشن و ابسیدین/اسپرسو در حالت تیره برای راحتی چشم در مطالعه طولانی.
-- گوشه‌ها و ابعاد: cornerSmall 10, cornerMedium 16, cornerLarge 22؛ cardElevation 2.dp, cardBorderAlpha 0.80f.
-- ساختار چیدمان (`ClaudeHomeContent`): هدر سرمقاله‌ای، بنر پیشرفت و حفظ ماندگار، شبکه آماری ۴ قسمتی، صف مرور زمان‌بندی‌شده، پروفایل سطوح دشواری و مرکز ابزارهای سریع.
-
-### ۴. تم Googoli (googoli)
-
-| توکن | روشن | تاریک |
-|------|------|-------|
-| primary | 14B8A6 | 2DD4BF |
-| secondary | FF8B66 | FFA07A |
-| background | F0FDF9 | 0F1B18 |
-| surface | BBEFDF | 162823 |
-| surfaceVariant | E6F7F3 | 1F3831 |
-
-ویژگی‌ها و ابعاد Googoli:
-- هندسه حباب‌گون (Bubble & Rounded): شعاع گوشه‌های بسیار نرم و ارگانیک (20.dp تا 36.dp).
-- پالت رنگی آبنباتی و پاستلی: ترکیب صورتی پاستلی، نعنایی روشن، هلویی و یاسی.
-- ساختار چیدمان (`GoogoliHomeContent`): هدر شاداب با درود صمیمانه، کارت جادویی یادگیری (Hero Card)، حباب‌های مراحل تثبیت واژه‌ها (🌸 daily, 🌼 weekly, 🌺 monthly, 🏆 learned) و طیف دشواری آبنباتی.
 
 ## 8.2 رنگ‌های معنایی مشترک
 
@@ -2475,38 +2421,28 @@ endedAt جلسه هنگام ورود به این صفحه (یا خروج زود�
 | success | 138A5B | 52D49A |
 | warning | F59E0B | FBBF24 |
 | error | D92D48 | FF8A9A |
-| info | 536DFE | 7C8CFF |
-| onPrimary | FFFFFF | FFFFFF |
+| info | 3B82F6 | 7C8CFF |
+| onPrimary | FFFFFF | 060B14 |
 
-## 8.3 توکن‌های اندازه تم‌ها
+## 8.3 توکن‌های اندازه تم Gemini
 
 ```text
-gtp:    همه مقادیر پایه × 0.88 ، سپس screenPadding 16 ، contentGap 10 ، sectionGap 14
-        statCardHeight 118 ، navHeight 70 ، cardElevationBase 5 ، cardBorderAlpha 0.70
-        cardBorderStrongAlpha 0.95 ، accentSurfaceAlpha 0.18 ، hierarchyBoost 1.12
-
 gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
-        navHeight 76 ، cardElevationBase 3 ، cardBorderAlpha 0.35 ، cardBorderStrongAlpha 0.60
-        accentSurfaceAlpha 0.12 ، hierarchyBoost 1.05 ، cornerSmall 12 ، cornerMedium 20 ، cornerLarge 28
-
-claude: screenPadding 16 ، contentGap 12 ، sectionGap 16 ، cornerSmall 10 ، cornerMedium 16
-        cornerLarge 22 ، cardElevation 2 ، cardBorderAlpha 0.80
-
-googoli: screenPadding 16 ، contentGap 12 ، sectionGap 16 ، cornerSmall 20 ، cornerMedium 28
-         cornerLarge 36 ، cardElevation 3 ، cardBorderAlpha 0.50
+        navHeight 76 ، cardElevation 6 ، cardBorderAlpha 0.45
+        cornerSmall 16 ، cornerMedium 24 ، cornerLarge 32 ، cornerPill 40
 ```
 
 ## 8.4 قواعد
 
 ۱. فونت فارسی: وزیر (Vazirmatn) که در assets/fonts گذاشته می‌شود (مجوز آزاد). برای انگلیسی فونت پیش‌فرض سیستم.
-۲. اندازه فونت‌ها: headlineLarge 28sp ، headlineMedium 24sp ، bodyLarge 16sp ، bodyMedium 14sp ، bodySmall 12sp ، labelMedium 12sp؛ همه ضربدر typographyScale تم.
+۲. اندازه فونت‌ها: headlineLarge 28sp ، headlineMedium 24sp ، bodyLarge 16sp ، bodyMedium 14sp ، bodySmall 12sp ، labelMedium 12sp.
 ۳. ارتفاع دکمه 48 تا 52dp؛ ارتفاع فیلد ورودی 56dp.
 ۴. حداقل ناحیه لمس همه کنترل‌ها 48dp.
 ۵. حالت کنتراست: متن روی primary با onPrimary؛ نسبت کنتراست متن اصلی حداقل 4.5 به 1.
 ۶. ممنوع: Color(0x...) مستقیم یا dp مستقیم در کد صفحه‌ها (باید از توکن تم).
-۷. تغییر تم و حالت روشن / تاریک بدون راه‌اندازی مجدد و به صورت بلادرنگ اعمال می‌شود.
+۷. تغییر حالت روشن / تاریک بدون راه‌اندازی مجدد و به صورت بلادرنگ اعمال می‌شود.
 ۸. رنگ‌های مرتبط با مرحله و سختی (نشان‌ها): سختی EASY با success ، MEDIUM با info ، HARD با warning ، VERY_HARD با error ؛ مرحله DAILY با primary ، WEEKLY با info ، MONTHLY با warning ، LEARNED با success.
-۹. برنامه دارای ۴ پوسته رسمی و متمایز (`GTP Cyber`, `Gemini Future AI`, `Claude`, `Googoli`) با پشتیبانی کامل از هر دو حالت دارک و لایت است که تمامی مشخصات، توکن‌های رنگی و چیدمان‌های اختصاصی آن‌ها در همین بخش ۸ تثبیت شده‌اند.
+۹. برنامه دارای پوسته رسمی و استاندارد `Gemini Future AI` با پشتیبانی کامل از هر دو حالت دارک و لایت است.
 
 ---
 
@@ -2516,7 +2452,7 @@ googoli: screenPadding 16 ، contentGap 12 ، sectionGap 16 ، cornerSmall 20 ،
 
 | کلید | نوع | پیش‌فرض | بازه |
 |------|-----|---------|------|
-| themeId | متن | gtp | gtp, gemini, claude, googoli |
+| themeId | متن | gemini | gemini |
 | isDark | بولی | true | |
 | uiLanguage | متن | fa | fa، en |
 | activePair | متن | es-fa | از language_pairs فعال |

@@ -578,9 +578,9 @@ private fun LeitnerSelectableStageBox(
     val shape = RoundedCornerShape(dimensions.cornerSmall)
 
     val containerBg = if (isSelected) {
-        accentColor.copy(alpha = if (colors.isGemini) 0.22f else 0.16f)
+        accentColor.copy(alpha = 0.22f)
     } else {
-        accentColor.copy(alpha = if (colors.isGemini) 0.08f else 0.05f)
+        accentColor.copy(alpha = 0.08f)
     }
 
     val borderColor = if (isSelected) {

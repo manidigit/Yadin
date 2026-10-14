@@ -117,7 +117,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = colors.onHero,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -196,7 +196,7 @@ fun HomeScreen(
                             title = "تمرین‌شده‌ها",
                             count = practicedCount,
                             icon = Icons.Default.Visibility,
-                            accentColor = Color(0xFF8B5CF6), // Violet/Purple tint (distinct from Primary Blue)
+                            accentColor = colors.accentPurple,
                             modifier = Modifier.weight(1f)
                         )
                         VocabStatTile(

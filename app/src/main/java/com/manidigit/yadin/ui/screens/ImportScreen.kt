@@ -703,7 +703,7 @@ fun ImportScreen(
                     shape = RoundedCornerShape(dimensions.cornerMedium),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.success,
-                        contentColor = Color.White
+                        contentColor = colors.onSuccess
                     )
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))

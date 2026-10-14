@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.theme.LocalYadinColors
+import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.LocalYadinShapes
 import com.manidigit.yadin.ui.util.toPersianDigits
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -61,6 +63,8 @@ fun DailyReviewChart(
     modifier: Modifier = Modifier
 ) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+    val shapes = LocalYadinShapes.current
     var selectedTimeframe by remember { mutableStateOf(ChartTimeframe.WEEKLY) }
 
     val today = ClockAndDayMath.todayDayString()
@@ -124,8 +128,8 @@ fun DailyReviewChart(
         backgroundColor = colors.surface
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(dimensions.sectionGap),
+            verticalArrangement = Arrangement.spacedBy(dimensions.contentGap)
         ) {
             // Header Row with Timeframe Selector (هفتگی / ماهانه)
             Row(
@@ -150,7 +154,7 @@ fun DailyReviewChart(
                 // Segmented Toggle for Weekly vs Monthly
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(shapes.extraSmall)
                         .background(colors.surfaceVariant)
                         .padding(2.dp),
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -307,17 +311,17 @@ fun DailyReviewChart(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapSmall)
                 ) {
-                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(colors.primary))
+                    Box(modifier = Modifier.size(dimensions.itemGapMedium).clip(shapes.circle).background(colors.primary))
                     Text("امروز / دوره جاری", fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(dimensions.sectionGap))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapSmall)
                 ) {
-                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(colors.secondary))
+                    Box(modifier = Modifier.size(dimensions.itemGapMedium).clip(shapes.circle).background(colors.secondary))
                     Text("روزهای قبل", fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
             }
