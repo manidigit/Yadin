@@ -127,91 +127,40 @@ fun ProgressScreen(
             .padding(dimensions.screenPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // ۱. هدر بالا با دکمه بازگشت و دکمه به‌روزرسانی آمار (Top Header with Back & Refresh)
+        // ۱. هدر بالا با دکمه بازگشت (Top Header with Back)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(colors.surfaceVariant)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "بازگشت",
-                            tint = colors.onSurface
-                        )
-                    }
-
-                    Column {
-                        Text(
-                            text = "پیشرفت و آمار یادگیری",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = "گزارش جامع وضعیت یادگیری و حافظه",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-                }
-
-                // دکمه به‌روزرسانی آمار (آیتم ۹)
                 IconButton(
-                    onClick = {
-                        onRefresh()
-                        Toast.makeText(context, "آمار با موفقیت به‌روزرسانی شد", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = onBack,
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(colors.primary.copy(alpha = 0.12f))
+                        .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "به‌روزرسانی آمار",
-                        tint = colors.primary
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "بازگشت",
+                        tint = colors.onSurface
                     )
                 }
-            }
-        }
 
-        // نشانگر جهت مطالعه فعال (تنظیم‌شده در تنظیمات سراسری طبق دستور کارفرما)
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(dimensions.cornerPill))
-                    .background(colors.surfaceVariant.copy(alpha = 0.6f))
-                    .padding(horizontal = 14.dp, vertical = 9.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "جهت مطالعه فعال:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
-                )
-                Text(
-                    text = if (activeDirection == CardDirection.NORMAL)
-                        "🇪🇸 اسپانیایی ← 🇮🇷 فارسی"
-                    else
-                        "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.primary
-                )
+                Column {
+                    Text(
+                        text = "پیشرفت و آمار یادگیری",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                    Text(
+                        text = "گزارش جامع وضعیت یادگیری و حافظه",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
             }
         }
 

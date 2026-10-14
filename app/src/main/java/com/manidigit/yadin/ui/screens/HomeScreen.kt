@@ -178,12 +178,6 @@ fun HomeScreen(
                                 color = colors.onSurface
                             )
                         }
-
-                        Text(
-                            text = "مجموع ${totalWords.toPersianDigits()} کلمه",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = colors.onSurfaceVariant
-                        )
                     }
 
                     // 4 Metric Tiles: کل کلمات، تمرین‌شده‌ها، تمرین‌نشده‌ها، یادگرفته‌شده‌ها
@@ -202,21 +196,21 @@ fun HomeScreen(
                             title = "تمرین‌شده‌ها",
                             count = practicedCount,
                             icon = Icons.Default.Visibility,
-                            accentColor = colors.info,
+                            accentColor = Color(0xFF8B5CF6), // Violet/Purple tint (distinct from Primary Blue)
                             modifier = Modifier.weight(1f)
                         )
                         VocabStatTile(
                             title = "تمرین‌نشده",
                             count = unpracticedCount,
                             icon = Icons.Default.VisibilityOff,
-                            accentColor = colors.warning,
+                            accentColor = colors.warning, // Amber/Orange
                             modifier = Modifier.weight(1f)
                         )
                         VocabStatTile(
                             title = "یادگرفته‌ها",
                             count = learnedCount,
                             icon = Icons.Default.CheckCircle,
-                            accentColor = colors.success,
+                            accentColor = colors.success, // Emerald Green
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -256,12 +250,6 @@ fun HomeScreen(
                                 color = colors.onSurface
                             )
                         }
-
-                        Text(
-                            text = "جهت ورود به جلسه لمس کنید",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
-                        )
                     }
 
                     Row(
@@ -316,19 +304,39 @@ fun HomeScreen(
             }
         }
 
-        // 4. Adaptive Difficulty Matrix (طیف دشواری واژگان)
+        // 4. Adaptive Difficulty Matrix in YadinCard (یکدست‌سازی کادر طیف دشواری واژگان)
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "طیف دشواری واژگان",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
-                DifficultyCounterRow(
-                    counts = difficultyCounts,
-                    onSelectDifficulty = onDifficultyFilterClick
-                )
+            YadinCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = colors.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "طیف دشواری واژگان",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                    }
+
+                    DifficultyCounterRow(
+                        counts = difficultyCounts,
+                        onSelectDifficulty = onDifficultyFilterClick
+                    )
+                }
             }
         }
 

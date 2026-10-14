@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Style
 import com.manidigit.yadin.domain.model.ReviewMode
+import com.manidigit.yadin.ui.util.toPersianDigits
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -257,12 +258,6 @@ fun SettingsScreen(
                             fontWeight = FontWeight.SemiBold,
                             color = colors.onSurface
                         )
-                        Text(
-                            text = "تعداد پاسخ متوالی جهت ساده‌تر شدن یا سخت‌تر شدن کلمه",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
                     }
                 }
 
@@ -273,7 +268,7 @@ fun SettingsScreen(
                 ) {
                     listOf(1, 2, 3, 4, 5).forEach { thresholdValue ->
                         val isSelected = (difficultyThreshold == thresholdValue)
-                        val label = if (thresholdValue == 3) "۳ (پیش‌فرض)" else "$thresholdValue بار"
+                        val label = thresholdValue.toPersianDigits()
 
                         Box(
                             modifier = Modifier
@@ -283,17 +278,16 @@ fun SettingsScreen(
                                     if (isSelected) colors.primary else colors.surfaceVariant
                                 )
                                 .clickable { onSetDifficultyThreshold(thresholdValue) }
-                                .padding(vertical = 8.dp, horizontal = 2.dp),
+                                .padding(vertical = 10.dp, horizontal = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) colors.onPrimary else colors.onSurface,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                maxLines = 2,
-                                fontSize = 11.sp
+                                fontSize = 13.sp
                             )
                         }
                     }
@@ -332,20 +326,12 @@ fun SettingsScreen(
                         )
                     }
 
-                    Column {
-                        Text(
-                            text = "جهت زبان یادگیری برنامه",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = "تغییر جهت یادگیری در مرور، آزمون، افزودن کلمات و آمار پیشرفت",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
-                    }
+                    Text(
+                        text = "جهت زبان یادگیری برنامه در مرور، افزودن کلمات و آمار پیشرفت",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
                 }
 
                 Row(

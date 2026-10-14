@@ -353,9 +353,8 @@ fun ReviewSetupScreen(
                             DiffItem(VocabularyDifficulty.VERY_HARD, "خیلی سخت", colors.error)
                         )
 
-                        FlowRow(
+                        Row(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             diffItems.forEach { item ->
@@ -366,6 +365,7 @@ fun ReviewSetupScreen(
                                     count = count,
                                     isSelected = isSelected,
                                     color = item.color,
+                                    modifier = Modifier.weight(1f),
                                     onClick = {
                                         selectedDifficulties = if (isSelected) {
                                             val remaining = selectedDifficulties - item.diff
@@ -554,10 +554,12 @@ private fun ReviewSourceChip(
     Box(
         modifier = Modifier
             .clip(shape)
-            .background(if (isSelected) colors.primary else colors.surfaceVariant)
+            .background(
+                if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.7f)
+            )
             .border(
                 width = 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.2f),
+                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.3f),
                 shape = shape
             )
             .clickable { onClick() }
@@ -571,7 +573,7 @@ private fun ReviewSourceChip(
             Icon(
                 imageVector = item.icon,
                 contentDescription = null,
-                tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                tint = if (isSelected) colors.onPrimary else colors.primary,
                 modifier = Modifier.size(15.dp)
             )
             Text(
@@ -584,14 +586,16 @@ private fun ReviewSourceChip(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(if (isSelected) colors.onPrimary.copy(alpha = 0.2f) else colors.surface.copy(alpha = 0.8f))
-                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                        .background(
+                            if (isSelected) colors.onPrimary.copy(alpha = 0.22f) else colors.primary.copy(alpha = 0.12f)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = countBadge,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+                        color = if (isSelected) colors.onPrimary else colors.primary
                     )
                 }
             }
@@ -605,36 +609,39 @@ fun CompactDiffBadge(
     count: Int,
     isSelected: Boolean,
     color: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isSelected) color.copy(alpha = 0.2f) else colors.surfaceVariant)
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (isSelected) color.copy(alpha = 0.18f) else colors.surfaceVariant.copy(alpha = 0.7f))
             .border(
-                width = if (isSelected) 1.dp else 0.dp,
-                color = if (isSelected) color else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) color else colors.outline.copy(alpha = 0.25f),
+                shape = RoundedCornerShape(10.dp)
             )
             .clickable { onClick() }
-            .padding(horizontal = 8.dp, vertical = 5.dp)
+            .padding(vertical = 8.dp, horizontal = 2.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(color)
+            Text(
+                text = count.toPersianDigits(),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isSelected) color else colors.onSurface
             )
             Text(
-                text = "$label (${count.toPersianDigits()})",
-                fontSize = 11.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected) colors.onSurface else colors.onSurfaceVariant
+                text = label,
+                fontSize = 10.5.sp,
+                maxLines = 1,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) color else colors.onSurfaceVariant
             )
         }
     }

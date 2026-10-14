@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
@@ -35,6 +36,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -48,6 +51,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -199,136 +204,63 @@ fun LibraryScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Active vs Inactive Toggle Bar
+            // 3-Combobox Compact Filter Toolbar (وضعیت، مرحله مرور، سطح سختی)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                FilterChip(
-                    label = if (showOnlyInactive) "🗑️ سطل زباله (غیرفعال)" else "✅ واژگان فعال کتابخانه",
-                    isSelected = showOnlyInactive,
-                    onClick = { onInactiveFilterToggle(!showOnlyInactive) }
+                // Combobox 1: وضعیت (فعال / سطل زباله)
+                LibraryFilterDropdown(
+                    label = "وضعیت",
+                    selectedOption = if (showOnlyInactive) "سطل زباله" else "واژگان فعال",
+                    options = listOf(
+                        "واژگان فعال" to { onInactiveFilterToggle(false) },
+                        "سطل زباله" to { onInactiveFilterToggle(true) }
+                    ),
+                    modifier = Modifier.weight(1f)
                 )
-                if (selectedStage != null || selectedDifficulty != null) {
-                    androidx.compose.material3.TextButton(
-                        onClick = {
-                            onStageFilterChange(null)
-                            onDifficultyFilterChange(null)
-                        },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "حذف فیلترها",
-                            fontSize = 11.sp,
-                            color = colors.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
 
-            if (!showOnlyInactive) {
-                // Structured Filter Panel for Spaced Repetition Stages and Difficulties
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(dimensions.cornerSmall))
-                        .background(colors.surface)
-                        .border(
-                            width = 1.dp,
-                            color = colors.outline.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(dimensions.cornerSmall)
-                        )
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Row 1: Leitner Spaced Repetition Stages
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "مرحله مرور:",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurfaceVariant,
-                            modifier = Modifier.width(68.dp)
-                        )
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            item {
-                                FilterChip(
-                                    label = "همه",
-                                    isSelected = selectedStage == null,
-                                    onClick = { onStageFilterChange(null) }
-                                )
-                            }
-                            Stage.values().forEach { st ->
-                                val (name, color) = when (st) {
-                                    Stage.DAILY -> "روزانه" to colors.primary
-                                    Stage.WEEKLY -> "هفتگی" to colors.info
-                                    Stage.MONTHLY -> "ماهانه" to colors.warning
-                                    Stage.LEARNED -> "یادگرفته" to colors.success
-                                }
-                                item {
-                                    FilterChip(
-                                        label = name,
-                                        isSelected = selectedStage == st,
-                                        indicatorColor = if (selectedStage != st) color else null,
-                                        onClick = { onStageFilterChange(if (selectedStage == st) null else st) }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Row 2: Difficulty Levels
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "سطح سختی:",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurfaceVariant,
-                            modifier = Modifier.width(68.dp)
-                        )
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            item {
-                                FilterChip(
-                                    label = "همه",
-                                    isSelected = selectedDifficulty == null,
-                                    onClick = { onDifficultyFilterChange(null) }
-                                )
-                            }
-                            com.manidigit.yadin.domain.model.VocabularyDifficulty.values().forEach { diff ->
-                                val (diffName, diffColor) = when (diff) {
-                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> "آسان" to colors.success
-                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> "متوسط" to colors.info
-                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> "سخت" to colors.warning
-                                    com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> "خیلی سخت" to colors.error
-                                }
-                                item {
-                                    FilterChip(
-                                        label = diffName,
-                                        isSelected = selectedDifficulty == diff,
-                                        indicatorColor = if (selectedDifficulty != diff) diffColor else null,
-                                        onClick = { onDifficultyFilterChange(if (selectedDifficulty == diff) null else diff) }
-                                    )
-                                }
-                            }
-                        }
-                    }
+                // Combobox 2: مرحله مرور (لایتنر)
+                val currentStageLabel = when (selectedStage) {
+                    Stage.DAILY -> "روزانه"
+                    Stage.WEEKLY -> "هفتگی"
+                    Stage.MONTHLY -> "ماهانه"
+                    Stage.LEARNED -> "تثبیت‌شده"
+                    null -> "همه مراحل"
                 }
+                LibraryFilterDropdown(
+                    label = "مرحله مرور",
+                    selectedOption = currentStageLabel,
+                    options = listOf(
+                        "همه مراحل" to { onStageFilterChange(null) },
+                        "روزانه" to { onStageFilterChange(Stage.DAILY) },
+                        "هفتگی" to { onStageFilterChange(Stage.WEEKLY) },
+                        "ماهانه" to { onStageFilterChange(Stage.MONTHLY) },
+                        "تثبیت‌شده" to { onStageFilterChange(Stage.LEARNED) }
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Combobox 3: سطح سختی
+                val currentDiffLabel = when (selectedDifficulty) {
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> "آسان"
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> "متوسط"
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> "سخت"
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
+                    null -> "همه سختی‌ها"
+                }
+                LibraryFilterDropdown(
+                    label = "سطح سختی",
+                    selectedOption = currentDiffLabel,
+                    options = listOf(
+                        "همه سختی‌ها" to { onDifficultyFilterChange(null) },
+                        "آسان" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY) },
+                        "متوسط" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM) },
+                        "سخت" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD) },
+                        "خیلی سخت" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD) }
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -1026,4 +958,76 @@ fun LibraryAuditDialog(
             }
         }
     )
+}
+
+@Composable
+private fun LibraryFilterDropdown(
+    label: String,
+    selectedOption: String,
+    options: List<Pair<String, () -> Unit>>,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val colors = LocalYadinColors.current
+
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.surface)
+                .border(1.dp, colors.outline.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                .clickable { expanded = true }
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant,
+                    fontSize = 9.sp
+                )
+                Text(
+                    text = selectedOption,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 11.sp
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(colors.surface)
+        ) {
+            options.forEach { (title, onSelect) ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = title,
+                            fontSize = 12.sp,
+                            fontWeight = if (title == selectedOption) FontWeight.Bold else FontWeight.Normal,
+                            color = if (title == selectedOption) colors.primary else colors.onSurface
+                        )
+                    },
+                    onClick = {
+                        onSelect()
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
