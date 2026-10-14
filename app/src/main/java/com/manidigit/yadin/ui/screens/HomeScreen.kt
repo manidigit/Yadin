@@ -77,8 +77,8 @@ fun HomeScreen(
     onOpenProgress: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenBackup: () -> Unit,
-    onOpenHelp: () -> Unit,
-    onOpenAbout: () -> Unit
+    onOpenHelp: () -> Unit = {},
+    onOpenAbout: () -> Unit = {}
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
@@ -141,43 +141,8 @@ fun HomeScreen(
                     }
                 }
 
-                // Controls: Streak + Help/About
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    StreakChip(streakDays = statistics.currentStreakDays)
-
-                    IconButton(
-                        onClick = onOpenHelp,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(colors.surfaceVariant)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                            contentDescription = "راهنما",
-                            tint = colors.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onOpenAbout,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(colors.surfaceVariant)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "درباره ما",
-                            tint = colors.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
+                // Controls: Streak Chip
+                StreakChip(streakDays = statistics.currentStreakDays)
             }
         }
 
