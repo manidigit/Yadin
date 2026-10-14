@@ -258,7 +258,6 @@ fun HomeScreen(
                     ) {
                         LeitnerStageBox(
                             title = "روزانه",
-                            subtitle = if (statistics.dueDailyCount > 0) "${statistics.dueDailyCount.toPersianDigits()} آماده" else "مرور شده",
                             totalCount = statistics.dailyStageCount,
                             dueCount = statistics.dueDailyCount,
                             accentColor = colors.primary,
@@ -269,7 +268,6 @@ fun HomeScreen(
 
                         LeitnerStageBox(
                             title = "هفتگی",
-                            subtitle = if (statistics.dueWeeklyCount > 0) "${statistics.dueWeeklyCount.toPersianDigits()} آماده" else "مرور شده",
                             totalCount = statistics.weeklyStageCount,
                             dueCount = statistics.dueWeeklyCount,
                             accentColor = colors.info,
@@ -280,7 +278,6 @@ fun HomeScreen(
 
                         LeitnerStageBox(
                             title = "ماهانه",
-                            subtitle = if (statistics.dueMonthlyCount > 0) "${statistics.dueMonthlyCount.toPersianDigits()} آماده" else "مرور شده",
                             totalCount = statistics.monthlyStageCount,
                             dueCount = statistics.dueMonthlyCount,
                             accentColor = colors.warning,
@@ -291,7 +288,6 @@ fun HomeScreen(
 
                         LeitnerStageBox(
                             title = "تثبیت‌شده",
-                            subtitle = "یادگیری کامل",
                             totalCount = statistics.learnedStageCount,
                             dueCount = statistics.availableLearnedCount,
                             accentColor = colors.success,
@@ -401,12 +397,11 @@ private fun VocabStatTile(
 }
 
 /**
- * باکس استاندارد و شکیل نمایش مرحله تثبیت لایتنر با ابعاد و تایپوگرافی خوانا.
+ * باکس استاندارد، خوانا و شکیل نمایش مرحله تثبیت لایتنر در صفحه اصلی.
  */
 @Composable
 private fun LeitnerStageBox(
     title: String,
-    subtitle: String,
     totalCount: Int,
     dueCount: Int,
     accentColor: Color,
@@ -428,7 +423,7 @@ private fun LeitnerStageBox(
                 shape = shape
             )
             .clickable { onClick() }
-            .padding(vertical = 10.dp, horizontal = 4.dp),
+            .padding(vertical = 10.dp, horizontal = 2.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -439,28 +434,30 @@ private fun LeitnerStageBox(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor,
-                modifier = Modifier.size(16.dp)
-            )
-            Text(
-                text = totalCount.toPersianDigits(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = accentColor,
-                fontSize = 15.sp
+                modifier = Modifier.size(18.dp)
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface,
-                fontSize = 11.sp
+                fontSize = 11.5.sp,
+                maxLines = 1
             )
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
+                text = if (dueCount > 0) "${dueCount.toPersianDigits()} آماده" else "مرور شده",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.ExtraBold,
                 color = if (dueCount > 0) accentColor else colors.onSurfaceVariant.copy(alpha = 0.7f),
-                fontSize = 9.sp,
-                fontWeight = if (dueCount > 0) FontWeight.Bold else FontWeight.Normal
+                fontSize = 11.5.sp,
+                maxLines = 1
+            )
+            Text(
+                text = "از ${totalCount.toPersianDigits()} واژه",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant.copy(alpha = 0.8f),
+                fontSize = 9.5.sp,
+                maxLines = 1
             )
         }
     }

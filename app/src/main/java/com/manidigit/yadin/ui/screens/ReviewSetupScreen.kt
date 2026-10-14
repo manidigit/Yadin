@@ -22,11 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Button
@@ -235,7 +237,7 @@ fun ReviewSetupScreen(
                         )
 
                         // Category A: چرخه تکرار فاصله‌دار (لایتنر)
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 text = "چرخه تکرار فاصله‌دار (لایتنر):",
                                 style = MaterialTheme.typography.labelMedium,
@@ -243,76 +245,96 @@ fun ReviewSetupScreen(
                                 color = colors.onSurfaceVariant
                             )
 
-                            val leitnerItems = listOf(
-                                ReviewTypeItem(ReviewType.DAILY, "مرور روزانه", Icons.Default.Today),
-                                ReviewTypeItem(ReviewType.WEEKLY, "مرور هفتگی", Icons.Default.AutoAwesome),
-                                ReviewTypeItem(ReviewType.MONTHLY, "مرور ماهانه", Icons.Default.AutoAwesome)
-                            )
+                            val stats = statistics
+                            val dueDaily = stats?.dueDailyCount ?: 0
+                            val totalDaily = stats?.dailyStageCount ?: 0
 
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
+                            val dueWeekly = stats?.dueWeeklyCount ?: 0
+                            val totalWeekly = stats?.weeklyStageCount ?: 0
+
+                            val dueMonthly = stats?.dueMonthlyCount ?: 0
+                            val totalMonthly = stats?.monthlyStageCount ?: 0
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                leitnerItems.forEach { item ->
-                                    val isSelected = (selectedType == item.type)
-                                    val countBadge = statistics?.let { stats ->
-                                        val badgeText = when (item.type) {
-                                            ReviewType.DAILY -> "${stats.dueDailyCount} از ${stats.dailyStageCount}"
-                                            ReviewType.WEEKLY -> "${stats.dueWeeklyCount} از ${stats.weeklyStageCount}"
-                                            ReviewType.MONTHLY -> "${stats.dueMonthlyCount} از ${stats.monthlyStageCount}"
-                                            else -> ""
-                                        }
-                                        badgeText.toPersianDigits()
-                                    }
+                                LeitnerSelectableStageBox(
+                                    title = "روزانه",
+                                    dueCount = dueDaily,
+                                    totalCount = totalDaily,
+                                    accentColor = colors.primary,
+                                    icon = Icons.Default.Today,
+                                    isSelected = (selectedType == ReviewType.DAILY),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.DAILY }
+                                )
 
-                                    ReviewSourceChip(
-                                        item = item,
-                                        countBadge = countBadge,
-                                        isSelected = isSelected,
-                                        onClick = { selectedType = item.type }
-                                    )
-                                }
+                                LeitnerSelectableStageBox(
+                                    title = "هفتگی",
+                                    dueCount = dueWeekly,
+                                    totalCount = totalWeekly,
+                                    accentColor = colors.info,
+                                    icon = Icons.Default.AutoAwesome,
+                                    isSelected = (selectedType == ReviewType.WEEKLY),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.WEEKLY }
+                                )
+
+                                LeitnerSelectableStageBox(
+                                    title = "ماهانه",
+                                    dueCount = dueMonthly,
+                                    totalCount = totalMonthly,
+                                    accentColor = colors.warning,
+                                    icon = Icons.Default.Star,
+                                    isSelected = (selectedType == ReviewType.MONTHLY),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.MONTHLY }
+                                )
                             }
                         }
 
-                        // Category B: حالات تکمیلی و آزاد
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        // Category B: حالات تکمیلی و مرور آزاد (جداگانه و هم‌سبک با کارت‌ها)
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = "حالات تکمیلی و آزاد:",
+                                text = "حالات تکمیلی و مرور آزاد:",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.onSurfaceVariant
                             )
 
-                            val freeItems = listOf(
-                                ReviewTypeItem(ReviewType.RANDOM, "تصادفی (آزاد)", Icons.Default.Shuffle),
-                                ReviewTypeItem(ReviewType.LEARNED, "یادگرفته‌ها", Icons.Default.DoneAll)
-                            )
+                            val stats = statistics
+                            val dueRandom = stats?.dueTodayCount ?: 0
+                            val totalRandom = stats?.totalWords ?: 0
 
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
+                            val dueLearned = stats?.availableLearnedCount ?: 0
+                            val totalLearned = stats?.learnedStageCount ?: 0
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                freeItems.forEach { item ->
-                                    val isSelected = (selectedType == item.type)
-                                    val countBadge = statistics?.let { stats ->
-                                        val badgeText = when (item.type) {
-                                            ReviewType.LEARNED -> "${stats.availableLearnedCount} از ${stats.learnedStageCount}"
-                                            ReviewType.RANDOM -> "${stats.dueTodayCount} از ${stats.totalWords}"
-                                            else -> ""
-                                        }
-                                        badgeText.toPersianDigits()
-                                    }
+                                LeitnerSelectableStageBox(
+                                    title = "تصادفی (آزاد)",
+                                    dueCount = dueRandom,
+                                    totalCount = totalRandom,
+                                    accentColor = colors.primary,
+                                    icon = Icons.Default.Shuffle,
+                                    isSelected = (selectedType == ReviewType.RANDOM),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.RANDOM }
+                                )
 
-                                    ReviewSourceChip(
-                                        item = item,
-                                        countBadge = countBadge,
-                                        isSelected = isSelected,
-                                        onClick = { selectedType = item.type }
-                                    )
-                                }
+                                LeitnerSelectableStageBox(
+                                    title = "تثبیت‌شده (یادگرفته)",
+                                    dueCount = dueLearned,
+                                    totalCount = totalLearned,
+                                    accentColor = colors.success,
+                                    icon = Icons.Default.CheckCircle,
+                                    isSelected = (selectedType == ReviewType.LEARNED),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.LEARNED }
+                                )
                             }
                         }
 
@@ -535,6 +557,83 @@ fun ModeSelectButton(
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 color = if (isSelected) colors.onPrimary else colors.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun LeitnerSelectableStageBox(
+    title: String,
+    dueCount: Int,
+    totalCount: Int,
+    accentColor: Color,
+    icon: ImageVector,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val dimensions = LocalYadinDimensions.current
+    val colors = LocalYadinColors.current
+    val shape = RoundedCornerShape(dimensions.cornerSmall)
+
+    val containerBg = if (isSelected) {
+        accentColor.copy(alpha = if (colors.isGemini) 0.22f else 0.16f)
+    } else {
+        accentColor.copy(alpha = if (colors.isGemini) 0.08f else 0.05f)
+    }
+
+    val borderColor = if (isSelected) {
+        accentColor
+    } else {
+        accentColor.copy(alpha = 0.35f)
+    }
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(containerBg)
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = borderColor,
+                shape = shape
+            )
+            .clickable { onClick() }
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accentColor,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = colors.onSurface,
+                fontSize = 11.5.sp,
+                maxLines = 1
+            )
+            Text(
+                text = if (dueCount > 0) "${dueCount.toPersianDigits()} آماده" else "مرور شده",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (dueCount > 0) accentColor else colors.onSurfaceVariant.copy(alpha = 0.7f),
+                fontSize = 11.5.sp,
+                maxLines = 1
+            )
+            Text(
+                text = "از ${totalCount.toPersianDigits()} واژه",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant.copy(alpha = 0.8f),
+                fontSize = 9.5.sp,
+                maxLines = 1
             )
         }
     }
