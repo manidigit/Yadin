@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,21 +38,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.ui.util.formatDigits
 
 data class ReviewItem(
     val id: String,
     var sourceText: String,
     var translationText: String,
-    val confidence: Int,
-    val reason: String
+    val reason: String,
+    val confidence: Int
 )
 
 @Composable
@@ -62,20 +62,17 @@ fun ImportReviewScreen(
     onApproveItems: (List<ParsedEntry>) -> Unit,
     onBack: () -> Unit
 ) {
-    androidx.activity.compose.BackHandler(onBack = onBack)
-
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
-    val pendingList = remember { mutableStateListOf(*itemsToReview.toTypedArray()) }
+    val pendingList = remember { mutableStateListOf<ReviewItem>().apply { addAll(itemsToReview) } }
     val approvedList = remember { mutableStateListOf<ParsedEntry>() }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
-            .padding(dimensions.screenPadding),
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(dimensions.screenPadding)
     ) {
         // Header
         Row(
@@ -92,12 +89,12 @@ fun ImportReviewScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "بازگشت",
+                    contentDescription = stringResource(R.string.action_back),
                     tint = colors.onSurface
                 )
             }
             Text(
-                text = "بررسی و اصلاح ورودی‌ها",
+                text = stringResource(R.string.import_review_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -124,9 +121,9 @@ fun ImportReviewScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = if (approvedList.isNotEmpty())
-                            "تمام موارد بررسی شدند (${approvedList.size.toPersianDigits()} واژه آماده ثبت)"
+                            stringResource(R.string.import_review_all_done, approvedList.size.formatDigits())
                         else
-                            "هیچ واژه نیاز به بررسی در صف وجود ندارد",
+                            stringResource(R.string.import_review_queue_empty),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.onSurface
                     )
@@ -174,7 +171,7 @@ fun ImportReviewScreen(
                     .height(48.dp),
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             ) {
-                Text("انصراف")
+                Text(stringResource(R.string.action_cancel))
             }
 
             Button(
@@ -199,9 +196,9 @@ fun ImportReviewScreen(
                 val totalApprovedCount = approvedList.size + pendingList.size
                 Text(
                     text = if (totalApprovedCount > 0)
-                        "تایید و ثبت (${totalApprovedCount.toPersianDigits()} واژه)"
+                        stringResource(R.string.import_review_btn_confirm, totalApprovedCount.formatDigits())
                     else
-                        "تایید و ثبت"
+                        stringResource(R.string.action_save)
                 )
             }
         }
@@ -251,7 +248,7 @@ private fun ReviewItemCard(
                     )
                 }
                 Text(
-                    text = "اطمینان: ${item.confidence}%",
+                    text = stringResource(R.string.import_review_confidence, item.confidence.formatDigits()),
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.onSurfaceVariant
                 )
@@ -263,7 +260,7 @@ private fun ReviewItemCard(
                     source = it
                     item.sourceText = it
                 },
-                label = { Text("واژه / عبارت مبدأ") },
+                label = { Text(stringResource(R.string.import_review_source_field)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -274,7 +271,7 @@ private fun ReviewItemCard(
                     translation = it
                     item.translationText = it
                 },
-                label = { Text("ترجمه مقصد") },
+                label = { Text(stringResource(R.string.import_review_target_field)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -287,14 +284,14 @@ private fun ReviewItemCard(
                 IconButton(onClick = onReject) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "رد",
+                        contentDescription = stringResource(R.string.import_review_desc_reject),
                         tint = colors.error
                     )
                 }
                 IconButton(onClick = { onApprove(item) }) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "تایید",
+                        contentDescription = stringResource(R.string.import_review_desc_approve),
                         tint = colors.primary
                     )
                 }

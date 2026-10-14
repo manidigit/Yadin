@@ -1,13 +1,9 @@
 package com.manidigit.yadin.ui.util
 
+import java.util.Locale
+
 /**
- * ابزار تبدیل ارقام انگلیسی به فارسی جهت یکدست‌سازی نمایش اعداد در رابط کاربری برنامه یادین.
- *
- * این تابع افزوده (Extension Function) تمامی کاراکترهای عددی انگلیسی (0 تا 9) موجود در هر شیء
- * را به معادل ارقام فارسی (۰ تا ۹) تبدیل می‌کند تا هماهنگی کامل بصری در متون، شمارنده‌ها،
- * درصدها و نمودارها حفظ شود.
- *
- * @return رشته حاصل با ارقام فارسی یا رشته خالی در صورت null بودن شیء
+ * ابزار تبدیل ارقام انگلیسی به فارسی جهت یکدست‌سازی نمایش اعداد در رابط کاربری فارسی برنامه یادین.
  */
 fun Any?.toPersianDigits(): String {
     if (this == null) return ""
@@ -22,4 +18,17 @@ fun Any?.toPersianDigits(): String {
         .replace('7', '۷')
         .replace('8', '۸')
         .replace('9', '۹')
+}
+
+/**
+ * نمایش هوشمند و محلی‌سازی‌شده اعداد متناسب با زبان فعال رابط کاربری (انگلیسی یا فارسی).
+ */
+fun Any?.formatDigits(): String {
+    if (this == null) return ""
+    val isEn = try {
+        Locale.getDefault().language == "en"
+    } catch (_: Exception) {
+        false
+    }
+    return if (isEn) this.toString() else this.toPersianDigits()
 }

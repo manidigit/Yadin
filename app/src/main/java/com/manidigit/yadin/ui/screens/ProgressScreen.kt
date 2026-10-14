@@ -41,11 +41,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.manidigit.yadin.ui.theme.YadinPalette
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.algorithm.AchievementTierEvaluator
 import com.manidigit.yadin.domain.model.AchievementCategory
@@ -59,7 +60,8 @@ import com.manidigit.yadin.ui.components.DailyReviewChart
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.ui.theme.YadinPalette
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun ProgressScreen(
@@ -143,20 +145,20 @@ fun ProgressScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
+                        contentDescription = stringResource(R.string.action_back),
                         tint = colors.onSurface
                     )
                 }
 
                 Column {
                     Text(
-                        text = "پیشرفت و آمار یادگیری",
+                        text = stringResource(R.string.progress_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "گزارش جامع وضعیت یادگیری و حافظه",
+                        text = stringResource(R.string.progress_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -183,7 +185,7 @@ fun ProgressScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "رگبار متوالی: ${statistics.currentStreakDays.toPersianDigits()} روز تمرین مستمر و پیوسته",
+                        text = stringResource(R.string.progress_streak_days_fmt, statistics.currentStreakDays.formatDigits()),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.warning
@@ -218,13 +220,13 @@ fun ProgressScreen(
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
-                            text = "${totalAccuracy.toPersianDigits()}٪",
+                            text = "${totalAccuracy.formatDigits()}%",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.success
                         )
                         Text(
-                            text = "دقت کل",
+                            text = stringResource(R.string.progress_total_accuracy),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant,
                             fontSize = 11.sp,
@@ -250,13 +252,13 @@ fun ProgressScreen(
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
-                            text = statistics.learnedStageCount.toPersianDigits(),
+                            text = statistics.learnedStageCount.formatDigits(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.onSurface
                         )
                         Text(
-                            text = "یادگرفته",
+                            text = stringResource(R.string.progress_mastered_words),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant,
                             fontSize = 11.sp,
@@ -282,13 +284,13 @@ fun ProgressScreen(
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
-                            text = practicedCount.toPersianDigits(),
+                            text = practicedCount.formatDigits(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.onSurface
                         )
                         Text(
-                            text = "کل تمرین‌شده",
+                            text = stringResource(R.string.progress_total_practiced),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant,
                             fontSize = 11.sp,
@@ -318,13 +320,13 @@ fun ProgressScreen(
                     ) {
                         Column {
                             Text(
-                                text = "پیشرفت یادگیری",
+                                text = stringResource(R.string.progress_learning_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
                             )
                             Text(
-                                text = "درصد پیشرفت کلی بر اساس فرمول استاندارد لایتنر",
+                                text = stringResource(R.string.progress_learning_formula_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 fontSize = 11.sp
@@ -332,7 +334,7 @@ fun ProgressScreen(
                         }
 
                         Text(
-                            text = "${progressPercent.toInt().toPersianDigits()}٪",
+                            text = "${progressPercent.toInt().formatDigits()}%",
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Black,
                             color = colors.primary
@@ -353,10 +355,10 @@ fun ProgressScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        FormulaScorePill("یادگرفته: ۱۰۰+".toPersianDigits(), colors.success, Modifier.weight(1f))
-                        FormulaScorePill("ماهانه: ۸۰+".toPersianDigits(), colors.warning, Modifier.weight(1f))
-                        FormulaScorePill("هفتگی: ۶۰+".toPersianDigits(), colors.info, Modifier.weight(1f))
-                        FormulaScorePill("روزانه: ۳۵+".toPersianDigits(), colors.primary, Modifier.weight(1f))
+                        FormulaScorePill(stringResource(R.string.progress_formula_learned), colors.success, Modifier.weight(1f))
+                        FormulaScorePill(stringResource(R.string.progress_formula_monthly), colors.warning, Modifier.weight(1f))
+                        FormulaScorePill(stringResource(R.string.progress_formula_weekly), colors.info, Modifier.weight(1f))
+                        FormulaScorePill(stringResource(R.string.progress_formula_daily), colors.primary, Modifier.weight(1f))
                     }
                 }
             }
@@ -382,13 +384,17 @@ fun ProgressScreen(
                     ) {
                         Column {
                             Text(
-                                text = "حفظ ماندگار",
+                                text = stringResource(R.string.progress_deep_retention),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
                             )
                             Text(
-                                text = "${totalCorrectCount.toPersianDigits()} پاسخ درست از مجموع ${totalReviewed.toPersianDigits()} پاسخ ثبت‌شده",
+                                text = stringResource(
+                                    R.string.progress_retention_ratio,
+                                    totalCorrectCount.formatDigits(),
+                                    totalReviewed.formatDigits()
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 fontSize = 12.sp
@@ -396,7 +402,7 @@ fun ProgressScreen(
                         }
 
                         Text(
-                            text = "${totalAccuracy.toPersianDigits()}٪",
+                            text = "${totalAccuracy.formatDigits()}%",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Black,
                             color = colors.success
@@ -431,7 +437,7 @@ fun ProgressScreen(
         // - یادگرفته: تعداد
         item {
             Text(
-                text = "مراحل یادگیری (لایتنر)",
+                text = stringResource(R.string.progress_leitner_stages),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -449,25 +455,25 @@ fun ProgressScreen(
                     val total = statistics.totalWords.coerceAtLeast(1)
 
                     ProgressRow(
-                        title = "روزانه",
+                        title = stringResource(R.string.stage_daily),
                         count = statistics.dailyStageCount,
                         total = total,
                         color = colors.primary
                     )
                     ProgressRow(
-                        title = "هفتگی",
+                        title = stringResource(R.string.stage_weekly),
                         count = statistics.weeklyStageCount,
                         total = total,
                         color = colors.info
                     )
                     ProgressRow(
-                        title = "ماهانه",
+                        title = stringResource(R.string.stage_monthly),
                         count = statistics.monthlyStageCount,
                         total = total,
                         color = colors.warning
                     )
                     ProgressRow(
-                        title = "یادگرفته",
+                        title = stringResource(R.string.stage_learned),
                         count = statistics.learnedStageCount,
                         total = total,
                         color = colors.success
@@ -483,7 +489,7 @@ fun ProgressScreen(
         // - خیلی سخت: تعداد
         item {
             Text(
-                text = "پروفایل سختی",
+                text = stringResource(R.string.progress_difficulty_profile),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -501,25 +507,25 @@ fun ProgressScreen(
                     val diffTotal = (statistics.easyCount + statistics.mediumCount + statistics.hardCount + statistics.veryHardCount).coerceAtLeast(1)
 
                     ProgressRow(
-                        title = "آسان",
+                        title = stringResource(R.string.diff_easy),
                         count = statistics.easyCount,
                         total = diffTotal,
                         color = colors.success
                     )
                     ProgressRow(
-                        title = "متوسط",
+                        title = stringResource(R.string.diff_medium),
                         count = statistics.mediumCount,
                         total = diffTotal,
                         color = colors.info
                     )
                     ProgressRow(
-                        title = "سخت",
+                        title = stringResource(R.string.diff_hard),
                         count = statistics.hardCount,
                         total = diffTotal,
                         color = colors.warning
                     )
                     ProgressRow(
-                        title = "خیلی سخت",
+                        title = stringResource(R.string.diff_very_hard),
                         count = statistics.veryHardCount,
                         total = diffTotal,
                         color = colors.error
@@ -535,7 +541,7 @@ fun ProgressScreen(
         // - مجموع کل: تعداد درست از کل و درصد
         item {
             Text(
-                text = "دقت مرور",
+                text = stringResource(R.string.progress_review_accuracy_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -551,28 +557,28 @@ fun ProgressScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     AccuracyRow(
-                        label = "امروز",
+                        label = stringResource(R.string.progress_acc_today),
                         correct = todayCorrect,
                         total = todayTotal,
                         percentage = todayPercent,
                         color = colors.primary
                     )
                     AccuracyRow(
-                        label = "این هفته",
+                        label = stringResource(R.string.progress_acc_week),
                         correct = weekCorrect,
                         total = weekTotal,
                         percentage = weekPercent,
                         color = colors.info
                     )
                     AccuracyRow(
-                        label = "این ماه",
+                        label = stringResource(R.string.progress_acc_month),
                         correct = monthCorrect,
                         total = monthTotal,
                         percentage = monthPercent,
                         color = colors.warning
                     )
                     AccuracyRow(
-                        label = "مجموع کل",
+                        label = stringResource(R.string.progress_acc_all_time),
                         correct = allTimeCorrect,
                         total = allTimeTotal,
                         percentage = allTimePercent,
@@ -590,13 +596,17 @@ fun ProgressScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "دستاوردهای زنجیره‌ای",
+                    text = stringResource(R.string.progress_tiered_achievements),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
                 Text(
-                    text = "نشان‌های کسب‌شده: $unlockedCount از $totalAchievements",
+                    text = stringResource(
+                        R.string.progress_achievements_count,
+                        unlockedCount.formatDigits(),
+                        totalAchievements.formatDigits()
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = colors.primary
@@ -630,14 +640,14 @@ fun ProgressScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "پیشرفت کل مدال‌ها",
+                                text = stringResource(R.string.progress_all_medals),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
                             )
                         }
                         Text(
-                            text = "$unlockedPercent%",
+                            text = "${unlockedPercent.formatDigits()}%",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
                             color = colors.primary
@@ -670,7 +680,7 @@ fun ProgressScreen(
             Button(
                 onClick = {
                     onRefresh()
-                    Toast.makeText(context, "آمار با موفقیت به‌روزرسانی شد", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.progress_stats_refreshed_toast), Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -691,7 +701,7 @@ fun ProgressScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "به‌روزرسانی آمار",
+                        text = stringResource(R.string.progress_btn_refresh),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
@@ -733,7 +743,16 @@ private fun ProgressRow(
                 )
                 Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
             }
-            Text("${count.toPersianDigits()} واژه (${percent.toPersianDigits()}٪)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
+            Text(
+                text = stringResource(
+                    R.string.progress_words_count_percent,
+                    count.formatDigits(),
+                    percent.formatDigits()
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
         }
         LinearProgressIndicator(
             progress = { fraction },
@@ -769,7 +788,12 @@ private fun AccuracyRow(
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "${correct.toPersianDigits()} از ${total.toPersianDigits()} (${percentage.toPersianDigits()}٪)",
+                text = stringResource(
+                    R.string.progress_accuracy_ratio_fmt,
+                    correct.formatDigits(),
+                    total.formatDigits(),
+                    percentage.formatDigits()
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = color
@@ -793,12 +817,13 @@ private fun TieredAchievementCard(group: TieredGroupState) {
     val ach = group.displayAchievement
 
     // Tier badge color & title
-    val (tierColor, tierLabel) = when (ach.tier) {
-        AchievementTier.BRONZE -> YadinPalette.TierBronze to "سطح ۱ (برنز)"
-        AchievementTier.SILVER -> YadinPalette.TierSilver to "سطح ۲ (نقره)"
-        AchievementTier.GOLD -> YadinPalette.TierGold to "سطح ۳ (طلا)"
-        AchievementTier.PLATINUM -> YadinPalette.TierPlatinum to "سطح ۴ (پلاتین)"
+    val tierColor = when (ach.tier) {
+        AchievementTier.BRONZE -> YadinPalette.TierBronze
+        AchievementTier.SILVER -> YadinPalette.TierSilver
+        AchievementTier.GOLD -> YadinPalette.TierGold
+        AchievementTier.PLATINUM -> YadinPalette.TierPlatinum
     }
+    val tierLabel = stringResource(ach.tier.badgeLabelRes)
 
     val progressFraction = if (group.isMaxLevel) 1f else {
         (group.currentProgress.toFloat() / group.targetThreshold.coerceAtLeast(1)).coerceIn(0f, 1f)
@@ -841,7 +866,7 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = group.category.title,
+                            text = stringResource(group.category.titleRes),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -862,7 +887,7 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                     }
 
                     Text(
-                        text = if (group.isMaxLevel) "تمام سطوح با موفقیت فتح شد!" else ach.descriptionRes,
+                        text = if (group.isMaxLevel) stringResource(R.string.ach_all_tiers_cleared) else stringResource(ach.descriptionRes),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                         fontSize = 11.sp
@@ -872,7 +897,7 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                 if (group.isMaxLevel) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "تکمیل شده",
+                        contentDescription = stringResource(R.string.ach_completed),
                         tint = colors.success,
                         modifier = Modifier.size(22.dp)
                     )
@@ -887,13 +912,21 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (group.isMaxLevel) "نشان نهایی: ${ach.titleRes}" else "هدف بعدی: ${ach.titleRes}",
+                        text = if (group.isMaxLevel) {
+                            stringResource(R.string.ach_final_badge, stringResource(ach.titleRes))
+                        } else {
+                            stringResource(R.string.ach_next_target, stringResource(ach.titleRes))
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = if (group.isMaxLevel) "تکمیل ۱۰۰٪" else "${group.currentProgress.toPersianDigits()} / ${group.targetThreshold.toPersianDigits()}",
+                        text = if (group.isMaxLevel) {
+                            stringResource(R.string.ach_100_percent)
+                        } else {
+                            "${group.currentProgress.formatDigits()} / ${group.targetThreshold.formatDigits()}"
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = if (group.isMaxLevel) colors.success else colors.primary,
                         fontWeight = FontWeight.Bold
@@ -936,5 +969,3 @@ private fun FormulaScorePill(
         )
     }
 }
-
-

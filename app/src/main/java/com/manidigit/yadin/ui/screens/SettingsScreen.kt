@@ -69,6 +69,9 @@ import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.YadinPalette
+import com.manidigit.yadin.R
+import androidx.compose.ui.res.stringResource
+import com.manidigit.yadin.ui.util.formatDigits
 
 /**
  * صفحه تنظیمات اصلی برنامه یادین.
@@ -129,13 +132,13 @@ fun SettingsScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "بازگشت",
+                    contentDescription = stringResource(R.string.action_back),
                     tint = colors.onSurface
                 )
             }
 
             Text(
-                text = "تنظیمات برنامه",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -144,7 +147,7 @@ fun SettingsScreen(
 
         // Section: Appearance & Theme Hub (Dropdown + Compact Dark Mode button)
         Text(
-            text = "ظاهر و پوسته برنامه:",
+            text = stringResource(R.string.settings_appearance_section),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface
@@ -179,13 +182,13 @@ fun SettingsScreen(
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "پوسته اختصاصی",
+                            text = stringResource(R.string.settings_theme_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.onSurfaceVariant,
                             fontSize = 10.sp
                         )
                         Text(
-                            text = "تم Gemini (هوش مصنوعی)",
+                            text = stringResource(R.string.settings_theme_gemini),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -205,7 +208,7 @@ fun SettingsScreen(
                 ) {
                     Icon(
                         imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
-                        contentDescription = "تغییر حالت شب و روز",
+                        contentDescription = stringResource(R.string.settings_toggle_dark_mode),
                         tint = if (isDark) colors.warning else colors.primary,
                         modifier = Modifier.size(22.dp)
                     )
@@ -215,7 +218,7 @@ fun SettingsScreen(
 
         // Section Title: Learning & Review Settings
         Text(
-            text = "تنظیمات یادگیری و آزمون:",
+            text = stringResource(R.string.settings_learning_section),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface
@@ -253,7 +256,7 @@ fun SettingsScreen(
 
                     Column {
                         Text(
-                            text = "پاسخ متوالی برای تغییر سطح سختی",
+                            text = stringResource(R.string.settings_diff_threshold_title),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = colors.onSurface
@@ -268,7 +271,7 @@ fun SettingsScreen(
                 ) {
                     listOf(1, 2, 3, 4, 5).forEach { thresholdValue ->
                         val isSelected = (difficultyThreshold == thresholdValue)
-                        val label = thresholdValue.toPersianDigits()
+                        val label = thresholdValue.formatDigits()
 
                         Box(
                             modifier = Modifier
@@ -327,7 +330,7 @@ fun SettingsScreen(
                     }
 
                     Text(
-                        text = "جهت زبان یادگیری برنامه در مرور، افزودن کلمات و آمار پیشرفت",
+                        text = stringResource(R.string.settings_language_direction_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
@@ -340,15 +343,15 @@ fun SettingsScreen(
                 ) {
                     val isNormal = (languageDirection == CardDirection.NORMAL)
                     LanguageDirectionPill(
-                        title = "🇪🇸 اسپانیایی ← 🇮🇷 فارسی",
-                        subtitle = "مبدأ: اسپانیایی / مقصد: فارسی",
+                        title = stringResource(R.string.settings_lang_normal),
+                        subtitle = "es → fa",
                         isSelected = isNormal,
                         modifier = Modifier.weight(1f),
                         onClick = { onSetLanguageDirection(CardDirection.NORMAL) }
                     )
                     LanguageDirectionPill(
-                        title = "🇮🇷 فارسی ← 🇪🇸 اسپانیایی",
-                        subtitle = "مبدأ: فارسی / مقصد: اسپانیایی",
+                        title = stringResource(R.string.settings_lang_reverse),
+                        subtitle = "fa → es",
                         isSelected = !isNormal,
                         modifier = Modifier.weight(1f),
                         onClick = { onSetLanguageDirection(CardDirection.REVERSE) }
@@ -373,7 +376,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Icon(Icons.Default.Language, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
-                    Text("زبان رابط کاربری (UI Language)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
+                    Text(stringResource(R.string.settings_ui_lang_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -381,15 +384,15 @@ fun SettingsScreen(
                 ) {
                     val isFa = (uiLanguage == "fa")
                     LanguageDirectionPill(
-                        title = "فارسی 🇮🇷",
-                        subtitle = "راست‌به‌چپ (RTL)",
+                        title = stringResource(R.string.settings_ui_lang_fa),
+                        subtitle = stringResource(R.string.settings_ui_lang_fa_sub),
                         isSelected = isFa,
                         modifier = Modifier.weight(1f),
                         onClick = { onSetUiLanguage("fa") }
                     )
                     LanguageDirectionPill(
-                        title = "English 🇬🇧",
-                        subtitle = "Left-to-Right (LTR)",
+                        title = stringResource(R.string.settings_ui_lang_en),
+                        subtitle = stringResource(R.string.settings_ui_lang_en_sub),
                         isSelected = !isFa,
                         modifier = Modifier.weight(1f),
                         onClick = { onSetUiLanguage("en") }
@@ -417,15 +420,15 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Default.DeleteForever, contentDescription = null, tint = colors.error, modifier = Modifier.size(22.dp))
                     Column {
-                        Text("پاک‌سازی دائمی واژگان حذف‌شده", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
-                        Text("تخلیه کامل سطل بازیافت و حذف قطعی از دیتابیس", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, fontSize = 11.sp)
+                        Text(stringResource(R.string.settings_purge_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
+                        Text(stringResource(R.string.settings_purge_desc), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, fontSize = 11.sp)
                     }
                 }
                 androidx.compose.material3.OutlinedButton(
                     onClick = { showPurgeConfirmDialog = true },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.error)
                 ) {
-                    Text("تخلیه", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_purge_button), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -433,8 +436,8 @@ fun SettingsScreen(
         if (showPurgeConfirmDialog) {
             AlertDialog(
                 onDismissRequest = { showPurgeConfirmDialog = false },
-                title = { Text("تأیید پاک‌سازی دائمی", fontWeight = FontWeight.Bold) },
-                text = { Text("آیا مطمئن هستید؟ با این کار تمامی واژگانی که پیش‌تر حذف کرده‌اید برای همیشه از پایگاه داده پاک خواهند شد و قابل احیا نخواهند بود.") },
+                title = { Text(stringResource(R.string.settings_purge_confirm_title), fontWeight = FontWeight.Bold) },
+                text = { Text(stringResource(R.string.settings_purge_confirm_msg)) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -446,12 +449,12 @@ fun SettingsScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                     ) {
-                        Text("بله، پاک شود", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.action_yes_purge), fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showPurgeConfirmDialog = false }) {
-                        Text("انصراف")
+                        Text(stringResource(R.string.action_cancel))
                     }
                 }
             )
@@ -460,13 +463,13 @@ fun SettingsScreen(
         if (showPurgeReportDialog) {
             AlertDialog(
                 onDismissRequest = { showPurgeReportDialog = false },
-                title = { Text("گزارش پاک‌سازی دیتابیس", fontWeight = FontWeight.Bold, color = colors.onSurface) },
+                title = { Text(stringResource(R.string.settings_purge_success_title), fontWeight = FontWeight.Bold, color = colors.onSurface) },
                 text = {
                     Text(
                         text = if (purgedCountResult > 0)
-                            "عملیات با موفقیت انجام شد.\nتعداد $purgedCountResult واژه غیرفعال به‌طور کامل و دائمی از پایگاه داده حذف گردید."
+                            stringResource(R.string.settings_purge_success_msg, purgedCountResult.formatDigits())
                         else
-                            "هیچ واژه غیرفعالی در سطل بازیافت جهت پاک‌سازی پیدا نشد.",
+                            stringResource(R.string.settings_purge_desc),
                         color = colors.onSurface
                     )
                 },
@@ -475,7 +478,7 @@ fun SettingsScreen(
                         onClick = { showPurgeReportDialog = false },
                         colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
                     ) {
-                        Text("تأیید و بستن", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.action_confirm), fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -511,13 +514,13 @@ fun SettingsScreen(
 
                 Column {
                     Text(
-                        text = "پشتیبان‌گیری و بازیابی داده‌ها",
+                        text = stringResource(R.string.settings_backup_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "صادرات و بازگردانی فایل پشتیبان واژگان و پیشرفت (JSON)",
+                        text = stringResource(R.string.settings_backup_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -555,13 +558,13 @@ fun SettingsScreen(
 
                 Column {
                     Text(
-                        text = "درباره ما و مشخصات یادین",
+                        text = stringResource(R.string.settings_about_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "اطلاعات سازنده (maniDigit)، اهداف و نسخه نرم‌افزار",
+                        text = stringResource(R.string.settings_about_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -599,13 +602,13 @@ fun SettingsScreen(
 
                 Column {
                     Text(
-                        text = "راهنما و آموزش قوانین یادین",
+                        text = stringResource(R.string.settings_help_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "آموزش گام‌به‌گام مراحل یادگیری، سختی واژه و آزمون",
+                        text = stringResource(R.string.settings_help_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )

@@ -56,9 +56,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -89,7 +91,7 @@ fun ExposedCategoryDropdown(
     selectedCategoryId: String?,
     onSelectCategory: (String?) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "دسته‌بندی موضوعی",
+    label: String? = null,
     onAddNewCategory: ((String) -> Unit)? = null,
     onEditCategory: ((String, String) -> Unit)? = null,
     onDeleteCategory: ((String) -> Unit)? = null
@@ -103,8 +105,10 @@ fun ExposedCategoryDropdown(
     var editCategoryText by remember { mutableStateOf("") }
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
+    val resolvedLabel = label ?: stringResource(R.string.category_label)
+    val defaultAllText = stringResource(R.string.category_all_general)
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
-    val displayText = selectedCategory?.name ?: "همه دسته‌ها (عمومی)"
+    val displayText = selectedCategory?.name ?: defaultAllText
     val icon = getCategoryIcon(selectedCategory?.name)
 
     if (showAddDialog) {
@@ -112,7 +116,7 @@ fun ExposedCategoryDropdown(
             onDismissRequest = { showAddDialog = false },
             title = {
                 Text(
-                    text = "ایجاد دسته‌بندی موضوعی جدید",
+                    text = stringResource(R.string.category_create_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -121,15 +125,15 @@ fun ExposedCategoryDropdown(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "نام دسته‌بندی مورد نظر خود را وارد کنید:",
+                        text = stringResource(R.string.category_create_hint_prompt),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
                     OutlinedTextField(
                         value = newCategoryText,
                         onValueChange = { newCategoryText = it },
-                        label = { Text("عنوان دسته‌بندی") },
-                        placeholder = { Text("مثال: پزشکی، ورزش، فناوری") },
+                        label = { Text(stringResource(R.string.category_title_field)) },
+                        placeholder = { Text(stringResource(R.string.category_title_placeholder)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -151,12 +155,12 @@ fun ExposedCategoryDropdown(
                         contentColor = colors.onPrimary
                     )
                 ) {
-                    Text("ثبت و انتخاب", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.category_submit_select), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showAddDialog = false }) {
-                    Text("انصراف")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -165,13 +169,13 @@ fun ExposedCategoryDropdown(
     if (categoryToEdit != null) {
         AlertDialog(
             onDismissRequest = { categoryToEdit = null },
-            title = { Text("ویرایش عنوان دسته‌بندی", fontWeight = FontWeight.Bold, color = colors.onSurface) },
+            title = { Text(stringResource(R.string.category_edit_title), fontWeight = FontWeight.Bold, color = colors.onSurface) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = editCategoryText,
                         onValueChange = { editCategoryText = it },
-                        label = { Text("عنوان جدید دسته‌بندی") },
+                        label = { Text(stringResource(R.string.category_edit_new_title)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -191,12 +195,12 @@ fun ExposedCategoryDropdown(
                     enabled = editCategoryText.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
                 ) {
-                    Text("ذخیره", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { categoryToEdit = null }) {
-                    Text("انصراف")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -205,9 +209,9 @@ fun ExposedCategoryDropdown(
     if (categoryToDelete != null) {
         AlertDialog(
             onDismissRequest = { categoryToDelete = null },
-            title = { Text("حذف دسته‌بندی", fontWeight = FontWeight.Bold, color = colors.onSurface) },
+            title = { Text(stringResource(R.string.category_delete_title), fontWeight = FontWeight.Bold, color = colors.onSurface) },
             text = {
-                Text("آیا از حذف دسته‌بندی «${categoryToDelete?.name}» اطمینان دارید؟ واژه‌های مرتبط با این دسته‌بندی به دسته عمومی منتقل خواهند شد.")
+                Text(stringResource(R.string.category_delete_confirm_msg, categoryToDelete?.name ?: ""))
             },
             confirmButton = {
                 Button(
@@ -219,12 +223,12 @@ fun ExposedCategoryDropdown(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                 ) {
-                    Text("حذف دسته", fontWeight = FontWeight.Bold, color = colors.onError)
+                    Text(stringResource(R.string.category_btn_delete), fontWeight = FontWeight.Bold, color = colors.onError)
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { categoryToDelete = null }) {
-                    Text("انصراف")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -239,7 +243,7 @@ fun ExposedCategoryDropdown(
             value = displayText,
             onValueChange = {},
             readOnly = true,
-            label = { Text(label) },
+            label = { Text(resolvedLabel) },
             leadingIcon = {
                 Icon(
                     imageVector = icon,
@@ -254,7 +258,7 @@ fun ExposedCategoryDropdown(
                         IconButton(onClick = { onSelectCategory(null) }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = "حذف انتخاب",
+                                contentDescription = stringResource(R.string.category_clear_selection),
                                 tint = colors.onSurfaceVariant,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -287,7 +291,7 @@ fun ExposedCategoryDropdown(
                             tint = colors.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
-                        Text("همه دسته‌ها (عمومی)", fontWeight = if (selectedCategoryId == null) FontWeight.Bold else FontWeight.Normal)
+                        Text(defaultAllText, fontWeight = if (selectedCategoryId == null) FontWeight.Bold else FontWeight.Normal)
                     }
                 },
                 onClick = {
@@ -338,7 +342,7 @@ fun ExposedCategoryDropdown(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Edit,
-                                            contentDescription = "ویرایش دسته",
+                                            contentDescription = stringResource(R.string.category_btn_edit),
                                             tint = colors.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -354,7 +358,7 @@ fun ExposedCategoryDropdown(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
-                                            contentDescription = "حذف دسته",
+                                            contentDescription = stringResource(R.string.category_btn_delete),
                                             tint = colors.error,
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -393,7 +397,7 @@ fun ExposedCategoryDropdown(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "+ ایجاد دسته‌بندی جدید...",
+                                text = stringResource(R.string.category_add_new_action),
                                 color = colors.primary,
                                 fontWeight = FontWeight.Bold
                             )

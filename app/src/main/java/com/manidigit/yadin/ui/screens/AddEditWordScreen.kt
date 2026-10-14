@@ -37,14 +37,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.WordDetail
-import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
@@ -56,6 +57,7 @@ fun AddEditWordScreen(
     onSave: (sourceText: String, translations: List<String>, categoryId: String?, note: String?, categoryIds: List<String>) -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
@@ -89,17 +91,17 @@ fun AddEditWordScreen(
             }
         )
     }
-    var selectedCategoryId by remember { mutableStateOf(initialWord?.concept?.categoryId) }
-    val initialCategoryIds = remember(initialWord) {
-        if (initialWord != null && initialWord.categories.isNotEmpty()) {
-            initialWord.categories.map { it.id }.toSet()
-        } else if (initialWord?.concept?.categoryId != null) {
-            setOf(initialWord.concept.categoryId)
-        } else {
-            emptySet()
-        }
+    var selectedCategoryIds by remember {
+        mutableStateOf(
+            if (initialWord != null && initialWord.categories.isNotEmpty()) {
+                initialWord.categories.map { it.id }.toSet()
+            } else if (initialWord?.concept?.categoryId != null) {
+                setOf(initialWord.concept.categoryId)
+            } else {
+                emptySet()
+            }
+        )
     }
-    var selectedCategoryIds by remember { mutableStateOf(initialCategoryIds) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -130,24 +132,23 @@ fun AddEditWordScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
+                        contentDescription = stringResource(R.string.action_back),
                         tint = colors.onSurface
                     )
                 }
 
                 Text(
-                    text = if (initialWord != null) "ویرایش واژه" else "افزودن واژه جدید",
+                    text = if (initialWord != null) stringResource(R.string.word_edit_title) else stringResource(R.string.word_add_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
             }
 
-            val isNormal = (languageDirection == CardDirection.NORMAL)
-            val sourceLabel = if (isNormal) "واژه یا عبارت مبدأ (اسپانیایی 🇪🇸)" else "واژه یا عبارت مبدأ (فارسی 🇮🇷)"
-            val sourcePlaceholder = if (isNormal) "مثال: buenos días" else "مثال: صبح بخیر"
-            val targetLabel = if (isNormal) "ترجمه‌های فارسی 🇮🇷 (با ویرگول جدا کنید)" else "ترجمه‌های اسپانیایی 🇪🇸 (با ویرگول جدا کنید)"
-            val targetPlaceholder = if (isNormal) "مثال: صبح بخیر، روز خوش" else "مثال: buenos días"
+            val sourceLabel = if (isNormal) stringResource(R.string.word_source_label_es) else stringResource(R.string.word_source_label_fa)
+            val sourcePlaceholder = if (isNormal) stringResource(R.string.word_source_placeholder_es) else stringResource(R.string.word_source_placeholder_fa)
+            val targetLabel = if (isNormal) stringResource(R.string.word_target_label_fa) else stringResource(R.string.word_target_label_es)
+            val targetPlaceholder = if (isNormal) stringResource(R.string.word_target_placeholder_fa) else stringResource(R.string.word_target_placeholder_es)
 
             // Source Input
             OutlinedTextField(
@@ -176,10 +177,10 @@ fun AddEditWordScreen(
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             )
 
-            // Multi-Category Selection Chips (ISS-10)
+            // Multi-Category Selection Chips
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "دسته‌بندی‌های موضوعی (امکان انتخاب هم‌زمان چند دسته):",
+                    text = stringResource(R.string.word_categories_label),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -219,8 +220,8 @@ fun AddEditWordScreen(
                 value = note,
                 onValueChange = { note = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("توضیحات و مثال کاربردی (اختیاری)") },
-                placeholder = { Text("مثال: اصطلاح رایج در احوال‌پرسی روزانه") },
+                label = { Text(stringResource(R.string.word_note_label)) },
+                placeholder = { Text(stringResource(R.string.word_note_placeholder)) },
                 minLines = 2,
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             )
@@ -244,9 +245,9 @@ fun AddEditWordScreen(
                     .filter { it.isNotEmpty() }
 
                 if (cleanSrc.isEmpty()) {
-                    errorMessage = "لطفاً واژه مبدأ را وارد کنید."
+                    errorMessage = context.getString(R.string.word_error_empty_source)
                 } else if (translationsList.isEmpty()) {
-                    errorMessage = "لطفاً حداقل یک ترجمه برای واژه وارد کنید."
+                    errorMessage = context.getString(R.string.word_error_empty_target)
                 } else {
                     onSave(
                         cleanSrc,
@@ -268,9 +269,7 @@ fun AddEditWordScreen(
         ) {
             Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("ذخیره در جعبه لایتنر", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.word_save_leitner), fontWeight = FontWeight.Bold)
         }
     }
 }
-
-

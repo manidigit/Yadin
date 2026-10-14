@@ -24,12 +24,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.ui.theme.LocalYadinColors
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun SplashScreen(
@@ -59,20 +60,20 @@ fun SplashScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = "Yadin Logo",
+                    contentDescription = stringResource(R.string.app_name),
                     tint = colors.onHero,
                     modifier = Modifier.size(44.dp)
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "یادین",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
             )
             Text(
-                text = "سامانه مرور هوشمند واژگان و جعبه لایتنر پیشرفته",
+                text = stringResource(R.string.app_tagline),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -97,7 +98,7 @@ fun SplashScreen(
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "${(animatedProgress * 100).toInt()}%",
+                text = "${(animatedProgress * 100).toInt().formatDigits()}%",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.primary

@@ -92,6 +92,7 @@ class MainActivity : ComponentActivity() {
             YadinTheme(themeId = themeId, isDark = isDark) {
                 CompositionLocalProvider(
                     LocalContext provides localizedContext,
+                    androidx.compose.ui.platform.LocalConfiguration provides localizedContext.resources.configuration,
                     LocalLayoutDirection provides layoutDirection,
                     androidx.activity.compose.LocalActivityResultRegistryOwner provides this@MainActivity
                 ) {
@@ -443,7 +444,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 importSummary = importSummary,
                 errorMessage = libraryErrorMessage,
                 onParseText = { text -> viewModel.parseInputText(text) },
-                onParseResult = { result -> viewModel.setParseResult(result) },
+                onParseResult = { result: com.manidigit.yadin.domain.model.ParseResult -> viewModel.setParseResult(result) },
                 onResetParse = {
                     viewModel.clearParseResult()
                     viewModel.clearImportSummary()
@@ -476,6 +477,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
         is Screen.ImportReview -> {
             val parseResult by viewModel.parseResult.collectAsStateWithLifecycle()
             val currentResult = parseResult
+            val defaultManualReason = androidx.compose.ui.res.stringResource(R.string.import_review_manual_needed)
+            val defaultAutoReason = androidx.compose.ui.res.stringResource(R.string.import_review_auto_extracted)
             val reviewItems = remember(currentResult) {
                 currentResult?.entries?.mapIndexed { index, entry ->
                     com.manidigit.yadin.ui.screens.ReviewItem(
@@ -483,14 +486,14 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                         sourceText = entry.sourceText,
                         translationText = entry.translations.joinToString("، "),
                         confidence = (entry.confidence * 100).toInt(),
-                        reason = entry.note ?: if (entry.confidence < 0.8f) "نیازمند بازبینی دستی" else "استخراج خودکار"
+                        reason = entry.note ?: if (entry.confidence < 0.8f) defaultManualReason else defaultAutoReason
                     )
                 } ?: emptyList()
             }
 
             com.manidigit.yadin.ui.screens.ImportReviewScreen(
                 itemsToReview = reviewItems,
-                onApproveItems = { approvedEntries ->
+                onApproveItems = { approvedEntries: List<com.manidigit.yadin.domain.model.ParsedEntry> ->
                     if (currentResult != null) {
                         viewModel.setParseResult(
                             currentResult.copy(

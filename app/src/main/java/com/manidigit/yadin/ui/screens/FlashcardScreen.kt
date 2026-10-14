@@ -25,11 +25,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Flip
-import androidx.compose.material.icons.filled.Refresh
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.AlertDialog
@@ -50,21 +48,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.ReviewCard
-import com.manidigit.yadin.ui.util.toPersianDigits
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun FlashcardScreen(
@@ -81,7 +80,6 @@ fun FlashcardScreen(
 
     var showExitConfirmDialog by remember { mutableStateOf(false) }
 
-    // خالی بودن صف مرور (حل نقص ISS-88: افزودن دکمه خروج درون‌برنامه‌ای)
     if (cards.isEmpty() || currentIndex >= cards.size) {
         Box(
             modifier = Modifier
@@ -110,13 +108,13 @@ fun FlashcardScreen(
                     )
                 }
                 Text(
-                    text = "هیچ کارتی برای مرور وجود ندارد",
+                    text = stringResource(R.string.flashcard_empty_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
                 Text(
-                    text = "همه واژگان واجد شرایط مرور شده‌اند یا کارتی مطابق فیلترهای انتخابی شما یافت نشد.",
+                    text = stringResource(R.string.flashcard_empty_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -127,14 +125,13 @@ fun FlashcardScreen(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.height(44.dp)
                 ) {
-                    Text("بازگشت به صفحه اصلی", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.summary_back_home), fontWeight = FontWeight.Bold)
                 }
             }
         }
         return
     }
 
-    // رهگیری دکمه بازگشت سیستم در حین مرور فعال
     BackHandler {
         showExitConfirmDialog = true
     }
@@ -194,13 +191,13 @@ fun FlashcardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "خروج از مرور",
+                        contentDescription = stringResource(R.string.flashcard_exit_confirm_title),
                         tint = colors.onSurface
                     )
                 }
 
                 Text(
-                    text = "کارت ${(currentIndex + 1).toPersianDigits()} از ${cards.size.toPersianDigits()}",
+                    text = stringResource(R.string.flashcard_card_progress, (currentIndex + 1).formatDigits(), cards.size.formatDigits()),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -332,7 +329,7 @@ fun FlashcardScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "برای مشاهده پاسخ ضربه بزنید",
+                                text = stringResource(R.string.flashcard_flip_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant
                             )
@@ -364,7 +361,7 @@ fun FlashcardScreen(
                                 .verticalScroll(backScrollState)
                         ) {
                             Text(
-                                text = if (card.direction == CardDirection.NORMAL) "ترجمه فارسی:" else "واژه اسپانیایی:",
+                                text = if (card.direction == CardDirection.NORMAL) stringResource(R.string.flashcard_target_label_fa) else stringResource(R.string.flashcard_target_label_es),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant
                             )
@@ -412,7 +409,7 @@ fun FlashcardScreen(
                         }
 
                         Text(
-                            text = "آیا پاسخ را به یاد آوردید؟",
+                            text = stringResource(R.string.flashcard_did_you_recall),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant
                         )
@@ -441,7 +438,7 @@ fun FlashcardScreen(
                 ) {
                     Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("نادرست", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(stringResource(R.string.flashcard_forgot), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
 
                 IconButton(
@@ -453,7 +450,7 @@ fun FlashcardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Flip,
-                        contentDescription = "برگشت به روی کارت",
+                        contentDescription = stringResource(R.string.flashcard_flip_back),
                         tint = colors.onSurface,
                         modifier = Modifier.size(20.dp)
                     )
@@ -472,7 +469,7 @@ fun FlashcardScreen(
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("به‌خاطر داشتم", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(stringResource(R.string.flashcard_remembered), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
             }
         } else {
@@ -493,25 +490,24 @@ fun FlashcardScreen(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("نمایش پاسخ (چرخش کارت)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text(stringResource(R.string.flashcard_show_answer), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }
 
-    // دیالوگ هشدار تأیید خروج از مرور (حل نقص ISS-87 / ISS-113)
     if (showExitConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showExitConfirmDialog = false },
             title = {
                 Text(
-                    text = "خروج از جلسه مرور",
+                    text = stringResource(R.string.flashcard_exit_confirm_title),
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
             },
             text = {
                 Text(
-                    text = "آیا مطمئن هستید که می‌خواهید از جلسه مرور خارج شوید؟ کارت‌های بررسی‌نشده در این نشست ذخیره نخواهند شد.",
+                    text = stringResource(R.string.flashcard_exit_confirm_msg),
                     color = colors.onSurfaceVariant
                 )
             },
@@ -523,12 +519,12 @@ fun FlashcardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                 ) {
-                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = colors.onError)
+                    Text(stringResource(R.string.action_yes_exit), fontWeight = FontWeight.Bold, color = colors.onError)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showExitConfirmDialog = false }) {
-                    Text("ادامه مرور", fontWeight = FontWeight.Bold, color = colors.primary)
+                    Text(stringResource(R.string.flashcard_continue_session), fontWeight = FontWeight.Bold, color = colors.primary)
                 }
             },
             containerColor = colors.surface,

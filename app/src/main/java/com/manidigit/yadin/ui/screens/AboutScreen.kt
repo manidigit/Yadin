@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,14 +24,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,13 +42,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
@@ -109,20 +108,20 @@ fun AboutScreen(onBack: () -> Unit) {
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
+                        contentDescription = stringResource(R.string.action_back),
                         tint = colors.onSurface
                     )
                 }
 
                 Column {
                     Text(
-                        text = "درباره یادین",
+                        text = stringResource(R.string.about_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "اطلاعات برنامه، نسخه، سازنده و مشخصات فنی",
+                        text = stringResource(R.string.about_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -149,7 +148,7 @@ fun AboutScreen(onBack: () -> Unit) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "یا",
+                            text = stringResource(R.string.app_monogram),
                             color = colors.onHero,
                             fontWeight = FontWeight.Black,
                             fontSize = 32.sp
@@ -157,21 +156,21 @@ fun AboutScreen(onBack: () -> Unit) {
                     }
 
                     Text(
-                        text = "نرم‌افزار یادین (Yadin)",
+                        text = stringResource(R.string.about_app_full_name),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
 
                     Text(
-                        text = "نسخه $currentVersionName (کد ساخت $currentVersionCode)",
+                        text = stringResource(R.string.about_version_build, currentVersionName, currentVersionCode.formatDigits()),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.primary,
                         fontWeight = FontWeight.SemiBold
                     )
 
                     Text(
-                        text = "سامانه مدرن یادگیری واژگان زبان اسپانیایی و فارسی بر پایه موتور مقتدر تکرار فاصله‌دار، آزمون‌های ۴ گزینه‌ای تطبیقی، ساختار آفلاین Room و سیستم پوسته چندگانه.",
+                        text = stringResource(R.string.about_summary_text),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -190,25 +189,25 @@ fun AboutScreen(onBack: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "مشخصات فنی و استانداردهای طراحی",
+                        text = stringResource(R.string.about_tech_specs_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
 
-                    TechRow("سازنده / صاحب پروژه", "maniDigit")
+                    TechRow(stringResource(R.string.about_developer_label), stringResource(R.string.about_developer_name))
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("نسخه برنامه (Version)", "$currentVersionName (کد ساخت $currentVersionCode)")
+                    TechRow(stringResource(R.string.about_version_label), "$currentVersionName ($currentVersionCode)")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("موتور تکرار فاصله‌دار", "Daily → Weekly → Monthly → Learned")
+                    TechRow(stringResource(R.string.about_leitner_engine_label), "Daily → Weekly → Monthly → Learned")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("الگوریتم سختی واژگان", "EASY / MEDIUM / HARD / VERY_HARD (آستانه ۳)")
+                    TechRow(stringResource(R.string.about_difficulty_algo_label), "EASY / MEDIUM / HARD / VERY_HARD")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("فرمول درصد پیشرفت", "مجموع ضرایب (۳۵، ۶۰، ۸۰، ۱۰۰) بر طبق بند ۶.۱۸")
+                    TechRow(stringResource(R.string.about_progress_formula_label), "Weights (35%, 60%, 80%, 100%)")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("پایگاه داده محلی", "Android Room SQLite (Schema v2)")
+                    TechRow(stringResource(R.string.about_local_db_label), "Android Room SQLite (Schema v2)")
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow("سیستم طراحی پوسته", "پوسته اختصاصی Gemini (تاریک/روشن)")
+                    TechRow(stringResource(R.string.about_theme_system_label), stringResource(R.string.about_theme_system_value))
                 }
             }
 
@@ -242,7 +241,7 @@ fun AboutScreen(onBack: () -> Unit) {
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = "مخزن گیت‌هاب",
+                            text = stringResource(R.string.about_github_btn),
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
                             color = colors.onSurface
@@ -275,7 +274,7 @@ fun AboutScreen(onBack: () -> Unit) {
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = "پشتیبانی واتساپ",
+                            text = stringResource(R.string.about_whatsapp_btn),
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
                             color = colors.success
@@ -287,24 +286,24 @@ fun AboutScreen(onBack: () -> Unit) {
             // Scientific Principles
             AboutFeatureCard(
                 icon = Icons.Default.Psychology,
-                title = "پشتوانه علمی و الگوریتم تکرار فاصله‌دار",
-                description = "یادین بر پایه مدل علمی منحنی فراموشی ابینگهاوس (Ebbinghaus) طراحی شده است. فواصل زمانی مرورها (روزانه، هفتگی و ماهانه) به‌گونه‌ای زمان‌بندی می‌شوند که واژه‌ها در آستانه فراموشی تکرار شوند تا به حافظه بلندمدت منتقل گردند.",
+                title = stringResource(R.string.about_feature1_title),
+                description = stringResource(R.string.about_feature1_desc),
                 color = colors.info
             )
 
             // Difficulty & State Engine
             AboutFeatureCard(
                 icon = Icons.Default.School,
-                title = "موتور محاسبه پویای سختی واژگان",
-                description = "هر واژه دارای ۴ سطح سختی (آسان، متوسط، سخت، خیلی سخت) است. سیستم با بررسی تاریخچه پاسخ‌ها و آستانه ۳ پاسخ متوالی، درجه سختی کلمات را به‌طور خودکار تنظیم و گزینه‌های آزمون را بر اساس این شاخص هوشمندانه انتخاب می‌نماید.",
+                title = stringResource(R.string.about_feature2_title),
+                description = stringResource(R.string.about_feature2_desc),
                 color = colors.warning
             )
 
             // Database & Offline First
             AboutFeatureCard(
                 icon = Icons.Default.Storage,
-                title = "بانک واژگان آفلاین و مستقل",
-                description = "بیش از ۶,۰۰۰ واژه غنی و تخصصی زبان اسپانیایی همراه با ترجمه‌های دقیق فارسی، صوت هوشمند سیستم و یادداشت‌های کاربردی به‌صورت ۱۰۰٪ آفلاین و محلی بر روی دیتابیس Room ذخیره و پردازش می‌شوند.",
+                title = stringResource(R.string.about_feature3_title),
+                description = stringResource(R.string.about_feature3_desc),
                 color = colors.success
             )
 
@@ -317,7 +316,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "یادین • طراحی‌شده با ",
+                    text = stringResource(R.string.about_footer_prefix),
                     fontSize = 12.sp,
                     color = colors.onSurfaceVariant
                 )
@@ -328,7 +327,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     modifier = Modifier.size(14.dp)
                 )
                 Text(
-                    text = " برای شیفتگان زبان",
+                    text = stringResource(R.string.about_footer_suffix),
                     fontSize = 12.sp,
                     color = colors.onSurfaceVariant
                 )
@@ -349,7 +348,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 contentColor = colors.onPrimary
             )
         ) {
-            Text("بازگشت", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.action_back), fontWeight = FontWeight.Bold)
         }
     }
 }

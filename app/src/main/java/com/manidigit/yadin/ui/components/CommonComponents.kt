@@ -24,7 +24,10 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import com.manidigit.yadin.ui.util.TtsManager
+import com.manidigit.yadin.ui.util.formatDigits
 import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -103,10 +106,10 @@ fun DifficultyCounterRow(
         horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapMedium)
     ) {
         val items = listOf(
-            Triple(VocabularyDifficulty.EASY, "آسان", colors.success),
-            Triple(VocabularyDifficulty.MEDIUM, "متوسط", colors.info),
-            Triple(VocabularyDifficulty.HARD, "سخت", colors.warning),
-            Triple(VocabularyDifficulty.VERY_HARD, "خیلی سخت", colors.error)
+            Triple(VocabularyDifficulty.EASY, stringResource(R.string.difficulty_easy), colors.success),
+            Triple(VocabularyDifficulty.MEDIUM, stringResource(R.string.difficulty_medium), colors.info),
+            Triple(VocabularyDifficulty.HARD, stringResource(R.string.difficulty_hard), colors.warning),
+            Triple(VocabularyDifficulty.VERY_HARD, stringResource(R.string.difficulty_very_hard), colors.error)
         )
 
         items.forEach { (diff, label, color) ->
@@ -136,7 +139,7 @@ fun DifficultyCounterRow(
                     verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     Text(
-                        text = count.toPersianDigits(),
+                        text = count.formatDigits(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = color
@@ -158,10 +161,10 @@ fun StageBadge(stage: Stage, modifier: Modifier = Modifier) {
     val colors = LocalYadinColors.current
     val shapes = LocalYadinShapes.current
     val (title, color) = when (stage) {
-        Stage.DAILY -> "روزانه" to colors.primary
-        Stage.WEEKLY -> "هفتگی" to colors.info
-        Stage.MONTHLY -> "ماهانه" to colors.warning
-        Stage.LEARNED -> "یادگرفته" to colors.success
+        Stage.DAILY -> stringResource(R.string.stage_daily) to colors.primary
+        Stage.WEEKLY -> stringResource(R.string.stage_weekly) to colors.info
+        Stage.MONTHLY -> stringResource(R.string.stage_monthly) to colors.warning
+        Stage.LEARNED -> stringResource(R.string.stage_learned) to colors.success
     }
 
     val shape = shapes.badge
@@ -189,10 +192,10 @@ fun DifficultyBadge(difficulty: VocabularyDifficulty, modifier: Modifier = Modif
     val colors = LocalYadinColors.current
     val shapes = LocalYadinShapes.current
     val (title, color) = when (difficulty) {
-        VocabularyDifficulty.EASY -> "آسان" to colors.success
-        VocabularyDifficulty.MEDIUM -> "متوسط" to colors.info
-        VocabularyDifficulty.HARD -> "سخت" to colors.warning
-        VocabularyDifficulty.VERY_HARD -> "خیلی سخت" to colors.error
+        VocabularyDifficulty.EASY -> stringResource(R.string.difficulty_easy) to colors.success
+        VocabularyDifficulty.MEDIUM -> stringResource(R.string.difficulty_medium) to colors.info
+        VocabularyDifficulty.HARD -> stringResource(R.string.difficulty_hard) to colors.warning
+        VocabularyDifficulty.VERY_HARD -> stringResource(R.string.difficulty_very_hard) to colors.error
     }
 
     val shape = shapes.badge
@@ -232,12 +235,12 @@ fun StreakChip(streakDays: Int, modifier: Modifier = Modifier) {
     ) {
         Icon(
             imageVector = Icons.Default.LocalFireDepartment,
-            contentDescription = "رگبار تمرین",
+            contentDescription = stringResource(R.string.content_desc_streak),
             tint = colors.warning,
             modifier = Modifier.size(18.dp)
         )
         Text(
-            text = "${streakDays.toPersianDigits()} روز",
+            text = "${streakDays.formatDigits()} ${stringResource(R.string.home_streak_days_suffix)}",
             color = colors.warning,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold
@@ -264,7 +267,7 @@ fun SpeakButton(
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-            contentDescription = "پخش تلفظ صوتی",
+            contentDescription = stringResource(R.string.content_desc_speak),
             tint = colors.primary
         )
     }

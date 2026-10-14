@@ -1,5 +1,7 @@
 package com.manidigit.yadin.ui.components
 
+import android.content.Context
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,28 +33,31 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.LocalYadinShapes
-import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.ui.util.formatDigits
 import java.time.DayOfWeek
 import java.time.LocalDate
 
-enum class ChartTimeframe(val title: String) {
-    WEEKLY("هفتگی"),
-    MONTHLY("ماهانه")
+enum class ChartTimeframe(@StringRes val titleRes: Int) {
+    WEEKLY(R.string.chart_filter_weekly),
+    MONTHLY(R.string.chart_filter_monthly)
 }
 
 /**
  * کامپوننت نمودار میله‌ای فعالیت روزانه مرور و تمرین واژگان.
  *
  * نمایش گرافیکی تعداد مرورها به تفکیک روزهای هفته یا بازه‌های ۵روزه ماهانه
- * با رسم محور عمودی، برچسب‌های فارسی و نوار تفکیک برجسته روز جاری.
+ * با رسم محور عمودی، برچسب‌های محلی‌سازی‌شده و نوار تفکیک برجسته روز جاری.
  *
  * @param dailyStats لیست آمارهای خام مرور روزانه استخراج‌شده از دیتابیس
  */
@@ -62,6 +66,7 @@ fun DailyReviewChart(
     dailyStats: List<DayCountRaw>,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     val shapes = LocalYadinShapes.current
@@ -70,15 +75,17 @@ fun DailyReviewChart(
     val today = ClockAndDayMath.todayDayString()
     val statMap = dailyStats.associateBy { it.reviewedDay }
 
+    val recentDaysLabel = stringResource(R.string.chart_recent_days)
+
     val chartItems = if (selectedTimeframe == ChartTimeframe.WEEKLY) {
         // 7 days: from (today - 6) up to today
         (6 downTo 0).map { offset ->
             val day = ClockAndDayMath.addDays(today, -offset)
             val raw = statMap[day]
-            val persianDayName = getPersianDayOfWeek(day)
+            val dayName = getLocalizedDayOfWeek(day, context)
             DayChartModel(
                 dayString = day,
-                shortLabel = persianDayName,
+                shortLabel = dayName,
                 totalCount = raw?.totalCount ?: 0,
                 correctCount = raw?.correctCount ?: 0,
                 isToday = (day == today)
@@ -101,7 +108,15 @@ fun DailyReviewChart(
                 }
             }
 
-            val label = if (sliceIndex == 0) "۵ روز اخیر" else "${(sliceEndOffset + 1).toPersianDigits()}-${(sliceStartOffset + 1).toPersianDigits()} روز پیش"
+            val label = if (sliceIndex == 0) {
+                recentDaysLabel
+            } else {
+                context.getString(
+                    R.string.chart_days_ago,
+                    (sliceEndOffset + 1).formatDigits(),
+                    (sliceStartOffset + 1).formatDigits()
+                )
+            }
             DayChartModel(
                 dayString = endDay,
                 shortLabel = label,
@@ -139,13 +154,13 @@ fun DailyReviewChart(
             ) {
                 Column {
                     Text(
-                        text = "فعالیت مرور",
+                        text = stringResource(R.string.chart_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "مجموع: ${totalReviews.toPersianDigits()} مرور در دوره انتخاب‌شده",
+                        text = stringResource(R.string.chart_total_reviews, totalReviews.formatDigits()),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -170,7 +185,7 @@ fun DailyReviewChart(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = tf.title,
+                                text = stringResource(tf.titleRes),
                                 fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
@@ -187,7 +202,7 @@ fun DailyReviewChart(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "محور عمودی: تعداد مرور",
+                    text = stringResource(R.string.chart_axis_label),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     color = colors.onSurfaceVariant
@@ -239,7 +254,7 @@ fun DailyReviewChart(
                                 textAlign = android.graphics.Paint.Align.LEFT
                                 isAntiAlias = true
                             }
-                            drawText(value.toPersianDigits(), 4.dp.toPx(), y + 3.dp.toPx(), axisPaint)
+                            drawText(value.formatDigits(), 4.dp.toPx(), y + 3.dp.toPx(), axisPaint)
                         }
                     }
 
@@ -284,7 +299,7 @@ fun DailyReviewChart(
                                     isAntiAlias = true
                                     isFakeBoldText = item.isToday
                                 }
-                                drawText(item.totalCount.toPersianDigits(), centerX, barTop - 5.dp.toPx(), paint)
+                                drawText(item.totalCount.formatDigits(), centerX, barTop - 5.dp.toPx(), paint)
                             }
                         }
 
@@ -314,7 +329,7 @@ fun DailyReviewChart(
                     horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapSmall)
                 ) {
                     Box(modifier = Modifier.size(dimensions.itemGapMedium).clip(shapes.circle).background(colors.primary))
-                    Text("امروز / دوره جاری", fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Text(stringResource(R.string.chart_legend_today), fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
                 Spacer(modifier = Modifier.width(dimensions.sectionGap))
                 Row(
@@ -322,24 +337,24 @@ fun DailyReviewChart(
                     horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapSmall)
                 ) {
                     Box(modifier = Modifier.size(dimensions.itemGapMedium).clip(shapes.circle).background(colors.secondary))
-                    Text("روزهای قبل", fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Text(stringResource(R.string.chart_legend_past), fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
             }
         }
     }
 }
 
-private fun getPersianDayOfWeek(dateString: String): String {
+private fun getLocalizedDayOfWeek(dateString: String, context: Context): String {
     return try {
         val date = LocalDate.parse(dateString)
         when (date.dayOfWeek) {
-            DayOfWeek.SATURDAY -> "شنبه"
-            DayOfWeek.SUNDAY -> "یکشنبه"
-            DayOfWeek.MONDAY -> "دوشنبه"
-            DayOfWeek.TUESDAY -> "سه‌شنبه"
-            DayOfWeek.WEDNESDAY -> "چهارشنبه"
-            DayOfWeek.THURSDAY -> "پنج‌شنبه"
-            DayOfWeek.FRIDAY -> "جمعه"
+            DayOfWeek.SATURDAY -> context.getString(R.string.dow_sat)
+            DayOfWeek.SUNDAY -> context.getString(R.string.dow_sun)
+            DayOfWeek.MONDAY -> context.getString(R.string.dow_mon)
+            DayOfWeek.TUESDAY -> context.getString(R.string.dow_tue)
+            DayOfWeek.WEDNESDAY -> context.getString(R.string.dow_wed)
+            DayOfWeek.THURSDAY -> context.getString(R.string.dow_thu)
+            DayOfWeek.FRIDAY -> context.getString(R.string.dow_fri)
             else -> dateString.takeLast(5)
         }
     } catch (_: Exception) {
@@ -354,4 +369,3 @@ data class DayChartModel(
     val correctCount: Int,
     val isToday: Boolean
 )
-

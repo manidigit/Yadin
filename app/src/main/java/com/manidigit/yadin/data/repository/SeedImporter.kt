@@ -2,6 +2,7 @@ package com.manidigit.yadin.data.repository
 
 import android.content.Context
 import android.util.JsonReader
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.local.database.YadinDatabase
 import androidx.room.withTransaction
 import com.manidigit.yadin.data.local.dao.AchievementDao
@@ -53,7 +54,7 @@ class SeedImporter(
             return@withContext
         }
 
-        onProgress(0.05f, "در حال خواندن بانک واژگان اولیه...")
+        onProgress(0.05f, context.getString(R.string.seed_reading_initial_data))
 
         try {
             val existingConceptIds = conceptDao.getAllConcepts().map { it.id }.toSet()
@@ -182,7 +183,7 @@ class SeedImporter(
             reader.endObject()
             reader.close()
 
-            onProgress(0.35f, "در حال دسته‌بندی موضوعات...")
+            onProgress(0.35f, context.getString(R.string.seed_categorizing_topics))
             val now = System.currentTimeMillis()
             val conceptsNeedingStates = if (existingConceptIds.isEmpty()) {
                 concepts
@@ -265,7 +266,7 @@ class SeedImporter(
                 settingsDao.setSetting(com.manidigit.yadin.data.local.entity.SettingEntity("seedImported", "true"))
             }
 
-            onProgress(1.0f, "آماده‌سازی با موفقیت پایان یافت.")
+            onProgress(1.0f, context.getString(R.string.seed_import_completed))
         } catch (e: Exception) {
             e.printStackTrace()
             ensureDefaultAchievements()

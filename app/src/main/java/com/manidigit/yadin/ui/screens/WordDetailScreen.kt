@@ -20,13 +20,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,18 +36,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
-import com.manidigit.yadin.ui.util.toPersianDigits
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun WordDetailScreen(
@@ -61,23 +63,23 @@ fun WordDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("تأیید حذف واژه", fontWeight = FontWeight.Bold) },
-            text = { Text("آیا از حذف این واژه از کتابخانه و جعبه لایتنر اطمینان دارید؟") },
+            title = { Text(stringResource(R.string.word_delete_dialog_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.word_delete_dialog_msg)) },
             confirmButton = {
-                androidx.compose.material3.TextButton(
+                TextButton(
                     onClick = {
                         showDeleteDialog = false
                         onDelete()
                     }
                 ) {
-                    Text("حذف شود", color = colors.error, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.word_btn_delete), color = colors.error, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("انصراف")
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -90,7 +92,7 @@ fun WordDetailScreen(
                 .background(colors.background),
             contentAlignment = Alignment.Center
         ) {
-            Text("اطلاعات واژه یافت نشد", color = colors.onSurface)
+            Text(stringResource(R.string.word_not_found), color = colors.onSurface)
         }
         return
     }
@@ -123,13 +125,13 @@ fun WordDetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
+                        contentDescription = stringResource(R.string.action_back),
                         tint = colors.onSurface
                     )
                 }
 
                 Text(
-                    text = "جزئیات واژه",
+                    text = stringResource(R.string.word_detail_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -141,7 +143,7 @@ fun WordDetailScreen(
                 ) {
                     if (!word.concept.active) {
                         Text(
-                            text = "غیرفعال (حذف‌شده)",
+                            text = stringResource(R.string.word_status_inactive),
                             color = colors.error,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
@@ -154,7 +156,7 @@ fun WordDetailScreen(
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "حذف",
+                            contentDescription = stringResource(R.string.action_delete),
                             tint = colors.error
                         )
                     }
@@ -176,13 +178,13 @@ fun WordDetailScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "این واژه به سطل زباله منتقل شده است",
+                                text = stringResource(R.string.word_trash_banner_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.error
                             )
                             Text(
-                                text = "در جلسات مرور و آزمون قرار نخواهد گرفت مگر اینکه آن را احیا کنید.",
+                                text = stringResource(R.string.word_trash_banner_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant
                             )
@@ -196,7 +198,7 @@ fun WordDetailScreen(
                                     contentColor = colors.onSuccess
                                 )
                             ) {
-                                Text("احیا و فعال‌سازی", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.word_btn_restore_activate), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -237,7 +239,7 @@ fun WordDetailScreen(
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(colors.surfaceVariant)
                                         .padding(horizontal = 10.dp, vertical = 4.dp)
-                                ) {
+                                 ) {
                                     Text(
                                         text = cat.name,
                                         style = MaterialTheme.typography.bodySmall,
@@ -260,7 +262,7 @@ fun WordDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "ترجمه‌های فارسی:",
+                        text = stringResource(R.string.word_target_translations_header),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
@@ -299,7 +301,7 @@ fun WordDetailScreen(
                     if (!word.sourceContent.note.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "توضیحات و کاربرد:",
+                            text = stringResource(R.string.word_notes_header),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant
                         )
@@ -322,7 +324,7 @@ fun WordDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "وضعیت یادگیری (🇪🇸 اسپانیایی → 🇮🇷 فارسی)",
+                        text = stringResource(R.string.word_learning_normal_header),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
@@ -332,7 +334,7 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("مرحله فعلی:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_current_stage), color = colors.onSurfaceVariant)
                         word.normalLearning?.stage?.let { StageBadge(stage = it) }
                     }
                     Row(
@@ -340,7 +342,7 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("سطح سختی کلمه:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_difficulty_level), color = colors.onSurfaceVariant)
                         word.normalDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
                     }
                     val normCorrect = word.normalDifficulty?.consecutiveCorrect ?: 0
@@ -350,11 +352,11 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("شمارنده پاسخ‌های متوالی:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_streak_counter), color = colors.onSurfaceVariant)
                         val text = when {
-                            normCorrect > 0 -> "✅ ${normCorrect.toPersianDigits()} درست متوالی"
-                            normWrong > 0 -> "❌ ${normWrong.toPersianDigits()} غلط متوالی"
-                            else -> "۰ (بدون تسلسل)"
+                            normCorrect > 0 -> stringResource(R.string.word_streak_correct_fmt, normCorrect.formatDigits())
+                            normWrong > 0 -> stringResource(R.string.word_streak_wrong_fmt, normWrong.formatDigits())
+                            else -> stringResource(R.string.word_streak_none)
                         }
                         Text(
                             text = text,
@@ -367,12 +369,12 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("تاریخ سررسید مرور بعدی:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_due_date), color = colors.onSurfaceVariant)
                         val normalDueText = when {
-                            word.normalLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> "تثبیت‌شده در حافظه دائم"
+                            word.normalLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> stringResource(R.string.word_due_permanent_memory)
                             word.normalLearning?.nextReviewDay != null -> word.normalLearning.nextReviewDay
-                            word.normalLearning != null -> "سررسید امروز"
-                            else -> "در صف مرور قرار نگرفته"
+                            word.normalLearning != null -> stringResource(R.string.word_due_today)
+                            else -> stringResource(R.string.word_not_in_review)
                         }
                         Text(
                             text = normalDueText,
@@ -393,7 +395,7 @@ fun WordDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "وضعیت یادگیری برعکس (🇮🇷 فارسی → 🇪🇸 اسپانیایی)",
+                        text = stringResource(R.string.word_learning_reverse_header),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
@@ -403,7 +405,7 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("مرحله فعلی:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_current_stage), color = colors.onSurfaceVariant)
                         word.reverseLearning?.stage?.let { StageBadge(stage = it) }
                     }
                     Row(
@@ -411,7 +413,7 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("سطح سختی کلمه:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_difficulty_level), color = colors.onSurfaceVariant)
                         word.reverseDifficulty?.current?.let { DifficultyBadge(difficulty = it) }
                     }
                     val revCorrect = word.reverseDifficulty?.consecutiveCorrect ?: 0
@@ -421,11 +423,11 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("شمارنده پاسخ‌های متوالی:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_streak_counter), color = colors.onSurfaceVariant)
                         val text = when {
-                            revCorrect > 0 -> "✅ ${revCorrect.toPersianDigits()} درست متوالی"
-                            revWrong > 0 -> "❌ ${revWrong.toPersianDigits()} غلط متوالی"
-                            else -> "۰ (بدون تسلسل)"
+                            revCorrect > 0 -> stringResource(R.string.word_streak_correct_fmt, revCorrect.formatDigits())
+                            revWrong > 0 -> stringResource(R.string.word_streak_wrong_fmt, revWrong.formatDigits())
+                            else -> stringResource(R.string.word_streak_none)
                         }
                         Text(
                             text = text,
@@ -438,12 +440,12 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("تاریخ سررسید مرور بعدی:", color = colors.onSurfaceVariant)
+                        Text(stringResource(R.string.word_stat_due_date), color = colors.onSurfaceVariant)
                         val reverseDueText = when {
-                            word.reverseLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> "تثبیت‌شده در حافظه دائم"
+                            word.reverseLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> stringResource(R.string.word_due_permanent_memory)
                             word.reverseLearning?.nextReviewDay != null -> word.reverseLearning.nextReviewDay
-                            word.reverseLearning != null -> "سررسید امروز"
-                            else -> "در صف مرور قرار نگرفته"
+                            word.reverseLearning != null -> stringResource(R.string.word_due_today)
+                            else -> stringResource(R.string.word_not_in_review)
                         }
                         Text(
                             text = reverseDueText,
@@ -469,7 +471,7 @@ fun WordDetailScreen(
         ) {
             Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("ویرایش این واژه", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.word_btn_edit), fontWeight = FontWeight.Bold)
         }
     }
 }

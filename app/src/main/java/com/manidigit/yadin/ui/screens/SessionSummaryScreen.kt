@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
@@ -28,15 +27,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun SessionSummaryScreen(
@@ -74,21 +74,21 @@ fun SessionSummaryScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = "جشن پایان جلسه",
+                    contentDescription = stringResource(R.string.summary_celebration_icon),
                     tint = colors.onHero,
                     modifier = Modifier.size(50.dp)
                 )
             }
 
             Text(
-                text = "جلسه مرور به پایان رسید!",
+                text = stringResource(R.string.summary_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
             )
 
             Text(
-                text = if (accuracy >= 80) "عالی بود! واژگان با موفقیت در لایتنر تثبیت شدند." else "تمرین خوبی بود! با تکرار منظم به تسلط کامل می‌رسید.",
+                text = if (accuracy >= 80) stringResource(R.string.summary_congrats_high) else stringResource(R.string.summary_congrats_low),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -104,7 +104,7 @@ fun SessionSummaryScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = "خلاصه عملکرد",
+                    text = stringResource(R.string.summary_performance_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -114,32 +114,32 @@ fun SessionSummaryScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("کل واژگان مرور شده:", color = colors.onSurfaceVariant)
-                    Text("${total.toPersianDigits()} کارت", fontWeight = FontWeight.Bold, color = colors.onSurface)
+                    Text(stringResource(R.string.summary_total_reviewed_label), color = colors.onSurfaceVariant)
+                    Text(stringResource(R.string.summary_cards_count, total.formatDigits()), fontWeight = FontWeight.Bold, color = colors.onSurface)
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("پاسخ‌های صحیح:", color = colors.onSurfaceVariant)
-                    Text(correctCount.toPersianDigits(), fontWeight = FontWeight.Bold, color = colors.success)
+                    Text(stringResource(R.string.summary_correct_count_label), color = colors.onSurfaceVariant)
+                    Text(correctCount.formatDigits(), fontWeight = FontWeight.Bold, color = colors.success)
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("پاسخ‌های نادرست:", color = colors.onSurfaceVariant)
-                    Text(wrongCount.toPersianDigits(), fontWeight = FontWeight.Bold, color = colors.error)
+                    Text(stringResource(R.string.summary_wrong_count_label), color = colors.onSurfaceVariant)
+                    Text(wrongCount.formatDigits(), fontWeight = FontWeight.Bold, color = colors.error)
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("درصد موفقیت:", color = colors.onSurfaceVariant)
-                    Text("${accuracy.toPersianDigits()}٪", fontWeight = FontWeight.Bold, color = colors.primary)
+                    Text(stringResource(R.string.summary_accuracy_label), color = colors.onSurfaceVariant)
+                    Text("${accuracy.formatDigits()}%", fontWeight = FontWeight.Bold, color = colors.primary)
                 }
             }
         }
@@ -161,7 +161,7 @@ fun SessionSummaryScreen(
             ) {
                 Icon(Icons.Default.Home, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.size(8.dp))
-                Text("بازگشت به صفحه اصلی", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.summary_back_home), fontWeight = FontWeight.Bold)
             }
 
             OutlinedButton(
@@ -173,7 +173,7 @@ fun SessionSummaryScreen(
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.size(8.dp))
-                Text("شروع یک جلسه جدید", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.summary_review_again), fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -1,5 +1,10 @@
 package com.manidigit.yadin.ui.screens
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,15 +21,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -40,63 +49,56 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
+import com.manidigit.yadin.domain.algorithm.FileReaders
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.DuplicatePolicy
+import com.manidigit.yadin.domain.model.ImportSummary
 import com.manidigit.yadin.domain.model.ParseResult
 import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-
-import androidx.compose.ui.platform.LocalClipboardManager
-import com.manidigit.yadin.domain.model.ImportSummary
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
-import android.provider.OpenableColumns
-import android.net.Uri
-import com.manidigit.yadin.domain.algorithm.FileReaders
+import com.manidigit.yadin.ui.util.formatDigits
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun ImportScreen(
     parseResult: ParseResult?,
-    categories: List<Category> = emptyList(),
-    isImporting: Boolean,
-    importProgress: Float,
-    importSummary: ImportSummary? = null,
+    categories: List<Category>,
+    isImporting: Boolean = false,
+    importProgress: Float = 0f,
     errorMessage: String? = null,
+    importSummary: ImportSummary? = null,
     onParseText: (String) -> Unit,
     onParseResult: ((ParseResult) -> Unit)? = null,
+    onConfirmImport: (policy: DuplicatePolicy, categoryId: String?) -> Unit,
     onResetParse: (() -> Unit)? = null,
-    onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
-    onConfirmImport: (DuplicatePolicy, String?) -> Unit,
-    onNavigateToReview: (() -> Unit)? = null,
     onGoToLibrary: () -> Unit = {},
+    onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
+    onNavigateToReview: (() -> Unit)? = null,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
-    val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
+
     var fileLoadError by remember { mutableStateOf<String?>(null) }
 
     var inputText by remember { mutableStateOf("") }
@@ -105,22 +107,22 @@ fun ImportScreen(
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
 
-    val sampleText = """
-        amigo: دوست (مذکر)
-        casa: خانه، منزل
-        libro: کتاب
-        feliz: خوشحال، شاد
-    """.trimIndent()
+    val sampleText = listOf(
+        stringResource(R.string.import_sample_amigo),
+        stringResource(R.string.import_sample_casa),
+        stringResource(R.string.import_sample_libro),
+        stringResource(R.string.import_sample_feliz)
+    ).joinToString("\n")
 
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            coroutineScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    withContext(Dispatchers.Main) {
                         fileLoadError = null
                     }
                     val contentResolver = context.contentResolver
@@ -140,7 +142,7 @@ fun ImportScreen(
                             lowerName.endsWith(".xlsx") -> FileReaders.readXlsx(inputStream)
                             else -> FileReaders.readText(inputStream)
                         }
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             if (onParseResult != null) {
                                 onParseResult(result)
                             } else {
@@ -151,8 +153,8 @@ fun ImportScreen(
                         }
                     }
                 } catch (e: Exception) {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        fileLoadError = "خطا در خواندن فایل: ${e.message}"
+                    withContext(Dispatchers.Main) {
+                        fileLoadError = context.getString(R.string.import_err_read_file, e.message ?: "")
                     }
                 }
             }
@@ -174,9 +176,7 @@ fun ImportScreen(
         ) {
             IconButton(
                 onClick = {
-                    if (importSummary != null) {
-                        onResetParse?.invoke()
-                    } else if (parseResult != null && onResetParse != null) {
+                    if (parseResult != null && onResetParse != null) {
                         onResetParse()
                     } else {
                         onBack()
@@ -189,13 +189,13 @@ fun ImportScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "بازگشت",
+                    contentDescription = stringResource(R.string.action_back),
                     tint = colors.onSurface
                 )
             }
 
             Text(
-                text = "ورود متنی واژگان (پارسر هوشمند)",
+                text = stringResource(R.string.import_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -203,7 +203,7 @@ fun ImportScreen(
         }
 
         if (importSummary != null) {
-            // SUCCESS REPORT CARD inside scrollable container
+            // SUCCESS REPORT CARD
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -235,17 +235,17 @@ fun ImportScreen(
                         }
 
                         Text(
-                            text = "گزارش ورود گروهی واژگان",
+                            text = stringResource(R.string.import_summary_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
 
                         Text(
-                            text = "عملیات ورود با موفقیت به پایان رسید و در پایگاه داده ثبت شد.",
+                            text = stringResource(R.string.import_summary_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            textAlign = TextAlign.Center
                         )
 
                         // Stats Summary Grid
@@ -261,30 +261,30 @@ fun ImportScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("کل ردیف‌های پردازش‌شده:", color = colors.onSurfaceVariant)
-                                Text("${importSummary.totalProcessed} واژه", fontWeight = FontWeight.Bold, color = colors.onSurface)
+                                Text(stringResource(R.string.import_total_rows), color = colors.onSurfaceVariant)
+                                Text(stringResource(R.string.library_total_count, importSummary.totalProcessed.formatDigits()), fontWeight = FontWeight.Bold, color = colors.onSurface)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("واژگان جدید افزوده شده:", color = colors.onSurfaceVariant)
-                                Text("${importSummary.addedCount} واژه", fontWeight = FontWeight.Bold, color = colors.success)
+                                Text(stringResource(R.string.import_new_added), color = colors.onSurfaceVariant)
+                                Text(stringResource(R.string.library_total_count, importSummary.addedCount.formatDigits()), fontWeight = FontWeight.Bold, color = colors.success)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("واژگان به‌روزشده یا ادغام‌شده:", color = colors.onSurfaceVariant)
-                                Text("${importSummary.updatedCount} واژه", fontWeight = FontWeight.Bold, color = colors.info)
+                                Text(stringResource(R.string.import_updated_merged), color = colors.onSurfaceVariant)
+                                Text(stringResource(R.string.library_total_count, importSummary.updatedCount.formatDigits()), fontWeight = FontWeight.Bold, color = colors.info)
                             }
                             if (importSummary.skippedCount > 0) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("واژگان تکراری ردشده:", color = colors.onSurfaceVariant)
-                                    Text("${importSummary.skippedCount} واژه", fontWeight = FontWeight.Bold, color = colors.warning)
+                                    Text(stringResource(R.string.import_skipped_duplicates), color = colors.onSurfaceVariant)
+                                    Text(stringResource(R.string.library_total_count, importSummary.skippedCount.formatDigits()), fontWeight = FontWeight.Bold, color = colors.warning)
                                 }
                             }
                             if (!importSummary.categoryName.isNullOrBlank()) {
@@ -292,7 +292,7 @@ fun ImportScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("دسته‌بندی موضوعی:", color = colors.onSurfaceVariant)
+                                    Text(stringResource(R.string.import_category_label), color = colors.onSurfaceVariant)
                                     Text(importSummary.categoryName, fontWeight = FontWeight.Bold, color = colors.primary)
                                 }
                             }
@@ -314,7 +314,7 @@ fun ImportScreen(
                                     .height(48.dp),
                                 shape = RoundedCornerShape(dimensions.cornerMedium)
                             ) {
-                                Text("ورود دسته جدید", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.import_btn_new_batch), fontWeight = FontWeight.Bold)
                             }
 
                             Button(
@@ -328,7 +328,7 @@ fun ImportScreen(
                                     contentColor = colors.onPrimary
                                 )
                             ) {
-                                Text("مشاهده در کتابخانه", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.import_btn_view_library), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -344,12 +344,12 @@ fun ImportScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = "متن واژگان را در کادر زیر وارد کنید (پشتیبانی از فرمت دو نقطه : یا خط تیره - و جداکننده کاما):",
+                    text = stringResource(R.string.import_instructions),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant
                 )
 
-                // Quick Action Bar: Clear & Paste & File Picker & Sample buttons
+                // Quick Action Bar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -364,7 +364,7 @@ fun ImportScreen(
                                     isShowingSample = false
                                 }
                             } catch (e: Exception) {
-                                fileLoadError = "خطا در خواندن کلیپ‌بورد: ${e.message}"
+                                fileLoadError = context.getString(R.string.import_err_clipboard, e.message ?: "")
                             }
                         },
                         modifier = Modifier
@@ -383,7 +383,7 @@ fun ImportScreen(
                             try {
                                 filePickerLauncher.launch(arrayOf("*/*"))
                             } catch (e: Exception) {
-                                fileLoadError = "عدم امکان باز کردن انتخابگر فایل روی این دستگاه: ${e.localizedMessage ?: "برنامه مناسبی یافت نشد"}"
+                                fileLoadError = context.getString(R.string.import_err_file_picker, e.localizedMessage ?: "")
                             }
                         },
                         modifier = Modifier
@@ -394,7 +394,7 @@ fun ImportScreen(
                     ) {
                         Icon(Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("انتخاب فایل", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.import_btn_select_file), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 
                     if (inputText.isNotEmpty()) {
@@ -411,7 +411,7 @@ fun ImportScreen(
                         ) {
                             Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(2.dp))
-                            Text("پاک", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.import_btn_clear), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         OutlinedButton(
@@ -425,7 +425,7 @@ fun ImportScreen(
                             shape = RoundedCornerShape(dimensions.cornerSmall),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                         ) {
-                            Text("نمونه", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.import_btn_sample), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -466,7 +466,7 @@ fun ImportScreen(
                             selectedCategoryId = newId
                         }
                     },
-                    label = "دسته‌بندی موضوعی برای این واژگان (اختیاری)"
+                    label = stringResource(R.string.import_default_category_label)
                 )
 
                 OutlinedTextField(
@@ -479,9 +479,7 @@ fun ImportScreen(
                         .fillMaxWidth()
                         .heightIn(min = 160.dp, max = 280.dp),
                     placeholder = {
-                        Text(
-                            "متن واژگان را اینجا کپی یا بنویسید...\nمثال:\namigo: دوست\ncasa: خانه\nlibro: کتاب"
-                        )
+                        Text(stringResource(R.string.import_text_placeholder))
                     },
                     trailingIcon = {
                         if (inputText.isNotEmpty()) {
@@ -489,7 +487,7 @@ fun ImportScreen(
                                 inputText = ""
                                 isShowingSample = false
                             }) {
-                                Icon(Icons.Default.Clear, contentDescription = "پاک کردن")
+                                Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_clear))
                             }
                         }
                     },
@@ -510,18 +508,18 @@ fun ImportScreen(
                 ) {
                     Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("پردازش و استخراج واژگان", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.import_btn_parse), fontWeight = FontWeight.Bold)
                 }
             }
         } else {
-            // Preview parsed entries: Top Header & Options
+            // Preview parsed entries
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "پیش‌نمایش استخراج (${parseResult.entries.size} مدخل)",
+                    text = stringResource(R.string.import_preview_title, parseResult.entries.size.formatDigits()),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -531,7 +529,7 @@ fun ImportScreen(
                         onClick = onResetParse,
                         shape = RoundedCornerShape(dimensions.cornerSmall)
                     ) {
-                        Text("ویرایش مجدد متن", fontSize = 11.sp)
+                        Text(stringResource(R.string.import_btn_edit_text), fontSize = 11.sp)
                     }
                 }
             }
@@ -546,12 +544,12 @@ fun ImportScreen(
                         selectedCategoryId = newId
                     }
                 },
-                label = "دسته‌بندی موضوعی واژگان واردشده (اختیاری)"
+                label = stringResource(R.string.import_default_category_label)
             )
 
             // Duplicate policy selection
             Text(
-                text = "سیاست برخورد با واژگان تکراری:",
+                text = stringResource(R.string.import_duplicate_policy_label),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.onSurface
@@ -565,13 +563,13 @@ fun ImportScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     PolicyChip(
-                        label = "ادغام (MERGE)",
+                        label = stringResource(R.string.import_policy_merge),
                         isSelected = selectedPolicy == DuplicatePolicy.MERGE,
                         modifier = Modifier.weight(1f),
                         onClick = { selectedPolicy = DuplicatePolicy.MERGE }
                     )
                     PolicyChip(
-                        label = "مدخل جدید (SEPARATE)",
+                        label = stringResource(R.string.import_policy_separate),
                         isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
                         modifier = Modifier.weight(1f),
                         onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
@@ -582,13 +580,13 @@ fun ImportScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     PolicyChip(
-                        label = "صرف‌نظر (SKIP)",
+                        label = stringResource(R.string.import_policy_skip),
                         isSelected = selectedPolicy == DuplicatePolicy.SKIP,
                         modifier = Modifier.weight(1f),
                         onClick = { selectedPolicy = DuplicatePolicy.SKIP }
                     )
                     PolicyChip(
-                        label = "جایگزینی (REPLACE)",
+                        label = stringResource(R.string.import_policy_replace),
                         isSelected = selectedPolicy == DuplicatePolicy.REPLACE,
                         modifier = Modifier.weight(1f),
                         onClick = { selectedPolicy = DuplicatePolicy.REPLACE }
@@ -596,7 +594,7 @@ fun ImportScreen(
                 }
             }
 
-            // Warning Card for discarded lines / parse warnings
+            // Warning Card
             if (parseResult.warnings.isNotEmpty()) {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -617,13 +615,13 @@ fun ImportScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "هشدار و خطوط کنارگذاشته‌شده (${parseResult.warnings.size} مورد):",
+                                text = stringResource(R.string.import_warnings_title, parseResult.warnings.size.formatDigits()),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.warning
                             )
                         }
-                        parseResult.warnings.take(5).forEach { warn ->
+                        for (warn in parseResult.warnings.take(5)) {
                             Text(
                                 text = "• $warn",
                                 style = MaterialTheme.typography.bodySmall,
@@ -632,7 +630,7 @@ fun ImportScreen(
                         }
                         if (parseResult.warnings.size > 5) {
                             Text(
-                                text = "... و ${parseResult.warnings.size - 5} مورد دیگر",
+                                text = stringResource(R.string.import_more_warnings, (parseResult.warnings.size - 5).formatDigits()),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.onSurfaceVariant
                             )
@@ -671,7 +669,7 @@ fun ImportScreen(
                         trackColor = colors.surfaceVariant
                     )
                     Text(
-                        text = "در حال ذخیره‌سازی... ${(importProgress * 100).toInt()}%",
+                        text = stringResource(R.string.import_saving_progress, (importProgress * 100).toInt().formatDigits()),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.primary
                     )
@@ -688,7 +686,7 @@ fun ImportScreen(
                         Icon(Icons.Default.RateReview, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "بازبینی و ویرایش لغات قبل از ذخیره (${parseResult.entries.size} مورد)",
+                            text = stringResource(R.string.import_review_before_save, parseResult.entries.size.formatDigits()),
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -708,7 +706,7 @@ fun ImportScreen(
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("تأیید و ذخیره در پایگاه داده", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.import_btn_confirm_save), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -744,7 +742,7 @@ fun PolicyChip(
             fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             color = if (isSelected) colors.primary else colors.onSurface,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -816,7 +814,7 @@ fun ParsedEntryCard(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = "${(entry.confidence * 100).toInt()}% اطمینان",
+                    text = stringResource(R.string.import_review_confidence, (entry.confidence * 100).toInt().formatDigits()),
                     fontSize = 10.sp,
                     color = colors.onSurfaceVariant
                 )

@@ -1,5 +1,8 @@
 package com.manidigit.yadin.domain.model
 
+import androidx.annotation.StringRes
+import com.manidigit.yadin.R
+
 enum class EntryType {
     WORD,
     PHRASE,
@@ -139,40 +142,40 @@ enum class ImportItemStatus {
 }
 
 enum class AchievementId(
-    val titleRes: String,
-    val descriptionRes: String,
+    @StringRes val titleRes: Int,
+    @StringRes val descriptionRes: Int,
     val iconName: String,
     val category: AchievementCategory,
     val tier: AchievementTier,
     val threshold: Int
 ) {
     // ۱. دایره واژگان (Vocabulary Footprint)
-    FIRST_TEN_WORDS("آشنایی با واژگان", "۱۰ واژه را تمرین کنید", "school", AchievementCategory.VOCABULARY, AchievementTier.BRONZE, 10),
-    VOCABULARY_BUILDER("سازنده واژگان", "۵۰ واژه را با موفقیت تمرین کنید", "auto_stories", AchievementCategory.VOCABULARY, AchievementTier.SILVER, 50),
-    VOCABULARY_MASTER("خزانه‌دار لغات", "۲۰۰ واژه را در چرخه یادگیری تمرین کنید", "library_books", AchievementCategory.VOCABULARY, AchievementTier.GOLD, 200),
-    VOCABULARY_LEGEND("فرهنگ لغت متحرک", "۱,۰۰۰ واژه را وارد تمرین‌های خود کنید", "menu_book", AchievementCategory.VOCABULARY, AchievementTier.PLATINUM, 1000),
+    FIRST_TEN_WORDS(R.string.ach_title_first_ten, R.string.ach_desc_first_ten, "school", AchievementCategory.VOCABULARY, AchievementTier.BRONZE, 10),
+    VOCABULARY_BUILDER(R.string.ach_title_builder, R.string.ach_desc_builder, "auto_stories", AchievementCategory.VOCABULARY, AchievementTier.SILVER, 50),
+    VOCABULARY_MASTER(R.string.ach_title_master, R.string.ach_desc_master, "library_books", AchievementCategory.VOCABULARY, AchievementTier.GOLD, 200),
+    VOCABULARY_LEGEND(R.string.ach_title_legend, R.string.ach_desc_legend, "menu_book", AchievementCategory.VOCABULARY, AchievementTier.PLATINUM, 1000),
 
     // ۲. رگبار و مداومت (Streak Fire)
-    STREAK_3_DAYS("جرقه مداومت", "۳ روز متوالی مرور منظم داشته باشید", "local_fire_department", AchievementCategory.STREAK, AchievementTier.BRONZE, 3),
-    STREAK_7_DAYS("شعله هفتگی", "۷ روز متوالی (یک هفته کامل) مرور کنید", "whatshot", AchievementCategory.STREAK, AchievementTier.SILVER, 7),
-    STREAK_30_DAYS("قهرمان مداومت", "۳۰ روز متوالی مرور بدون وقفه داشته باشید", "military_tech", AchievementCategory.STREAK, AchievementTier.GOLD, 30),
-    STREAK_100_DAYS("اراده پولادین", "۱۰۰ روز متوالی پرچم یادگیری را بالا نگه دارید", "diamond", AchievementCategory.STREAK, AchievementTier.PLATINUM, 100),
+    STREAK_3_DAYS(R.string.ach_title_streak_3, R.string.ach_desc_streak_3, "local_fire_department", AchievementCategory.STREAK, AchievementTier.BRONZE, 3),
+    STREAK_7_DAYS(R.string.ach_title_streak_7, R.string.ach_desc_streak_7, "whatshot", AchievementCategory.STREAK, AchievementTier.SILVER, 7),
+    STREAK_30_DAYS(R.string.ach_title_streak_30, R.string.ach_desc_streak_30, "military_tech", AchievementCategory.STREAK, AchievementTier.GOLD, 30),
+    STREAK_100_DAYS(R.string.ach_title_streak_100, R.string.ach_desc_streak_100, "diamond", AchievementCategory.STREAK, AchievementTier.PLATINUM, 100),
 
     // ۳. تثبیت لایتنر و حافظه دائمی (Deep Retention)
-    LONG_TERM_MEMORY("اولین جوانه‌های تثبیت", "۵ واژه را به مرحله تثبیت دائمی (یادگرفته) برسانید", "neurology", AchievementCategory.RETENTION, AchievementTier.BRONZE, 5),
-    RETENTION_SILVER("ستون‌های حافظه", "۲۵ واژه را به مرحله تثبیت دائمی برسانید", "psychology", AchievementCategory.RETENTION, AchievementTier.SILVER, 25),
-    RETENTION_GOLD("گنجینه پایدار", "۱۰۰ واژه را به مرحله یادگرفته‌شده برسانید", "archive", AchievementCategory.RETENTION, AchievementTier.GOLD, 100),
-    RETENTION_PLATINUM("استاد ماندگاری", "۵۰۰ واژه را در حافظه بلندمدت حک کنید", "workspace_premium", AchievementCategory.RETENTION, AchievementTier.PLATINUM, 500),
+    LONG_TERM_MEMORY(R.string.ach_title_retention_bronze, R.string.ach_desc_retention_bronze, "neurology", AchievementCategory.RETENTION, AchievementTier.BRONZE, 5),
+    RETENTION_SILVER(R.string.ach_title_retention_silver, R.string.ach_desc_retention_silver, "psychology", AchievementCategory.RETENTION, AchievementTier.SILVER, 25),
+    RETENTION_GOLD(R.string.ach_title_retention_gold, R.string.ach_desc_retention_gold, "archive", AchievementCategory.RETENTION, AchievementTier.GOLD, 100),
+    RETENTION_PLATINUM(R.string.ach_title_retention_platinum, R.string.ach_desc_retention_platinum, "workspace_premium", AchievementCategory.RETENTION, AchievementTier.PLATINUM, 500),
 
     // ۴. واژگان سخت و چالش‌برانگیز (Hard Words Conqueror)
-    HARD_MASTER("شکارچی واژه‌های سخت", "۳ واژه خیلی‌سخت را رام کرده و یاد بگیرید", "fitness_center", AchievementCategory.HARD_WORDS, AchievementTier.BRONZE, 3),
-    HARD_SILVER("استاد چالش‌ها", "۱۰ واژه در سطح خیلی‌سخت را تسلیم کنید", "construction", AchievementCategory.HARD_WORDS, AchievementTier.SILVER, 10),
-    HARD_GOLD("حریف کلمات دشوار", "۳۰ واژه خیلی‌سخت را مهار کنید", "psychology", AchievementCategory.HARD_WORDS, AchievementTier.GOLD, 30),
-    HARD_PLATINUM("شکست‌ناپذیر", "۱۰۰ واژه با بالاترین درجه سختی را فتح کنید", "shield", AchievementCategory.HARD_WORDS, AchievementTier.PLATINUM, 100),
+    HARD_MASTER(R.string.ach_title_hard_bronze, R.string.ach_desc_hard_bronze, "fitness_center", AchievementCategory.HARD_WORDS, AchievementTier.BRONZE, 3),
+    HARD_SILVER(R.string.ach_title_hard_silver, R.string.ach_desc_hard_silver, "construction", AchievementCategory.HARD_WORDS, AchievementTier.SILVER, 10),
+    HARD_GOLD(R.string.ach_title_hard_gold, R.string.ach_desc_hard_gold, "psychology", AchievementCategory.HARD_WORDS, AchievementTier.GOLD, 30),
+    HARD_PLATINUM(R.string.ach_title_hard_platinum, R.string.ach_desc_hard_platinum, "shield", AchievementCategory.HARD_WORDS, AchievementTier.PLATINUM, 100),
 
     // ۵. مهارت و تسلط بر کوییز (Quiz Mastery)
-    QUIZ_ACE("دقت در آزمون", "در یک آزمون ۵ سؤالی نمره کامل ۱۰۰٪ بگیرید", "grade", AchievementCategory.QUIZ, AchievementTier.BRONZE, 5),
-    QUIZ_SILVER("نخبه آزمون", "در یک آزمون ۱۰ سؤالی نمره کامل ۱۰۰٪ بگیرید", "emoji_events", AchievementCategory.QUIZ, AchievementTier.SILVER, 10),
-    QUIZ_GOLD("استاد کوییزهای سخت", "در یک آزمون ۲۰ سؤالی نمره کامل ۱۰۰٪ بگیرید", "stars", AchievementCategory.QUIZ, AchievementTier.GOLD, 20),
-    QUIZ_PLATINUM("افسانه سنجش", "در آزمون ۳۰ سؤالی یا بالاتر نمره کامل ۱۰۰٪ کسب کنید", "diamond", AchievementCategory.QUIZ, AchievementTier.PLATINUM, 30)
+    QUIZ_ACE(R.string.ach_title_quiz_bronze, R.string.ach_desc_quiz_bronze, "grade", AchievementCategory.QUIZ, AchievementTier.BRONZE, 5),
+    QUIZ_SILVER(R.string.ach_title_quiz_silver, R.string.ach_desc_quiz_silver, "emoji_events", AchievementCategory.QUIZ, AchievementTier.SILVER, 10),
+    QUIZ_GOLD(R.string.ach_title_quiz_gold, R.string.ach_desc_quiz_gold, "stars", AchievementCategory.QUIZ, AchievementTier.GOLD, 20),
+    QUIZ_PLATINUM(R.string.ach_title_quiz_platinum, R.string.ach_desc_quiz_platinum, "diamond", AchievementCategory.QUIZ, AchievementTier.PLATINUM, 30)
 }

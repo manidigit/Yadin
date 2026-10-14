@@ -4,6 +4,7 @@ import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
+import com.manidigit.yadin.R
 import java.util.Locale
 
 /**
@@ -81,7 +82,7 @@ object TtsManager {
                         isInitialized = false
                         val request = pendingSpeech
                         pendingSpeech = null
-                        val errMsg = "موتور تبدیل متن به گفتار (TTS) آماده نشد."
+                        val errMsg = appContext.getString(R.string.tts_error_not_ready)
                         Log.e(TAG, errMsg)
                         request?.onError?.invoke(errMsg) ?: showToast(appContext, errMsg)
                     }
@@ -102,7 +103,7 @@ object TtsManager {
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 val fallbackResult = engine.setLanguage(Locale.US)
                 val langName = locale.displayLanguage
-                val errMsg = "داده‌های صوتی زبان $langName در دستگاه شما نصب نیست."
+                val errMsg = appContext.getString(R.string.tts_error_lang_missing, langName)
                 Log.w(TAG, "Language $locale not supported. Fallback result: $fallbackResult")
 
                 if (fallbackResult != TextToSpeech.LANG_MISSING_DATA && fallbackResult != TextToSpeech.LANG_NOT_SUPPORTED) {
@@ -112,13 +113,13 @@ object TtsManager {
             } else {
                 val speakResult = engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "yadin_tts_utterance")
                 if (speakResult == TextToSpeech.ERROR) {
-                    val errMsg = "خطا در پخش تلفظ صوتی."
+                    val errMsg = appContext.getString(R.string.tts_error_playback)
                     Log.e(TAG, errMsg)
                     onError?.invoke(errMsg) ?: showToast(appContext, errMsg)
                 }
             }
         } catch (e: Exception) {
-            val errMsg = "خطا در موتور گفتار: ${e.message}"
+            val errMsg = appContext.getString(R.string.tts_error_engine, e.message ?: "")
             Log.e(TAG, "Error during TTS speak", e)
             onError?.invoke(errMsg) ?: showToast(appContext, errMsg)
         }

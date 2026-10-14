@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Quiz
@@ -48,9 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.repository.ReviewFilters
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.Category
@@ -62,23 +62,11 @@ import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.ui.util.formatDigits
 
 private data class ReviewTypeItem(val type: ReviewType, val title: String, val icon: ImageVector)
 private data class DiffItem(val diff: VocabularyDifficulty, val label: String, val color: Color)
 
-/**
- * صفحه تنظیم و سفارشی‌سازی جلسه مرور و تمرینات.
- *
- * امکان تعیین حالت تمرین (پیش‌فرض: آزمون ۴ گزینه‌ای)، منبع واژگان (روزانه، هفتگی، آزاد)،
- * دسته‌بندی موضوعی، فیلتر سطوح دشواری و سقف تعداد کلمات جلسه.
- *
- * @param initialType نوع مرور اولیه
- * @param initialDifficulties فیلتر اولیه سطوح دشواری
- * @param initialMode حالت تمرین اولیه (پیش‌فرض [ReviewMode.QUIZ])
- * @param initialQuizLevel سطح اولیه سختی گزینه‌های کوییز
- * @param initialMaxCards سقف اولیه تعداد کارت‌های جلسه
- */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ReviewSetupScreen(
@@ -99,7 +87,6 @@ fun ReviewSetupScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
-    // حل نقص ISS-106: بارگذاری مقادیر پیش‌فرض کاربر از تنظیمات ذخیره‌شده
     var selectedType by remember(initialType) { mutableStateOf(initialType) }
     var selectedMode by remember(initialMode) { mutableStateOf(initialMode) }
     var selectedQuizLevel by remember(initialQuizLevel) { mutableStateOf(initialQuizLevel) }
@@ -158,14 +145,14 @@ fun ReviewSetupScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "بازگشت",
+                            contentDescription = stringResource(R.string.action_back),
                             tint = colors.onSurface
                         )
                     }
 
                     Column {
                         Text(
-                            text = "تنظیمات مرور و تمرین",
+                            text = stringResource(R.string.review_setup_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -174,7 +161,7 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 1: حالت تمرین (Mode)
+            // Card 1: Practice Mode
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -185,7 +172,7 @@ fun ReviewSetupScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "حالت تمرین",
+                            text = stringResource(R.string.review_setup_mode),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -201,14 +188,14 @@ fun ReviewSetupScreen(
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             ModeSelectButton(
-                                title = "آزمون ۴ گزینه‌ای",
+                                title = stringResource(R.string.review_mode_quiz),
                                 icon = Icons.Default.Quiz,
                                 isSelected = selectedMode == ReviewMode.QUIZ,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.QUIZ }
                             )
                             ModeSelectButton(
-                                title = "فلش‌کارت تعاملی",
+                                title = stringResource(R.string.review_mode_flashcard),
                                 icon = Icons.Default.Style,
                                 isSelected = selectedMode == ReviewMode.FLASHCARD,
                                 modifier = Modifier.weight(1f),
@@ -219,7 +206,7 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 2: منبع واژگان و دسته‌بندی
+            // Card 2: Source & Category
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -230,16 +217,16 @@ fun ReviewSetupScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "منبع واژگان و تکرار فاصله‌دار",
+                            text = stringResource(R.string.review_setup_source_title),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
 
-                        // Category A: چرخه تکرار فاصله‌دار (لایتنر)
+                        // Category A: Leitner Repetition Cycle
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = "چرخه تکرار فاصله‌دار (لایتنر):",
+                                text = stringResource(R.string.review_setup_leitner_cycle),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.onSurfaceVariant
@@ -260,7 +247,7 @@ fun ReviewSetupScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 LeitnerSelectableStageBox(
-                                    title = "روزانه",
+                                    title = stringResource(R.string.stage_daily),
                                     dueCount = dueDaily,
                                     totalCount = totalDaily,
                                     accentColor = colors.primary,
@@ -271,7 +258,7 @@ fun ReviewSetupScreen(
                                 )
 
                                 LeitnerSelectableStageBox(
-                                    title = "هفتگی",
+                                    title = stringResource(R.string.stage_weekly),
                                     dueCount = dueWeekly,
                                     totalCount = totalWeekly,
                                     accentColor = colors.info,
@@ -282,7 +269,7 @@ fun ReviewSetupScreen(
                                 )
 
                                 LeitnerSelectableStageBox(
-                                    title = "ماهانه",
+                                    title = stringResource(R.string.stage_monthly),
                                     dueCount = dueMonthly,
                                     totalCount = totalMonthly,
                                     accentColor = colors.warning,
@@ -294,10 +281,10 @@ fun ReviewSetupScreen(
                             }
                         }
 
-                        // Category B: حالات تکمیلی و مرور آزاد (جداگانه و هم‌سبک با کارت‌ها)
+                        // Category B: Additional & Free Review Modes
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = "حالات تکمیلی و مرور آزاد:",
+                                text = stringResource(R.string.review_setup_additional_modes),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.onSurfaceVariant
@@ -315,7 +302,7 @@ fun ReviewSetupScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 LeitnerSelectableStageBox(
-                                    title = "تصادفی (آزاد)",
+                                    title = stringResource(R.string.review_setup_mode_random),
                                     dueCount = dueRandom,
                                     totalCount = totalRandom,
                                     accentColor = colors.primary,
@@ -326,7 +313,7 @@ fun ReviewSetupScreen(
                                 )
 
                                 LeitnerSelectableStageBox(
-                                    title = "تثبیت‌شده (یادگرفته)",
+                                    title = stringResource(R.string.stage_learned),
                                     dueCount = dueLearned,
                                     totalCount = totalLearned,
                                     accentColor = colors.success,
@@ -344,14 +331,14 @@ fun ReviewSetupScreen(
                                 categories = categories,
                                 selectedCategoryId = selectedCategoryId,
                                 onSelectCategory = { selectedCategoryId = it },
-                                label = "دسته‌بندی موضوعی کلمات"
+                                label = stringResource(R.string.review_setup_category_label)
                             )
                         }
                     }
                 }
             }
 
-            // Card 3: فیلتر دشواری و سقف تعداد
+            // Card 3: Difficulty & Limit Filter
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -362,17 +349,17 @@ fun ReviewSetupScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "فیلتر سطح دشواری واژگان",
+                            text = stringResource(R.string.review_setup_diff_filter),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
 
                         val diffItems = listOf(
-                            DiffItem(VocabularyDifficulty.EASY, "آسان", colors.success),
-                            DiffItem(VocabularyDifficulty.MEDIUM, "متوسط", colors.info),
-                            DiffItem(VocabularyDifficulty.HARD, "سخت", colors.warning),
-                            DiffItem(VocabularyDifficulty.VERY_HARD, "خیلی سخت", colors.error)
+                            DiffItem(VocabularyDifficulty.EASY, stringResource(R.string.difficulty_easy), colors.success),
+                            DiffItem(VocabularyDifficulty.MEDIUM, stringResource(R.string.difficulty_medium), colors.info),
+                            DiffItem(VocabularyDifficulty.HARD, stringResource(R.string.difficulty_hard), colors.warning),
+                            DiffItem(VocabularyDifficulty.VERY_HARD, stringResource(R.string.difficulty_very_hard), colors.error)
                         )
 
                         Row(
@@ -400,10 +387,10 @@ fun ReviewSetupScreen(
                             }
                         }
 
-                        // Quiz level (if Quiz mode)
+                        // Quiz level
                         if (selectedMode == ReviewMode.QUIZ) {
                             Text(
-                                text = "سطح سختی گزینه‌های آزمون",
+                                text = stringResource(R.string.review_setup_quiz_level),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface,
@@ -414,9 +401,9 @@ fun ReviewSetupScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 listOf(
-                                    QuizLevel.EASY to "آسان",
-                                    QuizLevel.MEDIUM to "متوسط",
-                                    QuizLevel.HARD to "سخت"
+                                    QuizLevel.EASY to stringResource(R.string.difficulty_easy),
+                                    QuizLevel.MEDIUM to stringResource(R.string.difficulty_medium),
+                                    QuizLevel.HARD to stringResource(R.string.difficulty_hard)
                                 ).forEach { (lvl, title) ->
                                     val isSelected = (selectedQuizLevel == lvl)
                                     Box(
@@ -441,7 +428,7 @@ fun ReviewSetupScreen(
 
                         // Card limit selector
                         Text(
-                            text = "سقف تعداد واژگان جلسه",
+                            text = stringResource(R.string.review_setup_count),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface,
@@ -463,7 +450,7 @@ fun ReviewSetupScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = limit.toPersianDigits(),
+                                        text = limit.formatDigits(),
                                         fontSize = 12.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                         color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
@@ -485,12 +472,12 @@ fun ReviewSetupScreen(
         val actualSessionCards = minOf(candidateCount, selectedMaxCards)
         val buttonText = if (isReady) {
             if (candidateCount > selectedMaxCards) {
-                "شروع مرور (${actualSessionCards.toPersianDigits()} از ${candidateCount.toPersianDigits()} واژه)"
+                stringResource(R.string.review_setup_start_partial, actualSessionCards.formatDigits(), candidateCount.formatDigits())
             } else {
-                "شروع مرور (${actualSessionCards.toPersianDigits()} واژه)"
+                stringResource(R.string.review_setup_start, actualSessionCards.formatDigits())
             }
         } else {
-            "واژه‌ای با این فیلتر یافت نشد"
+            stringResource(R.string.review_setup_no_cards)
         }
 
         Button(
@@ -621,7 +608,7 @@ private fun LeitnerSelectableStageBox(
                 maxLines = 1
             )
             Text(
-                text = if (dueCount > 0) "${dueCount.toPersianDigits()} آماده" else "مرور شده",
+                text = if (dueCount > 0) stringResource(R.string.home_due_ready, dueCount.formatDigits()) else stringResource(R.string.home_reviewed_done),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (dueCount > 0) accentColor else colors.onSurfaceVariant.copy(alpha = 0.7f),
@@ -629,75 +616,12 @@ private fun LeitnerSelectableStageBox(
                 maxLines = 1
             )
             Text(
-                text = "از ${totalCount.toPersianDigits()} واژه",
+                text = stringResource(R.string.home_of_total_words, totalCount.formatDigits()),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant.copy(alpha = 0.8f),
                 fontSize = 9.5.sp,
                 maxLines = 1
             )
-        }
-    }
-}
-
-@Composable
-private fun ReviewSourceChip(
-    item: ReviewTypeItem,
-    countBadge: String?,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-    val shape = RoundedCornerShape(dimensions.cornerSmall)
-
-    Box(
-        modifier = Modifier
-            .clip(shape)
-            .background(
-                if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.7f)
-            )
-            .border(
-                width = 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.3f),
-                shape = shape
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 7.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = null,
-                tint = if (isSelected) colors.onPrimary else colors.primary,
-                modifier = Modifier.size(15.dp)
-            )
-            Text(
-                text = item.title,
-                fontSize = 12.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) colors.onPrimary else colors.onSurface
-            )
-            if (!countBadge.isNullOrEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(
-                            if (isSelected) colors.onPrimary.copy(alpha = 0.22f) else colors.primary.copy(alpha = 0.12f)
-                        )
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = countBadge,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) colors.onPrimary else colors.primary
-                    )
-                }
-            }
         }
     }
 }
@@ -730,7 +654,7 @@ fun CompactDiffBadge(
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
-                text = count.toPersianDigits(),
+                text = count.formatDigits(),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (isSelected) color else colors.onSurface

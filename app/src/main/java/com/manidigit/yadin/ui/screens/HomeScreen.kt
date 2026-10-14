@@ -48,8 +48,11 @@ import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.ui.components.DifficultyCounterRow
 import com.manidigit.yadin.ui.components.StreakChip
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.R
+import androidx.compose.ui.res.stringResource
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.formatDigits
 import com.manidigit.yadin.ui.util.toPersianDigits
 
 /**
@@ -124,14 +127,14 @@ fun HomeScreen(
 
                     Column {
                         Text(
-                            text = "یادین",
+                            text = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
                         val pairLabel = when (activePair) {
-                            "fa-es" -> "🇮🇷 فارسی ← 🇪🇸 اسپانیایی"
-                            else -> "🇪🇸 اسپانیایی ← 🇮🇷 فارسی"
+                            "fa-es" -> stringResource(R.string.home_lang_pair_fa_es)
+                            else -> stringResource(R.string.home_lang_pair_es_fa)
                         }
                         Text(
                             text = pairLabel,
@@ -172,7 +175,7 @@ fun HomeScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "خلاصه وضعیت واژگان",
+                                text = stringResource(R.string.home_vocab_summary),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -186,28 +189,28 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         VocabStatTile(
-                            title = "کل کلمات",
+                            title = stringResource(R.string.home_total_words),
                             count = totalWords,
                             icon = Icons.Default.Layers,
                             accentColor = colors.primary,
                             modifier = Modifier.weight(1f)
                         )
                         VocabStatTile(
-                            title = "تمرین‌شده‌ها",
+                            title = stringResource(R.string.home_practiced_words),
                             count = practicedCount,
                             icon = Icons.Default.Visibility,
                             accentColor = colors.accentPurple,
                             modifier = Modifier.weight(1f)
                         )
                         VocabStatTile(
-                            title = "تمرین‌نشده",
+                            title = stringResource(R.string.home_unpracticed_words),
                             count = unpracticedCount,
                             icon = Icons.Default.VisibilityOff,
                             accentColor = colors.warning, // Amber/Orange
                             modifier = Modifier.weight(1f)
                         )
                         VocabStatTile(
-                            title = "یادگرفته‌ها",
+                            title = stringResource(R.string.home_mastered_words),
                             count = learnedCount,
                             icon = Icons.Default.CheckCircle,
                             accentColor = colors.success, // Emerald Green
@@ -244,7 +247,7 @@ fun HomeScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "مراحل تثبیت حافظه لایتنر",
+                                text = stringResource(R.string.home_leitner_box),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -257,7 +260,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         LeitnerStageBox(
-                            title = "روزانه",
+                            title = stringResource(R.string.stage_daily),
                             totalCount = statistics.dailyStageCount,
                             dueCount = statistics.dueDailyCount,
                             accentColor = colors.primary,
@@ -267,7 +270,7 @@ fun HomeScreen(
                         )
 
                         LeitnerStageBox(
-                            title = "هفتگی",
+                            title = stringResource(R.string.stage_weekly),
                             totalCount = statistics.weeklyStageCount,
                             dueCount = statistics.dueWeeklyCount,
                             accentColor = colors.info,
@@ -277,7 +280,7 @@ fun HomeScreen(
                         )
 
                         LeitnerStageBox(
-                            title = "ماهانه",
+                            title = stringResource(R.string.stage_monthly),
                             totalCount = statistics.monthlyStageCount,
                             dueCount = statistics.dueMonthlyCount,
                             accentColor = colors.warning,
@@ -287,7 +290,7 @@ fun HomeScreen(
                         )
 
                         LeitnerStageBox(
-                            title = "تثبیت‌شده",
+                            title = stringResource(R.string.stage_learned),
                             totalCount = statistics.learnedStageCount,
                             dueCount = statistics.availableLearnedCount,
                             accentColor = colors.success,
@@ -321,7 +324,7 @@ fun HomeScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "طیف دشواری واژگان",
+                            text = stringResource(R.string.home_difficulty_spectrum),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -379,7 +382,7 @@ private fun VocabStatTile(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = count.toPersianDigits(),
+                text = count.formatDigits(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = accentColor,
@@ -445,7 +448,7 @@ private fun LeitnerStageBox(
                 maxLines = 1
             )
             Text(
-                text = if (dueCount > 0) "${dueCount.toPersianDigits()} آماده" else "مرور شده",
+                text = if (dueCount > 0) stringResource(R.string.home_due_ready, dueCount.formatDigits()) else stringResource(R.string.home_reviewed_done),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (dueCount > 0) accentColor else colors.onSurfaceVariant.copy(alpha = 0.7f),
@@ -453,7 +456,7 @@ private fun LeitnerStageBox(
                 maxLines = 1
             )
             Text(
-                text = "از ${totalCount.toPersianDigits()} واژه",
+                text = stringResource(R.string.home_of_total_words, totalCount.formatDigits()),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant.copy(alpha = 0.8f),
                 fontSize = 9.5.sp,

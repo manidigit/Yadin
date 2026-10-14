@@ -15,13 +15,12 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -31,7 +30,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -52,16 +50,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.manidigit.yadin.domain.model.AuditActionDetail
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.AuditActionType
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.LibraryAuditReport
@@ -74,6 +71,7 @@ import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun LibraryScreen(
@@ -140,20 +138,20 @@ fun LibraryScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
+                        contentDescription = stringResource(R.string.action_back),
                         tint = colors.onSurface
                     )
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (showOnlyInactive) "سطل بازیافت (واژگان غیرفعال)" else "کتابخانه واژگان",
+                        text = if (showOnlyInactive) stringResource(R.string.library_trash_title) else stringResource(R.string.library_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "${words.size} واژه بارگذاری‌شده (اسکرول نامحدود)",
+                        text = stringResource(R.string.library_loaded_words_count, words.size.formatDigits()),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -167,12 +165,12 @@ fun LibraryScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "پالایش و ادغام هوشمند",
+                            contentDescription = stringResource(R.string.library_audit_btn),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "پالایش و ادغام",
+                            text = stringResource(R.string.library_audit_btn_text),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -187,14 +185,14 @@ fun LibraryScreen(
                 value = searchQuery,
                 onValueChange = onSearchChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("جستجو در واژه‌ها، ترجمه و یادداشت...") },
+                placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null, tint = colors.onSurfaceVariant)
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { onSearchChange("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = "پاک کردن", tint = colors.onSurfaceVariant)
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_clear), tint = colors.onSurfaceVariant)
                         }
                     }
                 },
@@ -205,59 +203,72 @@ fun LibraryScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // 3-Combobox Compact Filter Toolbar (وضعیت، مرحله مرور، سطح سختی)
+            val statusActiveLabel = stringResource(R.string.filter_status_active)
+            val statusTrashLabel = stringResource(R.string.filter_status_trash)
+            val stageAllLabel = stringResource(R.string.stage_all)
+            val stageDailyLabel = stringResource(R.string.stage_daily)
+            val stageWeeklyLabel = stringResource(R.string.stage_weekly)
+            val stageMonthlyLabel = stringResource(R.string.stage_monthly)
+            val stageLearnedLabel = stringResource(R.string.stage_learned)
+            val diffAllLabel = stringResource(R.string.difficulty_all)
+            val diffEasyLabel = stringResource(R.string.diff_easy)
+            val diffMedLabel = stringResource(R.string.diff_medium)
+            val diffHardLabel = stringResource(R.string.diff_hard)
+            val diffVeryHardLabel = stringResource(R.string.diff_very_hard)
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Combobox 1: وضعیت (فعال / سطل زباله)
+                // Combobox 1: Status
                 LibraryFilterDropdown(
-                    label = "وضعیت",
-                    selectedOption = if (showOnlyInactive) "سطل زباله" else "واژگان فعال",
+                    label = stringResource(R.string.filter_status),
+                    selectedOption = if (showOnlyInactive) statusTrashLabel else statusActiveLabel,
                     options = listOf(
-                        "واژگان فعال" to { onInactiveFilterToggle(false) },
-                        "سطل زباله" to { onInactiveFilterToggle(true) }
+                        statusActiveLabel to { onInactiveFilterToggle(false) },
+                        statusTrashLabel to { onInactiveFilterToggle(true) }
                     ),
                     modifier = Modifier.weight(1f)
                 )
 
-                // Combobox 2: مرحله مرور (لایتنر)
+                // Combobox 2: Stage
                 val currentStageLabel = when (selectedStage) {
-                    Stage.DAILY -> "روزانه"
-                    Stage.WEEKLY -> "هفتگی"
-                    Stage.MONTHLY -> "ماهانه"
-                    Stage.LEARNED -> "تثبیت‌شده"
-                    null -> "همه مراحل"
+                    Stage.DAILY -> stageDailyLabel
+                    Stage.WEEKLY -> stageWeeklyLabel
+                    Stage.MONTHLY -> stageMonthlyLabel
+                    Stage.LEARNED -> stageLearnedLabel
+                    null -> stageAllLabel
                 }
                 LibraryFilterDropdown(
-                    label = "مرحله مرور",
+                    label = stringResource(R.string.filter_stage),
                     selectedOption = currentStageLabel,
                     options = listOf(
-                        "همه مراحل" to { onStageFilterChange(null) },
-                        "روزانه" to { onStageFilterChange(Stage.DAILY) },
-                        "هفتگی" to { onStageFilterChange(Stage.WEEKLY) },
-                        "ماهانه" to { onStageFilterChange(Stage.MONTHLY) },
-                        "تثبیت‌شده" to { onStageFilterChange(Stage.LEARNED) }
+                        stageAllLabel to { onStageFilterChange(null) },
+                        stageDailyLabel to { onStageFilterChange(Stage.DAILY) },
+                        stageWeeklyLabel to { onStageFilterChange(Stage.WEEKLY) },
+                        stageMonthlyLabel to { onStageFilterChange(Stage.MONTHLY) },
+                        stageLearnedLabel to { onStageFilterChange(Stage.LEARNED) }
                     ),
                     modifier = Modifier.weight(1f)
                 )
 
-                // Combobox 3: سطح سختی
+                // Combobox 3: Difficulty
                 val currentDiffLabel = when (selectedDifficulty) {
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> "آسان"
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> "متوسط"
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> "سخت"
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
-                    null -> "همه سختی‌ها"
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> diffEasyLabel
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> diffMedLabel
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> diffHardLabel
+                    com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> diffVeryHardLabel
+                    null -> diffAllLabel
                 }
                 LibraryFilterDropdown(
-                    label = "سطح سختی",
+                    label = stringResource(R.string.filter_difficulty),
                     selectedOption = currentDiffLabel,
                     options = listOf(
-                        "همه سختی‌ها" to { onDifficultyFilterChange(null) },
-                        "آسان" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY) },
-                        "متوسط" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM) },
-                        "سخت" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD) },
-                        "خیلی سخت" to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD) }
+                        diffAllLabel to { onDifficultyFilterChange(null) },
+                        diffEasyLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY) },
+                        diffMedLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM) },
+                        diffHardLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD) },
+                        diffVeryHardLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD) }
                     ),
                     modifier = Modifier.weight(1f)
                 )
@@ -271,7 +282,7 @@ fun LibraryScreen(
                     categories = categories,
                     selectedCategoryId = selectedCategory,
                     onSelectCategory = { onCategoryFilterChange(it) },
-                    label = "دسته‌بندی موضوعی کلمات",
+                    label = stringResource(R.string.category_label),
                     onAddNewCategory = onAddNewCategory,
                     onEditCategory = onEditCategory,
                     onDeleteCategory = onDeleteCategory
@@ -289,7 +300,7 @@ fun LibraryScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (showOnlyInactive) "هیچ واژه غیرفعالی در سطل بازیافت وجود ندارد" else "هیچ واژه‌ای با این مشخصات یافت نشد",
+                        text = if (showOnlyInactive) stringResource(R.string.library_empty_trash) else stringResource(R.string.library_empty_search),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant
                     )
@@ -321,7 +332,7 @@ fun LibraryScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (isLoadingMore) {
-                                    androidx.compose.material3.CircularProgressIndicator(
+                                    CircularProgressIndicator(
                                         modifier = Modifier.size(28.dp),
                                         color = colors.primary,
                                         strokeWidth = 3.dp
@@ -331,7 +342,7 @@ fun LibraryScreen(
                                         onClick = onLoadMore,
                                         shape = RoundedCornerShape(dimensions.cornerMedium)
                                     ) {
-                                        Text("بارگذاری موارد بیشتر...")
+                                        Text(stringResource(R.string.library_load_more))
                                     }
                                 }
                             }
@@ -355,10 +366,10 @@ fun LibraryScreen(
             contentColor = colors.onPrimary,
             shape = CircleShape
         ) {
-            Icon(Icons.Default.Add, contentDescription = "افزودن واژه جدید")
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.library_add_word))
         }
 
-        // دیالوگ انتخاب شیوه افزودن واژه (تکی یا گروهی)
+        // Dialog for adding single or batch
         if (showAddOptionsDialog) {
             AddWordChoiceDialog(
                 onDismiss = { showAddOptionsDialog = false },
@@ -373,7 +384,7 @@ fun LibraryScreen(
             )
         }
 
-        // دیالوگ بررسی، پالایش، ادغام واژگان تکراری و رفرش
+        // Dialog for audit & merge
         if (showAuditDialog) {
             LibraryAuditDialog(
                 isAuditing = isAuditing,
@@ -390,77 +401,20 @@ fun LibraryScreen(
 }
 
 @Composable
-fun FilterChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    indicatorColor: Color? = null
-) {
-    val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-    val shape = RoundedCornerShape(dimensions.cornerSmall)
-
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(if (isSelected) colors.primary else colors.surfaceVariant.copy(alpha = 0.5f))
-            .border(
-                width = 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.25f),
-                shape = shape
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            if (indicatorColor != null) {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .clip(CircleShape)
-                        .background(indicatorColor)
-                )
-            }
-            Text(
-                text = label,
-                color = if (isSelected) colors.onPrimary else colors.onSurface,
-                fontSize = 12.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-            )
-        }
-    }
-}
-
-private fun getLanguageFlag(langCode: String?): String {
-    return when (langCode?.lowercase()) {
-        "es", "spa", "spanish" -> "🇪🇸"
-        "fa", "fas", "per", "persian" -> "🇮🇷"
-        "en", "eng", "english" -> "🇬🇧"
-        "fr", "fra", "french" -> "🇫🇷"
-        "de", "deu", "german" -> "🇩🇪"
-        "it", "ita", "italian" -> "🇮🇹"
-        "ar", "ara", "arabic" -> "🇸🇦"
-        "ru", "rus", "russian" -> "🇷🇺"
-        else -> "🇪🇸"
-    }
-}
-
-@Composable
 fun WordItemCard(
     word: WordDetail,
-    direction: com.manidigit.yadin.domain.model.CardDirection = com.manidigit.yadin.domain.model.CardDirection.NORMAL,
+    direction: com.manidigit.yadin.domain.model.CardDirection,
     onClick: () -> Unit,
     onReactivate: (() -> Unit)? = null
 ) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
 
-    val sourceFlag = getLanguageFlag(word.sourceContent.languageCode)
-    val targetFlag = "🇮🇷"
+    val (sourceFlag, targetFlag) = if (direction == com.manidigit.yadin.domain.model.CardDirection.NORMAL) {
+        "🇪🇸" to "🇮🇷"
+    } else {
+        "🇮🇷" to "🇪🇸"
+    }
 
     val activeLearning = if (direction == com.manidigit.yadin.domain.model.CardDirection.NORMAL) {
         word.normalLearning
@@ -475,33 +429,32 @@ fun WordItemCard(
     }
 
     YadinCard(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(dimensions.cornerMedium))
+            .clickable(onClick = onClick),
         backgroundColor = colors.surface
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                // Source Row with Flag & Word & Badges
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.weight(1f, fill = false)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        // Country flag before source word
                         Text(
                             text = sourceFlag,
-                            fontSize = 16.sp
+                            fontSize = 14.sp
                         )
                         Text(
                             text = word.sourceContent.text,
@@ -517,7 +470,7 @@ fun WordItemCard(
                     ) {
                         if (!word.concept.active) {
                             Text(
-                                text = "حذف‌شده",
+                                text = stringResource(R.string.word_status_deleted),
                                 color = colors.error,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
@@ -535,7 +488,7 @@ fun WordItemCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Target Translation with Iranian Flag
+                // Target Translation
                 val trans = word.targetContents.joinToString("، ") { it.text }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -546,7 +499,7 @@ fun WordItemCard(
                         fontSize = 14.sp
                     )
                     Text(
-                        text = trans.ifEmpty { "بدون ترجمه" },
+                        text = trans.ifEmpty { stringResource(R.string.word_no_translation) },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.primary,
                         fontWeight = FontWeight.SemiBold
@@ -572,11 +525,11 @@ fun WordItemCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (!word.concept.active && onReactivate != null) {
-                    androidx.compose.material3.TextButton(
+                    TextButton(
                         onClick = onReactivate,
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Text("احیا", color = colors.success, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.action_restore), color = colors.success, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
                 SpeakButton(text = word.sourceContent.text, languageCode = word.sourceContent.languageCode)
@@ -607,7 +560,7 @@ fun AddWordChoiceDialog(
                     tint = colors.primary
                 )
                 Text(
-                    text = "افزودن واژه به کتابخانه",
+                    text = stringResource(R.string.library_add_choice_title),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -619,12 +572,12 @@ fun AddWordChoiceDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "شیوه افزودن واژگان را انتخاب کنید:",
+                    text = stringResource(R.string.library_add_choice_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant
                 )
 
-                // گزینه ۱: افزودن تکی
+                // Single Add Option
                 YadinCard(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -654,13 +607,13 @@ fun AddWordChoiceDialog(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "افزودن تکی واژه",
+                                text = stringResource(R.string.library_add_single_title),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleSmall,
                                 color = colors.onSurface
                             )
                             Text(
-                                text = "ورود دستی یک لغت با ترجمه‌ها، دسته‌بندی و یادداشت",
+                                text = stringResource(R.string.library_add_single_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 fontSize = 11.sp
@@ -669,7 +622,7 @@ fun AddWordChoiceDialog(
                     }
                 }
 
-                // گزینه ۲: افزودن گروهی
+                // Batch Import Option
                 YadinCard(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -699,13 +652,13 @@ fun AddWordChoiceDialog(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "افزودن گروهی واژگان",
+                                text = stringResource(R.string.library_add_batch_title),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleSmall,
                                 color = colors.onSurface
                             )
                             Text(
-                                text = "ورود دسته‌ای از متن کپی‌شده، فایل متنی، اکسل، یا فایل پشتیبان",
+                                text = stringResource(R.string.library_add_batch_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 fontSize = 11.sp
@@ -718,7 +671,7 @@ fun AddWordChoiceDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("انصراف")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -750,7 +703,7 @@ fun LibraryAuditDialog(
                     tint = colors.primary
                 )
                 Text(
-                    text = "بررسی، پالایش و ادغام واژگان",
+                    text = stringResource(R.string.audit_title),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -778,7 +731,7 @@ fun LibraryAuditDialog(
                             modifier = Modifier.size(36.dp)
                         )
                         Text(
-                            text = "در حال بررسی واژگان، ادغام تکراری‌ها و پالایش یادداشت‌ها...",
+                            text = stringResource(R.string.audit_in_progress),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.onSurface,
                             fontWeight = FontWeight.SemiBold
@@ -795,7 +748,7 @@ fun LibraryAuditDialog(
                         }
                     }
                 } else if (auditReport != null) {
-                    // کارت آمار نتیجه
+                    // Result Summary Card
                     YadinCard(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier
@@ -804,7 +757,7 @@ fun LibraryAuditDialog(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "گزارش نتیجه پالایش و ادغام:",
+                                text = stringResource(R.string.audit_result_title),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleSmall,
                                 color = colors.onSurface
@@ -813,29 +766,29 @@ fun LibraryAuditDialog(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("کل واژگان بررسی‌شده:", fontSize = 12.sp, color = colors.onSurfaceVariant)
-                                Text("${auditReport.totalScanned} واژه", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)
+                                Text(stringResource(R.string.audit_total_scanned), fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text(stringResource(R.string.library_total_count, auditReport.totalScanned.formatDigits()), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("واژگان تکراری ادغام‌شده:", fontSize = 12.sp, color = colors.onSurfaceVariant)
-                                Text("${auditReport.mergedCount} مورد", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.primary)
+                                Text(stringResource(R.string.audit_merged_count), fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text(stringResource(R.string.library_total_count, auditReport.mergedCount.formatDigits()), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.primary)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("واژگان پالایش‌شده (پرانتز و علائم):", fontSize = 12.sp, color = colors.onSurfaceVariant)
-                                Text("${auditReport.cleanedCount} مورد", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.success)
+                                Text(stringResource(R.string.audit_cleaned_count), fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text(stringResource(R.string.library_total_count, auditReport.cleanedCount.formatDigits()), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.success)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("تعداد خالص نهایی در کتابخانه:", fontSize = 12.sp, color = colors.onSurfaceVariant)
-                                Text("${auditReport.totalRemaining} واژه", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)
+                                Text(stringResource(R.string.audit_remaining_count), fontSize = 12.sp, color = colors.onSurfaceVariant)
+                                Text(stringResource(R.string.library_total_count, auditReport.totalRemaining.formatDigits()), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)
                             }
                         }
                     }
@@ -852,18 +805,22 @@ fun LibraryAuditDialog(
                         ) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success)
                             Text(
-                                text = "تمامی واژگان کتابخانه بررسی شدند و هیچ مورد تکراری یا نیازمند پالایش یافت نشد. کتابخانه کاملاً مرتب و استاندارد است.",
+                                text = stringResource(R.string.audit_no_issues),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurface
                             )
                         }
                     } else {
                         Text(
-                            text = "جزئیات اصلاحات و ادغام‌های انجام‌شده (${auditReport.actions.size} مورد):",
+                            text = stringResource(R.string.audit_actions_detail, auditReport.actions.size.formatDigits()),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
+                        val mergedActionLabel = stringResource(R.string.audit_action_merged)
+                        val cleanedActionLabel = stringResource(R.string.audit_action_cleaned)
+                        val noteActionLabel = stringResource(R.string.audit_action_note)
+
                         auditReport.actions.take(30).forEach { act ->
                             Column(
                                 modifier = Modifier
@@ -878,9 +835,9 @@ fun LibraryAuditDialog(
                                 ) {
                                     Text(
                                         text = when (act.actionType) {
-                                            AuditActionType.MERGED -> "ادغام تکراری"
-                                            AuditActionType.CLEANED -> "پالایش کاراکتر"
-                                            AuditActionType.NOTE_EXTRACTED -> "انتقال به یادداشت"
+                                            AuditActionType.MERGED -> mergedActionLabel
+                                            AuditActionType.CLEANED -> cleanedActionLabel
+                                            AuditActionType.NOTE_EXTRACTED -> noteActionLabel
                                         },
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
@@ -910,14 +867,9 @@ fun LibraryAuditDialog(
                         }
                     }
                 } else {
-                    // توضیحات اولیه قبل از اجرا
+                    // Initial Instructions
                     Text(
-                        text = "این عملیات تمامی واژگان کتابخانه را به طور هوشمند بررسی و یکپارچه می‌کند:\n\n" +
-                                "• شناسایی و ادغام (Merge) کلیه واژه‌های تکراری با حفظ بالاترین مرحله لایتنر و ترکیب تمام ترجمه‌ها\n" +
-                                "• انتقال کاراکترهای اضافی، پرانتزها و توضیحات چسبیده به واژه به بخش یادداشت‌ها\n" +
-                                "• جداسازی ترجمه‌های چسبیده با علامت‌های دوطرفه (:، -، =)\n" +
-                                "• حذف شماره‌گذاری‌های آغازین، نشانه‌ها و گیومه‌های زائد\n" +
-                                "• رفرش و به‌روزرسانی کامل پایگاه داده کتابخانه",
+                        text = stringResource(R.string.audit_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                         lineHeight = 20.sp
@@ -932,14 +884,14 @@ fun LibraryAuditDialog(
                         onClick = onRunAudit,
                         shape = RoundedCornerShape(dimensions.cornerMedium)
                     ) {
-                        Text("شروع بررسی و ادغام هوشمند")
+                        Text(stringResource(R.string.audit_btn_start))
                     }
                 } else {
                     Button(
                         onClick = onDismiss,
                         shape = RoundedCornerShape(dimensions.cornerMedium)
                     ) {
-                        Text("تأیید و بستن")
+                        Text(stringResource(R.string.action_confirm_close))
                     }
                 }
             }
@@ -948,11 +900,11 @@ fun LibraryAuditDialog(
             if (!isAuditing) {
                 if (auditReport != null) {
                     TextButton(onClick = onRunAudit) {
-                        Text("بررسی مجدد")
+                        Text(stringResource(R.string.audit_btn_retry))
                     }
                 } else {
                     TextButton(onClick = onDismiss) {
-                        Text("انصراف")
+                        Text(stringResource(R.string.action_cancel))
                     }
                 }
             }

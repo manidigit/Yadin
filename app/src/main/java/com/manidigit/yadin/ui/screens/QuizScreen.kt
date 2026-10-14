@@ -49,10 +49,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.QuizQuestion
 import com.manidigit.yadin.ui.components.DifficultyBadge
@@ -61,7 +63,7 @@ import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun QuizScreen(
@@ -81,7 +83,6 @@ fun QuizScreen(
     var showHelpDialog by remember { mutableStateOf(false) }
     var showExitConfirmDialog by remember { mutableStateOf(false) }
 
-    // Intercept hardware back button to show exit confirmation
     androidx.activity.compose.BackHandler {
         showExitConfirmDialog = true
     }
@@ -93,7 +94,7 @@ fun QuizScreen(
                 .background(colors.background),
             contentAlignment = Alignment.Center
         ) {
-            Text("سؤالی برای نمایش وجود ندارد", color = colors.onSurface)
+            Text(stringResource(R.string.quiz_empty_title), color = colors.onSurface)
         }
         return
     }
@@ -104,7 +105,6 @@ fun QuizScreen(
 
     val scrollState = rememberScrollState()
 
-    // Auto reset scroll to top on question change, and auto-scroll down on answer selection
     LaunchedEffect(currentIndex) {
         scrollState.scrollTo(0)
     }
@@ -121,7 +121,7 @@ fun QuizScreen(
             .background(colors.background)
             .padding(dimensions.screenPadding)
     ) {
-        // Top Header (Fixed at top)
+        // Top Header
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -137,13 +137,13 @@ fun QuizScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "خروج از آزمون",
+                        contentDescription = stringResource(R.string.quiz_exit_confirm_title),
                         tint = colors.onSurface
                     )
                 }
 
                 Text(
-                    text = "سؤال ${(currentIndex + 1).toPersianDigits()} از ${questions.size.toPersianDigits()}",
+                    text = stringResource(R.string.quiz_question_progress, (currentIndex + 1).formatDigits(), questions.size.formatDigits()),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -168,8 +168,8 @@ fun QuizScreen(
             // Question review & navigation strip
             LazyRow(
                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 2.dp),
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(questions.size, key = { idx -> questions[idx].conceptId }) { idx ->
@@ -205,7 +205,7 @@ fun QuizScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = (idx + 1).toPersianDigits(),
+                            text = (idx + 1).formatDigits(),
                             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
                             fontSize = 11.sp,
                             color = textColor
@@ -217,7 +217,7 @@ fun QuizScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Scrollable Question & Options Content (occupies available middle space)
+        // Scrollable Question & Options Content
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -243,7 +243,6 @@ fun QuizScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Optional Category Badge
                         if (showCategory && q.categoryName != null) {
                             Box(
                                 modifier = Modifier
@@ -261,12 +260,10 @@ fun QuizScreen(
                             Spacer(modifier = Modifier.size(1.dp))
                         }
 
-                        // Action Controls: Speech + Help/Note Button
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Help / Note Button
                             IconButton(
                                 onClick = { showHelpDialog = true },
                                 modifier = Modifier
@@ -276,7 +273,7 @@ fun QuizScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                    contentDescription = "راهنما و یادداشت واژه",
+                                    contentDescription = stringResource(R.string.quiz_help_tooltip),
                                     tint = colors.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -287,7 +284,6 @@ fun QuizScreen(
                         }
                     }
 
-                    // Responsive typography based on text length
                     val promptStyle = when {
                         q.promptText.length > 90 -> MaterialTheme.typography.titleMedium
                         q.promptText.length > 45 -> MaterialTheme.typography.titleLarge
@@ -304,7 +300,7 @@ fun QuizScreen(
                     )
 
                     Text(
-                        text = "ترجمه مناسب کدام است؟",
+                        text = stringResource(R.string.quiz_select_answer),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -312,7 +308,6 @@ fun QuizScreen(
             }
 
             // 4 Options Grid/List
-            val correctOptionText = q.options.getOrNull(q.correctIndex)?.text ?: q.correctAnswer
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -371,14 +366,14 @@ fun QuizScreen(
                                 if (isCorrect) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "صحیح",
+                                        contentDescription = stringResource(R.string.quiz_correct_badge),
                                         tint = colors.success,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 } else if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "غلط",
+                                        contentDescription = stringResource(R.string.quiz_wrong_badge),
                                         tint = colors.error,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -394,7 +389,7 @@ fun QuizScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Navigation Buttons (Always Visible & Pinned at Bottom - حل نقص ISS-68)
+        // Navigation Buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -422,12 +417,12 @@ fun QuizScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "سؤال قبلی",
+                        contentDescription = stringResource(R.string.quiz_previous_question),
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "قبلی",
+                        text = stringResource(R.string.quiz_previous),
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
@@ -454,9 +449,9 @@ fun QuizScreen(
                 ) {
                     Text(
                         text = when {
-                            !hasAnswered -> "انتخاب گزینه"
-                            currentIndex + 1 < questions.size -> "سؤال بعدی"
-                            else -> "مشاهده نتیجه آزمون"
+                            !hasAnswered -> stringResource(R.string.quiz_select_option_hint)
+                            currentIndex + 1 < questions.size -> stringResource(R.string.quiz_next_question)
+                            else -> stringResource(R.string.quiz_finish)
                         },
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
@@ -481,7 +476,7 @@ fun QuizScreen(
             confirmButton = {
                 TextButton(onClick = { showHelpDialog = false }) {
                     Text(
-                        text = "بستن",
+                        text = stringResource(R.string.action_close),
                         color = colors.primary,
                         fontWeight = FontWeight.Bold
                     )
@@ -498,7 +493,7 @@ fun QuizScreen(
                         tint = colors.warning
                     )
                     Text(
-                        text = "راهنما و توضیحات واژه",
+                        text = stringResource(R.string.quiz_hint_dialog_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
@@ -520,7 +515,7 @@ fun QuizScreen(
                     if (!q.note.isNullOrBlank()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = "یادداشت و نکات گرامری:",
+                                text = stringResource(R.string.quiz_grammar_notes),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.onSurfaceVariant
@@ -533,7 +528,7 @@ fun QuizScreen(
                         }
                     } else {
                         Text(
-                            text = "یادداشت اختصاصی برای این واژه ثبت نشده است.",
+                            text = stringResource(R.string.quiz_no_notes),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant
                         )
@@ -545,7 +540,7 @@ fun QuizScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "دسته‌بندی موضوعی:",
+                                text = stringResource(R.string.quiz_category_label),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.onSurfaceVariant
                             )
@@ -564,20 +559,19 @@ fun QuizScreen(
         )
     }
 
-    // دیالوگ هشدار تأیید خروج از آزمون (حل نقص ISS-113)
     if (showExitConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showExitConfirmDialog = false },
             title = {
                 Text(
-                    text = "خروج از آزمون",
+                    text = stringResource(R.string.quiz_exit_confirm_title),
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
                 )
             },
             text = {
                 Text(
-                    text = "آیا مطمئن هستید که می‌خواهید از آزمون خارج شوید؟ پاسخ‌های ثبت‌نشده در این نشست ذخیره نخواهند شد.",
+                    text = stringResource(R.string.quiz_exit_confirm_msg),
                     color = colors.onSurfaceVariant
                 )
             },
@@ -589,12 +583,12 @@ fun QuizScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.error)
                 ) {
-                    Text("بله، خروج", fontWeight = FontWeight.Bold, color = colors.onError)
+                    Text(stringResource(R.string.action_yes_exit), fontWeight = FontWeight.Bold, color = colors.onError)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showExitConfirmDialog = false }) {
-                    Text("ادامه آزمون", fontWeight = FontWeight.Bold, color = colors.primary)
+                    Text(stringResource(R.string.quiz_continue), fontWeight = FontWeight.Bold, color = colors.primary)
                 }
             },
             containerColor = colors.surface,

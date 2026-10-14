@@ -3,6 +3,7 @@ package com.manidigit.yadin.ui.viewmodel
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import com.manidigit.yadin.R
 import java.io.File
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -125,7 +126,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _seedProgress = MutableStateFlow(0f)
     val seedProgress: StateFlow<Float> = _seedProgress.asStateFlow()
 
-    private val _seedMessage = MutableStateFlow("در حال بررسی بانک واژگان...")
+    private val _seedMessage = MutableStateFlow(application.getString(R.string.seed_checking_database))
     val seedMessage: StateFlow<String> = _seedMessage.asStateFlow()
 
     // ==========================================

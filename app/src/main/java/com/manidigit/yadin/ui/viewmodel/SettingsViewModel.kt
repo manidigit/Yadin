@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.manidigit.yadin.R
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -155,11 +156,11 @@ class SettingsViewModel(
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(Intent.createChooser(shareIntent, "اشتراک‌گذاری فایل پشتیبان").apply {
+            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.backup_share_title)).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
         } catch (e: Exception) {
-            _backupLastResult.value = "خطا در اشتراک‌گذاری: ${e.message}"
+            _backupLastResult.value = context.getString(R.string.backup_share_error, e.message ?: "")
             _isBackupError.value = true
         }
     }
@@ -319,18 +320,22 @@ class SettingsViewModel(
         uri: Uri,
         options: BackupOptions = _backupOptions.value
     ) {
+        val context = getApplication<Application>()
         scope.launch {
             _isBackupProcessing.value = true
             _isBackupError.value = false
             _backupProgress.value = 0f
             val isExcel = (format != BackupExportFormat.JSON)
-            _backupProgressMessage.value = if (isExcel) "در حال تولید فایل اکسل..." else "در حال ایجاد فایل پشتیبان..."
+            _backupProgressMessage.value = if (isExcel) {
+                context.getString(R.string.backup_generating_excel)
+            } else {
+                context.getString(R.string.backup_creating_backup)
+            }
             try {
                 val content = backupRepo.createBackupByFormat(format, options) { p, msg ->
                     _backupProgress.value = p
                     _backupProgressMessage.value = msg
                 }
-                val context = getApplication<Application>()
                 withContext(Dispatchers.IO) {
                     context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                         outputStream.write(content.toByteArray(Charsets.UTF_8))
@@ -338,13 +343,13 @@ class SettingsViewModel(
                     }
                 }
                 _backupLastResult.value = if (isExcel) {
-                    "فایل اکسل (CSV) با موفقیت در مسیر انتخاب‌شده ذخیره شد."
+                    context.getString(R.string.backup_excel_saved_path)
                 } else {
-                    "فایل پشتیبان با موفقیت در مسیر انتخاب‌شده ذخیره شد."
+                    context.getString(R.string.backup_saved_path)
                 }
                 _isBackupError.value = false
             } catch (e: Exception) {
-                _backupLastResult.value = "خطا در ذخیره فایل: ${e.message}"
+                _backupLastResult.value = context.getString(R.string.backup_save_error, e.message ?: "")
                 _isBackupError.value = true
             } finally {
                 _isBackupProcessing.value = false
@@ -359,12 +364,17 @@ class SettingsViewModel(
         format: BackupExportFormat,
         options: BackupOptions = _backupOptions.value
     ) {
+        val context = getApplication<Application>()
         scope.launch {
             _isBackupProcessing.value = true
             _isBackupError.value = false
             _backupProgress.value = 0f
             val isExcel = (format != BackupExportFormat.JSON)
-            _backupProgressMessage.value = if (isExcel) "در حال تولید فایل اکسل..." else "در حال ایجاد فایل پشتیبان..."
+            _backupProgressMessage.value = if (isExcel) {
+                context.getString(R.string.backup_generating_excel)
+            } else {
+                context.getString(R.string.backup_creating_backup)
+            }
             try {
                 val content = backupRepo.createBackupByFormat(format, options) { p, msg ->
                     _backupProgress.value = p
@@ -379,10 +389,10 @@ class SettingsViewModel(
                 }
                 val fileName = "$prefix-${System.currentTimeMillis()}.$ext"
                 val file = backupRepo.saveBackupToFile(content, fileName)
-                _backupLastResult.value = "فایل با موفقیت ذخیره شد: ${file.name}"
+                _backupLastResult.value = context.getString(R.string.backup_file_saved_fmt, file.name)
                 _isBackupError.value = false
             } catch (e: Exception) {
-                _backupLastResult.value = "خطا در تهیه خروجی: ${e.message}"
+                _backupLastResult.value = context.getString(R.string.backup_export_error, e.message ?: "")
                 _isBackupError.value = true
             } finally {
                 _isBackupProcessing.value = false
@@ -395,18 +405,22 @@ class SettingsViewModel(
      * تهیه نسخه پشتیبان بر اساس نوع عمومی در Uri مشخص‌شده.
      */
     fun exportBackupToUri(type: BackupType, uri: Uri) {
+        val context = getApplication<Application>()
         scope.launch {
             _isBackupProcessing.value = true
             _isBackupError.value = false
             _backupProgress.value = 0f
             val isExcel = (type == BackupType.VOCABULARY_EXCEL || type == BackupType.PROGRESS_EXCEL)
-            _backupProgressMessage.value = if (isExcel) "در حال تولید فایل اکسل..." else "در حال ایجاد فایل پشتیبان..."
+            _backupProgressMessage.value = if (isExcel) {
+                context.getString(R.string.backup_generating_excel)
+            } else {
+                context.getString(R.string.backup_creating_backup)
+            }
             try {
                 val content = backupRepo.createBackupString(type) { p, msg ->
                     _backupProgress.value = p
                     _backupProgressMessage.value = msg
                 }
-                val context = getApplication<Application>()
                 withContext(Dispatchers.IO) {
                     context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                         outputStream.write(content.toByteArray(Charsets.UTF_8))
@@ -414,13 +428,13 @@ class SettingsViewModel(
                     }
                 }
                 _backupLastResult.value = if (isExcel) {
-                    "فایل اکسل (CSV) با موفقیت در مسیر انتخاب‌شده ذخیره شد."
+                    context.getString(R.string.backup_excel_saved_path)
                 } else {
-                    "فایل پشتیبان با موفقیت در مسیر انتخاب‌شده ذخیره شد."
+                    context.getString(R.string.backup_saved_path)
                 }
                 _isBackupError.value = false
             } catch (e: Exception) {
-                _backupLastResult.value = "خطا در ذخیره فایل: ${e.message}"
+                _backupLastResult.value = context.getString(R.string.backup_save_error, e.message ?: "")
                 _isBackupError.value = true
             } finally {
                 _isBackupProcessing.value = false
@@ -432,12 +446,17 @@ class SettingsViewModel(
      * ذخیره فایل پشتیبان بر اساس نوع عمومی در حافظه برنامه.
      */
     fun exportBackup(type: BackupType) {
+        val context = getApplication<Application>()
         scope.launch {
             _isBackupProcessing.value = true
             _isBackupError.value = false
             _backupProgress.value = 0f
             val isExcel = (type == BackupType.VOCABULARY_EXCEL || type == BackupType.PROGRESS_EXCEL)
-            _backupProgressMessage.value = if (isExcel) "در حال تولید فایل اکسل..." else "در حال ایجاد فایل پشتیبان..."
+            _backupProgressMessage.value = if (isExcel) {
+                context.getString(R.string.backup_generating_excel)
+            } else {
+                context.getString(R.string.backup_creating_backup)
+            }
             try {
                 val content = backupRepo.createBackupString(type) { p, msg ->
                     _backupProgress.value = p
@@ -446,10 +465,10 @@ class SettingsViewModel(
                 val ext = if (isExcel) "csv" else "json"
                 val fileName = "yadin-${type.name.lowercase()}-${System.currentTimeMillis()}.$ext"
                 val file = backupRepo.saveBackupToFile(content, fileName)
-                _backupLastResult.value = "فایل با موفقیت ذخیره شد: ${file.name}"
+                _backupLastResult.value = context.getString(R.string.backup_file_saved_fmt, file.name)
                 _isBackupError.value = false
             } catch (e: Exception) {
-                _backupLastResult.value = "خطا در تهیه خروجی: ${e.message}"
+                _backupLastResult.value = context.getString(R.string.backup_export_error, e.message ?: "")
                 _isBackupError.value = true
             } finally {
                 _isBackupProcessing.value = false
@@ -470,21 +489,22 @@ class SettingsViewModel(
         isReplace: Boolean,
         onRestoreCompleted: (() -> Unit)? = null
     ) {
+        val context = getApplication<Application>()
         scope.launch {
             _isBackupProcessing.value = true
             _isBackupError.value = false
             _backupProgress.value = 0f
-            _backupProgressMessage.value = "در حال اعتبارسنجی و بازیابی..."
+            _backupProgressMessage.value = context.getString(R.string.backup_validating_restoring)
             val result = backupRepo.restoreFromJson(jsonString, isReplace) { p, msg ->
                 _backupProgress.value = p
                 _backupProgressMessage.value = msg
             }
             if (result.isSuccess) {
-                _backupLastResult.value = result.getOrNull() ?: "با موفقیت انجام شد"
+                _backupLastResult.value = result.getOrNull() ?: context.getString(R.string.backup_action_success)
                 _isBackupError.value = false
                 onRestoreCompleted?.invoke()
             } else {
-                _backupLastResult.value = "خطا در بازیابی: ${result.exceptionOrNull()?.message}"
+                _backupLastResult.value = context.getString(R.string.backup_restore_error_fmt, result.exceptionOrNull()?.message ?: "")
                 _isBackupError.value = true
             }
             _isBackupProcessing.value = false

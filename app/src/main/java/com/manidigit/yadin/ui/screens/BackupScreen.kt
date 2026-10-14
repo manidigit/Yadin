@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FolderOpen
@@ -43,11 +44,9 @@ import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.TableChart
-import java.io.File
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -77,19 +76,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.repository.BackupExportFormat
 import com.manidigit.yadin.data.repository.BackupOptions
 import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.util.toPersianDigits
+import com.manidigit.yadin.ui.util.formatDigits
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 fun BackupScreen(
@@ -168,13 +170,14 @@ fun BackupScreen(
                     withContext(Dispatchers.Main) {
                         if (!text.isNullOrBlank()) {
                             loadedFileContent = text
-                            loadedFileName = "فایل انتخاب‌شده (${(text.length / 1024).toPersianDigits()} کیلوبایت)"
-                            Toast.makeText(context, "فایل با موفقیت بارگذاری شد", Toast.LENGTH_SHORT).show()
+                            val kb = (text.length / 1024).coerceAtLeast(1)
+                            loadedFileName = context.getString(R.string.backup_file_info_fmt, kb.formatDigits(), "")
+                            Toast.makeText(context, context.getString(R.string.backup_file_loaded_toast), Toast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "خطا در خواندن فایل: ${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.backup_file_error_toast, e.message ?: ""), Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -209,20 +212,20 @@ fun BackupScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "بازگشت",
+                        contentDescription = stringResource(R.string.action_back),
                         tint = colors.onSurface
                     )
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "پشتیبان‌گیری، اکسل و بازیابی",
+                        text = stringResource(R.string.backup_title),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
                     Text(
-                        text = "مدیریت جامع پایگاه داده، استخراج گزارش‌ها و بازیابی",
+                        text = stringResource(R.string.backup_subtitle),
                         fontSize = 12.sp,
                         color = colors.onSurfaceVariant
                     )
@@ -253,7 +256,7 @@ fun BackupScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = progressMessage.ifEmpty { "در حال پردازش عملیات..." },
+                                text = progressMessage.ifEmpty { stringResource(R.string.backup_progress_default) },
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = colors.onSurface
@@ -272,45 +275,6 @@ fun BackupScreen(
                 }
             }
 
-            // Result Banner
-            AnimatedVisibility(
-                visible = !lastResult.isNullOrBlank() && !isProcessing,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                val bannerColor = if (isError) colors.error else colors.success
-                val bannerIcon = if (isError) Icons.Default.Error else Icons.Default.CheckCircle
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(bannerColor.copy(alpha = 0.12f))
-                        .border(1.dp, bannerColor.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-                        .padding(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = bannerIcon,
-                            contentDescription = null,
-                            tint = bannerColor,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = lastResult ?: "",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.onSurface,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-
             // Tabs Selector
             Row(
                 modifier = Modifier
@@ -321,7 +285,7 @@ fun BackupScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 TabButton(
-                    title = "پشتیبان‌گیری و اکسل",
+                    title = stringResource(R.string.backup_tab_backup),
                     icon = Icons.Default.CloudUpload,
                     isSelected = activeTab == 0,
                     modifier = Modifier.weight(1f)
@@ -330,7 +294,7 @@ fun BackupScreen(
                 }
 
                 TabButton(
-                    title = "بازیابی اطلاعات",
+                    title = stringResource(R.string.backup_tab_restore),
                     icon = Icons.Default.CloudDownload,
                     isSelected = activeTab == 1,
                     modifier = Modifier.weight(1f)
@@ -361,7 +325,7 @@ fun BackupScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "وضعیت پایگاه داده فعلی",
+                                text = stringResource(R.string.backup_db_status_title),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -373,14 +337,14 @@ fun BackupScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             StatBox(
-                                label = "کل واژگان",
-                                value = "$totalConcepts",
+                                label = stringResource(R.string.backup_db_total_words),
+                                value = totalConcepts.formatDigits(),
                                 icon = Icons.Default.Translate,
                                 modifier = Modifier.weight(1f)
                             )
                             StatBox(
-                                label = "دسته‌بندی‌ها",
-                                value = "$totalCategories",
+                                label = stringResource(R.string.backup_db_categories),
+                                value = totalCategories.formatDigits(),
                                 icon = Icons.Default.Category,
                                 modifier = Modifier.weight(1f)
                             )
@@ -413,13 +377,13 @@ fun BackupScreen(
                                 )
                                 Column {
                                     Text(
-                                        text = "انتخاب اجزا و قلمرو خروجی",
+                                        text = stringResource(R.string.backup_scope_title),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.onSurface
                                     )
                                     Text(
-                                        text = "تعیین بخش‌های مورد نظر برای پشتیبان‌گیری یا خروجی",
+                                        text = stringResource(R.string.backup_scope_subtitle),
                                         fontSize = 11.sp,
                                         color = colors.onSurfaceVariant
                                     )
@@ -446,13 +410,13 @@ fun BackupScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "فول بکاپ کامل (Full Backup)",
+                                    text = stringResource(R.string.backup_full_title),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = colors.primary
                                 )
                                 Text(
-                                    text = "پشتیبان‌گیری جامع از تمام واژگان، تنظیمات، لایتنر و پروسه",
+                                    text = stringResource(R.string.backup_full_subtitle),
                                     fontSize = 11.sp,
                                     color = colors.onSurfaceVariant
                                 )
@@ -469,56 +433,56 @@ fun BackupScreen(
 
                         // Granular Checkboxes
                         BackupOptionCheckboxRow(
-                            title = "پایگاه واژگان (Vocabulary Database)",
-                            subtitle = "تمام کلمات، ترجمه‌های فارسی، دسته‌بندی‌ها و یادداشت‌ها",
+                            title = stringResource(R.string.backup_vocab_title),
+                            subtitle = stringResource(R.string.backup_vocab_sub),
                             icon = Icons.Default.Translate,
                             isChecked = backupOptions.includeVocabulary,
                             onCheckedChange = { onToggleOption("vocabulary", it) }
                         )
 
                         BackupOptionCheckboxRow(
-                            title = "دسته‌بندی‌ها (Categories)",
-                            subtitle = "ساختار موضوعی و گروه‌بندی کلمات",
+                            title = stringResource(R.string.backup_cat_title),
+                            subtitle = stringResource(R.string.backup_cat_sub),
                             icon = Icons.Default.Category,
                             isChecked = backupOptions.includeCategories,
                             onCheckedChange = { onToggleOption("categories", it) }
                         )
 
                         BackupOptionCheckboxRow(
-                            title = "درجه سختی کلمات (Difficulty Levels)",
-                            subtitle = "سطح دشواری (آسان تا خیلی سخت) و ترجیحات آستانه",
+                            title = stringResource(R.string.backup_diff_title),
+                            subtitle = stringResource(R.string.backup_diff_sub),
                             icon = Icons.Default.Speed,
                             isChecked = backupOptions.includeDifficulty,
                             onCheckedChange = { onToggleOption("difficulty", it) }
                         )
 
                         BackupOptionCheckboxRow(
-                            title = "آمار رگبار متوالی و تقویم (Streak & Daily Progress)",
-                            subtitle = "سابقه زنجیره مطالعه متوالی روزانه بدون وقفه",
+                            title = stringResource(R.string.backup_streak_title),
+                            subtitle = stringResource(R.string.backup_streak_sub),
                             icon = Icons.Default.LocalFireDepartment,
                             isChecked = backupOptions.includeStreakAndProgress,
                             onCheckedChange = { onToggleOption("streak", it) }
                         )
 
                         BackupOptionCheckboxRow(
-                            title = "آمار مرور و جعبه لایتنر (Word Review Stats)",
-                            subtitle = "مراحل ۴گانه جعبه لایتنر، فواصل زمانی و زمان مرور بعدی",
+                            title = stringResource(R.string.backup_leitner_title),
+                            subtitle = stringResource(R.string.backup_leitner_sub),
                             icon = Icons.Default.School,
                             isChecked = backupOptions.includeReviewStats,
                             onCheckedChange = { onToggleOption("reviewStats", it) }
                         )
 
                         BackupOptionCheckboxRow(
-                            title = "پروسه پیشرفت و جلسات (Process Progress)",
-                            subtitle = "ریز سوابق آزمون‌ها، فلش‌کارت‌ها، دقت و زمان جلسات",
+                            title = stringResource(R.string.backup_process_title),
+                            subtitle = stringResource(R.string.backup_process_sub),
                             icon = Icons.Default.History,
                             isChecked = backupOptions.includeProcessHistory,
                             onCheckedChange = { onToggleOption("process", it) }
                         )
 
                         BackupOptionCheckboxRow(
-                            title = "تنظیمات و دستاوردها (Settings & Achievements)",
-                            subtitle = "پیکربندی‌ها، تم رنگی، تنظیمات صوت و نشان‌های کسب‌شده",
+                            title = stringResource(R.string.backup_settings_title),
+                            subtitle = stringResource(R.string.backup_settings_sub),
                             icon = Icons.Default.Settings,
                             isChecked = backupOptions.includeSettings,
                             onCheckedChange = { onToggleOption("settings", it) }
@@ -545,7 +509,7 @@ fun BackupScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "انتخاب فرمت خروجی",
+                                text = stringResource(R.string.backup_format_title),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -553,32 +517,32 @@ fun BackupScreen(
                         }
 
                         FormatChoiceCard(
-                            title = "فایل پشتیبان یادین (.json)",
-                            subtitle = "قالب استاندارد JSON برای بازیابی کامل و اتمیک با تنظیمات انتخابی",
+                            title = stringResource(R.string.backup_fmt_json_title),
+                            subtitle = stringResource(R.string.backup_fmt_json_sub),
                             icon = Icons.Default.Description,
                             isSelected = selectedFormat == BackupExportFormat.JSON,
                             onClick = { selectedFormat = BackupExportFormat.JSON }
                         )
 
                         FormatChoiceCard(
-                            title = "خروجی اکسل واژگان و دسته‌بندی‌ها (.csv)",
-                            subtitle = "جدول اکسل با UTF-8 BOM شامل کلمات، معانی فارسی، دسته‌ها و سختی",
+                            title = stringResource(R.string.backup_fmt_csv_vocab_title),
+                            subtitle = stringResource(R.string.backup_fmt_csv_vocab_sub),
                             icon = Icons.Default.TableChart,
                             isSelected = selectedFormat == BackupExportFormat.EXCEL_CSV_VOCABULARY,
                             onClick = { selectedFormat = BackupExportFormat.EXCEL_CSV_VOCABULARY }
                         )
 
                         FormatChoiceCard(
-                            title = "خروجی اکسل گزارش پیشرفت و رگبار (.csv)",
-                            subtitle = "گزارش تحلیلی جامع با جدول شاخص‌ها، حجم مرور روزانه و رگبار متوالی",
+                            title = stringResource(R.string.backup_fmt_csv_streak_title),
+                            subtitle = stringResource(R.string.backup_fmt_csv_streak_sub),
                             icon = Icons.Default.BarChart,
                             isSelected = selectedFormat == BackupExportFormat.EXCEL_CSV_PROGRESS,
                             onClick = { selectedFormat = BackupExportFormat.EXCEL_CSV_PROGRESS }
                         )
 
                         FormatChoiceCard(
-                            title = "خروجی اکسل جامع و یکپارچه (.csv - Master)",
-                            subtitle = "ترکیب تمام جداول واژگان، آمار، لایتنر و تنظیمات در قالب فایل اکسل",
+                            title = stringResource(R.string.backup_fmt_csv_master_title),
+                            subtitle = stringResource(R.string.backup_fmt_csv_master_sub),
                             icon = Icons.Default.Storage,
                             isSelected = selectedFormat == BackupExportFormat.EXCEL_CSV_COMPLETE,
                             onClick = { selectedFormat = BackupExportFormat.EXCEL_CSV_COMPLETE }
@@ -606,7 +570,7 @@ fun BackupScreen(
                                     exportCsvLauncher.launch(fname)
                                 }
                             } catch (e: Exception) {
-                                android.widget.Toast.makeText(context, "عدم امکان باز کردن مدیریت فایل: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.backup_file_manager_error, e.message ?: ""), Toast.LENGTH_LONG).show()
                             }
                         },
                         modifier = Modifier.weight(1f),
@@ -620,7 +584,7 @@ fun BackupScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("ذخیره در...", fontSize = 13.sp)
+                        Text(stringResource(R.string.backup_btn_save_to), fontSize = 13.sp)
                     }
 
                     Button(
@@ -648,14 +612,14 @@ fun BackupScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = if (selectedFormat == BackupExportFormat.JSON) "ایجاد فایل پشتیبان" else "دریافت فایل اکسل",
+                            text = if (selectedFormat == BackupExportFormat.JSON) stringResource(R.string.backup_btn_create_json) else stringResource(R.string.backup_btn_export_excel),
                             color = colors.onPrimary,
                             fontSize = 13.sp
                         )
                     }
                 }
 
-                // ISS-35: Saved Backups and Reports in internal storage with direct Share and Delete
+                // Saved Backups and Reports in internal storage
                 YadinCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier
@@ -674,7 +638,7 @@ fun BackupScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "فایل‌های ذخیره‌شده در حافظه (${internalBackups.size})",
+                                text = stringResource(R.string.backup_internal_files_title, internalBackups.size.formatDigits()),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -683,7 +647,7 @@ fun BackupScreen(
 
                         if (internalBackups.isEmpty()) {
                             Text(
-                                text = "هنوز فایل پشتیبان یا خروجی در حافظه داخلی ایجاد نشده است. با زدن دکمه «ایجاد فایل پشتیبان» یا «دریافت فایل اکسل»، فایل‌ها در این بخش ذخیره شده و می‌توانید مستقیماً آن‌ها را با سایر برنامه‌ها (مانند پیام‌رسان‌ها یا درایو) به اشتراک بگذارید.",
+                                text = stringResource(R.string.backup_internal_files_empty),
                                 fontSize = 12.sp,
                                 color = colors.onSurfaceVariant,
                                 lineHeight = 18.sp
@@ -720,7 +684,7 @@ fun BackupScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "بازیابی پایگاه داده از فایل",
+                                text = stringResource(R.string.backup_restore_card_title),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -728,7 +692,7 @@ fun BackupScreen(
                         }
 
                         Text(
-                            text = "فایل پشتیبان با پسوند .json را انتخاب کنید تا داده‌های واژگان، مراحل یادگیری و پیشرفت بازیابی شوند.",
+                            text = stringResource(R.string.backup_restore_card_desc),
                             fontSize = 12.sp,
                             color = colors.onSurfaceVariant,
                             lineHeight = 18.sp
@@ -740,7 +704,7 @@ fun BackupScreen(
                                 try {
                                     importFileLauncher.launch("*/*")
                                 } catch (e: Exception) {
-                                    android.widget.Toast.makeText(context, "عدم امکان باز کردن انتخابگر فایل: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, context.getString(R.string.import_err_file_picker, e.message ?: ""), Toast.LENGTH_LONG).show()
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -755,7 +719,7 @@ fun BackupScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = loadedFileName ?: "انتخاب فایل پشتیبان از حافظه...",
+                                text = loadedFileName ?: stringResource(R.string.backup_restore_select_file),
                                 color = if (loadedFileContent != null) colors.success else colors.primary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
@@ -769,7 +733,7 @@ fun BackupScreen(
                             )
 
                             Text(
-                                text = "استراتژی بازیابی اطلاعات:",
+                                text = stringResource(R.string.backup_restore_strategy_title),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -793,13 +757,13 @@ fun BackupScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
-                                        text = "ادغام هوشمند (Merge)",
+                                        text = stringResource(R.string.backup_strategy_merge_title),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.onSurface
                                     )
                                     Text(
-                                        text = "کلمات و سوابق جدید اضافه می‌شوند و اطلاعات فعلی حفظ خواهند شد.",
+                                        text = stringResource(R.string.backup_strategy_merge_desc),
                                         fontSize = 11.sp,
                                         color = colors.onSurfaceVariant
                                     )
@@ -824,13 +788,13 @@ fun BackupScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
-                                        text = "جایگزینی کامل (Clean Replace)",
+                                        text = stringResource(R.string.backup_strategy_replace_title),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.error
                                     )
                                     Text(
-                                        text = "داده‌های فعلی پاکسازی شده و محتوای فایل پشتیبان نشانده می‌شود.",
+                                        text = stringResource(R.string.backup_strategy_replace_desc),
                                         fontSize = 11.sp,
                                         color = colors.onSurfaceVariant
                                     )
@@ -855,7 +819,7 @@ fun BackupScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = if (isReplaceMode) "شروع جایگزینی کامل اطلاعات" else "شروع ادغام و بازیابی",
+                                    text = if (isReplaceMode) stringResource(R.string.backup_btn_start_replace) else stringResource(R.string.backup_btn_start_merge),
                                     color = if (isReplaceMode) colors.onError else colors.onPrimary,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
@@ -876,7 +840,7 @@ fun BackupScreen(
             onDismissRequest = { showConfirmRestoreDialog = false },
             title = {
                 Text(
-                    text = if (isReplaceMode) "تأیید جایگزینی کامل اطلاعات" else "تأیید بازیابی و ادغام",
+                    text = if (isReplaceMode) stringResource(R.string.backup_dialog_replace_title) else stringResource(R.string.backup_dialog_merge_title),
                     fontWeight = FontWeight.Bold,
                     color = if (isReplaceMode) colors.error else colors.onSurface
                 )
@@ -884,9 +848,9 @@ fun BackupScreen(
             text = {
                 Text(
                     text = if (isReplaceMode)
-                        "هشدار: تمام واژگان و سوابق فعلی حذف خواهند شد و با داده‌های فایل پشتیبان جایگزین می‌شوند. آیا ادامه می‌دهید؟"
+                        stringResource(R.string.backup_dialog_replace_msg)
                     else
-                        "داده‌های فایل پشتیبان با بانک اطلاعاتی فعلی ادغام خواهند شد. آیا ادامه می‌دهید؟",
+                        stringResource(R.string.backup_dialog_merge_msg),
                     fontSize = 13.sp,
                     color = colors.onSurfaceVariant,
                     lineHeight = 20.sp
@@ -904,12 +868,12 @@ fun BackupScreen(
                         containerColor = if (isReplaceMode) colors.error else colors.primary
                     )
                 ) {
-                    Text("بله، انجام شود", color = if (isReplaceMode) colors.onError else colors.onPrimary)
+                    Text(stringResource(R.string.backup_btn_yes_proceed), color = if (isReplaceMode) colors.onError else colors.onPrimary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmRestoreDialog = false }) {
-                    Text("انصراف", color = colors.onSurfaceVariant)
+                    Text(stringResource(R.string.action_cancel), color = colors.onSurfaceVariant)
                 }
             },
             containerColor = colors.surfaceVariant
@@ -1151,7 +1115,7 @@ private fun SavedBackupItemRow(
                 maxLines = 1
             )
             Text(
-                text = "$sizeKb کیلوبایت • $dateStr",
+                text = stringResource(R.string.backup_file_info_fmt, sizeKb.formatDigits(), dateStr),
                 fontSize = 10.sp,
                 color = colors.onSurfaceVariant
             )
@@ -1162,7 +1126,7 @@ private fun SavedBackupItemRow(
         ) {
             Icon(
                 imageVector = Icons.Default.Share,
-                contentDescription = "اشتراک‌گذاری",
+                contentDescription = stringResource(R.string.action_share),
                 tint = colors.primary,
                 modifier = Modifier.size(18.dp)
             )
@@ -1173,11 +1137,10 @@ private fun SavedBackupItemRow(
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
-                contentDescription = "حذف",
+                contentDescription = stringResource(R.string.action_delete),
                 tint = colors.error,
                 modifier = Modifier.size(18.dp)
             )
         }
     }
 }
-

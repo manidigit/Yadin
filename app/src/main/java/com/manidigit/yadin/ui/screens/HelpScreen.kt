@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -25,9 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -60,13 +61,13 @@ fun HelpScreen(onBack: () -> Unit) {
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "بازگشت",
+                    contentDescription = stringResource(R.string.action_back),
                     tint = colors.onSurface
                 )
             }
 
             Text(
-                text = "راهنما و آموزش یادین",
+                text = stringResource(R.string.help_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface
@@ -74,39 +75,39 @@ fun HelpScreen(onBack: () -> Unit) {
         }
 
         HelpStepCard(
-            stepNumber = "۱",
-            title = "به یادین خوش آمدید",
-            description = "یادین یک سامانه مرور فاصله‌دار هوشمند (جعبه لایتنر مدرن) است که به شما کمک می‌کند واژگان زبان جدید را به حافظه بلندمدت بسپارید. واژه‌ها بر اساس برنامه علمی تکرار، سررسید می‌شوند."
+            stepNumber = stringResource(R.string.help_step1_number),
+            title = stringResource(R.string.help_step1_title),
+            description = stringResource(R.string.help_step1_desc)
         )
 
         HelpStepCard(
-            stepNumber = "۲",
-            title = "مرحله‌های یادگیری",
-            description = "هر واژه از ۴ مرحله عبور می‌کند:\n• روزانه (Daily): شروع یادگیری، مرور هر روز\n• هفتگی (Weekly): با یک پاسخ درست، مرور بعد از ۷ روز\n• ماهانه (Monthly): با پاسخ درست بعدی، مرور بعد از ۳۰ روز\n• یادگرفته‌شده (Learned): تثبیت کامل در حافظه دائمی\n* هر زمان به واژه‌ای پاسخ غلط بدهید، بلافاصله به مرحله روزانه بازمی‌گردد."
+            stepNumber = stringResource(R.string.help_step2_number),
+            title = stringResource(R.string.help_step2_title),
+            description = stringResource(R.string.help_step2_desc)
         )
 
         HelpStepCard(
-            stepNumber = "۳",
-            title = "مرور هر روز و سررسید",
-            description = "سیستم هر روز کارت‌هایی که تاریخ سررسید آن‌ها فرارسیده را در صف مرور قرار می‌دهد. مرور منظم و روزانه باعث افزایش رگبار (Streak) شما می‌شود."
+            stepNumber = stringResource(R.string.help_step3_number),
+            title = stringResource(R.string.help_step3_title),
+            description = stringResource(R.string.help_step3_desc)
         )
 
         HelpStepCard(
-            stepNumber = "۴",
-            title = "محاسبه سختی کلمه",
-            description = "واژه‌ها دارای ۴ درجه سختی (آسان، متوسط، سخت، خیلی سخت) هستند. با ۳ پاسخ درست متوالی، سختی یک پله کمتر می‌شود و با ۳ پاسخ غلط متوالی، سختی یک پله افزایش می‌یابد."
+            stepNumber = stringResource(R.string.help_step4_number),
+            title = stringResource(R.string.help_step4_title),
+            description = stringResource(R.string.help_step4_desc)
         )
 
         HelpStepCard(
-            stepNumber = "۵",
-            title = "آزمون چهارگزینه‌ای",
-            description = "می‌توانید علاوه بر فلش‌کارت، با آزمون‌های ۴ گزینه‌ای هوشمند خود را محک بزنید. گزینه‌های انحرافی آزمون با الگوریتم مشابهت انتخاب می‌شوند تا چالش واقعی ایجاد کنند."
+            stepNumber = stringResource(R.string.help_step5_number),
+            title = stringResource(R.string.help_step5_title),
+            description = stringResource(R.string.help_step5_desc)
         )
 
         HelpStepCard(
-            stepNumber = "۶",
-            title = "کتابخانه و ورود متنی",
-            description = "در بخش کتابخانه به تمامی واژگان موجود دسترسی دارید و می‌توانید آن‌ها را بر اساس دسته و مرحله فیلتر کنید. همچنین می‌توانید واژگان جدید را به صورت دستی یا ورود متنی با پارسر اضافه نمایید."
+            stepNumber = stringResource(R.string.help_step6_number),
+            title = stringResource(R.string.help_step6_title),
+            description = stringResource(R.string.help_step6_desc)
         )
 
         Spacer(modifier = Modifier.height(20.dp))
