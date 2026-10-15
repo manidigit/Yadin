@@ -385,6 +385,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun reactivateWord(conceptId: String) = libraryVm.reactivateWord(conceptId, appLanguageDirection.value)
     fun loadRecentWords() = libraryVm.loadRecentWords(appLanguageDirection.value)
 
+    fun scanLibrary() = libraryVm.scanLibrary(appLanguageDirection.value)
+    fun applyAuditFixes(approvedReviewItems: List<com.manidigit.yadin.domain.model.AuditReviewItem>) =
+        libraryVm.applyAuditFixes(appLanguageDirection.value, approvedReviewItems)
     fun runLibraryAuditAndMerge() = libraryVm.runLibraryAuditAndMerge(appLanguageDirection.value)
     fun clearAuditReport() = libraryVm.clearAuditReport()
 

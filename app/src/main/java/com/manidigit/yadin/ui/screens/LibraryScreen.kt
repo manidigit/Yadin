@@ -31,8 +31,16 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.RateReview
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.runtime.mutableStateListOf
+import com.manidigit.yadin.domain.algorithm.VocabularyParser
+import com.manidigit.yadin.domain.model.AuditReviewItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -106,6 +114,8 @@ fun LibraryScreen(
     isAuditing: Boolean = false,
     auditProgress: Float = 0f,
     auditReport: LibraryAuditReport? = null,
+    onScanLibrary: () -> Unit = {},
+    onApplyAuditFixes: ((List<AuditReviewItem>) -> Unit)? = null,
     onRunAuditAndMerge: () -> Unit = {},
     onClearAuditReport: () -> Unit = {},
     onBack: () -> Unit
@@ -399,7 +409,14 @@ fun LibraryScreen(
                     showAuditDialog = false
                     onClearAuditReport()
                 },
-                onRunAudit = onRunAuditAndMerge
+                onScanLibrary = onScanLibrary,
+                onApplyAuditFixes = { items ->
+                    if (onApplyAuditFixes != null) {
+                        onApplyAuditFixes(items)
+                    } else {
+                        onRunAuditAndMerge()
+                    }
+                }
             )
         }
     }
@@ -691,10 +708,35 @@ fun LibraryAuditDialog(
     auditProgress: Float,
     auditReport: LibraryAuditReport?,
     onDismiss: () -> Unit,
-    onRunAudit: () -> Unit
+    onScanLibrary: () -> Unit,
+    onApplyAuditFixes: (List<AuditReviewItem>) -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+
+    var showManualReviewDialog by remember { mutableStateOf(false) }
+    var fixesApplied by remember { mutableStateOf(false) }
+
+    val reviewItemsState = remember(auditReport) {
+        mutableStateListOf<AuditReviewItem>().apply {
+            if (auditReport != null) {
+                addAll(auditReport.reviewItems)
+            }
+        }
+    }
+
+    if (showManualReviewDialog) {
+        AuditManualReviewDialog(
+            items = reviewItemsState,
+            onDismiss = { showManualReviewDialog = false },
+            onSaveItem = { updatedItem ->
+                val idx = reviewItemsState.indexOfFirst { it.conceptId == updatedItem.conceptId }
+                if (idx != -1) {
+                    reviewItemsState[idx] = updatedItem
+                }
+            }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = {
@@ -721,7 +763,7 @@ fun LibraryAuditDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 440.dp)
+                    .heightIn(max = 460.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -739,7 +781,10 @@ fun LibraryAuditDialog(
                             modifier = Modifier.size(36.dp)
                         )
                         Text(
-                            text = stringResource(R.string.audit_in_progress),
+                            text = if (auditReport == null)
+                                stringResource(R.string.audit_scan_in_progress)
+                            else
+                                stringResource(R.string.audit_in_progress),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.onSurface,
                             fontWeight = FontWeight.SemiBold
@@ -801,7 +846,76 @@ fun LibraryAuditDialog(
                         }
                     }
 
-                    if (auditReport.actions.isEmpty()) {
+                    // Card for Items Needing Manual Review
+                    if (reviewItemsState.isNotEmpty()) {
+                        YadinCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            backgroundColor = colors.warning.copy(alpha = 0.12f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(Icons.Default.Warning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(18.dp))
+                                    Text(
+                                        text = stringResource(R.string.audit_needs_review_count),
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.warning
+                                    )
+                                    Text(
+                                        text = reviewItemsState.size.formatDigits(),
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.warning
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.audit_review_subtitle),
+                                    fontSize = 11.sp,
+                                    color = colors.onSurface,
+                                    lineHeight = 17.sp
+                                )
+                                Button(
+                                    onClick = { showManualReviewDialog = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = colors.warning, contentColor = colors.surface)
+                                ) {
+                                    Icon(Icons.Default.RateReview, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = stringResource(R.string.audit_btn_review_items, reviewItemsState.size.formatDigits()),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (fixesApplied) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.success.copy(alpha = 0.12f))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success)
+                            Text(
+                                text = stringResource(R.string.audit_applied_success),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurface,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    } else if (auditReport.actions.isEmpty() && reviewItemsState.isEmpty()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -818,7 +932,7 @@ fun LibraryAuditDialog(
                                 color = colors.onSurface
                             )
                         }
-                    } else {
+                    } else if (auditReport.actions.isNotEmpty()) {
                         Text(
                             text = stringResource(R.string.audit_actions_detail, auditReport.actions.size.formatDigits()),
                             style = MaterialTheme.typography.bodySmall,
@@ -892,10 +1006,20 @@ fun LibraryAuditDialog(
             if (!isAuditing) {
                 if (auditReport == null) {
                     Button(
-                        onClick = onRunAudit,
+                        onClick = onScanLibrary,
                         shape = RoundedCornerShape(dimensions.cornerMedium)
                     ) {
-                        Text(stringResource(R.string.audit_btn_start))
+                        Text(stringResource(R.string.audit_btn_scan))
+                    }
+                } else if (!fixesApplied) {
+                    Button(
+                        onClick = {
+                            fixesApplied = true
+                            onApplyAuditFixes(reviewItemsState)
+                        },
+                        shape = RoundedCornerShape(dimensions.cornerMedium)
+                    ) {
+                        Text(stringResource(R.string.audit_btn_apply_fixes))
                     }
                 } else {
                     Button(
@@ -909,8 +1033,8 @@ fun LibraryAuditDialog(
         },
         dismissButton = {
             if (!isAuditing) {
-                if (auditReport != null) {
-                    TextButton(onClick = onRunAudit) {
+                if (auditReport != null && !fixesApplied) {
+                    TextButton(onClick = onScanLibrary) {
                         Text(stringResource(R.string.audit_btn_retry))
                     }
                 } else {
@@ -921,6 +1045,215 @@ fun LibraryAuditDialog(
             }
         }
     )
+}
+
+@Composable
+fun AuditManualReviewDialog(
+    items: List<AuditReviewItem>,
+    onDismiss: () -> Unit,
+    onSaveItem: (AuditReviewItem) -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.RateReview,
+                    contentDescription = null,
+                    tint = colors.primary
+                )
+                Column {
+                    Text(
+                        text = stringResource(R.string.audit_review_title),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = stringResource(R.string.audit_review_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        },
+        text = {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 500.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(items, key = { it.conceptId }) { item ->
+                    AuditReviewItemCard(
+                        item = item,
+                        onUpdate = { onSaveItem(it) }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(dimensions.cornerMedium)
+            ) {
+                Text(stringResource(R.string.action_confirm_close))
+            }
+        }
+    )
+}
+
+@Composable
+private fun AuditReviewItemCard(
+    item: AuditReviewItem,
+    onUpdate: (AuditReviewItem) -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    var word by remember(item.conceptId) { mutableStateOf(item.suggestedWord) }
+    var translation by remember(item.conceptId) { mutableStateOf(item.suggestedTranslation) }
+    var note by remember(item.conceptId) { mutableStateOf(item.suggestedNote ?: "") }
+
+    YadinCard(
+        modifier = Modifier.fillMaxWidth(),
+        backgroundColor = colors.surfaceVariant.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(dimensions.cornerMedium)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = if (item.confidence < 0.8) colors.error else colors.warning,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = item.reason,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (item.confidence < 0.8) colors.error else colors.warning,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Text(
+                    text = "${(item.confidence * 100).toInt().formatDigits()}٪",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant
+                )
+            }
+
+            // Original Word
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Text(
+                    text = "${stringResource(R.string.audit_original_word)} ${item.originalWord}",
+                    fontSize = 11.sp,
+                    color = colors.onSurfaceVariant,
+                    style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Ltr)
+                )
+            }
+
+            OutlinedTextField(
+                value = word,
+                onValueChange = {
+                    word = it
+                    onUpdate(item.copy(suggestedWord = it, suggestedTranslation = translation, suggestedNote = note.ifBlank { null }))
+                },
+                label = { Text(stringResource(R.string.audit_field_word), fontSize = 11.sp) },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Ltr),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = translation,
+                onValueChange = {
+                    translation = it
+                    onUpdate(item.copy(suggestedWord = word, suggestedTranslation = it, suggestedNote = note.ifBlank { null }))
+                },
+                label = { Text(stringResource(R.string.audit_field_translation), fontSize = 11.sp) },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Rtl),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = note,
+                onValueChange = {
+                    note = it
+                    onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = it.ifBlank { null }))
+                },
+                label = { Text(stringResource(R.string.audit_field_note), fontSize = 11.sp) },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Rtl),
+                maxLines = 3
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(
+                    onClick = {
+                        val pair = VocabularyParser.splitPair(word)
+                        if (pair != null) {
+                            word = pair.first.trim()
+                            val extra = pair.second.trim()
+                            if (VocabularyParser.hasPersian(extra)) {
+                                translation = if (translation.isBlank()) extra else "$translation، $extra"
+                            } else {
+                                note = if (note.isBlank()) extra else "$note\n$extra"
+                            }
+                            onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = note.ifBlank { null }))
+                        } else {
+                            val paren = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""").find(word)
+                            if (paren != null) {
+                                val main = paren.groupValues[1].trim()
+                                val inside = paren.groupValues[2].trim()
+                                word = main
+                                note = if (note.isBlank()) inside else "$note\n$inside"
+                                onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = note.ifBlank { null }))
+                            }
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.audit_btn_move_to_note), fontSize = 11.sp)
+                }
+
+                TextButton(
+                    onClick = {
+                        word = item.originalWord
+                        translation = item.originalTranslation
+                        note = ""
+                        onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = null))
+                    }
+                ) {
+                    Text(stringResource(R.string.audit_btn_keep_original), fontSize = 11.sp)
+                }
+            }
+        }
+    }
 }
 
 @Composable

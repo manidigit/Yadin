@@ -639,6 +639,51 @@ fun ImportScreen(
                 }
             }
 
+            // Warning Banner for Items Needing Manual Review
+            val itemsNeedingReview = parseResult.entries.count { it.confidence < 0.98 || it.possibleCorrection != null }
+            if (itemsNeedingReview > 0 && onNavigateToReview != null) {
+                YadinCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = colors.warning.copy(alpha = 0.15f)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.Warning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp))
+                            Column {
+                                Text(
+                                    text = "تعداد ${itemsNeedingReview.formatDigits()} واژه نیازمند بازبینی یا انتقال به یادداشت",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = colors.warning
+                                )
+                                Text(
+                                    text = "برای جلوگیری از حذف اطلاعات، قبل از ذخیره آن‌ها را دستی بررسی و ویرایش کنید.",
+                                    fontSize = 11.sp,
+                                    color = colors.onSurface
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = onNavigateToReview,
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.warning, contentColor = colors.surface),
+                            shape = RoundedCornerShape(dimensions.cornerSmall)
+                        ) {
+                            Text("ویرایش دستی", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
             // Parsed entries LazyColumn
             LazyColumn(
                 modifier = Modifier

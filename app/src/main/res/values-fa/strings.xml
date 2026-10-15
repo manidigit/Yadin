@@ -478,6 +478,21 @@
 • حذف شماره‌گذاری‌های آغازین، نشانه‌ها و گیومه‌های زائد
 • به‌روزرسانی کامل پایگاه داده کتابخانه</string>
     <string name="audit_btn_start">شروع بررسی و ادغام هوشمند</string>
+    <string name="audit_scan_in_progress">در حال اسکن و گزارش‌گیری اولیه بدون تغییر داده...</string>
+    <string name="audit_btn_scan">اسکن و گزارش‌گیری اولیه</string>
+    <string name="audit_btn_apply_fixes">اعمال اصلاحات و ادغام در کتابخانه</string>
+    <string name="audit_needs_review_count">واژگان نیازمند بازبینی یا ویرایش دستی:</string>
+    <string name="audit_btn_review_items">بازبینی و ویرایش دستی (%1$s مورد)</string>
+    <string name="audit_review_title">بازبینی و تعیین تکلیف واژگان</string>
+    <string name="audit_review_subtitle">این موارد مشکوک یا چندخطی هستند. آن‌ها را دستی ویرایش کنید یا به یادداشت انتقال دهید تا اطلاعات پاک نشود.</string>
+    <string name="audit_original_word">واژه اصلی:</string>
+    <string name="audit_original_translation">ترجمه اصلی:</string>
+    <string name="audit_field_word">فیلد واژه (اسپانیایی):</string>
+    <string name="audit_field_translation">فیلد ترجمه (فارسی):</string>
+    <string name="audit_field_note">فیلد یادداشت و توضیحات:</string>
+    <string name="audit_btn_move_to_note">انتقال متن دوم به یادداشت</string>
+    <string name="audit_btn_keep_original">بدون تغییر</string>
+    <string name="audit_applied_success">اصلاحات و ادغام‌ها با موفقیت در کتابخانه اعمال شد.</string>
     <string name="action_confirm_close">تأیید و بستن</string>
     <string name="audit_btn_retry">بررسی مجدد</string>
     <string name="import_sample_amigo">amigo: دوست (مذکر)</string>

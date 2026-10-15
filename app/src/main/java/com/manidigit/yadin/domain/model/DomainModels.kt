@@ -180,7 +180,8 @@ enum class ParseWarningType {
     ORPHAN_SOURCE,
     ORPHAN_TRANSLATION,
     UNKNOWN_FORMAT,
-    CONFLICT
+    CONFLICT,
+    MIXED_SCRIPT_CONFUSION
 }
 
 data class ParseResult(
@@ -237,10 +238,41 @@ data class AuditActionDetail(
     val description: String
 )
 
+enum class ReviewAction {
+    KEEP,
+    MOVE_TO_NOTE,
+    SUGGEST_CORRECTION,
+    MANUAL_REVIEW
+}
+
+data class FieldValidationResult(
+    val action: ReviewAction,
+    val confidence: Double,
+    val originalWord: String,
+    val originalTranslation: String,
+    val suggestedWord: String?,
+    val suggestedTranslation: String?,
+    val suggestedNote: String?,
+    val reason: String
+)
+
+data class AuditReviewItem(
+    val conceptId: String,
+    val originalWord: String,
+    val originalTranslation: String,
+    val suggestedWord: String,
+    val suggestedTranslation: String,
+    val suggestedNote: String?,
+    val reason: String,
+    val confidence: Double
+)
+
 data class LibraryAuditReport(
     val totalScanned: Int,
     val mergedCount: Int,
     val cleanedCount: Int,
     val totalRemaining: Int,
-    val actions: List<AuditActionDetail>
+    val actions: List<AuditActionDetail>,
+    val needsReviewCount: Int = 0,
+    val reviewItems: List<AuditReviewItem> = emptyList()
 )

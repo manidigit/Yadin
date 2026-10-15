@@ -944,6 +944,21 @@ class VocabularyRepository(
         com.manidigit.yadin.domain.algorithm.VocabularyAuditService(database, conceptDao, learningDao, reviewSessionDao)
     }
 
+    suspend fun scanLibraryForAudit(
+        direction: CardDirection = CardDirection.NORMAL,
+        onProgress: (Int, Int) -> Unit = { _, _ -> }
+    ): com.manidigit.yadin.domain.model.LibraryAuditReport {
+        return auditService.scanLibraryForAudit(direction, onProgress)
+    }
+
+    suspend fun applyAuditFixes(
+        direction: CardDirection = CardDirection.NORMAL,
+        approvedReviewItems: List<com.manidigit.yadin.domain.model.AuditReviewItem> = emptyList(),
+        onProgress: (Int, Int) -> Unit = { _, _ -> }
+    ): com.manidigit.yadin.domain.model.LibraryAuditReport {
+        return auditService.applyAuditFixes(direction, approvedReviewItems, onProgress)
+    }
+
     suspend fun auditAndMergeLibrary(
         direction: CardDirection = CardDirection.NORMAL,
         onProgress: (Int, Int) -> Unit = { _, _ -> }

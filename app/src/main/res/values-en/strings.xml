@@ -478,6 +478,21 @@
 • Removes leading numbers and extra symbols
 • Fully updates the library database</string>
     <string name="audit_btn_start">Start Smart Audit &amp; Merge</string>
+    <string name="audit_scan_in_progress">Scanning and analyzing library words safely (read-only)...</string>
+    <string name="audit_btn_scan">Scan &amp; Safe Analysis</string>
+    <string name="audit_btn_apply_fixes">Apply Changes &amp; Merge</string>
+    <string name="audit_needs_review_count">Words needing manual review or editing:</string>
+    <string name="audit_btn_review_items">Review &amp; Edit Suspicious Words (%1$s items)</string>
+    <string name="audit_review_title">Vocabulary Review &amp; Resolution</string>
+    <string name="audit_review_subtitle">These records are multi-line or ambiguous. Manually edit or move them to notes to prevent data loss.</string>
+    <string name="audit_original_word">Original Word:</string>
+    <string name="audit_original_translation">Original Translation:</string>
+    <string name="audit_field_word">Word Field (Spanish):</string>
+    <string name="audit_field_translation">Translation Field (Persian):</string>
+    <string name="audit_field_note">Notes / Explanation Field:</string>
+    <string name="audit_btn_move_to_note">Move extra text to Note</string>
+    <string name="audit_btn_keep_original">Keep Unchanged</string>
+    <string name="audit_applied_success">Modifications and merges were successfully applied to the library.</string>
     <string name="action_confirm_close">Confirm &amp; Close</string>
     <string name="audit_btn_retry">Re-audit</string>
     <string name="import_sample_amigo">amigo: friend (male)</string>

@@ -96,4 +96,40 @@ class VocabularyAuditServiceTest {
         assertEquals("palabra", resultTrailing.cleanSourceText)
         assertTrue(resultTrailing.wasModified)
     }
+
+    @Test
+    fun testFieldValidationRules() {
+        // ۱. واژه سالم اسپانیایی و ترجمه معتبر فارسی -> KEEP, confidence 1.0
+        val res1 = FieldValidationEngine.validateRecord("Presión de los neumáticos", listOf("فشار باد لاستیک‌ها"))
+        assertEquals(com.manidigit.yadin.domain.model.ReviewAction.KEEP, res1.action)
+        assertEquals(1.0, res1.confidence, 0.001)
+
+        // ۲. واژه چندخطی شامل مفاهیم مستقل لاتین -> MANUAL_REVIEW, confidence 0.60
+        val res2 = FieldValidationEngine.validateRecord("Dispositivo V-16 چراغ هشدار\nPresión de los neumáticos", listOf("چراغ هشدار"))
+        assertEquals(com.manidigit.yadin.domain.model.ReviewAction.MANUAL_REVIEW, res2.action)
+        assertEquals(0.60, res2.confidence, 0.001)
+
+        // ۳. اختلاط اسپانیایی و فارسی بدون جداکننده مشخص -> MANUAL_REVIEW, confidence 0.70
+        val res3 = FieldValidationEngine.validateRecord("Dispositivo V-16 چراغ هشدار V-16", listOf("چراغ هشدار"))
+        assertEquals(com.manidigit.yadin.domain.model.ReviewAction.MANUAL_REVIEW, res3.action)
+        assertEquals(0.70, res3.confidence, 0.001)
+
+        // ۴. پرانتز توضیحی یا نقش کلمه -> MOVE_TO_NOTE, confidence 0.98
+        val res4 = FieldValidationEngine.validateRecord("correr (v.)", listOf("دویدن"))
+        assertEquals(com.manidigit.yadin.domain.model.ReviewAction.MOVE_TO_NOTE, res4.action)
+        assertEquals(0.98, res4.confidence, 0.001)
+        assertEquals("correr", res4.suggestedWord)
+        assertTrue(res4.suggestedNote?.contains("v.") == true)
+
+        // ۵. علامت مخدوش پرسشی اسپانیایی -> SUGGEST_CORRECTION, confidence 0.98
+        val res5 = FieldValidationEngine.validateRecord("¿Cuánto es la carrera;¿", listOf("کرایه چقدر است؟"))
+        assertEquals(com.manidigit.yadin.domain.model.ReviewAction.SUGGEST_CORRECTION, res5.action)
+        assertEquals(0.98, res5.confidence, 0.001)
+        assertEquals("¿Cuánto es la carrera?", res5.suggestedWord)
+
+        // ۶. فیلد واژه فقط به فارسی -> MANUAL_REVIEW, confidence 0.40
+        val res6 = FieldValidationEngine.validateRecord("کتاب", listOf("libro"))
+        assertEquals(com.manidigit.yadin.domain.model.ReviewAction.MANUAL_REVIEW, res6.action)
+        assertEquals(0.40, res6.confidence, 0.001)
+    }
 }

@@ -417,6 +417,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onSelectWord = { conceptId -> viewModel.selectWordDetail(conceptId) },
                 onAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
                 onBatchImport = { viewModel.navigateTo(Screen.ImportPreview) },
+                onScanLibrary = { viewModel.scanLibrary() },
+                onApplyAuditFixes = { items -> viewModel.applyAuditFixes(approvedReviewItems = items) },
                 onRunAuditAndMerge = { viewModel.runLibraryAuditAndMerge() },
                 onClearAuditReport = { viewModel.clearAuditReport() },
                 onBack = {
@@ -523,8 +525,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                         id = "${index}_${entry.lineNumber}_${entry.sourceText.hashCode()}",
                         sourceText = entry.sourceText,
                         translationText = entry.translations.joinToString("، "),
+                        noteText = entry.note ?: "",
                         confidence = (entry.confidence * 100).toInt(),
-                        reason = entry.note ?: if (entry.confidence < 0.8f) defaultManualReason else defaultAutoReason
+                        reason = entry.possibleCorrection?.let { "پیشنهاد: $it" } ?: (entry.note ?: if (entry.confidence < 0.8f) defaultManualReason else defaultAutoReason)
                     )
                 } ?: emptyList()
             }

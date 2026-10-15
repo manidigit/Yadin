@@ -441,28 +441,60 @@ class LibraryViewModel(
     }
 
     /**
-     * اجرای کامل عملیات بررسی، پالایش، ادغام واژگان تکراری و رفرش پایگاه داده
+     * گام ۱: اسکن و گزارش‌گیری امن کتابخانه بدون تغییر در داده‌ها
      */
-    fun runLibraryAuditAndMerge(direction: CardDirection = CardDirection.NORMAL) {
+    fun scanLibrary(direction: CardDirection = CardDirection.NORMAL) {
         scope.launch {
             _isAuditing.value = true
             _auditProgress.value = 0f
             _libraryErrorMessage.value = null
             try {
-                val report = vocabularyRepo.auditAndMergeLibrary(direction) { done, total ->
+                val report = vocabularyRepo.scanLibraryForAudit(direction) { done, total ->
                     if (total > 0) {
                         _auditProgress.value = done.toFloat() / total
                     }
                 }
                 _auditReport.value = report
-                // بلافاصله نتایج جستجو و لیست کتابخانه رفرش شوند
-                performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در بررسی و ادغام واژگان: ${e.message}"
+                _libraryErrorMessage.value = "خطا در تحلیل و اسکن واژگان: ${e.message}"
             } finally {
                 _isAuditing.value = false
             }
         }
+    }
+
+    /**
+     * گام ۲: اعمال اصلاحات، ادغام‌ها و موارد بازبینی‌شده در پایگاه‌داده
+     */
+    fun applyAuditFixes(
+        direction: CardDirection = CardDirection.NORMAL,
+        approvedReviewItems: List<com.manidigit.yadin.domain.model.AuditReviewItem> = emptyList()
+    ) {
+        scope.launch {
+            _isAuditing.value = true
+            _auditProgress.value = 0f
+            _libraryErrorMessage.value = null
+            try {
+                val report = vocabularyRepo.applyAuditFixes(direction, approvedReviewItems) { done, total ->
+                    if (total > 0) {
+                        _auditProgress.value = done.toFloat() / total
+                    }
+                }
+                _auditReport.value = report
+                performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
+            } catch (e: Exception) {
+                _libraryErrorMessage.value = "خطا در اعمال اصلاحات واژگان: ${e.message}"
+            } finally {
+                _isAuditing.value = false
+            }
+        }
+    }
+
+    /**
+     * اجرای کامل عملیات بررسی، پالایش، ادغام واژگان تکراری و رفرش پایگاه داده
+     */
+    fun runLibraryAuditAndMerge(direction: CardDirection = CardDirection.NORMAL) {
+        applyAuditFixes(direction, emptyList())
     }
 
     /**

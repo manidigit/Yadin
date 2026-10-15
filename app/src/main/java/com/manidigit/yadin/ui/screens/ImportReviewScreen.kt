@@ -20,15 +20,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -39,12 +42,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
+import com.manidigit.yadin.domain.algorithm.VocabularyParser
 import com.manidigit.yadin.domain.model.ParsedEntry
+import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -54,6 +59,7 @@ data class ReviewItem(
     val id: String,
     var sourceText: String,
     var translationText: String,
+    var noteText: String = "",
     val reason: String,
     val confidence: Int
 )
@@ -145,8 +151,8 @@ fun ImportReviewScreen(
                             approvedList.add(
                                 ParsedEntry(
                                     sourceText = approved.sourceText,
-                                    translations = listOf(approved.translationText),
-                                    note = null
+                                    translations = TextUtilities.splitTranslations(approved.translationText),
+                                    note = approved.noteText.ifBlank { null }
                                 )
                             )
                             pendingList.remove(item)
@@ -181,8 +187,8 @@ fun ImportReviewScreen(
                     val remainingEntries = pendingList.map {
                         ParsedEntry(
                             sourceText = it.sourceText,
-                            translations = listOf(it.translationText),
-                            note = null
+                            translations = TextUtilities.splitTranslations(it.translationText),
+                            note = it.noteText.ifBlank { null }
                         )
                     }
                     val finalApproved = approvedList + remainingEntries
@@ -218,6 +224,7 @@ private fun ReviewItemCard(
 
     var source by remember { mutableStateOf(item.sourceText) }
     var translation by remember { mutableStateOf(item.translationText) }
+    var note by remember { mutableStateOf(item.noteText) }
 
     YadinCard(
         modifier = Modifier.fillMaxWidth(),
@@ -228,25 +235,28 @@ private fun ReviewItemCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
-                        tint = colors.error,
+                        tint = if (item.confidence < 80) colors.error else colors.warning,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = item.reason,
                         style = MaterialTheme.typography.labelMedium,
-                        color = colors.error
+                        color = if (item.confidence < 80) colors.error else colors.warning
                     )
                 }
                 Text(
@@ -279,6 +289,54 @@ private fun ReviewItemCard(
                 textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Rtl),
                 singleLine = true
             )
+
+            OutlinedTextField(
+                value = note,
+                onValueChange = {
+                    note = it
+                    item.noteText = it
+                },
+                label = { Text("یادداشت و توضیحات (اختیاری)") },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Rtl),
+                singleLine = false,
+                maxLines = 3
+            )
+
+            // Quick button to move extra parts from source to note if needed
+            if (VocabularyParser.hasPersian(source) || source.contains("\n") || source.contains("(") || source.contains(":")) {
+                TextButton(
+                    onClick = {
+                        val pair = VocabularyParser.splitPair(source)
+                        if (pair != null) {
+                            source = pair.first.trim()
+                            item.sourceText = source
+                            val extra = pair.second.trim()
+                            if (VocabularyParser.hasPersian(extra)) {
+                                translation = if (translation.isBlank()) extra else "$translation، $extra"
+                                item.translationText = translation
+                            } else {
+                                note = if (note.isBlank()) extra else "$note\n$extra"
+                                item.noteText = note
+                            }
+                        } else {
+                            val paren = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""").find(source)
+                            if (paren != null) {
+                                val main = paren.groupValues[1].trim()
+                                val inside = paren.groupValues[2].trim()
+                                source = main
+                                item.sourceText = source
+                                note = if (note.isBlank()) inside else "$note\n$inside"
+                                item.noteText = note
+                            }
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("انتقال خودکار متن اضافی به یادداشت", fontSize = 12.sp)
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

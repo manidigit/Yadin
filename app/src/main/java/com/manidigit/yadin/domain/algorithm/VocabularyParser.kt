@@ -5,6 +5,7 @@ import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.domain.model.ParseResult
 import com.manidigit.yadin.domain.model.ParseWarning
 import com.manidigit.yadin.domain.model.ParseWarningType
+import com.manidigit.yadin.domain.model.ReviewAction
 import com.manidigit.yadin.domain.model.VariantType
 import com.manidigit.yadin.domain.model.VocabularyBreakdownEntry
 import com.manidigit.yadin.domain.model.VocabularyRelationEntry
@@ -100,21 +101,105 @@ object VocabularyParser {
                 val entryType = classifyEntry(src)
                 val noteCombined = if (currentNotes.isNotEmpty()) currentNotes.joinToString("\n") else null
 
+                // اعتبارسنجی محافظه‌کارانه فیلدها با استفاده از FieldValidationEngine
+                val validation = FieldValidationEngine.validateRecord(src, transList, noteCombined)
+                val finalSource: String
+                val finalTranslations: List<String>
+                val finalNote: String?
+                val finalConfidence: Double
+                var possibleCorrection: String? = null
+
+                when (validation.action) {
+                    ReviewAction.KEEP -> {
+                        finalSource = src
+                        finalTranslations = transList
+                        finalNote = noteCombined
+                        finalConfidence = currentConfidence.coerceIn(0.0, 1.0)
+                    }
+                    ReviewAction.MOVE_TO_NOTE -> {
+                        if (validation.confidence >= 0.98) {
+                            finalSource = validation.suggestedWord ?: src
+                            finalTranslations = if (validation.suggestedTranslation != null) {
+                                TextUtilities.splitTranslations(validation.suggestedTranslation)
+                            } else transList
+                            finalNote = validation.suggestedNote ?: noteCombined
+                            finalConfidence = validation.confidence
+                            currentEvidence.add(validation.reason)
+                        } else {
+                            finalSource = src
+                            finalTranslations = transList
+                            finalNote = noteCombined
+                            finalConfidence = validation.confidence
+                            possibleCorrection = validation.suggestedWord
+                            warnings.add(
+                                ParseWarning(
+                                    type = ParseWarningType.MIXED_SCRIPT_CONFUSION,
+                                    lineNumber = currentLineNumber,
+                                    rawText = src,
+                                    message = validation.reason
+                                )
+                            )
+                        }
+                    }
+                    ReviewAction.SUGGEST_CORRECTION -> {
+                        if (validation.confidence >= 0.98) {
+                            finalSource = validation.suggestedWord ?: src
+                            finalTranslations = if (validation.suggestedTranslation != null) {
+                                TextUtilities.splitTranslations(validation.suggestedTranslation)
+                            } else transList
+                            finalNote = validation.suggestedNote ?: noteCombined
+                            finalConfidence = validation.confidence
+                            currentEvidence.add(validation.reason)
+                        } else {
+                            finalSource = src
+                            finalTranslations = transList
+                            finalNote = noteCombined
+                            finalConfidence = validation.confidence
+                            possibleCorrection = validation.suggestedWord
+                            warnings.add(
+                                ParseWarning(
+                                    type = ParseWarningType.MIXED_SCRIPT_CONFUSION,
+                                    lineNumber = currentLineNumber,
+                                    rawText = src,
+                                    message = validation.reason
+                                )
+                            )
+                        }
+                    }
+                    ReviewAction.MANUAL_REVIEW -> {
+                        // در صورت ابهام یا اختلاط بدون جداکننده، داده اصلی بدون دستکاری ذخیره شده و به صف بازبینی دستی می‌رود
+                        finalSource = src
+                        finalTranslations = transList
+                        finalNote = validation.suggestedNote ?: noteCombined
+                        finalConfidence = validation.confidence
+                        possibleCorrection = validation.suggestedWord
+                        warnings.add(
+                            ParseWarning(
+                                type = ParseWarningType.MIXED_SCRIPT_CONFUSION,
+                                lineNumber = currentLineNumber,
+                                rawText = src,
+                                message = "${validation.reason} (نیازمند بازبینی دستی قبل از ذخیره)"
+                            )
+                        )
+                    }
+                }
+
                 entries.add(
                     ParsedEntry(
-                        sourceText = src,
-                        translations = transList,
-                        note = noteCombined,
+                        sourceText = finalSource,
+                        translations = finalTranslations,
+                        note = finalNote,
                         grammarNotes = null,
                         categoryNames = emptyList(),
                         entryType = entryType,
-                        confidence = currentConfidence.coerceIn(0.0, 1.0),
+                        confidence = finalConfidence.coerceIn(0.0, 1.0),
                         lineNumber = currentLineNumber,
                         rawLines = currentRawLines.toList(),
                         evidence = currentEvidence.toList(),
                         variants = currentVariants.toList(),
                         breakdowns = currentBreakdowns.toList(),
-                        relations = currentRelations.toList()
+                        relations = currentRelations.toList(),
+                        possibleCorrection = possibleCorrection
                     )
                 )
             }
