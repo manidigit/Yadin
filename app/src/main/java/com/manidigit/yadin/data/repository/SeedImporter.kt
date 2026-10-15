@@ -35,17 +35,28 @@ class SeedImporter(
     private val settingsDao: com.manidigit.yadin.data.local.dao.SettingsDao = database.settingsDao()
 ) {
 
+    companion object {
+        const val CURRENT_SEED_VERSION = "7207_v1.44.0"
+    }
+
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
         conceptDao.getTotalConceptCount() == 0
     }
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
-        // ISS-53: If seed was already imported previously, do not re-import upon user deliberate wipe
+        val totalCount = conceptDao.getTotalConceptCount()
+        if (totalCount < 7000) {
+            return@withContext true
+        }
+        val seedVersion = settingsDao.getSetting("seedVersion")
+        if (seedVersion != CURRENT_SEED_VERSION) {
+            return@withContext true
+        }
         val alreadyImported = settingsDao.getSetting("seedImported") == "true"
         if (alreadyImported) {
             return@withContext false
         }
-        conceptDao.getTotalConceptCount() == 0
+        totalCount == 0
     }
 
     suspend fun importSeedIfNeeded(onProgress: (Float, String) -> Unit) = withContext(Dispatchers.IO) {
@@ -64,6 +75,7 @@ class SeedImporter(
             val categories = mutableListOf<CategoryEntity>()
             val concepts = mutableListOf<ConceptEntity>()
             val contents = mutableListOf<ContentEntity>()
+            val seedDifficultyStates = mutableListOf<DifficultyStateEntity>()
 
             reader.beginObject()
             while (reader.hasNext()) {
@@ -167,6 +179,32 @@ class SeedImporter(
                                         }
                                         reader.endArray()
                                     }
+                                    "difficultyStates" -> {
+                                        reader.beginArray()
+                                        while (reader.hasNext()) {
+                                            reader.beginObject()
+                                            var id = ""
+                                            var conceptId = ""
+                                            var dirStr = "NORMAL"
+                                            var currStr = "EASY"
+                                            while (reader.hasNext()) {
+                                                when (reader.nextName()) {
+                                                    "id" -> id = reader.nextString()
+                                                    "conceptId" -> conceptId = reader.nextString()
+                                                    "direction" -> dirStr = reader.nextString()
+                                                    "current" -> currStr = reader.nextString()
+                                                    else -> reader.skipValue()
+                                                }
+                                            }
+                                            reader.endObject()
+                                            if (id.isNotEmpty() && conceptId.isNotEmpty()) {
+                                                val cardDir = try { CardDirection.valueOf(dirStr) } catch (_: Exception) { CardDirection.NORMAL }
+                                                val diffVal = try { VocabularyDifficulty.valueOf(currStr) } catch (_: Exception) { VocabularyDifficulty.EASY }
+                                                seedDifficultyStates.add(DifficultyStateEntity(id, conceptId, cardDir, diffVal))
+                                            }
+                                        }
+                                        reader.endArray()
+                                    }
                                     else -> reader.skipValue()
                                 }
                             }
@@ -220,22 +258,35 @@ class SeedImporter(
                         updatedAt = now
                     )
                 )
-                diffBatch.add(
-                    DifficultyStateEntity(
-                        id = UUID.randomUUID().toString(),
-                        conceptId = concept.id,
-                        direction = CardDirection.NORMAL,
-                        current = VocabularyDifficulty.EASY
+            }
+
+            if (seedDifficultyStates.isNotEmpty()) {
+                diffBatch.addAll(seedDifficultyStates)
+            } else {
+                conceptsNeedingStates.forEach { concept ->
+                    diffBatch.add(
+                        DifficultyStateEntity(
+                            id = UUID.randomUUID().toString(),
+                            conceptId = concept.id,
+                            direction = CardDirection.NORMAL,
+                            current = VocabularyDifficulty.EASY
+                        )
                     )
-                )
-                diffBatch.add(
-                    DifficultyStateEntity(
-                        id = UUID.randomUUID().toString(),
-                        conceptId = concept.id,
-                        direction = CardDirection.REVERSE,
-                        current = VocabularyDifficulty.EASY
+                    diffBatch.add(
+                        DifficultyStateEntity(
+                            id = UUID.randomUUID().toString(),
+                            conceptId = concept.id,
+                            direction = CardDirection.REVERSE,
+                            current = VocabularyDifficulty.EASY
+                        )
                     )
-                )
+                }
+            }
+
+            val conceptCategories = concepts.mapNotNull { concept ->
+                concept.categoryId?.let { catId ->
+                    com.manidigit.yadin.data.local.entity.ConceptCategoryEntity(concept.id, catId)
+                }
             }
 
             database.withTransaction {
@@ -245,6 +296,12 @@ class SeedImporter(
 
                 concepts.chunked(500).forEach { chunk ->
                     conceptDao.insertConcepts(chunk)
+                }
+
+                if (conceptCategories.isNotEmpty()) {
+                    conceptCategories.chunked(1000).forEach { chunk ->
+                        conceptDao.insertConceptCategories(chunk)
+                    }
                 }
 
                 contents.chunked(1000).forEach { chunk ->
@@ -264,6 +321,7 @@ class SeedImporter(
 
                 ensureDefaultAchievements()
                 settingsDao.setSetting(com.manidigit.yadin.data.local.entity.SettingEntity("seedImported", "true"))
+                settingsDao.setSetting(com.manidigit.yadin.data.local.entity.SettingEntity("seedVersion", CURRENT_SEED_VERSION))
             }
 
             onProgress(1.0f, context.getString(R.string.seed_import_completed))
