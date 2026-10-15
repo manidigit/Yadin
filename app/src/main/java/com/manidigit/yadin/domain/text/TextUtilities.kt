@@ -11,6 +11,12 @@ object TextUtilities {
     private val ARABIC_PERSIAN_DIACRITICS_REGEX = Regex("[\u064B-\u065F\u0670]")
     private val PRIMARY_SEGMENTS_REGEX = Regex("[،,;\n]")
     private val SLASH_SURROUNDED_BY_SPACE = Regex("""\s+/\s*|\s*/\s+""")
+    private val TRAILING_INVERTED_QUESTION_REGEX = Regex("""[;,؛،\s]+¿\s*$""")
+    private val TRAILING_INVERTED_EXCLAMATION_REGEX = Regex("""[;,؛،\s]+¡\s*$""")
+    private val SPACE_BEFORE_QUESTION_REGEX = Regex("""\s+\?$""")
+    private val TRAILING_SEMI_OR_COMMA_REGEX = Regex("""[;,؛،\s]+$""")
+    private val SPANISH_QUESTION_STARTER_SPLIT_REGEX = Regex("""\s+""")
+    private val TRAILING_DANGLING_DELIMITERS_REGEX = Regex("""[;,؛،:\-—]+\s*$""")
     private val MULTI_ZWNJ_REGEX = Regex("\u200C+")
 
     /**
@@ -145,9 +151,8 @@ object TextUtilities {
         }
 
         // 2. Fix corrupted trailing inverted question mark: ";¿" or ",¿" or " ¿" or "¿" at end
-        val trailingInvertedQuestion = Regex("""[;,؛،\s]+¿\s*$""")
-        if (trailingInvertedQuestion.containsMatchIn(text)) {
-            text = trailingInvertedQuestion.replace(text, "?").trim()
+        if (TRAILING_INVERTED_QUESTION_REGEX.containsMatchIn(text)) {
+            text = TRAILING_INVERTED_QUESTION_REGEX.replace(text, "?").trim()
             modifications.add("اصلاح علامت سؤال اسپانیایی و تبدیل ;¿ پایانی به ?")
         } else if (text.endsWith("¿") && text.length > 1) {
             text = text.substring(0, text.length - 1).trimEnd() + "?"
@@ -155,9 +160,8 @@ object TextUtilities {
         }
 
         // 3. Fix corrupted trailing inverted exclamation mark: ";¡" or ",¡" or " ¡" or "¡" at end
-        val trailingInvertedExclamation = Regex("""[;,؛،\s]+¡\s*$""")
-        if (trailingInvertedExclamation.containsMatchIn(text)) {
-            text = trailingInvertedExclamation.replace(text, "!").trim()
+        if (TRAILING_INVERTED_EXCLAMATION_REGEX.containsMatchIn(text)) {
+            text = TRAILING_INVERTED_EXCLAMATION_REGEX.replace(text, "!").trim()
             modifications.add("اصلاح علامت تعجب اسپانیایی و تبدیل ;¡ پایانی به !")
         } else if (text.endsWith("¡") && text.length > 1) {
             text = text.substring(0, text.length - 1).trimEnd() + "!"
@@ -167,14 +171,12 @@ object TextUtilities {
         // 4. If string starts with "¿", ensure it ends with "?"
         if (text.startsWith("¿")) {
             // Remove space before question mark e.g. "carrera ?" -> "carrera?"
-            val spaceBeforeQ = Regex("""\s+\?$""")
-            if (spaceBeforeQ.containsMatchIn(text)) {
-                text = spaceBeforeQ.replace(text, "?")
+            if (SPACE_BEFORE_QUESTION_REGEX.containsMatchIn(text)) {
+                text = SPACE_BEFORE_QUESTION_REGEX.replace(text, "?")
             }
             // If ends with semicolon or comma instead of question mark e.g. "¿Cuánto cuesta;"
-            val trailingSemiOrComma = Regex("""[;,؛،\s]+$""")
-            if (trailingSemiOrComma.containsMatchIn(text) && !text.endsWith("?")) {
-                text = trailingSemiOrComma.replace(text, "?").trim()
+            if (TRAILING_SEMI_OR_COMMA_REGEX.containsMatchIn(text) && !text.endsWith("?")) {
+                text = TRAILING_SEMI_OR_COMMA_REGEX.replace(text, "?").trim()
                 modifications.add("اصلاح علامت سؤال در انتهای جمله سؤالی اسپانیایی")
             } else if (!text.endsWith("?") && !text.endsWith(".") && !text.endsWith("!")) {
                 text = "$text?"
@@ -182,9 +184,7 @@ object TextUtilities {
             }
         } else if (text.endsWith("?") && !isRtlText(text)) {
             // If it ends with "?" and has Latin/Spanish characters, and is a question clause
-            // (e.g. "Cuánto cuesta;¿" after fixing became "Cuánto cuesta?")
-            // If it's a full interrogative sentence starting with common Spanish question words, add opening "¿"
-            val firstWord = text.split(Regex("""\s+""")).firstOrNull()?.lowercase(Locale.ROOT) ?: ""
+            val firstWord = text.split(SPANISH_QUESTION_STARTER_SPLIT_REGEX).firstOrNull()?.lowercase(Locale.ROOT) ?: ""
             val spanishQuestionStarters = setOf(
                 "cuánto", "cuanto", "cuántos", "cuantos", "cuánta", "cuanta", "cuántas", "cuantas",
                 "qué", "que", "cómo", "como", "dónde", "donde", "adónde", "adonde",
@@ -198,9 +198,8 @@ object TextUtilities {
         }
 
         // 5. Strip trailing stray delimiters like ";" or "؛" or ":" or stray comma/hyphen
-        val trailingDanglingDelimiters = Regex("""[;,؛،:\-—]+\s*$""")
-        if (trailingDanglingDelimiters.containsMatchIn(text)) {
-            val cleaned = trailingDanglingDelimiters.replace(text, "").trim()
+        if (TRAILING_DANGLING_DELIMITERS_REGEX.containsMatchIn(text)) {
+            val cleaned = TRAILING_DANGLING_DELIMITERS_REGEX.replace(text, "").trim()
             if (cleaned.isNotBlank()) {
                 text = cleaned
                 modifications.add("حذف علامت یا جداکننده زائد از انتهای متن")

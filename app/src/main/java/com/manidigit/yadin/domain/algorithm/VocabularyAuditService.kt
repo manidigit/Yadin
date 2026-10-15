@@ -17,6 +17,8 @@ import com.manidigit.yadin.domain.model.LibraryAuditReport
 import com.manidigit.yadin.domain.model.ReviewAction
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.text.TextUtilities
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 /**
@@ -236,13 +238,13 @@ class VocabularyAuditService(
     suspend fun scanLibraryForAudit(
         direction: CardDirection = CardDirection.NORMAL,
         onProgress: (Int, Int) -> Unit = { _, _ -> }
-    ): LibraryAuditReport {
+    ): LibraryAuditReport = withContext(Dispatchers.Default) {
         val (sourceLang, _) = direction.resolveSourceAndTarget()
-        val allConcepts = conceptDao.getAllConcepts().filter { it.active }
+        val allConcepts = withContext(Dispatchers.IO) { conceptDao.getAllConcepts().filter { it.active } }
         val totalScanned = allConcepts.size
 
         if (totalScanned == 0) {
-            return LibraryAuditReport(
+            return@withContext LibraryAuditReport(
                 totalScanned = 0,
                 mergedCount = 0,
                 cleanedCount = 0,
@@ -253,22 +255,38 @@ class VocabularyAuditService(
             )
         }
 
+        // ۱. پیش‌فراخوانی دسته‌جمعی داده‌ها در ۳ کوئری سریع خارج از ترنزاکشن
+        val contentsByConcept = withContext(Dispatchers.IO) { conceptDao.getAllContents().groupBy { it.conceptId } }
+        val learningByConcept = withContext(Dispatchers.IO) {
+            learningDao.getAllLearningStates()
+                .filter { it.direction == direction }
+                .associateBy { it.conceptId }
+        }
+        val conceptCategoriesByConcept = withContext(Dispatchers.IO) { conceptDao.getAllConceptCategories().groupBy { it.conceptId } }
+
         val reviewItems = mutableListOf<AuditReviewItem>()
         val actions = mutableListOf<AuditActionDetail>()
         var duplicateCount = 0
         var autoCleanCount = 0
 
-        val workingList = mutableListOf<ConceptWorkingData>()
+        val workingList = ArrayList<ConceptWorkingData>(totalScanned)
 
+        // ۲. پردازش بر روی Dispatchers.Default با کنترل نرخ انتشار گزارش پیشرفت (حد اکثر ۱۰ بار در ثانیه)
+        var lastReportTime = 0L
         allConcepts.forEachIndexed { idx, concept ->
-            onProgress(idx + 1, totalScanned)
-            val contents = conceptDao.getContentsForConcept(concept.id)
+            val now = System.currentTimeMillis()
+            if (now - lastReportTime >= 100 || idx == totalScanned - 1) {
+                lastReportTime = now
+                onProgress(idx + 1, totalScanned)
+            }
+            val contents = contentsByConcept[concept.id] ?: emptyList()
             val source = contents.firstOrNull { it.languageCode == sourceLang }
                 ?: contents.firstOrNull { it.languageCode != "fa" }
                 ?: contents.firstOrNull()
             val targets = contents.filter { it.id != source?.id }
-            val learning = learningDao.getLearningState(concept.id, direction)
-            val cats = conceptDao.getCategoriesForConcept(concept.id).map { it.id }
+            val learning = learningByConcept[concept.id]
+            val catIdsFromJoin = conceptCategoriesByConcept[concept.id]?.map { it.categoryId } ?: emptyList()
+            val cats = (catIdsFromJoin + listOfNotNull(concept.categoryId)).distinct()
 
             val rawSourceText = source?.text ?: ""
             val rawTransTexts = targets.map { it.text }
@@ -278,7 +296,6 @@ class VocabularyAuditService(
             val validation = FieldValidationEngine.validateRecord(rawSourceText, rawTransTexts, existingNote)
 
             if (validation.action == ReviewAction.MANUAL_REVIEW || validation.confidence < 0.98) {
-                // این رکورد نباید خودکار تغییر کند؛ باید برای کاربر در صف بازبینی دستی قرار گیرد
                 reviewItems.add(
                     AuditReviewItem(
                         conceptId = concept.id,
@@ -302,7 +319,7 @@ class VocabularyAuditService(
                     sourceContent = source,
                     targetContents = targets,
                     learningState = learning,
-                    categoryIds = (cats + listOfNotNull(concept.categoryId)).distinct(),
+                    categoryIds = cats,
                     cleanedResult = cleaned
                 )
             )
@@ -329,7 +346,7 @@ class VocabularyAuditService(
 
         val totalRemaining = totalScanned - duplicateCount
 
-        return LibraryAuditReport(
+        LibraryAuditReport(
             totalScanned = totalScanned,
             mergedCount = duplicateCount,
             cleanedCount = autoCleanCount,
@@ -347,39 +364,21 @@ class VocabularyAuditService(
         direction: CardDirection = CardDirection.NORMAL,
         approvedReviewItems: List<AuditReviewItem> = emptyList(),
         onProgress: (Int, Int) -> Unit = { _, _ -> }
-    ): LibraryAuditReport {
+    ): LibraryAuditReport = withContext(Dispatchers.Default) {
         val actions = mutableListOf<AuditActionDetail>()
         var mergedCount = 0
         var cleanedCount = 0
         val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
 
-        return database.withTransaction {
-            val allConcepts = conceptDao.getAllConcepts().filter { it.active }
-            val totalScanned = allConcepts.size
-
-            if (totalScanned == 0) {
-                return@withTransaction LibraryAuditReport(
-                    totalScanned = 0,
-                    mergedCount = 0,
-                    cleanedCount = 0,
-                    totalRemaining = 0,
-                    actions = emptyList()
-                )
-            }
-
-            // ۱. اعمال ویرایش‌های تأییدشده در صف بازبینی دستی توسط کاربر
-            val reviewMap = approvedReviewItems.associateBy { it.conceptId }
+        // ۱. اعمال ویرایش‌های تأییدشده در صف بازبینی دستی توسط کاربر
+        val reviewMap = approvedReviewItems.associateBy { it.conceptId }
+        if (approvedReviewItems.isNotEmpty()) {
+            val approvedConceptIds = approvedReviewItems.map { it.conceptId }
+            val approvedContentsToInsert = mutableListOf<ContentEntity>()
             for (item in approvedReviewItems) {
-                val contents = conceptDao.getContentsForConcept(item.conceptId)
-                val source = contents.firstOrNull { it.languageCode == sourceLang }
-                    ?: contents.firstOrNull { it.languageCode != "fa" }
-                    ?: contents.firstOrNull()
                 val targetList = TextUtilities.splitTranslations(item.suggestedTranslation)
-
-                conceptDao.deleteContentsForConcept(item.conceptId)
-
                 val newSourceContent = ContentEntity(
-                    id = source?.id ?: UUID.randomUUID().toString(),
+                    id = UUID.randomUUID().toString(),
                     conceptId = item.conceptId,
                     languageCode = sourceLang,
                     text = item.suggestedWord,
@@ -398,7 +397,8 @@ class VocabularyAuditService(
                         translationIndex = idx
                     )
                 }
-                conceptDao.insertContents(listOf(newSourceContent) + newTargets)
+                approvedContentsToInsert.add(newSourceContent)
+                approvedContentsToInsert.addAll(newTargets)
                 cleanedCount++
                 actions.add(
                     AuditActionDetail(
@@ -409,241 +409,328 @@ class VocabularyAuditService(
                     )
                 )
             }
-
-            // ۲. بازخوانی تمام مفاهیم برای پردازش ادغام و اصلاحات خودکار
-            val updatedConcepts = conceptDao.getAllConcepts().filter { it.active }
-            val workingList = mutableListOf<ConceptWorkingData>()
-
-            updatedConcepts.forEachIndexed { idx, concept ->
-                onProgress(idx + 1, updatedConcepts.size)
-                val contents = conceptDao.getContentsForConcept(concept.id)
-                val source = contents.firstOrNull { it.languageCode == sourceLang }
-                    ?: contents.firstOrNull { it.languageCode != "fa" }
-                    ?: contents.firstOrNull()
-                val targets = contents.filter { it.id != source?.id }
-                val learning = learningDao.getLearningState(concept.id, direction)
-                val cats = conceptDao.getCategoriesForConcept(concept.id).map { it.id }
-
-                val rawSourceText = source?.text ?: ""
-                val cleaned = if (reviewMap.containsKey(concept.id)) {
-                    CleanedWordResult(
-                        cleanSourceText = rawSourceText,
-                        extractedTranslations = emptyList(),
-                        extractedNotes = emptyList(),
-                        wasModified = false,
-                        modifications = emptyList()
-                    )
-                } else {
-                    cleanAndExtractWord(rawSourceText)
+            withContext(Dispatchers.IO) {
+                database.withTransaction {
+                    conceptDao.deleteContentsForConcepts(approvedConceptIds)
+                    if (approvedContentsToInsert.isNotEmpty()) {
+                        approvedContentsToInsert.chunked(1000).forEach { conceptDao.insertContents(it) }
+                    }
                 }
+            }
+        }
 
-                workingList.add(
-                    ConceptWorkingData(
-                        concept = concept,
-                        sourceContent = source,
-                        targetContents = targets,
-                        learningState = learning,
-                        categoryIds = (cats + listOfNotNull(concept.categoryId)).distinct(),
-                        cleanedResult = cleaned
+        // ۲. پیش‌فراخوانی دسته‌جمعی داده‌ها خارج از ترنزاکشن
+        val allConcepts = withContext(Dispatchers.IO) { conceptDao.getAllConcepts().filter { it.active } }
+        val totalScanned = allConcepts.size
+
+        if (totalScanned == 0) {
+            return@withContext LibraryAuditReport(
+                totalScanned = 0,
+                mergedCount = 0,
+                cleanedCount = 0,
+                totalRemaining = 0,
+                actions = emptyList()
+            )
+        }
+
+        val contentsByConcept = withContext(Dispatchers.IO) { conceptDao.getAllContents().groupBy { it.conceptId } }
+        val learningByConcept = withContext(Dispatchers.IO) {
+            learningDao.getAllLearningStates()
+                .filter { it.direction == direction }
+                .associateBy { it.conceptId }
+        }
+        val conceptCategoriesByConcept = withContext(Dispatchers.IO) { conceptDao.getAllConceptCategories().groupBy { it.conceptId } }
+
+        val workingList = ArrayList<ConceptWorkingData>(totalScanned)
+        var lastReportTime = 0L
+
+        allConcepts.forEachIndexed { idx, concept ->
+            val now = System.currentTimeMillis()
+            if (now - lastReportTime >= 100 || idx == totalScanned - 1) {
+                lastReportTime = now
+                onProgress(idx + 1, totalScanned)
+            }
+            val contents = contentsByConcept[concept.id] ?: emptyList()
+            val source = contents.firstOrNull { it.languageCode == sourceLang }
+                ?: contents.firstOrNull { it.languageCode != "fa" }
+                ?: contents.firstOrNull()
+            val targets = contents.filter { it.id != source?.id }
+            val learning = learningByConcept[concept.id]
+            val catIdsFromJoin = conceptCategoriesByConcept[concept.id]?.map { it.categoryId } ?: emptyList()
+            val cats = (catIdsFromJoin + listOfNotNull(concept.categoryId)).distinct()
+
+            val rawSourceText = source?.text ?: ""
+            val cleaned = if (reviewMap.containsKey(concept.id)) {
+                CleanedWordResult(
+                    cleanSourceText = rawSourceText,
+                    extractedTranslations = emptyList(),
+                    extractedNotes = emptyList(),
+                    wasModified = false,
+                    modifications = emptyList()
+                )
+            } else {
+                cleanAndExtractWord(rawSourceText)
+            }
+
+            workingList.add(
+                ConceptWorkingData(
+                    concept = concept,
+                    sourceContent = source,
+                    targetContents = targets,
+                    learningState = learning,
+                    categoryIds = cats,
+                    cleanedResult = cleaned
+                )
+            )
+        }
+
+        // ۳. گروه‌بندی و ادغام واژگان تکراری در حافظه
+        val groupedByCanonical = workingList.groupBy {
+            TextUtilities.toCanonicalKey(it.cleanedResult.cleanSourceText)
+        }
+
+        val conceptsToUpdate = mutableListOf<ConceptEntity>()
+        val conceptsToDeletePerm = mutableListOf<String>()
+        val contentsToDeleteForConcepts = mutableListOf<String>()
+        val contentsToInsertAll = mutableListOf<ContentEntity>()
+        val conceptCategoriesToDeleteForConcepts = mutableListOf<String>()
+        val conceptCategoriesToInsertAll = mutableListOf<ConceptCategoryEntity>()
+        val learningStatesToUpdate = mutableListOf<LearningStateEntity>()
+        val duplicateIdsToRepoint = mutableListOf<Pair<List<String>, String>>()
+
+        groupedByCanonical.forEach { (canonicalKey, items) ->
+            if (canonicalKey.isBlank()) return@forEach
+
+            if (items.size > 1) {
+                val primary = items.maxWithOrNull(
+                    compareBy<ConceptWorkingData> { item ->
+                        when (item.learningState?.stage) {
+                            Stage.LEARNED -> 4
+                            Stage.MONTHLY -> 3
+                            Stage.WEEKLY -> 2
+                            Stage.DAILY -> 1
+                            null -> 0
+                        }
+                    }.thenBy {
+                        it.learningState?.updatedAt ?: it.concept.updatedAt
+                    }
+                ) ?: items.first()
+
+                val duplicates = items.filter { it.concept.id != primary.concept.id }
+                val duplicateIds = duplicates.map { it.concept.id }
+
+                // ترکیب ترجمه‌ها بدون تکرار
+                val existingTrans = (primary.targetContents.map { it.text } + primary.cleanedResult.extractedTranslations).toMutableList()
+                duplicates.forEach { dup ->
+                    existingTrans.addAll(dup.targetContents.map { it.text })
+                    existingTrans.addAll(dup.cleanedResult.extractedTranslations)
+                }
+                val mergedTranslations = existingTrans
+                    .map { TextUtilities.cleanText(it) }
+                    .filter { it.isNotBlank() }
+                    .distinct()
+
+                // ترکیب یادداشت‌ها
+                val allNotes = mutableListOf<String>()
+                primary.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
+                allNotes.addAll(primary.cleanedResult.extractedNotes)
+                duplicates.forEach { dup ->
+                    dup.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
+                    allNotes.addAll(dup.cleanedResult.extractedNotes)
+                }
+                val mergedNote = allNotes.distinct().joinToString("\n").ifBlank { null }
+
+                val allCatIds = (primary.categoryIds + duplicates.flatMap { it.categoryIds }).distinct()
+
+                val bestStage = items.mapNotNull { it.learningState?.stage }.maxWithOrNull(
+                    compareBy { stage ->
+                        when (stage) {
+                            Stage.LEARNED -> 4
+                            Stage.MONTHLY -> 3
+                            Stage.WEEKLY -> 2
+                            Stage.DAILY -> 1
+                        }
+                    }
+                ) ?: (primary.learningState?.stage ?: Stage.DAILY)
+
+                val now = System.currentTimeMillis()
+
+                conceptsToUpdate.add(
+                    primary.concept.copy(
+                        categoryId = allCatIds.firstOrNull() ?: primary.concept.categoryId,
+                        updatedAt = now
                     )
                 )
-            }
 
-            // ۳. گروه‌بندی و ادغام واژگان تکراری با حفظ بالاترین مرحله لایتنر
-            val groupedByCanonical = workingList.groupBy {
-                TextUtilities.toCanonicalKey(it.cleanedResult.cleanSourceText)
-            }
+                contentsToDeleteForConcepts.add(primary.concept.id)
+                val newSourceContent = ContentEntity(
+                    id = primary.sourceContent?.id ?: UUID.randomUUID().toString(),
+                    conceptId = primary.concept.id,
+                    languageCode = sourceLang,
+                    text = primary.cleanedResult.cleanSourceText,
+                    canonicalKey = canonicalKey,
+                    note = mergedNote,
+                    translationIndex = 0
+                )
+                val newTargetContents = mergedTranslations.mapIndexed { idx, transText ->
+                    ContentEntity(
+                        id = UUID.randomUUID().toString(),
+                        conceptId = primary.concept.id,
+                        languageCode = targetLang,
+                        text = transText,
+                        canonicalKey = TextUtilities.toCanonicalKey(transText),
+                        note = null,
+                        translationIndex = idx
+                    )
+                }
+                contentsToInsertAll.add(newSourceContent)
+                contentsToInsertAll.addAll(newTargetContents)
 
-            groupedByCanonical.forEach { (canonicalKey, items) ->
-                if (canonicalKey.isBlank()) return@forEach
+                conceptCategoriesToDeleteForConcepts.add(primary.concept.id)
+                allCatIds.forEach { catId ->
+                    conceptCategoriesToInsertAll.add(ConceptCategoryEntity(primary.concept.id, catId))
+                }
 
-                if (items.size > 1) {
-                    val primary = items.maxWithOrNull(
-                        compareBy<ConceptWorkingData> { item ->
-                            when (item.learningState?.stage) {
-                                Stage.LEARNED -> 4
-                                Stage.MONTHLY -> 3
-                                Stage.WEEKLY -> 2
-                                Stage.DAILY -> 1
-                                null -> 0
-                            }
-                        }.thenBy {
-                            it.learningState?.updatedAt ?: it.concept.updatedAt
-                        }
-                    ) ?: items.first()
-
-                    val duplicates = items.filter { it.concept.id != primary.concept.id }
-                    val duplicateIds = duplicates.map { it.concept.id }
-
-                    // ترکیب ترجمه‌ها بدون تکرار
-                    val existingTrans = (primary.targetContents.map { it.text } + primary.cleanedResult.extractedTranslations).toMutableList()
-                    duplicates.forEach { dup ->
-                        existingTrans.addAll(dup.targetContents.map { it.text })
-                        existingTrans.addAll(dup.cleanedResult.extractedTranslations)
-                    }
-                    val mergedTranslations = existingTrans
-                        .map { TextUtilities.cleanText(it) }
-                        .filter { it.isNotBlank() }
-                        .distinct()
-
-                    // ترکیب یادداشت‌ها
-                    val allNotes = mutableListOf<String>()
-                    primary.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
-                    allNotes.addAll(primary.cleanedResult.extractedNotes)
-                    duplicates.forEach { dup ->
-                        dup.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
-                        allNotes.addAll(dup.cleanedResult.extractedNotes)
-                    }
-                    val mergedNote = allNotes.distinct().joinToString("\n").ifBlank { null }
-
-                    val allCatIds = (primary.categoryIds + duplicates.flatMap { it.categoryIds }).distinct()
-
-                    val bestStage = items.mapNotNull { it.learningState?.stage }.maxWithOrNull(
-                        compareBy { stage ->
-                            when (stage) {
-                                Stage.LEARNED -> 4
-                                Stage.MONTHLY -> 3
-                                Stage.WEEKLY -> 2
-                                Stage.DAILY -> 1
-                            }
-                        }
-                    ) ?: (primary.learningState?.stage ?: Stage.DAILY)
-
-                    val now = System.currentTimeMillis()
-
-                    conceptDao.updateConcept(
-                        primary.concept.copy(
-                            categoryId = allCatIds.firstOrNull() ?: primary.concept.categoryId,
+                if (primary.learningState != null) {
+                    learningStatesToUpdate.add(
+                        primary.learningState.copy(
+                            stage = bestStage,
                             updatedAt = now
                         )
                     )
+                }
 
-                    conceptDao.deleteContentsForConcept(primary.concept.id)
-                    val newSourceContent = ContentEntity(
-                        id = primary.sourceContent?.id ?: UUID.randomUUID().toString(),
-                        conceptId = primary.concept.id,
-                        languageCode = sourceLang,
-                        text = primary.cleanedResult.cleanSourceText,
-                        canonicalKey = canonicalKey,
-                        note = mergedNote,
-                        translationIndex = 0
+                duplicateIdsToRepoint.add(Pair(duplicateIds, primary.concept.id))
+
+                contentsToDeleteForConcepts.addAll(duplicateIds)
+                conceptCategoriesToDeleteForConcepts.addAll(duplicateIds)
+                conceptsToDeletePerm.addAll(duplicateIds)
+
+                mergedCount += duplicates.size
+                actions.add(
+                    AuditActionDetail(
+                        originalText = primary.sourceContent?.text ?: primary.cleanedResult.cleanSourceText,
+                        cleanedText = primary.cleanedResult.cleanSourceText,
+                        actionType = AuditActionType.MERGED,
+                        description = "ادغام ${duplicates.size + 1} واژه تکراری با کلید یکسان (مرحله: $bestStage، تعداد ترجمه‌ها: ${mergedTranslations.size})"
                     )
-                    val newTargetContents = mergedTranslations.mapIndexed { idx, transText ->
-                        ContentEntity(
-                            id = UUID.randomUUID().toString(),
-                            conceptId = primary.concept.id,
-                            languageCode = targetLang,
-                            text = transText,
-                            canonicalKey = TextUtilities.toCanonicalKey(transText),
-                            note = null,
-                            translationIndex = idx
+                )
+            } else {
+                // واژه تکراری نیست، بررسی اصلاحات خودکار
+                val single = items.first()
+                if (!reviewMap.containsKey(single.concept.id)) {
+                    val targetMods = mutableListOf<String>()
+                    val cleanedTargets = single.targetContents.map { target ->
+                        val (norm, mods) = TextUtilities.normalizeSpanishPunctuation(target.text)
+                        if (mods.isNotEmpty()) targetMods.addAll(mods)
+                        TextUtilities.cleanText(norm)
+                    }.filter { it.isNotBlank() }.distinct()
+
+                    val updatedSourceText = single.cleanedResult.cleanSourceText
+                    val sourceTextChanged = updatedSourceText != single.sourceContent?.text
+
+                    val allNotes = mutableListOf<String>()
+                    single.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
+                    allNotes.addAll(single.cleanedResult.extractedNotes)
+                    val mergedNote = allNotes.distinct().joinToString("\n").ifBlank { null }
+                    val noteChanged = mergedNote != single.sourceContent?.note
+
+                    val existingTargetTexts = single.targetContents.map { it.text }
+                    val newCombinedTargets = (cleanedTargets + single.cleanedResult.extractedTranslations).distinct()
+                    val targetsChanged = newCombinedTargets != existingTargetTexts
+
+                    // فقط در صورت وجود تغییر واقعی دیتابیس آپدیت می‌شود
+                    if ((sourceTextChanged || targetsChanged || noteChanged) && single.sourceContent != null) {
+                        val now = System.currentTimeMillis()
+
+                        contentsToDeleteForConcepts.add(single.concept.id)
+                        val updatedSource = ContentEntity(
+                            id = single.sourceContent.id,
+                            conceptId = single.concept.id,
+                            languageCode = sourceLang,
+                            text = updatedSourceText,
+                            canonicalKey = canonicalKey,
+                            note = mergedNote,
+                            translationIndex = 0
                         )
-                    }
-                    conceptDao.insertContents(listOf(newSourceContent) + newTargetContents)
-
-                    conceptDao.deleteConceptCategories(primary.concept.id)
-                    allCatIds.forEach { catId ->
-                        conceptDao.insertConceptCategory(ConceptCategoryEntity(primary.concept.id, catId))
-                    }
-
-                    if (primary.learningState != null) {
-                        learningDao.updateLearningState(
-                            primary.learningState.copy(
-                                stage = bestStage,
-                                updatedAt = now
-                            )
-                        )
-                    }
-
-                    reviewSessionDao.repointReviewHistory(duplicateIds, primary.concept.id)
-                    reviewSessionDao.repointReviewSessionItems(duplicateIds, primary.concept.id)
-
-                    conceptDao.deleteContentsForConcepts(duplicateIds)
-                    learningDao.deleteLearningStatesForConcepts(duplicateIds)
-                    learningDao.deleteDifficultyStatesForConcepts(duplicateIds)
-                    conceptDao.deleteConceptCategoriesForConcepts(duplicateIds)
-                    conceptDao.deleteConceptsPermanently(duplicateIds)
-
-                    mergedCount += duplicates.size
-                    actions.add(
-                        AuditActionDetail(
-                            originalText = primary.sourceContent?.text ?: primary.cleanedResult.cleanSourceText,
-                            cleanedText = primary.cleanedResult.cleanSourceText,
-                            actionType = AuditActionType.MERGED,
-                            description = "ادغام ${duplicates.size + 1} واژه تکراری با کلید یکسان (مرحله: $bestStage، تعداد ترجمه‌ها: ${mergedTranslations.size})"
-                        )
-                    )
-                } else {
-                    // واژه تکراری نیست، اما ممکن است نیاز به اصلاح خودکار نشانه‌گذاری یا پرانتز با اطمینان بالا داشته باشد
-                    val single = items.first()
-                    if (!reviewMap.containsKey(single.concept.id)) {
-                        val targetMods = mutableListOf<String>()
-                        val cleanedTargets = single.targetContents.map { target ->
-                            val (norm, mods) = TextUtilities.normalizeSpanishPunctuation(target.text)
-                            if (mods.isNotEmpty()) targetMods.addAll(mods)
-                            TextUtilities.cleanText(norm)
-                        }.filter { it.isNotBlank() }.distinct()
-
-                        val targetWasModified = targetMods.isNotEmpty() || cleanedTargets != single.targetContents.map { it.text }
-
-                        if ((single.cleanedResult.wasModified || targetWasModified) && single.sourceContent != null) {
-                            val now = System.currentTimeMillis()
-                            val existingTrans = (cleanedTargets + single.cleanedResult.extractedTranslations).distinct()
-                            val allNotes = mutableListOf<String>()
-                            single.sourceContent.note?.let { if (it.isNotBlank()) allNotes.add(it) }
-                            allNotes.addAll(single.cleanedResult.extractedNotes)
-                            val mergedNote = allNotes.distinct().joinToString("\n").ifBlank { null }
-
-                            conceptDao.deleteContentsForConcept(single.concept.id)
-                            val updatedSource = ContentEntity(
-                                id = single.sourceContent.id,
+                        val updatedTargets = newCombinedTargets.mapIndexed { idx, transText ->
+                            ContentEntity(
+                                id = UUID.randomUUID().toString(),
                                 conceptId = single.concept.id,
-                                languageCode = sourceLang,
-                                text = single.cleanedResult.cleanSourceText,
-                                canonicalKey = canonicalKey,
-                                note = mergedNote,
-                                translationIndex = 0
-                            )
-                            val updatedTargets = existingTrans.mapIndexed { idx, transText ->
-                                ContentEntity(
-                                    id = UUID.randomUUID().toString(),
-                                    conceptId = single.concept.id,
-                                    languageCode = targetLang,
-                                    text = transText,
-                                    canonicalKey = TextUtilities.toCanonicalKey(transText),
-                                    note = null,
-                                    translationIndex = idx
-                                )
-                            }
-                            conceptDao.insertContents(listOf(updatedSource) + updatedTargets)
-                            conceptDao.updateConcept(single.concept.copy(updatedAt = now))
-
-                            cleanedCount++
-                            val allModifications = (single.cleanedResult.modifications + targetMods).distinct()
-                            actions.add(
-                                AuditActionDetail(
-                                    originalText = single.sourceContent.text,
-                                    cleanedText = single.cleanedResult.cleanSourceText,
-                                    actionType = if (single.cleanedResult.extractedNotes.isNotEmpty()) AuditActionType.NOTE_EXTRACTED else AuditActionType.CLEANED,
-                                    description = "پالایش واژه: ${allModifications.joinToString("، ")}"
-                                )
+                                languageCode = targetLang,
+                                text = transText,
+                                canonicalKey = TextUtilities.toCanonicalKey(transText),
+                                note = null,
+                                translationIndex = idx
                             )
                         }
+                        contentsToInsertAll.add(updatedSource)
+                        contentsToInsertAll.addAll(updatedTargets)
+
+                        conceptsToUpdate.add(single.concept.copy(updatedAt = now))
+                        cleanedCount++
+                        val allModifications = (single.cleanedResult.modifications + targetMods).distinct()
+                        actions.add(
+                            AuditActionDetail(
+                                originalText = single.sourceContent.text,
+                                cleanedText = updatedSourceText,
+                                actionType = if (single.cleanedResult.extractedNotes.isNotEmpty()) AuditActionType.NOTE_EXTRACTED else AuditActionType.CLEANED,
+                                description = "پالایش واژه: ${allModifications.joinToString("، ")}"
+                            )
+                        )
                     }
                 }
             }
-
-            val totalRemaining = totalScanned - mergedCount
-            LibraryAuditReport(
-                totalScanned = totalScanned,
-                mergedCount = mergedCount,
-                cleanedCount = cleanedCount,
-                totalRemaining = totalRemaining,
-                actions = actions,
-                needsReviewCount = 0,
-                reviewItems = emptyList()
-            )
         }
+
+        // ۴. اجرای دسته‌جمعی و سریع تغییرات دیتابیس در ترنزاکشن متمرکز
+        withContext(Dispatchers.IO) {
+            database.withTransaction {
+                for ((dupIds, primaryId) in duplicateIdsToRepoint) {
+                    reviewSessionDao.repointReviewHistory(dupIds, primaryId)
+                    reviewSessionDao.repointReviewSessionItems(dupIds, primaryId)
+                }
+
+                if (conceptsToUpdate.isNotEmpty()) {
+                    conceptsToUpdate.chunked(500).forEach { conceptDao.insertConcepts(it) }
+                }
+                if (contentsToDeleteForConcepts.isNotEmpty()) {
+                    contentsToDeleteForConcepts.distinct().chunked(500).forEach { conceptDao.deleteContentsForConcepts(it) }
+                }
+                if (contentsToInsertAll.isNotEmpty()) {
+                    contentsToInsertAll.chunked(1000).forEach { conceptDao.insertContents(it) }
+                }
+                if (conceptCategoriesToDeleteForConcepts.isNotEmpty()) {
+                    conceptCategoriesToDeleteForConcepts.distinct().chunked(500).forEach { conceptDao.deleteConceptCategoriesForConcepts(it) }
+                }
+                if (conceptCategoriesToInsertAll.isNotEmpty()) {
+                    conceptCategoriesToInsertAll.chunked(1000).forEach { conceptDao.insertConceptCategories(it) }
+                }
+                if (learningStatesToUpdate.isNotEmpty()) {
+                    learningStatesToUpdate.chunked(500).forEach { learningDao.insertLearningStates(it) }
+                }
+                if (conceptsToDeletePerm.isNotEmpty()) {
+                    val toDelete = conceptsToDeletePerm.distinct()
+                    toDelete.chunked(500).forEach { chunk ->
+                        learningDao.deleteLearningStatesForConcepts(chunk)
+                        learningDao.deleteDifficultyStatesForConcepts(chunk)
+                        conceptDao.deleteConceptCategoriesForConcepts(chunk)
+                        conceptDao.deleteConceptsPermanently(chunk)
+                    }
+                }
+            }
+        }
+
+        val totalRemaining = totalScanned - mergedCount
+        LibraryAuditReport(
+            totalScanned = totalScanned,
+            mergedCount = mergedCount,
+            cleanedCount = cleanedCount,
+            totalRemaining = totalRemaining,
+            actions = actions,
+            needsReviewCount = 0,
+            reviewItems = emptyList()
+        )
     }
 
     /**
