@@ -52,11 +52,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.ReviewCard
+import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
@@ -309,13 +314,16 @@ fun FlashcardScreen(
                                 else -> MaterialTheme.typography.headlineLarge
                             }
 
-                            Text(
-                                text = card.sourceText,
-                                style = promptStyle,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface,
-                                textAlign = TextAlign.Center
-                            )
+                            val isFrontLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
+                            CompositionLocalProvider(LocalLayoutDirection provides (if (isFrontLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                                Text(
+                                    text = card.sourceText,
+                                    style = promptStyle.copy(textDirection = if (isFrontLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
 
                         Row(
@@ -345,13 +353,16 @@ fun FlashcardScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = card.sourceText,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = colors.primary,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center
-                        )
+                        val isSourceLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
+                        CompositionLocalProvider(LocalLayoutDirection provides (if (isSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                            Text(
+                                text = card.sourceText,
+                                style = MaterialTheme.typography.titleMedium.copy(textDirection = if (isSourceLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                color = colors.primary,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center
+                            )
+                        }
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -375,6 +386,7 @@ fun FlashcardScreen(
                                     } else {
                                         MaterialTheme.typography.titleLarge
                                     }
+                                    val isTransLtr = (card.direction == CardDirection.REVERSE) || !TextUtilities.isRtlText(trans)
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -385,13 +397,15 @@ fun FlashcardScreen(
                                                 .background(colors.surfaceVariant)
                                                 .padding(horizontal = 14.dp, vertical = 6.dp)
                                         ) {
-                                            Text(
-                                                text = trans,
-                                                style = translationStyle,
-                                                fontWeight = FontWeight.Bold,
-                                                color = colors.onSurface,
-                                                textAlign = TextAlign.Center
-                                            )
+                                            CompositionLocalProvider(LocalLayoutDirection provides (if (isTransLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                                                Text(
+                                                    text = trans,
+                                                    style = translationStyle.copy(textDirection = if (isTransLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = colors.onSurface,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
                                         }
                                     }
                                 }

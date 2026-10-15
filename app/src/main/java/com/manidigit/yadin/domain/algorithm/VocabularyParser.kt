@@ -468,7 +468,7 @@ object VocabularyParser {
         if (csvFields.size >= 2) {
             val left = csvFields[0]
             val right = csvFields[1]
-            if (left.isNotBlank() && right.isNotBlank() && (hasLatin(left) || hasPersian(right))) {
+            if (left.isNotBlank() && right.isNotBlank() && (hasLatin(left) || hasPersian(left)) && (hasLatin(right) || hasPersian(right))) {
                 return SplitResult(left, right, "csv", 0.95)
             }
         }

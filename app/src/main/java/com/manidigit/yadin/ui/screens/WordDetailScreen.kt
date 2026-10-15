@@ -37,11 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.WordDetail
+import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
@@ -219,12 +224,15 @@ fun WordDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = word.sourceContent.text,
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
+                        val isSourceLtr = (word.sourceContent.languageCode != "fa") && !TextUtilities.isRtlText(word.sourceContent.text)
+                        CompositionLocalProvider(LocalLayoutDirection provides (if (isSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                            Text(
+                                text = word.sourceContent.text,
+                                style = MaterialTheme.typography.headlineLarge.copy(textDirection = if (isSourceLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                        }
                         SpeakButton(
                             text = word.sourceContent.text,
                             languageCode = word.sourceContent.languageCode

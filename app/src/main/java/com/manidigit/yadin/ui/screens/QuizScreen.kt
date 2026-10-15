@@ -52,11 +52,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.QuizQuestion
+import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
@@ -291,13 +296,16 @@ fun QuizScreen(
                         else -> MaterialTheme.typography.headlineMedium
                     }
 
-                    Text(
-                        text = q.promptText,
-                        style = promptStyle,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface,
-                        textAlign = TextAlign.Center
-                    )
+                    val isPromptLtr = (q.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(q.promptText)
+                    CompositionLocalProvider(LocalLayoutDirection provides (if (isPromptLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                        Text(
+                            text = q.promptText,
+                            style = promptStyle.copy(textDirection = if (isPromptLtr) TextDirection.Ltr else TextDirection.Rtl),
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface,
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
                     Text(
                         text = stringResource(R.string.quiz_select_answer),
@@ -354,13 +362,16 @@ fun QuizScreen(
                                 else -> MaterialTheme.typography.titleMedium
                             }
 
-                            Text(
-                                text = option.text,
-                                style = optionTextStyle,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.onSurface,
-                                modifier = Modifier.weight(1f).padding(end = 8.dp)
-                            )
+                            val isOptionLtr = (q.direction == CardDirection.REVERSE) || !TextUtilities.isRtlText(option.text)
+                            CompositionLocalProvider(LocalLayoutDirection provides (if (isOptionLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                                Text(
+                                    text = option.text,
+                                    style = optionTextStyle.copy(textDirection = if (isOptionLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.onSurface,
+                                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                )
+                            }
 
                             if (hasAnswered) {
                                 if (isCorrect) {

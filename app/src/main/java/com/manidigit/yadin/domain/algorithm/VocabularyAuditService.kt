@@ -98,6 +98,13 @@ class VocabularyAuditService(
                 text = strippedQuotes
             }
 
+            // ۳.۵. اصلاح اولیه نشانه‌گذاری و علائم خراب انتهای متن (مانند ;¿ یا ;¡ قبل از بررسی جداکننده‌ها)
+            val (prePunctCleaned, prePunctMods) = TextUtilities.normalizeSpanishPunctuation(text)
+            if (prePunctCleaned != text) {
+                text = prePunctCleaned
+                modifications.addAll(prePunctMods)
+            }
+
             // ۴. بررسی وجود جداکننده دوطرفه (مانند "casa : خانه" یا "run - دویدن" یا "Dispositivo V-16 / چراغ هشدار V-16")
             val pair = VocabularyParser.splitPair(text)
             if (pair != null) {
@@ -169,6 +176,13 @@ class VocabularyAuditService(
                         modifications.add("تفکیک متن فارسی متداخل ($persianPart)")
                     }
                 }
+            }
+
+            // ۷. بررسی و اصلاح نشانه‌گذاری اسپانیایی و علائم آسیب‌دیده (مانند ¿...;¿ یا نشانه‌های زائد پایانی)
+            val (punctCleaned, punctMods) = TextUtilities.normalizeSpanishPunctuation(text)
+            if (punctCleaned != text) {
+                text = punctCleaned
+                modifications.addAll(punctMods)
             }
 
             text = TextUtilities.cleanText(text)
@@ -401,9 +415,18 @@ class VocabularyAuditService(
                 } else {
                     // واژه تکراری نیست، اما ممکن است نیاز به پاکسازی کاراکتر یا یادداشت داشته باشد
                     val single = items.first()
-                    if (single.cleanedResult.wasModified && single.sourceContent != null) {
+                    val targetMods = mutableListOf<String>()
+                    val cleanedTargets = single.targetContents.map { target ->
+                        val (norm, mods) = TextUtilities.normalizeSpanishPunctuation(target.text)
+                        if (mods.isNotEmpty()) targetMods.addAll(mods)
+                        TextUtilities.cleanText(norm)
+                    }.filter { it.isNotBlank() }.distinct()
+
+                    val targetWasModified = targetMods.isNotEmpty() || cleanedTargets != single.targetContents.map { it.text }
+
+                    if ((single.cleanedResult.wasModified || targetWasModified) && single.sourceContent != null) {
                         val now = System.currentTimeMillis()
-                        val existingTrans = (single.targetContents.map { it.text } + single.cleanedResult.extractedTranslations).distinct()
+                        val existingTrans = (cleanedTargets + single.cleanedResult.extractedTranslations).distinct()
                         val allNotes = mutableListOf<String>()
                         single.sourceContent.note?.let { if (it.isNotBlank()) allNotes.add(it) }
                         allNotes.addAll(single.cleanedResult.extractedNotes)
@@ -434,12 +457,13 @@ class VocabularyAuditService(
                         conceptDao.updateConcept(single.concept.copy(updatedAt = now))
 
                         cleanedCount++
+                        val allModifications = (single.cleanedResult.modifications + targetMods).distinct()
                         actions.add(
                             AuditActionDetail(
                                 originalText = single.sourceContent.text,
                                 cleanedText = single.cleanedResult.cleanSourceText,
                                 actionType = if (single.cleanedResult.extractedNotes.isNotEmpty()) AuditActionType.NOTE_EXTRACTED else AuditActionType.CLEANED,
-                                description = "پالایش واژه: ${single.cleanedResult.modifications.joinToString("، ")}"
+                                description = "پالایش واژه: ${allModifications.joinToString("، ")}"
                             )
                         )
                     }

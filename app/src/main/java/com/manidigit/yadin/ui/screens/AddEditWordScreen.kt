@@ -26,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -40,12 +41,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.WordDetail
+import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
@@ -158,6 +161,7 @@ fun AddEditWordScreen(
                     errorMessage = null
                 },
                 modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = if (isNormal) TextDirection.Ltr else TextDirection.Rtl),
                 label = { Text(sourceLabel) },
                 placeholder = { Text(sourcePlaceholder) },
                 singleLine = true,
@@ -172,6 +176,7 @@ fun AddEditWordScreen(
                     errorMessage = null
                 },
                 modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = if (isNormal) TextDirection.Rtl else TextDirection.Ltr),
                 label = { Text(targetLabel) },
                 placeholder = { Text(targetPlaceholder) },
                 shape = RoundedCornerShape(dimensions.cornerMedium)
@@ -249,9 +254,13 @@ fun AddEditWordScreen(
                 } else if (translationsList.isEmpty()) {
                     errorMessage = context.getString(R.string.word_error_empty_target)
                 } else {
+                    val finalSrc = if (isNormal) TextUtilities.normalizeSpanishPunctuation(cleanSrc).first else cleanSrc
+                    val finalTrans = translationsList.map { trans ->
+                        if (!isNormal) TextUtilities.normalizeSpanishPunctuation(trans).first else trans
+                    }
                     onSave(
-                        cleanSrc,
-                        translationsList,
+                        finalSrc,
+                        finalTrans,
                         selectedCategoryIds.firstOrNull(),
                         note.trim().ifEmpty { null },
                         selectedCategoryIds.toList()

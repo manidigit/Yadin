@@ -55,10 +55,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
+import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.domain.model.AuditActionType
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.LibraryAuditReport
@@ -456,12 +461,15 @@ fun WordItemCard(
                             text = sourceFlag,
                             fontSize = 14.sp
                         )
-                        Text(
-                            text = word.sourceContent.text,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
+                        val isSourceLtr = (direction == com.manidigit.yadin.domain.model.CardDirection.NORMAL) || !TextUtilities.isRtlText(word.sourceContent.text)
+                        CompositionLocalProvider(LocalLayoutDirection provides (if (isSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                            Text(
+                                text = word.sourceContent.text,
+                                style = MaterialTheme.typography.titleMedium.copy(textDirection = if (isSourceLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                        }
                     }
 
                     Row(
@@ -850,12 +858,15 @@ fun LibraryAuditDialog(
                                             .background(colors.surface)
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     )
-                                    Text(
-                                        text = "${act.originalText} ➔ ${act.cleanedText}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.onSurface
-                                    )
+                                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                        Text(
+                                            text = "${act.originalText} ➔ ${act.cleanedText}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.onSurface,
+                                            style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Ltr)
+                                        )
+                                    }
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(

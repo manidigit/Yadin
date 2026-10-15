@@ -68,7 +68,13 @@ class MainActivity : ComponentActivity() {
         val targetLocale = if (uiLanguage == "en") java.util.Locale("en", "US") else java.util.Locale("fa", "IR")
         java.util.Locale.setDefault(targetLocale)
         val config = android.content.res.Configuration(newBase.resources.configuration)
-        config.setLocale(targetLocale)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            val list = android.os.LocaleList(targetLocale)
+            android.os.LocaleList.setDefault(list)
+            config.setLocales(list)
+        } else {
+            config.setLocale(targetLocale)
+        }
         config.setLayoutDirection(targetLocale)
         @Suppress("DEPRECATION")
         newBase.resources.updateConfiguration(config, newBase.resources.displayMetrics)
@@ -91,13 +97,23 @@ class MainActivity : ComponentActivity() {
 
             androidx.compose.runtime.LaunchedEffect(uiLanguage) {
                 java.util.Locale.setDefault(targetLocale)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    val list = android.os.LocaleList(targetLocale)
+                    android.os.LocaleList.setDefault(list)
+                }
             }
 
             val currentContext = LocalContext.current
             val localizedContext = remember(uiLanguage, currentContext) {
                 java.util.Locale.setDefault(targetLocale)
                 val config = android.content.res.Configuration(currentContext.resources.configuration)
-                config.setLocale(targetLocale)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    val list = android.os.LocaleList(targetLocale)
+                    android.os.LocaleList.setDefault(list)
+                    config.setLocales(list)
+                } else {
+                    config.setLocale(targetLocale)
+                }
                 config.setLayoutDirection(targetLocale)
                 @Suppress("DEPRECATION")
                 currentContext.resources.updateConfiguration(config, currentContext.resources.displayMetrics)

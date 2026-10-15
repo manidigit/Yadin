@@ -39,7 +39,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.ParsedEntry
@@ -262,6 +264,7 @@ private fun ReviewItemCard(
                 },
                 label = { Text(stringResource(R.string.import_review_source_field)) },
                 modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Ltr),
                 singleLine = true
             )
 
@@ -273,6 +276,7 @@ private fun ReviewItemCard(
                 },
                 label = { Text(stringResource(R.string.import_review_target_field)) },
                 modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Rtl),
                 singleLine = true
             )
 
