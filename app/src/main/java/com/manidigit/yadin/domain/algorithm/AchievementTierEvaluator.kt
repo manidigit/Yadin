@@ -3,7 +3,6 @@ package com.manidigit.yadin.domain.algorithm
 import com.manidigit.yadin.data.local.entity.AchievementEntity
 import com.manidigit.yadin.domain.model.AchievementCategory
 import com.manidigit.yadin.domain.model.AchievementId
-import com.manidigit.yadin.domain.model.AchievementTier
 import com.manidigit.yadin.domain.model.TieredGroupState
 
 object AchievementTierEvaluator {

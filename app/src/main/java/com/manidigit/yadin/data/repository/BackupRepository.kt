@@ -8,7 +8,6 @@ import com.manidigit.yadin.data.local.dao.LearningDao
 import com.manidigit.yadin.data.local.dao.ReviewSessionDao
 import com.manidigit.yadin.data.local.dao.SettingsDao
 import com.manidigit.yadin.data.local.database.YadinDatabase
-import com.manidigit.yadin.data.local.entity.AchievementEntity
 import com.manidigit.yadin.data.local.entity.CategoryEntity
 import com.manidigit.yadin.data.local.entity.ConceptEntity
 import com.manidigit.yadin.data.local.entity.ContentEntity

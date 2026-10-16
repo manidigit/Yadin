@@ -2,7 +2,6 @@ package com.manidigit.yadin.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Speed
@@ -49,7 +47,6 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.algorithm.AchievementTierEvaluator
-import com.manidigit.yadin.domain.model.AchievementCategory
 import com.manidigit.yadin.domain.model.AchievementId
 import com.manidigit.yadin.domain.model.AchievementTier
 import com.manidigit.yadin.domain.model.CardDirection

@@ -9,7 +9,6 @@ import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
 import com.manidigit.yadin.domain.model.SessionItemState
-import com.manidigit.yadin.domain.model.SessionStatus
 import kotlinx.coroutines.flow.Flow
 
 data class DayCountRaw(

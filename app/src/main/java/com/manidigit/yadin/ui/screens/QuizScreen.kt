@@ -1,6 +1,5 @@
 package com.manidigit.yadin.ui.screens
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

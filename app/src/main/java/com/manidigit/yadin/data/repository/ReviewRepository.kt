@@ -6,7 +6,6 @@ import com.manidigit.yadin.data.local.dao.LearningDao
 import com.manidigit.yadin.data.local.dao.ReviewSessionDao
 import com.manidigit.yadin.data.local.database.YadinDatabase
 import androidx.room.withTransaction
-import com.manidigit.yadin.data.local.entity.ContentEntity
 import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
@@ -30,8 +29,6 @@ import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.Normalizer
-import java.util.Locale
 import java.util.UUID
 
 data class SubmitResult(
