@@ -38,12 +38,15 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import com.manidigit.yadin.ui.theme.YadinColors
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -265,168 +268,20 @@ fun FlashcardScreen(
                 shape = RoundedCornerShape(dimensions.cornerLarge),
                 backgroundColor = colors.surface
             ) {
-                if (rotationAnimatable.value <= 90f) {
-                    // Front Face
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(18.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (showCategory && card.categoryName != null) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(colors.surfaceVariant)
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = card.categoryName,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = colors.onSurfaceVariant
-                                    )
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.size(1.dp))
-                            }
-                            val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
-                            SpeakButton(text = card.sourceText, languageCode = frontLang)
-                        }
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier
-                                .weight(1f, fill = false)
-                                .verticalScroll(frontScrollState)
-                        ) {
-                            val promptStyle = when {
-                                card.sourceText.length > 90 -> MaterialTheme.typography.titleMedium
-                                card.sourceText.length > 45 -> MaterialTheme.typography.titleLarge
-                                card.sourceText.length > 25 -> MaterialTheme.typography.headlineSmall
-                                else -> MaterialTheme.typography.headlineLarge
-                            }
-
-                            val isFrontLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
-                            CompositionLocalProvider(LocalLayoutDirection provides (if (isFrontLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
-                                Text(
-                                    text = card.sourceText,
-                                    style = promptStyle.copy(textDirection = if (isFrontLtr) TextDirection.Ltr else TextDirection.Rtl),
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.onSurface,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Flip,
-                                contentDescription = null,
-                                tint = colors.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.flashcard_flip_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.onSurfaceVariant
-                            )
-                        }
-                    }
+                val isShowingFront by remember { derivedStateOf { rotationAnimatable.value <= 90f } }
+                if (isShowingFront) {
+                    FlashcardFrontFace(
+                        card = card,
+                        showCategory = showCategory,
+                        frontScrollState = frontScrollState,
+                        colors = colors
+                    )
                 } else {
-                    // Back Face
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer { rotationY = 180f }
-                            .padding(18.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        val isSourceLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
-                        CompositionLocalProvider(LocalLayoutDirection provides (if (isSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
-                            Text(
-                                text = card.sourceText,
-                                style = MaterialTheme.typography.titleMedium.copy(textDirection = if (isSourceLtr) TextDirection.Ltr else TextDirection.Rtl),
-                                color = colors.primary,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier
-                                .weight(1f, fill = false)
-                                .verticalScroll(backScrollState)
-                        ) {
-                            Text(
-                                text = if (card.direction == CardDirection.NORMAL) stringResource(R.string.flashcard_target_label_fa) else stringResource(R.string.flashcard_target_label_es),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.onSurfaceVariant
-                            )
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                card.targetTranslations.forEach { trans ->
-                                    val translationStyle = if (trans.length > 50) {
-                                        MaterialTheme.typography.titleMedium
-                                    } else {
-                                        MaterialTheme.typography.titleLarge
-                                    }
-                                    val isTransLtr = (card.direction == CardDirection.REVERSE) || !TextUtilities.isRtlText(trans)
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(colors.surfaceVariant)
-                                                .padding(horizontal = 14.dp, vertical = 6.dp)
-                                        ) {
-                                            CompositionLocalProvider(LocalLayoutDirection provides (if (isTransLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
-                                                Text(
-                                                    text = trans,
-                                                    style = translationStyle.copy(textDirection = if (isTransLtr) TextDirection.Ltr else TextDirection.Rtl),
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = colors.onSurface,
-                                                    textAlign = TextAlign.Center
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (!card.note.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = card.note,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.onSurfaceVariant,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-
-                        Text(
-                            text = stringResource(R.string.flashcard_did_you_recall),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
+                    FlashcardBackFace(
+                        card = card,
+                        backScrollState = backScrollState,
+                        colors = colors
+                    )
                 }
             }
         }
@@ -545,3 +400,179 @@ fun FlashcardScreen(
         )
     }
 }
+
+@Composable
+private fun FlashcardFrontFace(
+    card: ReviewCard,
+    showCategory: Boolean,
+    frontScrollState: ScrollState,
+    colors: YadinColors
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (showCategory && card.categoryName != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.surfaceVariant)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = card.categoryName,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.size(1.dp))
+            }
+            val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
+            SpeakButton(text = card.sourceText, languageCode = frontLang)
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(frontScrollState)
+        ) {
+            val promptStyle = when {
+                card.sourceText.length > 90 -> MaterialTheme.typography.titleMedium
+                card.sourceText.length > 45 -> MaterialTheme.typography.titleLarge
+                card.sourceText.length > 25 -> MaterialTheme.typography.headlineSmall
+                else -> MaterialTheme.typography.headlineLarge
+            }
+
+            val isFrontLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
+            CompositionLocalProvider(LocalLayoutDirection provides (if (isFrontLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                Text(
+                    text = card.sourceText,
+                    style = promptStyle.copy(textDirection = if (isFrontLtr) TextDirection.Ltr else TextDirection.Rtl),
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Flip,
+                contentDescription = null,
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = stringResource(R.string.flashcard_flip_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun FlashcardBackFace(
+    card: ReviewCard,
+    backScrollState: ScrollState,
+    colors: YadinColors
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer { rotationY = 180f }
+            .padding(18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        val isSourceLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
+        CompositionLocalProvider(LocalLayoutDirection provides (if (isSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+            Text(
+                text = card.sourceText,
+                style = MaterialTheme.typography.titleMedium.copy(textDirection = if (isSourceLtr) TextDirection.Ltr else TextDirection.Rtl),
+                color = colors.primary,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(backScrollState)
+        ) {
+            Text(
+                text = if (card.direction == CardDirection.NORMAL) stringResource(R.string.flashcard_target_label_fa) else stringResource(R.string.flashcard_target_label_es),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                for (trans in card.targetTranslations) {
+                    val translationStyle = if (trans.length > 50) {
+                        MaterialTheme.typography.titleMedium
+                    } else {
+                        MaterialTheme.typography.titleLarge
+                    }
+                    val isTransLtr = (card.direction == CardDirection.REVERSE) || !TextUtilities.isRtlText(trans)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.surfaceVariant)
+                                .padding(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            CompositionLocalProvider(LocalLayoutDirection provides (if (isTransLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                                Text(
+                                    text = trans,
+                                    style = translationStyle.copy(textDirection = if (isTransLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!card.note.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = card.note,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(R.string.flashcard_did_you_recall),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant
+        )
+    }
+}
+

@@ -332,14 +332,12 @@ class SettingsViewModel(
                 context.getString(R.string.backup_creating_backup)
             }
             try {
-                val content = backupRepo.createBackupByFormat(format, options) { p, msg ->
-                    _backupProgress.value = p
-                    _backupProgressMessage.value = msg
-                }
                 withContext(Dispatchers.IO) {
                     context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(content.toByteArray(Charsets.UTF_8))
-                        outputStream.flush()
+                        backupRepo.writeBackupByFormat(format, options, outputStream) { p, msg ->
+                            _backupProgress.value = p
+                            _backupProgressMessage.value = msg
+                        }
                     }
                 }
                 _backupLastResult.value = if (isExcel) {
@@ -376,10 +374,6 @@ class SettingsViewModel(
                 context.getString(R.string.backup_creating_backup)
             }
             try {
-                val content = backupRepo.createBackupByFormat(format, options) { p, msg ->
-                    _backupProgress.value = p
-                    _backupProgressMessage.value = msg
-                }
                 val ext = if (isExcel) "csv" else "json"
                 val prefix = when (format) {
                     BackupExportFormat.JSON -> if (options.fullBackup) "yadin-full-backup" else "yadin-custom-backup"
@@ -388,7 +382,18 @@ class SettingsViewModel(
                     BackupExportFormat.EXCEL_CSV_COMPLETE -> "yadin-master-export"
                 }
                 val fileName = "$prefix-${System.currentTimeMillis()}.$ext"
-                val file = backupRepo.saveBackupToFile(content, fileName)
+                val file = withContext(Dispatchers.IO) {
+                    val backupsDir = File(context.filesDir, "backups")
+                    if (!backupsDir.exists()) backupsDir.mkdirs()
+                    val targetFile = File(backupsDir, fileName)
+                    targetFile.outputStream().use { os ->
+                        backupRepo.writeBackupByFormat(format, options, os) { p, msg ->
+                            _backupProgress.value = p
+                            _backupProgressMessage.value = msg
+                        }
+                    }
+                    targetFile
+                }
                 _backupLastResult.value = context.getString(R.string.backup_file_saved_fmt, file.name)
                 _isBackupError.value = false
             } catch (e: Exception) {
@@ -417,14 +422,22 @@ class SettingsViewModel(
                 context.getString(R.string.backup_creating_backup)
             }
             try {
-                val content = backupRepo.createBackupString(type) { p, msg ->
-                    _backupProgress.value = p
-                    _backupProgressMessage.value = msg
+                val opt = when (type) {
+                    BackupType.VOCABULARY -> BackupOptions(fullBackup = false, includeVocabulary = true, includeCategories = true, includeDifficulty = false, includeStreakAndProgress = false, includeReviewStats = false, includeProcessHistory = false, includeSettings = false)
+                    BackupType.PROGRESS -> BackupOptions(fullBackup = false, includeVocabulary = false, includeCategories = false, includeDifficulty = true, includeStreakAndProgress = true, includeReviewStats = true, includeProcessHistory = true, includeSettings = true)
+                    else -> BackupOptions(fullBackup = true)
+                }
+                val fmt = when (type) {
+                    BackupType.VOCABULARY_EXCEL -> BackupExportFormat.EXCEL_CSV_VOCABULARY
+                    BackupType.PROGRESS_EXCEL -> BackupExportFormat.EXCEL_CSV_PROGRESS
+                    else -> BackupExportFormat.JSON
                 }
                 withContext(Dispatchers.IO) {
                     context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(content.toByteArray(Charsets.UTF_8))
-                        outputStream.flush()
+                        backupRepo.writeBackupByFormat(fmt, opt, outputStream) { p, msg ->
+                            _backupProgress.value = p
+                            _backupProgressMessage.value = msg
+                        }
                     }
                 }
                 _backupLastResult.value = if (isExcel) {
@@ -458,13 +471,30 @@ class SettingsViewModel(
                 context.getString(R.string.backup_creating_backup)
             }
             try {
-                val content = backupRepo.createBackupString(type) { p, msg ->
-                    _backupProgress.value = p
-                    _backupProgressMessage.value = msg
+                val opt = when (type) {
+                    BackupType.VOCABULARY -> BackupOptions(fullBackup = false, includeVocabulary = true, includeCategories = true, includeDifficulty = false, includeStreakAndProgress = false, includeReviewStats = false, includeProcessHistory = false, includeSettings = false)
+                    BackupType.PROGRESS -> BackupOptions(fullBackup = false, includeVocabulary = false, includeCategories = false, includeDifficulty = true, includeStreakAndProgress = true, includeReviewStats = true, includeProcessHistory = true, includeSettings = true)
+                    else -> BackupOptions(fullBackup = true)
+                }
+                val fmt = when (type) {
+                    BackupType.VOCABULARY_EXCEL -> BackupExportFormat.EXCEL_CSV_VOCABULARY
+                    BackupType.PROGRESS_EXCEL -> BackupExportFormat.EXCEL_CSV_PROGRESS
+                    else -> BackupExportFormat.JSON
                 }
                 val ext = if (isExcel) "csv" else "json"
                 val fileName = "yadin-${type.name.lowercase()}-${System.currentTimeMillis()}.$ext"
-                val file = backupRepo.saveBackupToFile(content, fileName)
+                val file = withContext(Dispatchers.IO) {
+                    val backupsDir = File(context.filesDir, "backups")
+                    if (!backupsDir.exists()) backupsDir.mkdirs()
+                    val targetFile = File(backupsDir, fileName)
+                    targetFile.outputStream().use { os ->
+                        backupRepo.writeBackupByFormat(fmt, opt, os) { p, msg ->
+                            _backupProgress.value = p
+                            _backupProgressMessage.value = msg
+                        }
+                    }
+                    targetFile
+                }
                 _backupLastResult.value = context.getString(R.string.backup_file_saved_fmt, file.name)
                 _isBackupError.value = false
             } catch (e: Exception) {

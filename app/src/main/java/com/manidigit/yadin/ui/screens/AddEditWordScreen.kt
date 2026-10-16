@@ -106,6 +106,7 @@ fun AddEditWordScreen(
         )
     }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -244,6 +245,7 @@ fun AddEditWordScreen(
         // Save Button
         Button(
             onClick = {
+                if (isSaving) return@Button
                 val cleanSrc = sourceText.trim()
                 val translationsList = translationsText.split("،", ",", "\n")
                     .map { it.trim() }
@@ -254,6 +256,7 @@ fun AddEditWordScreen(
                 } else if (translationsList.isEmpty()) {
                     errorMessage = context.getString(R.string.word_error_empty_target)
                 } else {
+                    isSaving = true
                     val finalSrc = if (isNormal) TextUtilities.normalizeSpanishPunctuation(cleanSrc).first else cleanSrc
                     val finalTrans = translationsList.map { trans ->
                         if (!isNormal) TextUtilities.normalizeSpanishPunctuation(trans).first else trans
@@ -267,6 +270,7 @@ fun AddEditWordScreen(
                     )
                 }
             },
+            enabled = !isSaving,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),

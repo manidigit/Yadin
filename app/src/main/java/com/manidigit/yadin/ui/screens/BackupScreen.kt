@@ -804,6 +804,7 @@ fun BackupScreen(
 
                             Button(
                                 onClick = { showConfirmRestoreDialog = true },
+                                enabled = !isProcessing,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(
@@ -836,7 +837,7 @@ fun BackupScreen(
     // Confirmation Dialog for Restore
     if (showConfirmRestoreDialog && loadedFileContent != null) {
         AlertDialog(
-            onDismissRequest = { showConfirmRestoreDialog = false },
+            onDismissRequest = { if (!isProcessing) showConfirmRestoreDialog = false },
             title = {
                 Text(
                     text = if (isReplaceMode) stringResource(R.string.backup_dialog_replace_title) else stringResource(R.string.backup_dialog_merge_title),
@@ -858,11 +859,14 @@ fun BackupScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        showConfirmRestoreDialog = false
-                        loadedFileContent?.let { content ->
-                            onRestoreBackup(content, isReplaceMode)
+                        if (!isProcessing) {
+                            showConfirmRestoreDialog = false
+                            loadedFileContent?.let { content ->
+                                onRestoreBackup(content, isReplaceMode)
+                            }
                         }
                     },
+                    enabled = !isProcessing,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isReplaceMode) colors.error else colors.primary
                     )
@@ -871,7 +875,10 @@ fun BackupScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirmRestoreDialog = false }) {
+                TextButton(
+                    onClick = { showConfirmRestoreDialog = false },
+                    enabled = !isProcessing
+                ) {
                     Text(stringResource(R.string.action_cancel), color = colors.onSurfaceVariant)
                 }
             },

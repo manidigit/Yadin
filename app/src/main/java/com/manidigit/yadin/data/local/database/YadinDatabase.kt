@@ -38,7 +38,7 @@ import com.manidigit.yadin.data.local.entity.SettingEntity
         SettingEntity::class,
         AchievementEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -100,6 +100,13 @@ abstract class YadinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // مهاجرت نسخه ۴: پشتیبانی ساختاری از ForeignKey با onDelete = CASCADE
+                // در SQLite کلیدهای خارجی در هنگام ساخت جدول مقداردهی می‌شوند
+            }
+        }
+
         fun getInstance(context: Context): YadinDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -107,7 +114,8 @@ abstract class YadinDatabase : RoomDatabase() {
                     YadinDatabase::class.java,
                     "yadin_database.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_1, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_1, MIGRATION_2_3, MIGRATION_3_4)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

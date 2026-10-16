@@ -133,218 +133,236 @@ class BackupRepository(
         createBackupJsonWithOptions(options, onProgress)
     }
 
-    suspend fun createBackupJsonWithOptions(
+    suspend fun writeBackupJsonWithOptions(
+        writer: java.io.Writer,
         options: BackupOptions,
-        onProgress: (Float, String) -> Unit
-    ): String = withContext(Dispatchers.IO) {
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ) = withContext(Dispatchers.IO) {
         onProgress(0.1f, "در حال آماده‌سازی داده‌های پشتیبان...")
 
-        val root = JSONObject()
-        root.put("format", "yadin-backup")
-        root.put("schemaVersion", 2)
+        val jsonWriter = JsonStreamWriter(writer)
+        jsonWriter.beginObject()
+        jsonWriter.name("format").value("yadin-backup")
+        jsonWriter.name("schemaVersion").value(2L)
         val utcFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
             timeZone = java.util.TimeZone.getTimeZone("UTC")
         }
-        root.put("exportedAt", utcFormat.format(Date()))
-        root.put("backupType", if (options.fullBackup) "FULL" else "CUSTOM")
+        jsonWriter.name("exportedAt").value(utcFormat.format(Date()))
+        jsonWriter.name("backupType").value(if (options.fullBackup) "FULL" else "CUSTOM")
 
-        val optsJson = JSONObject()
-        optsJson.put("includeVocabulary", options.includeVocabulary)
-        optsJson.put("includeCategories", options.includeCategories)
-        optsJson.put("includeDifficulty", options.includeDifficulty)
-        optsJson.put("includeStreakAndProgress", options.includeStreakAndProgress)
-        optsJson.put("includeReviewStats", options.includeReviewStats)
-        optsJson.put("includeProcessHistory", options.includeProcessHistory)
-        optsJson.put("includeSettings", options.includeSettings)
-        root.put("options", optsJson)
+        jsonWriter.name("options").beginObject()
+        jsonWriter.name("includeVocabulary").value(options.includeVocabulary)
+        jsonWriter.name("includeCategories").value(options.includeCategories)
+        jsonWriter.name("includeDifficulty").value(options.includeDifficulty)
+        jsonWriter.name("includeStreakAndProgress").value(options.includeStreakAndProgress)
+        jsonWriter.name("includeReviewStats").value(options.includeReviewStats)
+        jsonWriter.name("includeProcessHistory").value(options.includeProcessHistory)
+        jsonWriter.name("includeSettings").value(options.includeSettings)
+        jsonWriter.endObject()
 
-        val data = JSONObject()
+        jsonWriter.name("data").beginObject()
 
         if (options.includeCategories || options.includeVocabulary) {
             onProgress(0.2f, "استخراج دسته‌بندی‌ها...")
             val categories = conceptDao.getAllCategories()
-            val catArray = JSONArray()
+            jsonWriter.name("categories").beginArray()
             categories.forEach { cat ->
-                val c = JSONObject()
-                c.put("id", cat.id)
-                c.put("name", cat.name)
-                c.put("sortOrder", cat.sortOrder)
-                c.put("isDefault", cat.isDefault)
-                catArray.put(c)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(cat.id)
+                jsonWriter.name("name").value(cat.name)
+                jsonWriter.name("sortOrder").value(cat.sortOrder.toLong())
+                jsonWriter.name("isDefault").value(cat.isDefault)
+                jsonWriter.endObject()
             }
-            data.put("categories", catArray)
+            jsonWriter.endArray()
         }
 
         if (options.includeVocabulary) {
             onProgress(0.35f, "استخراج واژگان و ترجمه‌ها...")
-            val conceptsArray = JSONArray()
-            val contentsArray = JSONArray()
             val allConcepts = conceptDao.getAllConcepts()
             val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
+            
+            jsonWriter.name("concepts").beginArray()
             allConcepts.forEach { c ->
-                val co = JSONObject()
-                co.put("id", c.id)
-                co.put("entryType", c.entryType.name)
-                co.put("categoryId", c.categoryId)
-                co.put("active", c.active)
-                co.put("createdAt", c.createdAt)
-                co.put("updatedAt", c.updatedAt)
-                conceptsArray.put(co)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(c.id)
+                jsonWriter.name("entryType").value(c.entryType.name)
+                jsonWriter.name("categoryId").value(c.categoryId)
+                jsonWriter.name("active").value(c.active)
+                jsonWriter.name("createdAt").value(c.createdAt)
+                jsonWriter.name("updatedAt").value(c.updatedAt)
+                jsonWriter.endObject()
+            }
+            jsonWriter.endArray()
 
+            jsonWriter.name("contents").beginArray()
+            allConcepts.forEach { c ->
                 val contents = allContentsByConcept[c.id] ?: emptyList()
                 contents.forEach { ct ->
-                    val cto = JSONObject()
-                    cto.put("id", ct.id)
-                    cto.put("conceptId", ct.conceptId)
-                    cto.put("languageCode", ct.languageCode)
-                    cto.put("text", ct.text)
-                    cto.put("canonicalKey", ct.canonicalKey)
-                    cto.put("note", ct.note)
-                    cto.put("translationIndex", ct.translationIndex)
-                    contentsArray.put(cto)
+                    jsonWriter.beginObject()
+                    jsonWriter.name("id").value(ct.id)
+                    jsonWriter.name("conceptId").value(ct.conceptId)
+                    jsonWriter.name("languageCode").value(ct.languageCode)
+                    jsonWriter.name("text").value(ct.text)
+                    jsonWriter.name("canonicalKey").value(ct.canonicalKey)
+                    jsonWriter.name("note").value(ct.note)
+                    jsonWriter.name("translationIndex").value(ct.translationIndex.toLong())
+                    jsonWriter.endObject()
                 }
             }
-            data.put("concepts", conceptsArray)
-            data.put("contents", contentsArray)
+            jsonWriter.endArray()
 
             val conceptCategories = conceptDao.getAllConceptCategories()
-            val ccArray = JSONArray()
+            jsonWriter.name("conceptCategories").beginArray()
             conceptCategories.forEach { cc ->
-                val cco = JSONObject()
-                cco.put("conceptId", cc.conceptId)
-                cco.put("categoryId", cc.categoryId)
-                ccArray.put(cco)
+                jsonWriter.beginObject()
+                jsonWriter.name("conceptId").value(cc.conceptId)
+                jsonWriter.name("categoryId").value(cc.categoryId)
+                jsonWriter.endObject()
             }
-            data.put("conceptCategories", ccArray)
+            jsonWriter.endArray()
         }
 
         if (options.includeReviewStats) {
             onProgress(0.5f, "استخراج مراحل جعبه لایتنر...")
             val learningStates = learningDao.getAllLearningStates()
-            val lsArray = JSONArray()
+            jsonWriter.name("learningStates").beginArray()
             learningStates.forEach { ls ->
-                val o = JSONObject()
-                o.put("id", ls.id)
-                o.put("conceptId", ls.conceptId)
-                o.put("direction", ls.direction.name)
-                o.put("stage", ls.stage.name)
-                o.put("nextReviewDay", ls.nextReviewDay)
-                o.put("lastReviewedDay", ls.lastReviewedDay)
-                o.put("updatedAt", ls.updatedAt)
-                lsArray.put(o)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(ls.id)
+                jsonWriter.name("conceptId").value(ls.conceptId)
+                jsonWriter.name("direction").value(ls.direction.name)
+                jsonWriter.name("stage").value(ls.stage.name)
+                jsonWriter.name("nextReviewDay").value(ls.nextReviewDay)
+                jsonWriter.name("lastReviewedDay").value(ls.lastReviewedDay)
+                jsonWriter.name("updatedAt").value(ls.updatedAt)
+                jsonWriter.endObject()
             }
-            data.put("learningStates", lsArray)
+            jsonWriter.endArray()
         }
 
         if (options.includeDifficulty) {
             onProgress(0.6f, "استخراج وضعیت درجه سختی کلمات...")
             val diffStates = learningDao.getAllDifficultyStates()
-            val dsArray = JSONArray()
+            jsonWriter.name("difficultyStates").beginArray()
             diffStates.forEach { ds ->
-                val o = JSONObject()
-                o.put("id", ds.id)
-                o.put("conceptId", ds.conceptId)
-                o.put("direction", ds.direction.name)
-                o.put("current", ds.current.name)
-                o.put("consecutiveCorrect", ds.consecutiveCorrect)
-                o.put("consecutiveWrong", ds.consecutiveWrong)
-                o.put("hasReachedVeryHard", ds.hasReachedVeryHard)
-                dsArray.put(o)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(ds.id)
+                jsonWriter.name("conceptId").value(ds.conceptId)
+                jsonWriter.name("direction").value(ds.direction.name)
+                jsonWriter.name("current").value(ds.current.name)
+                jsonWriter.name("consecutiveCorrect").value(ds.consecutiveCorrect.toLong())
+                jsonWriter.name("consecutiveWrong").value(ds.consecutiveWrong.toLong())
+                jsonWriter.name("hasReachedVeryHard").value(ds.hasReachedVeryHard)
+                jsonWriter.endObject()
             }
-            data.put("difficultyStates", dsArray)
+            jsonWriter.endArray()
         }
 
         if (options.includeProcessHistory) {
             onProgress(0.75f, "استخراج تاریخچه جلسات و آزمون‌ها...")
             val history = reviewSessionDao.getAllHistory()
-            val histArray = JSONArray()
+            jsonWriter.name("reviewHistory").beginArray()
             history.forEach { h ->
-                val o = JSONObject()
-                o.put("id", h.id)
-                o.put("sessionId", h.sessionId)
-                o.put("reviewAttemptId", h.reviewAttemptId)
-                o.put("conceptId", h.conceptId)
-                o.put("direction", h.direction.name)
-                o.put("reviewedAt", h.reviewedAt)
-                o.put("reviewedDay", h.reviewedDay)
-                o.put("isCorrect", h.isCorrect)
-                o.put("reviewType", h.reviewType.name)
-                o.put("mode", h.mode.name)
-                o.put("stageBefore", h.stageBefore.name)
-                o.put("quizLevel", h.quizLevel?.name)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(h.id)
+                jsonWriter.name("sessionId").value(h.sessionId)
+                jsonWriter.name("reviewAttemptId").value(h.reviewAttemptId)
+                jsonWriter.name("conceptId").value(h.conceptId)
+                jsonWriter.name("direction").value(h.direction.name)
+                jsonWriter.name("reviewedAt").value(h.reviewedAt)
+                jsonWriter.name("reviewedDay").value(h.reviewedDay)
+                jsonWriter.name("isCorrect").value(h.isCorrect)
+                jsonWriter.name("reviewType").value(h.reviewType.name)
+                jsonWriter.name("mode").value(h.mode.name)
+                jsonWriter.name("stageBefore").value(h.stageBefore.name)
+                jsonWriter.name("quizLevel").value(h.quizLevel?.name)
                 if (h.optionsJson != null) {
-                    o.put("optionsJson", h.optionsJson)
+                    jsonWriter.name("optionsJson").value(h.optionsJson)
                 }
-                o.put("selectedIndex", h.selectedIndex)
-                o.put("correctIndex", h.correctIndex)
-                histArray.put(o)
+                if (h.selectedIndex != null) {
+                    jsonWriter.name("selectedIndex").value(h.selectedIndex?.toLong())
+                }
+                if (h.correctIndex != null) {
+                    jsonWriter.name("correctIndex").value(h.correctIndex?.toLong())
+                }
+                jsonWriter.endObject()
             }
-            data.put("reviewHistory", histArray)
+            jsonWriter.endArray()
 
             val sessions = reviewSessionDao.getAllSessions()
-            val sessArray = JSONArray()
+            jsonWriter.name("reviewSessions").beginArray()
             sessions.forEach { s ->
-                val o = JSONObject()
-                o.put("id", s.id)
-                o.put("startedAt", s.startedAt)
-                o.put("endedAt", s.endedAt)
-                o.put("reviewType", s.reviewType.name)
-                o.put("mode", s.mode.name)
-                o.put("direction", s.direction.name)
-                o.put("quizLevel", s.quizLevel?.name)
-                o.put("status", s.status.name)
-                o.put("currentPosition", s.currentPosition)
-                o.put("totalItems", s.totalItems)
-                sessArray.put(o)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(s.id)
+                jsonWriter.name("startedAt").value(s.startedAt)
+                jsonWriter.name("endedAt").value(s.endedAt)
+                jsonWriter.name("reviewType").value(s.reviewType.name)
+                jsonWriter.name("mode").value(s.mode.name)
+                jsonWriter.name("direction").value(s.direction.name)
+                jsonWriter.name("quizLevel").value(s.quizLevel?.name)
+                jsonWriter.name("status").value(s.status.name)
+                jsonWriter.name("currentPosition").value(s.currentPosition.toLong())
+                jsonWriter.name("totalItems").value(s.totalItems.toLong())
+                jsonWriter.endObject()
             }
-            data.put("reviewSessions", sessArray)
+            jsonWriter.endArray()
 
             val sessionItems = reviewSessionDao.getAllSessionItems()
-            val sessItemsArray = JSONArray()
+            jsonWriter.name("reviewSessionItems").beginArray()
             sessionItems.forEach { si ->
-                val o = JSONObject()
-                o.put("id", si.id)
-                o.put("sessionId", si.sessionId)
-                o.put("conceptId", si.conceptId)
-                o.put("direction", si.direction.name)
-                o.put("position", si.position)
-                o.put("state", si.state.name)
-                sessItemsArray.put(o)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(si.id)
+                jsonWriter.name("sessionId").value(si.sessionId)
+                jsonWriter.name("conceptId").value(si.conceptId)
+                jsonWriter.name("direction").value(si.direction.name)
+                jsonWriter.name("position").value(si.position.toLong())
+                jsonWriter.name("state").value(si.state.name)
+                jsonWriter.endObject()
             }
-            data.put("reviewSessionItems", sessItemsArray)
+            jsonWriter.endArray()
         }
 
         if (options.includeStreakAndProgress) {
             onProgress(0.85f, "استخراج نشان‌ها و دستاوردها...")
             val achievements = achievementDao.getAllAchievements()
-            val achArray = JSONArray()
+            jsonWriter.name("achievements").beginArray()
             achievements.forEach { a ->
-                val o = JSONObject()
-                o.put("id", a.id)
-                o.put("unlockedAt", a.unlockedAt)
-                o.put("progress", a.progress)
-                achArray.put(o)
+                jsonWriter.beginObject()
+                jsonWriter.name("id").value(a.id)
+                jsonWriter.name("unlockedAt").value(a.unlockedAt)
+                jsonWriter.name("progress").value(a.progress.toLong())
+                jsonWriter.endObject()
             }
-            data.put("achievements", achArray)
+            jsonWriter.endArray()
         }
 
         if (options.includeSettings) {
             onProgress(0.9f, "استخراج تنظیمات برنامه...")
             val settings = settingsDao.getAllSettings()
-            val setArray = JSONArray()
+            jsonWriter.name("settings").beginArray()
             settings.forEach { s ->
-                val so = JSONObject()
-                so.put("key", s.key)
-                so.put("value", s.value)
-                setArray.put(so)
+                jsonWriter.beginObject()
+                jsonWriter.name("key").value(s.key)
+                jsonWriter.name("value").value(s.value)
+                jsonWriter.endObject()
             }
-            data.put("settings", setArray)
+            jsonWriter.endArray()
         }
 
-        root.put("data", data)
+        jsonWriter.endObject() // data
+        jsonWriter.endObject() // root
+        jsonWriter.flush()
         onProgress(1.0f, "تهیه پشتیبان با موفقیت انجام شد")
+    }
 
-        root.toString(2)
+    suspend fun createBackupJsonWithOptions(
+        options: BackupOptions,
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ): String = withContext(Dispatchers.IO) {
+        val stringWriter = java.io.StringWriter()
+        writeBackupJsonWithOptions(stringWriter, options, onProgress)
+        stringWriter.toString()
     }
 
     suspend fun createBackupString(
@@ -371,10 +389,12 @@ class BackupRepository(
         }
     }
 
-    suspend fun createVocabularyExcelCsv(
+    suspend fun writeVocabularyExcelCsv(
+        writer: java.io.Writer,
         options: BackupOptions = BackupOptions(),
+        writeBom: Boolean = true,
         onProgress: (Float, String) -> Unit = { _, _ -> }
-    ): String = withContext(Dispatchers.IO) {
+    ) = withContext(Dispatchers.IO) {
         onProgress(0.1f, "در حال بارگذاری واژگان و دسته‌بندی‌ها...")
         val categories = conceptDao.getAllCategories().associateBy { it.id }
         val allConcepts = conceptDao.getAllConcepts().filter { it.active }
@@ -383,9 +403,10 @@ class BackupRepository(
         val diffMap = learningDao.getAllDifficultyStates().associateBy { it.conceptId to it.direction }
 
         onProgress(0.5f, "در حال ساخت سطرهای اکسل...")
-        val sb = StringBuilder()
         // Prepend UTF-8 BOM so Microsoft Excel seamlessly opens Persian & Spanish characters without corruption
-        sb.append("\uFEFF")
+        if (writeBom) {
+            writer.write("\uFEFF")
+        }
 
         // Dynamic Header based on options
         val headers = mutableListOf<String>()
@@ -404,7 +425,7 @@ class BackupRepository(
         headers.add("توضیحات و یادداشت")
         headers.add("شناسه واژه")
 
-        sb.append(headers.joinToString(",") { escapeCsv(it) }).append("\n")
+        writer.write(headers.joinToString(",") { escapeCsv(it) } + "\n")
 
         allConcepts.forEachIndexed { index, concept ->
             val contents = allContentsByConcept[concept.id] ?: emptyList()
@@ -436,67 +457,100 @@ class BackupRepository(
             row.add(note)
             row.add(concept.id)
 
-            sb.append(row.joinToString(",") { escapeCsv(it) }).append("\n")
+            writer.write(row.joinToString(",") { escapeCsv(it) } + "\n")
         }
 
+        writer.flush()
         onProgress(1f, "خروجی اکسل واژگان آماده شد.")
-        sb.toString()
+    }
+
+    suspend fun createVocabularyExcelCsv(
+        options: BackupOptions = BackupOptions(),
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ): String = withContext(Dispatchers.IO) {
+        val sw = java.io.StringWriter()
+        writeVocabularyExcelCsv(sw, options, writeBom = true, onProgress = onProgress)
+        sw.toString()
+    }
+
+    suspend fun writeBackupByFormat(
+        format: BackupExportFormat,
+        options: BackupOptions,
+        outputStream: java.io.OutputStream,
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ) = withContext(Dispatchers.IO) {
+        val writer = java.io.BufferedWriter(java.io.OutputStreamWriter(outputStream, Charsets.UTF_8))
+        when (format) {
+            BackupExportFormat.JSON -> writeBackupJsonWithOptions(writer, options, onProgress)
+            BackupExportFormat.EXCEL_CSV_VOCABULARY -> writeVocabularyExcelCsv(writer, options, writeBom = true, onProgress = onProgress)
+            BackupExportFormat.EXCEL_CSV_PROGRESS -> writeProgressExcelCsv(writer, writeBom = true, onProgress = onProgress)
+            BackupExportFormat.EXCEL_CSV_COMPLETE -> writeCompleteExcelCsv(writer, options, onProgress = onProgress)
+        }
+        writer.flush()
+    }
+
+    suspend fun writeCompleteExcelCsv(
+        writer: java.io.Writer,
+        options: BackupOptions = BackupOptions(),
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ) = withContext(Dispatchers.IO) {
+        onProgress(0.1f, "در حال آماده‌سازی خروجی جامع اکسل...")
+        writer.write("\uFEFF") // UTF-8 BOM
+
+        writer.write(escapeCsv("=========================================") + "\n")
+        writer.write(escapeCsv("   خروجی جامع پایگاه داده و آمار یادین (MASTER EXPORT)   ") + "\n")
+        writer.write(escapeCsv("   تاریخ استخراج: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())}   ") + "\n")
+        writer.write(escapeCsv("=========================================") + "\n\n")
+
+        if (options.includeVocabulary) {
+            onProgress(0.3f, "افزودن بخش واژگان به اکسل...")
+            writer.write(escapeCsv("=== بخش ۱: بانک واژگان و دسته‌بندی‌ها ===") + "\n")
+            writeVocabularyExcelCsv(writer, options, writeBom = false) { _, _ -> }
+            writer.write("\n\n")
+        }
+
+        if (options.includeStreakAndProgress || options.includeProcessHistory) {
+            onProgress(0.6f, "افزودن گزارش پیشرفت و رگبار به اکسل...")
+            writeProgressExcelCsv(writer, writeBom = false) { _, _ -> }
+            writer.write("\n\n")
+        }
+
+        if (options.includeSettings) {
+            onProgress(0.85f, "افزودن تنظیمات و دستاوردها به اکسل...")
+            writer.write(escapeCsv("=== بخش تنظیمات و دستاوردها ===") + "\n")
+            writer.write(listOf("کلید تنظیمات", "مقدار ذخیره‌شده").joinToString(",") { escapeCsv(it) } + "\n")
+            val settings = settingsDao.getAllSettings()
+            settings.forEach { s ->
+                writer.write(listOf(s.key, s.value).joinToString(",") { escapeCsv(it) } + "\n")
+            }
+            writer.write("\n")
+            
+            writer.write(listOf("شناسه نشان/دستاورد", "میزان پیشرفت", "تاریخ آنلاک").joinToString(",") { escapeCsv(it) } + "\n")
+            val achs = achievementDao.getAllAchievements()
+            achs.forEach { a ->
+                writer.write(listOf(a.id, a.progress.toString(), a.unlockedAt?.toString() ?: "-").joinToString(",") { escapeCsv(it) } + "\n")
+            }
+            writer.write("\n")
+        }
+
+        writer.flush()
+        onProgress(1.0f, "خروجی جامع اکسل با موفقیت تولید شد.")
     }
 
     suspend fun createCompleteExcelCsv(
         options: BackupOptions = BackupOptions(),
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ): String = withContext(Dispatchers.IO) {
-        onProgress(0.1f, "در حال آماده‌سازی خروجی جامع اکسل...")
-        val sb = StringBuilder()
-        sb.append("\uFEFF") // UTF-8 BOM
-
-        sb.append(escapeCsv("=========================================")).append("\n")
-        sb.append(escapeCsv("   خروجی جامع پایگاه داده و آمار یادین (MASTER EXPORT)   ")).append("\n")
-        sb.append(escapeCsv("   تاریخ استخراج: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())}   ")).append("\n")
-        sb.append(escapeCsv("=========================================")).append("\n\n")
-
-        if (options.includeVocabulary) {
-            onProgress(0.3f, "افزودن بخش واژگان به اکسل...")
-            val vocabCsv = createVocabularyExcelCsv(options) { _, _ -> }
-            // Drop BOM from sub-csv if any
-            val cleanVocab = vocabCsv.removePrefix("\uFEFF")
-            sb.append(escapeCsv("=== بخش ۱: بانک واژگان و دسته‌بندی‌ها ===")).append("\n")
-            sb.append(cleanVocab).append("\n\n")
-        }
-
-        if (options.includeStreakAndProgress || options.includeProcessHistory) {
-            onProgress(0.6f, "افزودن گزارش پیشرفت و رگبار به اکسل...")
-            val progressCsv = createProgressExcelCsv { _, _ -> }
-            val cleanProgress = progressCsv.removePrefix("\uFEFF")
-            sb.append(cleanProgress).append("\n\n")
-        }
-
-        if (options.includeSettings) {
-            onProgress(0.85f, "افزودن تنظیمات و دستاوردها به اکسل...")
-            sb.append(escapeCsv("=== بخش تنظیمات و دستاوردها ===")).append("\n")
-            sb.append(listOf("کلید تنظیمات", "مقدار ذخیره‌شده").joinToString(",") { escapeCsv(it) }).append("\n")
-            val settings = settingsDao.getAllSettings()
-            settings.forEach { s ->
-                sb.append(listOf(s.key, s.value).joinToString(",") { escapeCsv(it) }).append("\n")
-            }
-            sb.append("\n")
-            
-            sb.append(listOf("شناسه نشان/دستاورد", "میزان پیشرفت", "تاریخ آنلاک").joinToString(",") { escapeCsv(it) }).append("\n")
-            val achs = achievementDao.getAllAchievements()
-            achs.forEach { a ->
-                sb.append(listOf(a.id, a.progress.toString(), a.unlockedAt?.toString() ?: "-").joinToString(",") { escapeCsv(it) }).append("\n")
-            }
-            sb.append("\n")
-        }
-
-        onProgress(1.0f, "خروجی جامع اکسل با موفقیت تولید شد.")
-        sb.toString()
+        val sw = java.io.StringWriter()
+        writeCompleteExcelCsv(sw, options, onProgress)
+        sw.toString()
     }
 
-    suspend fun createProgressExcelCsv(
+    suspend fun writeProgressExcelCsv(
+        writer: java.io.Writer,
+        writeBom: Boolean = true,
         onProgress: (Float, String) -> Unit = { _, _ -> }
-    ): String = withContext(Dispatchers.IO) {
+    ) = withContext(Dispatchers.IO) {
         onProgress(0.1f, "در حال محاسبه رگبار و آمار جلسات...")
         val today = ClockAndDayMath.todayDayString()
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
@@ -533,32 +587,33 @@ class BackupRepository(
         val contentsMap = conceptDao.getAllContents().groupBy { it.conceptId }
 
         onProgress(0.5f, "در حال آماده‌سازی بخش‌های اکسل...")
-        val sb = StringBuilder()
-        sb.append("\uFEFF") // UTF-8 BOM
+        if (writeBom) {
+            writer.write("\uFEFF") // UTF-8 BOM
+        }
 
         // SECTION 1: خلاصه شاخص‌ها و رگبار متوالی
-        sb.append(escapeCsv("=== گزارش پیشرفت و رگبار مطالعه یادین ===")).append("\n")
-        sb.append(listOf("شاخص کلیدی", "مقدار", "توضیحات آماری").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("روزهای رگبار متوالی (Streak)", "$streak روز", "تداوم زنجیره مطالعه بدون وقفه روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("کل مرورهای انجام شده", "$totalReviews بار", "مجموع کل کارت‌ها و سؤالات پاسخ داده شده").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("پاسخ‌های صحیح", "$correctReviews بار", "تعداد پاسخ‌های درست در جلسات").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("پاسخ‌های نادرست", "$wrongReviews بار", "تعداد پاسخ‌های اشتباه در جلسات").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("درصد دقت پاسخ‌ها", "$accuracyPct%", "نسبت پاسخ‌های درست به کل مرورها").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("تعداد کل جلسات تمرین", "${allSessions.size} جلسه", "مجموع جلسات فلش‌کارت و کوییز برگزار شده").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان تثبیت‌شده (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان تثبیت‌شده (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان مرحله ماهانه (عادی / برعکس)", "$normalMonthly / $reverseMonthly واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان مرحله هفتگی (عادی / برعکس)", "$normalWeekly / $reverseWeekly واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان مرحله روزانه (عادی / برعکس)", "$normalDaily / $reverseDaily واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح آسان (عادی / برعکس)", "$normalEasy / $reverseEasy واژه", "EASY").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح متوسط (عادی / برعکس)", "$normalMedium / $reverseMedium واژه", "MEDIUM").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح سخت (عادی / برعکس)", "$normalHard / $reverseHard واژه", "HARD").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append(listOf("واژگان سطح خیلی سخت (عادی / برعکس)", "$normalVeryHard / $reverseVeryHard واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) }).append("\n")
-        sb.append("\n")
+        writer.write(escapeCsv("=== گزارش پیشرفت و رگبار مطالعه یادین ===") + "\n")
+        writer.write(listOf("شاخص کلیدی", "مقدار", "توضیحات آماری").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("روزهای رگبار متوالی (Streak)", "$streak روز", "تداوم زنجیره مطالعه بدون وقفه روزانه").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کل مرورهای انجام شده", "$totalReviews بار", "مجموع کل کارت‌ها و سؤالات پاسخ داده شده").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("پاسخ‌های صحیح", "$correctReviews بار", "تعداد پاسخ‌های درست در جلسات").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("پاسخ‌های نادرست", "$wrongReviews بار", "تعداد پاسخ‌های اشتباه در جلسات").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("درصد دقت پاسخ‌ها", "$accuracyPct%", "نسبت پاسخ‌های درست به کل مرورها").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("تعداد کل جلسات تمرین", "${allSessions.size} جلسه", "مجموع جلسات فلش‌کارت و کوییز برگزار شده").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان تثبیت‌شده (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان تثبیت‌شده (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان مرحله ماهانه (عادی / برعکس)", "$normalMonthly / $reverseMonthly واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان مرحله هفتگی (عادی / برعکس)", "$normalWeekly / $reverseWeekly واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان مرحله روزانه (عادی / برعکس)", "$normalDaily / $reverseDaily واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان سطح آسان (عادی / برعکس)", "$normalEasy / $reverseEasy واژه", "EASY").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان سطح متوسط (عادی / برعکس)", "$normalMedium / $reverseMedium واژه", "MEDIUM").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان سطح سخت (عادی / برعکس)", "$normalHard / $reverseHard واژه", "HARD").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("واژگان سطح خیلی سخت (عادی / برعکس)", "$normalVeryHard / $reverseVeryHard واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write("\n")
 
         // SECTION 2: آمار حجم مرور تمرین‌های روزانه
-        sb.append(escapeCsv("=== آمار حجم مرور تمرین‌های روزانه ===")).append("\n")
-        sb.append(listOf("ردیف", "تاریخ", "روز هفته", "حجم مرور (تعداد واژه)", "پاسخ درست", "پاسخ نادرست", "درصد موفقیت روزانه").joinToString(",") { escapeCsv(it) }).append("\n")
+        writer.write(escapeCsv("=== آمار حجم مرور تمرین‌های روزانه ===") + "\n")
+        writer.write(listOf("ردیف", "تاریخ", "روز هفته", "حجم مرور (تعداد واژه)", "پاسخ درست", "پاسخ نادرست", "درصد موفقیت روزانه").joinToString(",") { escapeCsv(it) } + "\n")
         dailyStats.forEachIndexed { idx, dayStat ->
             val dayOfWeek = try {
                 val d = java.time.LocalDate.parse(dayStat.reviewedDay)
@@ -575,7 +630,7 @@ class BackupRepository(
             } catch (_: Exception) { "" }
             val wrongCount = dayStat.totalCount - dayStat.correctCount
             val dayPct = if (dayStat.totalCount > 0) String.format(Locale.US, "%.1f", (dayStat.correctCount.toDouble() / dayStat.totalCount) * 100) else "0.0"
-            sb.append(listOf(
+            writer.write(listOf(
                 (idx + 1).toString(),
                 dayStat.reviewedDay,
                 dayOfWeek,
@@ -583,13 +638,13 @@ class BackupRepository(
                 dayStat.correctCount.toString(),
                 wrongCount.toString(),
                 "$dayPct%"
-            ).joinToString(",") { escapeCsv(it) }).append("\n")
+            ).joinToString(",") { escapeCsv(it) } + "\n")
         }
-        sb.append("\n")
+        writer.write("\n")
 
         // SECTION 3: تاریخچه آخرین تمرین‌ها (Recent Item History - last 200 items)
-        sb.append(escapeCsv("=== آخرین تمرین‌ها و پاسخ‌ها ===")).append("\n")
-        sb.append(listOf("ردیف", "تاریخ و زمان", "واژه (اسپانیایی)", "جهت تمرین", "نوع تمرین", "نتیجه", "مرحله قبل").joinToString(",") { escapeCsv(it) }).append("\n")
+        writer.write(escapeCsv("=== آخرین تمرین‌ها و پاسخ‌ها ===") + "\n")
+        writer.write(listOf("ردیف", "تاریخ و زمان", "واژه (اسپانیایی)", "جهت تمرین", "نوع تمرین", "نتیجه", "مرحله قبل").joinToString(",") { escapeCsv(it) } + "\n")
         allHistory.takeLast(200).reversed().forEachIndexed { idx, h ->
             val wordText = contentsMap[h.conceptId]?.firstOrNull { it.languageCode == "es" }?.text ?: ""
             val dirText = if (h.direction == CardDirection.NORMAL) "اسپانیایی به فارسی" else "فارسی به اسپانیایی"
@@ -606,7 +661,7 @@ class BackupRepository(
             } catch (_: Exception) {
                 h.reviewedAt.toString()
             }
-            sb.append(listOf(
+            writer.write(listOf(
                 (idx + 1).toString(),
                 formattedDate,
                 wordText,
@@ -614,11 +669,19 @@ class BackupRepository(
                 modeText,
                 resultText,
                 stageText
-            ).joinToString(",") { escapeCsv(it) }).append("\n")
+            ).joinToString(",") { escapeCsv(it) } + "\n")
         }
 
+        writer.flush()
         onProgress(1f, "خروجی اکسل پیشرفت و حجم مرورها آماده شد.")
-        sb.toString()
+    }
+
+    suspend fun createProgressExcelCsv(
+        onProgress: (Float, String) -> Unit = { _, _ -> }
+    ): String = withContext(Dispatchers.IO) {
+        val sw = java.io.StringWriter()
+        writeProgressExcelCsv(sw, writeBom = true, onProgress)
+        sw.toString()
     }
 
     private fun escapeCsv(value: String): String {
@@ -647,11 +710,11 @@ class BackupRepository(
         val safetyDir = File(context.filesDir, "safety_backups")
         if (!safetyDir.exists()) safetyDir.mkdirs()
 
-        // استخراج کلیه داده‌های فعلی بدون ایجاد وقفه در UI
-        val backupJson = createBackupJson(BackupType.FULL) { _, _ -> }
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val safetyFile = File(safetyDir, "safety_backup_${timestamp}_${System.currentTimeMillis()}.json")
-        safetyFile.writeText(backupJson, Charsets.UTF_8)
+        safetyFile.bufferedWriter(Charsets.UTF_8).use { writer ->
+            writeBackupJsonWithOptions(writer, BackupOptions(fullBackup = true))
+        }
 
         // سیاست چرخش فایل‌ها: نگهداری حداکثر ۳ فایل اخیر و حذف قدیمی‌ترها
         rotateSafetyBackups(safetyDir)
