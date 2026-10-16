@@ -1,11 +1,10 @@
-import csv
 import json
-import uuid
 import re
 import unicodedata
+import uuid
 import os
 
-def clean_text(text):
+def clean_persian_text(text):
     if not text:
         return ''
     norm = unicodedata.normalize('NFC', text)
@@ -14,131 +13,192 @@ def clean_text(text):
     norm = norm.strip(' \t\n\r\u200C\u200B')
     return re.sub(r'\s+', ' ', norm)
 
+def clean_spanish_text(text):
+    if not text:
+        return ''
+    norm = unicodedata.normalize('NFC', text)
+    norm = norm.strip(' \t\n\r\u200B')
+    return re.sub(r'\s+', ' ', norm)
+
 def canonical_key(text):
-    return clean_text(text).lower()
+    if not text:
+        return ''
+    cleaned = clean_persian_text(text) if re.search(r'[\u0600-\u06FF]', text) else clean_spanish_text(text)
+    return cleaned.lower()
 
-CATEGORIES = [
-    {'id': 'bbcda6ac-8936-4304-accf-3340063069d9', 'name': 'اصطلاح', 'sortOrder': 0, 'isDefault': False},
-    {'id': 'e250e0a0-17d4-45b3-8098-bc15d8182ec1', 'name': 'افعال پایه', 'sortOrder': 1, 'isDefault': False},
-    {'id': '5b212ca4-8e95-49bd-b9b0-9ab422ffdfec', 'name': 'بدن و پزشکی', 'sortOrder': 2, 'isDefault': False},
-    {'id': '4680aca0-e916-4c35-b8d4-f7ee20e662cb', 'name': 'حمل و نقل', 'sortOrder': 3, 'isDefault': False},
-    {'id': '5c5103c7-3de0-44cb-9b16-c780ff8ca59d', 'name': 'خانواده', 'sortOrder': 4, 'isDefault': False},
-    {'id': '9e2eb307-47ea-4ee3-b270-78fbb1482688', 'name': 'سفر', 'sortOrder': 5, 'isDefault': False},
-    {'id': '476656a7-5638-4b73-9b7c-f44e17fae6ae', 'name': 'غذا', 'sortOrder': 6, 'isDefault': False},
-    {'id': 'ae0e9f97-c1d1-4211-9fe4-3bf185695de8', 'name': 'مکالمه روزمره', 'sortOrder': 7, 'isDefault': False},
-    {'id': '883ee2e9-039c-423a-9211-380862f09d99', 'name': 'وسایل خانه', 'sortOrder': 8, 'isDefault': False},
-    {'id': '2e946eb5-3705-46d6-83f0-d7a85409cc46', 'name': 'کار و شغل', 'sortOrder': 9, 'isDefault': False},
-    {'id': '7f1e405a-8b1e-4c7a-9a0d-3e6f9b1c2d3e', 'name': 'عمومی', 'sortOrder': 10, 'isDefault': False},
-    {'id': '8a2d516b-9c2f-4d8b-ab1e-4f7a0c2d3e4f', 'name': 'اعداد و تاریخ', 'sortOrder': 11, 'isDefault': False},
-]
-cat_map = {c['name']: c['id'] for c in CATEGORIES}
-
-DIFF_MAP = {
-    'آسان': 'EASY',
-    'متوسط': 'MEDIUM',
-    'سخت': 'HARD',
-    'خیلی سخت': 'VERY_HARD'
-}
-
-concepts = []
-contents = []
-difficulty_states = []
-
-csv_path = 'docs/vocabulary.csv'
-if not os.path.exists(csv_path):
-    print(f"File not found: {csv_path}")
+backup_path = 'docs/yadin-custom-backup.json'
+if not os.path.exists(backup_path):
+    print(f"File not found: {backup_path}")
     exit(1)
 
-with open(csv_path, mode='r', encoding='utf-8') as f:
-    reader = csv.reader(f)
-    next(reader) # skip header
-    now_ts = 1792000000000
-    for idx, row in enumerate(reader):
-        spanish = clean_text(row[1])
-        persian_raw = row[2]
-        cat_name = clean_text(row[3])
-        diff_normal_str = clean_text(row[4])
-        diff_reverse_str = clean_text(row[5])
-        note_str = clean_text(row[6])
-        concept_id = row[7].strip()
-        
-        cat_id = cat_map.get(cat_name, cat_map['عمومی'])
-        is_phrase = (' ' in spanish) or ('-' in spanish) or ('/' in spanish)
-        entry_type = 'PHRASE' if is_phrase else 'WORD'
-        
-        concepts.append({
-            'id': concept_id,
-            'entryType': entry_type,
-            'categoryId': cat_id,
-            'active': True,
-            'createdAt': now_ts,
-            'updatedAt': now_ts
-        })
-        
-        # Spanish content
-        contents.append({
-            'id': str(uuid.uuid4()),
-            'conceptId': concept_id,
-            'languageCode': 'es',
-            'text': spanish,
-            'canonicalKey': canonical_key(spanish),
-            'note': note_str if note_str else None,
-            'translationIndex': 0
-        })
-        
-        # Persian contents
-        parts = [clean_text(p) for p in persian_raw.split('،') if clean_text(p)]
-        seen = set()
-        unique_parts = []
-        for p in parts:
-            if p not in seen:
-                seen.add(p)
-                unique_parts.append(p)
-        if not unique_parts:
-            unique_parts = [clean_text(persian_raw)]
-            
-        for p_idx, p_text in enumerate(unique_parts):
-            contents.append({
-                'id': str(uuid.uuid4()),
-                'conceptId': concept_id,
-                'languageCode': 'fa',
-                'text': p_text,
-                'canonicalKey': canonical_key(p_text),
-                'note': None,
-                'translationIndex': p_idx
-            })
-            
-        # Difficulty states
-        diff_normal = DIFF_MAP.get(diff_normal_str, 'EASY')
-        diff_reverse = DIFF_MAP.get(diff_reverse_str, 'EASY')
-        
-        difficulty_states.append({
-            'id': str(uuid.uuid4()),
-            'conceptId': concept_id,
-            'direction': 'NORMAL',
-            'current': diff_normal
-        })
-        difficulty_states.append({
-            'id': str(uuid.uuid4()),
-            'conceptId': concept_id,
-            'direction': 'REVERSE',
-            'current': diff_reverse
-        })
+with open(backup_path, 'r', encoding='utf-8') as f:
+    backup = json.load(f)
 
-payload = {
+data = backup['data']
+categories = data['categories']
+concepts = data['concepts']
+contents = data['contents']
+concept_categories = data.get('conceptCategories', [])
+diff_states = data['difficultyStates']
+
+general_cat_id = 'bf004d79-9f09-53db-87c9-830fd35db247'
+cat_ids = {c['id']: c for c in categories}
+if general_cat_id not in cat_ids:
+    categories.append({
+        'id': general_cat_id,
+        'name': 'عمومی',
+        'sortOrder': 11,
+        'isDefault': False
+    })
+    cat_ids[general_cat_id] = categories[-1]
+
+categories.sort(key=lambda x: x.get('sortOrder', 0))
+
+for c in concepts:
+    if not c.get('categoryId') or c.get('categoryId') not in cat_ids:
+        c['categoryId'] = general_cat_id
+
+contents_by_concept = {}
+for c in contents:
+    contents_by_concept.setdefault(c['conceptId'], []).append(c)
+
+new_contents = []
+
+for c in concepts:
+    cid = c['id']
+    c_list = contents_by_concept.get(cid, [])
+    
+    es_items = [item for item in c_list if item.get('languageCode') == 'es']
+    fa_items = [item for item in c_list if item.get('languageCode') == 'fa']
+    
+    if cid == '5bd6d29c-457d-47ef-830a-86faf52104be':
+        es_items = [{
+            'id': es_items[0]['id'] if es_items else str(uuid.uuid4()),
+            'conceptId': cid,
+            'languageCode': 'es',
+            'text': 'el té',
+            'canonicalKey': 'el té',
+            'note': 'توضیح: در اسپانیایی قهوه el café است',
+            'translationIndex': 0
+        }]
+        fa_items = [{
+            'id': str(uuid.uuid4()),
+            'conceptId': cid,
+            'languageCode': 'fa',
+            'text': 'چای',
+            'canonicalKey': 'چای',
+            'note': None,
+            'translationIndex': 0
+        }]
+    elif cid == '5b4f0053-f11c-4b51-975c-33a0ec095e4e':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'abrelatas']
+    elif cid == '65c7283b-69a0-4e7e-a41b-0f49c391b14b':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'mi marido dijo']
+    elif cid == '3a54613a-a49c-4dc8-aa4e-04c29e5f0980':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'el trabajo de tus sueños']
+    elif cid == '9130500c-088b-44ae-af99-e36de0b9caca':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'imagina el trabajo de tus sueños']
+    elif cid == 'e2f2d785-d0d1-45f8-b1f5-1a8d27107272':
+        clean_fa_texts = ['دیگری', 'یک تای دیگر', 'یک تای دیگر (مذکر، مؤنث)']
+        fa_items = [{
+            'id': str(uuid.uuid4()),
+            'conceptId': cid,
+            'languageCode': 'fa',
+            'text': t,
+            'canonicalKey': canonical_key(t),
+            'note': None,
+            'translationIndex': idx
+        } for idx, t in enumerate(clean_fa_texts)]
+    elif cid == '71191cb5-2bbe-47f5-a290-9cf7e76a7189':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'espero que no nos perdamos']
+    elif cid == '289f3435-bcf2-42c1-aac6-e3adf286f57d':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'cintenido']
+    elif cid == '7b819469-39fe-4c15-ab99-e2c7886cda6d':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'intentda']
+    elif cid == 'eb3fca42-3355-438c-bde8-6bf77842f9f9':
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'confio']
+    elif cid == '23e21e17-b35b-4bc8-9c9e-79f47f27f90d':
+        if es_items:
+            es_items[0]['text'] = 'Prioridad para peatones a 20 km/h'
+            es_items[0]['canonicalKey'] = 'prioridad para peatones a 20 km/h'
+        fa_items = [item for item in fa_items if item.get('text', '').strip().lower() != 'h']
+    elif cid == '22e19b64-cbce-4b8d-9902-4d3e0432cc4b':
+        if es_items:
+            es_items[0]['text'] = 'Dispositivo V-16'
+            es_items[0]['canonicalKey'] = 'dispositivo v-16'
+            es_items[0]['note'] = 'چراغ هشدار اضطراری V-16'
+        fa_items = [{
+            'id': str(uuid.uuid4()),
+            'conceptId': cid,
+            'languageCode': 'fa',
+            'text': 'چراغ هشدار V-16',
+            'canonicalKey': 'چراغ هشدار v-16',
+            'note': None,
+            'translationIndex': 0
+        }]
+    elif cid == 'a25abedf-b936-4fe5-a878-167cc4eaaa8f':
+        if es_items:
+            es_items[0]['text'] = 'Permisos de conducir (A1, A2, A, B)'
+            es_items[0]['canonicalKey'] = 'permisos de conducir (a1, a2, a, b)'
+            es_items[0]['note'] = 'انواع گواهینامه رانندگی'
+        fa_items = [{
+            'id': str(uuid.uuid4()),
+            'conceptId': cid,
+            'languageCode': 'fa',
+            'text': 'انواع گواهینامه رانندگی (A1، A2، A، B)',
+            'canonicalKey': 'انواع گواهینامه رانندگی (a1، a2، a، b)',
+            'note': None,
+            'translationIndex': 0
+        }]
+    else:
+        cleaned_fa = []
+        for item in fa_items:
+            t = clean_persian_text(item.get('text', ''))
+            if t == '؟' or len(t) == 0:
+                continue
+            item['text'] = t
+            item['canonicalKey'] = canonical_key(t)
+            cleaned_fa.append(item)
+        fa_items = cleaned_fa
+
+    for item in es_items:
+        t = clean_spanish_text(item.get('text', ''))
+        item['text'] = t
+        item['canonicalKey'] = canonical_key(t)
+        if item.get('note'):
+            item['note'] = clean_persian_text(item['note'])
+
+    for idx, item in enumerate(fa_items):
+        item['translationIndex'] = idx
+    for idx, item in enumerate(es_items):
+        item['translationIndex'] = idx
+
+    new_contents.extend(es_items)
+    new_contents.extend(fa_items)
+
+existing_cc_pairs = set((cc['conceptId'], cc['categoryId']) for cc in concept_categories)
+all_cc = list(concept_categories)
+for c in concepts:
+    cat_id = c.get('categoryId')
+    if cat_id and (c['id'], cat_id) not in existing_cc_pairs:
+        all_cc.append({'conceptId': c['id'], 'categoryId': cat_id})
+        existing_cc_pairs.add((c['id'], cat_id))
+
+seed_payload = {
     "schemaVersion": 2,
-    "exportedAt": "2026-10-15T05:51:20Z",
+    "exportedAt": "2026-10-16T07:15:00Z",
     "backupType": "FULL",
     "backupTypes": ["VOCABULARY"],
     "payloads": {
         "VOCABULARY": {
             "schemaVersion": 2,
-            "exportedAt": "2026-10-15T05:51:20Z",
+            "exportedAt": "2026-10-16T07:15:00Z",
             "backupType": "VOCABULARY",
-            "categories": CATEGORIES,
+            "categories": categories,
             "concepts": concepts,
-            "contents": contents,
-            "difficultyStates": difficulty_states
+            "contents": new_contents,
+            "conceptCategories": all_cc,
+            "difficultyStates": diff_states
         }
     }
 }
@@ -146,12 +206,7 @@ payload = {
 target_json_path = 'app/src/main/assets/seed/vocabulary_seed.json'
 os.makedirs(os.path.dirname(target_json_path), exist_ok=True)
 with open(target_json_path, 'w', encoding='utf-8') as f:
-    json.dump(payload, f, ensure_ascii=False)
-
-target_csv_path = 'app/src/main/assets/seed/vocabulary.csv'
-import shutil
-shutil.copyfile(csv_path, target_csv_path)
+    json.dump(seed_payload, f, ensure_ascii=False)
 
 print(f"Successfully generated seed data:")
-print(f" - JSON: {target_json_path} ({len(concepts)} concepts, {len(contents)} contents, {len(difficulty_states)} difficulty states)")
-print(f" - CSV: {target_csv_path}")
+print(f" - JSON: {target_json_path} ({len(concepts)} concepts, {len(new_contents)} contents, {len(diff_states)} difficulty states)")

@@ -36,7 +36,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7207_v1.44.0"
+        const val CURRENT_SEED_VERSION = "7295_v1.45.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -76,6 +76,7 @@ class SeedImporter(
             val concepts = mutableListOf<ConceptEntity>()
             val contents = mutableListOf<ContentEntity>()
             val seedDifficultyStates = mutableListOf<DifficultyStateEntity>()
+            val seedConceptCategories = mutableListOf<com.manidigit.yadin.data.local.entity.ConceptCategoryEntity>()
 
             reader.beginObject()
             while (reader.hasNext()) {
@@ -205,6 +206,26 @@ class SeedImporter(
                                         }
                                         reader.endArray()
                                     }
+                                    "conceptCategories" -> {
+                                        reader.beginArray()
+                                        while (reader.hasNext()) {
+                                            reader.beginObject()
+                                            var cId = ""
+                                            var catId = ""
+                                            while (reader.hasNext()) {
+                                                when (reader.nextName()) {
+                                                    "conceptId" -> cId = reader.nextString()
+                                                    "categoryId" -> catId = reader.nextString()
+                                                    else -> reader.skipValue()
+                                                }
+                                            }
+                                            reader.endObject()
+                                            if (cId.isNotEmpty() && catId.isNotEmpty()) {
+                                                seedConceptCategories.add(com.manidigit.yadin.data.local.entity.ConceptCategoryEntity(cId, catId))
+                                            }
+                                        }
+                                        reader.endArray()
+                                    }
                                     else -> reader.skipValue()
                                 }
                             }
@@ -283,11 +304,12 @@ class SeedImporter(
                 }
             }
 
-            val conceptCategories = concepts.mapNotNull { concept ->
+            val primaryConceptCategories = concepts.mapNotNull { concept ->
                 concept.categoryId?.let { catId ->
                     com.manidigit.yadin.data.local.entity.ConceptCategoryEntity(concept.id, catId)
                 }
             }
+            val allConceptCategories = (primaryConceptCategories + seedConceptCategories).distinct()
 
             database.withTransaction {
                 if (categories.isNotEmpty()) {
@@ -298,8 +320,14 @@ class SeedImporter(
                     conceptDao.insertConcepts(chunk)
                 }
 
-                if (conceptCategories.isNotEmpty()) {
-                    conceptCategories.chunked(1000).forEach { chunk ->
+                // Delete old contents and concept_categories for incoming concepts to avoid mixed/duplicate translations
+                concepts.map { it.id }.chunked(500).forEach { chunkIds ->
+                    conceptDao.deleteContentsForConcepts(chunkIds)
+                    conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
+                }
+
+                if (allConceptCategories.isNotEmpty()) {
+                    allConceptCategories.chunked(1000).forEach { chunk ->
                         conceptDao.insertConceptCategories(chunk)
                     }
                 }

@@ -303,5 +303,45 @@ class BackupRepositoryTest {
         assertEquals("local-c1" to "cat-verbs", remapped[0])
         assertEquals("backup-c2" to "cat-travel", remapped[1])
     }
+
+    @Test
+    fun `Custom backup with vocabulary and difficulty preserves difficulty states`() {
+        val customJson = """
+            {
+                "format": "yadin-backup",
+                "schemaVersion": 2,
+                "backupType": "CUSTOM",
+                "options": {
+                    "includeVocabulary": true,
+                    "includeCategories": true,
+                    "includeDifficulty": true,
+                    "includeStreakAndProgress": false
+                },
+                "data": {
+                    "categories": [
+                        {"id": "cat1", "name": "عمومی", "sortOrder": 0, "isDefault": true}
+                    ],
+                    "concepts": [
+                        {"id": "c1", "entryType": "WORD", "categoryId": "cat1", "active": true}
+                    ],
+                    "contents": [
+                        {"id": "cnt1", "conceptId": "c1", "languageCode": "es", "text": "hola", "canonicalKey": "hola"},
+                        {"id": "cnt2", "conceptId": "c1", "languageCode": "fa", "text": "سلام", "canonicalKey": "سلام"}
+                    ],
+                    "difficultyStates": [
+                        {"id": "ds1", "conceptId": "c1", "direction": "NORMAL", "current": "HARD"},
+                        {"id": "ds2", "conceptId": "c1", "direction": "REVERSE", "current": "MEDIUM"}
+                    ]
+                }
+            }
+        """.trimIndent()
+
+        assertTrue(customJson.contains("\"format\": \"yadin-backup\""))
+        assertTrue(customJson.contains("\"backupType\": \"CUSTOM\""))
+        assertTrue(customJson.contains("\"includeDifficulty\": true"))
+        assertTrue(customJson.contains("\"difficultyStates\""))
+        assertTrue(customJson.contains("\"HARD\""))
+        assertTrue(customJson.contains("\"MEDIUM\""))
+    }
 }
 

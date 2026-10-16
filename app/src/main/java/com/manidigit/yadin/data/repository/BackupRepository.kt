@@ -1206,6 +1206,7 @@ class BackupRepository(
             }
 
             val bDiffMap = incomingDifficultyStates.associateBy { it.conceptId to it.direction }
+            val processedDiffKeys = mutableSetOf<Pair<String, CardDirection>>()
 
             for (bLs in incomingLearningStates) {
                 val mappedCid = restoreContext.remapConceptId(bLs.conceptId)
@@ -1222,6 +1223,7 @@ class BackupRepository(
                     finalLearningStatesToInsert.add(bLs.copy(conceptId = mappedCid))
                     if (bDs != null) {
                         finalDifficultyStatesToInsert.add(bDs.copy(conceptId = mappedCid))
+                        processedDiffKeys.add(pairKey)
                     }
                 } else {
                     // حالت MERGE طبق تصمیمات سند یادین:
@@ -1238,6 +1240,44 @@ class BackupRepository(
                         finalLearningStatesToInsert.add(bLs.copy(conceptId = mappedCid))
                         if (bDs != null) {
                             finalDifficultyStatesToInsert.add(bDs.copy(conceptId = mappedCid))
+                            processedDiffKeys.add(pairKey)
+                        }
+                    }
+                }
+            }
+
+            // تضمین نگهداری سطوح دشواری در بکاپ‌های سفارشی یا مستقل از مراحل یادگیری
+            for (bDs in incomingDifficultyStates) {
+                val mappedCid = restoreContext.remapConceptId(bDs.conceptId)
+                if (validConceptIds.contains(mappedCid)) {
+                    val pairKey = mappedCid to bDs.direction
+                    if (!processedDiffKeys.contains(pairKey)) {
+                        finalDifficultyStatesToInsert.add(bDs.copy(conceptId = mappedCid))
+                        processedDiffKeys.add(pairKey)
+                    }
+                }
+            }
+
+            // در صورتی که فایل حاوی واژگان بوده ولی رکوردهای پیشرفت نداشته، مراحل پیش‌فرض لایتنر ایجاد می‌شوند
+            if (incomingLearningStates.isEmpty() && hasVocabInData) {
+                val today = ClockAndDayMath.todayDayString()
+                val now = System.currentTimeMillis()
+                for (cid in validConceptIds) {
+                    for (dir in listOf(CardDirection.NORMAL, CardDirection.REVERSE)) {
+                        val pairKey = cid to dir
+                        if (isReplace || !existingLearningStates.containsKey(pairKey)) {
+                            finalLearningStatesToInsert.add(
+                                LearningStateEntity(
+                                    id = UUID.randomUUID().toString(),
+                                    conceptId = cid,
+                                    direction = dir,
+                                    stage = Stage.DAILY,
+                                    nextReviewDay = today,
+                                    lastReviewedDay = null,
+                                    createdAt = now,
+                                    updatedAt = now
+                                )
+                            )
                         }
                     }
                 }
