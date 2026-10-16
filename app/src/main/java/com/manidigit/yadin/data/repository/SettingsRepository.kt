@@ -64,7 +64,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         }
 
     suspend fun setThemeId(themeId: String) {
-        settingsDao.setSetting(SettingEntity("themeId", "gemini"))
+        settingsDao.setSetting(SettingEntity("themeId", themeId.ifBlank { "gemini" }))
     }
 
     suspend fun setDarkMode(isDark: Boolean) {

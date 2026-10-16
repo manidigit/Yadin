@@ -154,6 +154,7 @@ fun SettingsScreen(
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .background(colors.surfaceVariant)
+                        .clickable { onSelectTheme(currentThemeId.ifBlank { "gemini" }) }
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

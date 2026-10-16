@@ -147,15 +147,19 @@ fun ProgressScreen(
                     )
                 }
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.progress_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
                     )
+                    val dirText = when (activeDirection) {
+                        CardDirection.NORMAL -> stringResource(R.string.settings_lang_normal)
+                        CardDirection.REVERSE -> stringResource(R.string.settings_lang_reverse)
+                    }
                     Text(
-                        text = stringResource(R.string.progress_subtitle),
+                        text = "${stringResource(R.string.progress_subtitle)} ($dirText)",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )

@@ -6,7 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 
 @Composable
 fun YadinTheme(
-    themeId: String = "gemini",
+    @Suppress("UNUSED_PARAMETER") themeId: String = "gemini",
     isDark: Boolean = true,
     content: @Composable () -> Unit
 ) {

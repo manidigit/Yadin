@@ -281,10 +281,10 @@ class BackupRepository(
                     jsonWriter.name("optionsJson").value(h.optionsJson)
                 }
                 if (h.selectedIndex != null) {
-                    jsonWriter.name("selectedIndex").value(h.selectedIndex?.toLong())
+                    jsonWriter.name("selectedIndex").value(h.selectedIndex.toLong())
                 }
                 if (h.correctIndex != null) {
-                    jsonWriter.name("correctIndex").value(h.correctIndex?.toLong())
+                    jsonWriter.name("correctIndex").value(h.correctIndex.toLong())
                 }
                 jsonWriter.endObject()
             }
@@ -1236,7 +1236,6 @@ class BackupRepository(
 
             // آماده‌سازی پیشرفت (LearningStates & DifficultyStates) با اعمال کامل RestoreContext
             val existingLearningStates = learningDao.getAllLearningStates().associateBy { it.conceptId to it.direction }
-            val existingDifficultyStates = learningDao.getAllDifficultyStates().associateBy { it.conceptId to it.direction }
 
             val finalLearningStatesToInsert = mutableListOf<LearningStateEntity>()
             val finalDifficultyStatesToInsert = mutableListOf<DifficultyStateEntity>()
@@ -1294,7 +1293,7 @@ class BackupRepository(
                     val shouldUseBackup = when {
                         localLs == null -> true
                         localLs.lastReviewedDay == null -> true
-                        bLs.lastReviewedDay != null && (localLs.lastReviewedDay == null || bLs.lastReviewedDay > localLs.lastReviewedDay) -> true
+                        bLs.lastReviewedDay != null && bLs.lastReviewedDay > localLs.lastReviewedDay -> true
                         else -> false
                     }
 

@@ -58,25 +58,11 @@ import com.manidigit.yadin.ui.util.formatDigits
  */
 @Composable
 fun HomeScreen(
-    dueCount: Int,
     statistics: StatisticsSummary,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
-    themeId: String,
-    isDark: Boolean,
     activePair: String,
-    onToggleTheme: () -> Unit,
-    onToggleDarkMode: () -> Unit,
     onOpenReviewSetup: (ReviewType) -> Unit,
-    onStartReview: (ReviewType, ReviewMode) -> Unit,
-    onDifficultyFilterClick: (VocabularyDifficulty) -> Unit,
-    onOpenLibrary: () -> Unit,
-    onOpenAddWord: () -> Unit,
-    onOpenImport: () -> Unit,
-    onOpenProgress: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenBackup: () -> Unit,
-    onOpenHelp: () -> Unit = {},
-    onOpenAbout: () -> Unit = {}
+    onDifficultyFilterClick: (VocabularyDifficulty) -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current

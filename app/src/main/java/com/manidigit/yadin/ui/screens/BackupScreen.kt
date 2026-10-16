@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -274,6 +275,48 @@ fun BackupScreen(
                 }
             }
 
+            // Result Banner (نمایش نتیجه عملیات پشتیبان‌گیری یا بازیابی)
+            AnimatedVisibility(
+                visible = !lastResult.isNullOrBlank(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                if (!lastResult.isNullOrBlank()) {
+                    val containerColor = if (isError) colors.error.copy(alpha = 0.12f) else colors.success.copy(alpha = 0.12f)
+                    val contentColor = if (isError) colors.error else colors.success
+                    val borderColor = if (isError) colors.error.copy(alpha = 0.35f) else colors.success.copy(alpha = 0.35f)
+                    val icon = if (isError) Icons.Default.Warning else Icons.Default.CheckCircle
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(containerColor)
+                            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = contentColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = lastResult,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = contentColor,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
             // Tabs Selector
             Row(
                 modifier = Modifier
@@ -402,7 +445,11 @@ fun BackupScreen(
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(colors.primary.copy(alpha = 0.08f))
                                 .border(1.dp, colors.primary.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-                                .clickable { onToggleFullBackup(!backupOptions.fullBackup) }
+                                .clickable {
+                                    val nextState = !backupOptions.fullBackup
+                                    onToggleFullBackup(nextState)
+                                    onUpdateBackupOptions(backupOptions.copy(fullBackup = nextState))
+                                }
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -422,7 +469,10 @@ fun BackupScreen(
                             }
                             Switch(
                                 checked = backupOptions.fullBackup,
-                                onCheckedChange = { onToggleFullBackup(it) },
+                                onCheckedChange = {
+                                    onToggleFullBackup(it)
+                                    onUpdateBackupOptions(backupOptions.copy(fullBackup = it))
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = colors.primary,
                                     checkedTrackColor = colors.primary.copy(alpha = 0.4f)

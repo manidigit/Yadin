@@ -252,27 +252,16 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
         }
 
         is Screen.Home -> {
-            val dueCount by viewModel.dueCount.collectAsStateWithLifecycle()
             val statistics by viewModel.statistics.collectAsStateWithLifecycle()
             val difficultyCounts by viewModel.difficultyCounts.collectAsStateWithLifecycle()
-            val themeId by viewModel.themeId.collectAsStateWithLifecycle()
-            val isDark by viewModel.isDark.collectAsStateWithLifecycle()
             val activePair by viewModel.activePair.collectAsStateWithLifecycle()
 
             HomeScreen(
-                dueCount = dueCount,
                 statistics = statistics,
                 difficultyCounts = difficultyCounts,
-                themeId = themeId,
-                isDark = isDark,
                 activePair = activePair,
-                onToggleTheme = { viewModel.toggleTheme() },
-                onToggleDarkMode = { viewModel.toggleDarkMode() },
                 onOpenReviewSetup = { type ->
                     viewModel.navigateTo(Screen.ReviewSetup(type))
-                },
-                onStartReview = { type, mode ->
-                    viewModel.startSession(type, mode)
                 },
                 onDifficultyFilterClick = { diff ->
                     viewModel.navigateTo(
@@ -281,15 +270,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                             initialDifficulties = setOf(diff)
                         )
                     )
-                },
-                onOpenLibrary = { viewModel.navigateTo(Screen.Library) },
-                onOpenAddWord = { viewModel.navigateTo(Screen.EditWordScreen(null)) },
-                onOpenImport = { viewModel.navigateTo(Screen.ImportPreview) },
-                onOpenProgress = { viewModel.navigateTo(Screen.ProgressStats) },
-                onOpenSettings = { viewModel.navigateTo(Screen.Settings) },
-                onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
-                onOpenHelp = { viewModel.navigateTo(Screen.Help) },
-                onOpenAbout = { viewModel.navigateTo(Screen.About) }
+                }
             )
         }
 
