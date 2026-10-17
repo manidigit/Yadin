@@ -191,7 +191,7 @@ class LibraryViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در جستجوی واژگان: ${e.message}"
+                _libraryErrorMessage.value = "خطا در جستجوی کلمات: ${e.message}"
             }
         }
     }
@@ -432,7 +432,7 @@ class LibraryViewModel(
                 _importSummary.value = summary
                 loadRecentWords(direction)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در ورود واژگان: ${e.message}"
+                _libraryErrorMessage.value = "خطا در ورود کلمات: ${e.message}"
             } finally {
                 _isImporting.value = false
                 onComplete()
@@ -456,7 +456,7 @@ class LibraryViewModel(
                 }
                 _auditReport.value = report
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در تحلیل و اسکن واژگان: ${e.message}"
+                _libraryErrorMessage.value = "خطا در تحلیل و اسکن کلمات: ${e.message}"
             } finally {
                 _isAuditing.value = false
             }
@@ -483,7 +483,7 @@ class LibraryViewModel(
                 _auditReport.value = report
                 performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در اعمال اصلاحات واژگان: ${e.message}"
+                _libraryErrorMessage.value = "خطا در اعمال اصلاحات کلمات: ${e.message}"
             } finally {
                 _isAuditing.value = false
             }

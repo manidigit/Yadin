@@ -179,7 +179,7 @@ class BackupRepository(
         }
 
         if (options.includeVocabulary) {
-            onProgress(0.35f, "استخراج واژگان و ترجمه‌ها...")
+            onProgress(0.35f, "استخراج کلمات و ترجمه‌ها...")
             val allConcepts = conceptDao.getAllConcepts()
             val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
             
@@ -396,7 +396,7 @@ class BackupRepository(
         writeBom: Boolean = true,
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        onProgress(0.1f, "در حال بارگذاری واژگان و دسته‌بندی‌ها...")
+        onProgress(0.1f, "در حال بارگذاری کلمات و دسته‌بندی‌ها...")
         val categories = conceptDao.getAllCategories().associateBy { it.id }
         val allConcepts = conceptDao.getAllConcepts().filter { it.active }
         val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
@@ -462,7 +462,7 @@ class BackupRepository(
         }
 
         writer.flush()
-        onProgress(1f, "خروجی اکسل واژگان آماده شد.")
+        onProgress(1f, "خروجی اکسل کلمات آماده شد.")
     }
 
     suspend fun createVocabularyExcelCsv(
@@ -504,8 +504,8 @@ class BackupRepository(
         writer.write(escapeCsv("=========================================") + "\n\n")
 
         if (options.includeVocabulary) {
-            onProgress(0.3f, "افزودن بخش واژگان به اکسل...")
-            writer.write(escapeCsv("=== بخش ۱: بانک واژگان و دسته‌بندی‌ها ===") + "\n")
+            onProgress(0.3f, "افزودن بخش کلمات به اکسل...")
+            writer.write(escapeCsv("=== بخش ۱: بانک کلمات و دسته‌بندی‌ها ===") + "\n")
             writeVocabularyExcelCsv(writer, options, writeBom = false) { _, _ -> }
             writer.write("\n\n")
         }
@@ -601,15 +601,15 @@ class BackupRepository(
         writer.write(listOf("پاسخ‌های نادرست", "$wrongReviews بار", "تعداد پاسخ‌های اشتباه در جلسات").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write(listOf("درصد دقت پاسخ‌ها", "$accuracyPct%", "نسبت پاسخ‌های درست به کل مرورها").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write(listOf("تعداد کل جلسات تمرین", "${allSessions.size} جلسه", "مجموع جلسات فلش‌کارت و کوییز برگزار شده").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان تثبیت‌شده (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان تثبیت‌شده (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان مرحله ماهانه (عادی / برعکس)", "$normalMonthly / $reverseMonthly واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان مرحله هفتگی (عادی / برعکس)", "$normalWeekly / $reverseWeekly واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان مرحله روزانه (عادی / برعکس)", "$normalDaily / $reverseDaily واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان سطح آسان (عادی / برعکس)", "$normalEasy / $reverseEasy واژه", "EASY").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان سطح متوسط (عادی / برعکس)", "$normalMedium / $reverseMedium واژه", "MEDIUM").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان سطح سخت (عادی / برعکس)", "$normalHard / $reverseHard واژه", "HARD").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("واژگان سطح خیلی سخت (عادی / برعکس)", "$normalVeryHard / $reverseVeryHard واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات تثبیت‌شده (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات تثبیت‌شده (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات مرحله ماهانه (عادی / برعکس)", "$normalMonthly / $reverseMonthly واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات مرحله هفتگی (عادی / برعکس)", "$normalWeekly / $reverseWeekly واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات مرحله روزانه (عادی / برعکس)", "$normalDaily / $reverseDaily واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات سطح آسان (عادی / برعکس)", "$normalEasy / $reverseEasy واژه", "EASY").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات سطح متوسط (عادی / برعکس)", "$normalMedium / $reverseMedium واژه", "MEDIUM").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات سطح سخت (عادی / برعکس)", "$normalHard / $reverseHard واژه", "HARD").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات سطح خیلی سخت (عادی / برعکس)", "$normalVeryHard / $reverseVeryHard واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write("\n")
 
         // SECTION 2: آمار حجم مرور تمرین‌های روزانه
@@ -890,7 +890,7 @@ class BackupRepository(
             val incomingContents = mutableListOf<ContentEntity>()
 
             if (conceptsJson != null) {
-                onProgress(0.20f, "پردازش مفاهیم و واژگان...")
+                onProgress(0.20f, "پردازش مفاهیم و کلمات...")
                 for (i in 0 until conceptsJson.length()) {
                     val co = conceptsJson.getJSONObject(i)
                     val cid = co.getString("id")
