@@ -296,7 +296,7 @@ private fun ReviewItemCard(
                     note = it
                     item.noteText = it
                 },
-                label = { Text("یادداشت و توضیحات (اختیاری)") },
+                label = { Text(stringResource(R.string.import_review_note_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Rtl),
                 singleLine = false,
@@ -334,7 +334,7 @@ private fun ReviewItemCard(
                 ) {
                     Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("انتقال خودکار متن اضافی به یادداشت", fontSize = 12.sp)
+                    Text(stringResource(R.string.import_review_move_to_note), fontSize = 12.sp)
                 }
             }
 

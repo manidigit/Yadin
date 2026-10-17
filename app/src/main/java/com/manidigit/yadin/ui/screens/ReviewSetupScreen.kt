@@ -58,6 +58,7 @@ import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.domain.model.toStringRes
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
@@ -73,7 +74,7 @@ fun ReviewSetupScreen(
     initialType: ReviewType = ReviewType.RANDOM,
     initialDifficulties: Set<VocabularyDifficulty> = emptySet(),
     initialMode: ReviewMode = ReviewMode.QUIZ,
-    initialQuizLevel: QuizLevel = QuizLevel.MEDIUM,
+    initialQuizLevel: QuizLevel = QuizLevel.NORMAL,
     initialMaxCards: Int = 20,
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
@@ -400,11 +401,7 @@ fun ReviewSetupScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                listOf(
-                                    QuizLevel.EASY to stringResource(R.string.difficulty_easy),
-                                    QuizLevel.MEDIUM to stringResource(R.string.difficulty_medium),
-                                    QuizLevel.HARD to stringResource(R.string.difficulty_hard)
-                                ).forEach { (lvl, title) ->
+                                QuizLevel.entries.map { it to stringResource(it.toStringRes()) }.forEach { (lvl, title) ->
                                     val isSelected = (selectedQuizLevel == lvl)
                                     Box(
                                         modifier = Modifier

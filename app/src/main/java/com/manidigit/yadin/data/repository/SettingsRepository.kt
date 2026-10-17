@@ -43,11 +43,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     val defaultQuizLevelFlow: Flow<com.manidigit.yadin.domain.model.QuizLevel> = settingsDao.getSettingFlow("defaultQuizLevel")
         .map {
-            try {
-                if (it != null) com.manidigit.yadin.domain.model.QuizLevel.valueOf(it) else com.manidigit.yadin.domain.model.QuizLevel.MEDIUM
-            } catch (e: Exception) {
-                com.manidigit.yadin.domain.model.QuizLevel.MEDIUM
-            }
+            com.manidigit.yadin.domain.model.QuizLevel.fromString(it) ?: com.manidigit.yadin.domain.model.QuizLevel.NORMAL
         }
 
     /**

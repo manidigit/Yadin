@@ -1027,7 +1027,7 @@ class BackupRepository(
                     val sbStr = o.optString("stageBefore", "DAILY")
                     val sb = runCatching { Stage.valueOf(sbStr) }.getOrDefault(Stage.DAILY)
                     val qlStr = o.optString("quizLevel", "")
-                    val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
+                    val ql = if (qlStr.isNotEmpty()) QuizLevel.fromString(qlStr) else null
 
                     val revAt = o.optLong("reviewedAt", System.currentTimeMillis())
                     val revDay = parseIsoDay(o.optString("reviewedDay", ""))
@@ -1073,7 +1073,7 @@ class BackupRepository(
                     val stStr = o.optString("status", "COMPLETED")
                     val st = runCatching { SessionStatus.valueOf(stStr) }.getOrDefault(SessionStatus.COMPLETED)
                     val qlStr = o.optString("quizLevel", "")
-                    val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
+                    val ql = if (qlStr.isNotEmpty()) QuizLevel.fromString(qlStr) else null
 
                     incomingSessionsList.add(
                         ReviewSessionEntity(

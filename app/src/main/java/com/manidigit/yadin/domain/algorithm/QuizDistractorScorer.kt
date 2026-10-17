@@ -303,13 +303,13 @@ object QuizDistractorScorer {
         takeCount: Int = 3
     ): List<String> {
         return when (quizLevel) {
-            QuizLevel.EASY -> {
+            QuizLevel.BEGINNER -> {
                 candidates.sortedBy { it.score }.map { it.text }.take(takeCount)
             }
-            QuizLevel.MEDIUM -> {
+            QuizLevel.NORMAL -> {
                 candidates.sortedBy { kotlin.math.abs(it.score - 0.5) }.map { it.text }.take(takeCount)
             }
-            QuizLevel.HARD -> {
+            QuizLevel.PROFESSIONAL -> {
                 candidates.sortedByDescending { it.score }.map { it.text }.take(takeCount)
             }
         }

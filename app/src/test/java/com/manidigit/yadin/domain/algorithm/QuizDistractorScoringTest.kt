@@ -48,7 +48,7 @@ class QuizDistractorScoringTest {
     }
 
     @Test
-    fun `EASY quiz level selects lowest confusability distractors`() {
+    fun `BEGINNER quiz level selects lowest confusability distractors`() {
         val candidates = listOf(
             QuizDistractorScorer.ScoredItem("خیلی گمراه‌کننده", 0.95),
             QuizDistractorScorer.ScoredItem("گمراه‌کننده متوسط", 0.50),
@@ -56,12 +56,12 @@ class QuizDistractorScoringTest {
             QuizDistractorScorer.ScoredItem("کاندید ساده ۲", 0.15)
         )
 
-        val selected = QuizDistractorScorer.selectDistractorTexts(QuizLevel.EASY, candidates, 2)
+        val selected = QuizDistractorScorer.selectDistractorTexts(QuizLevel.BEGINNER, candidates, 2)
         assertEquals(listOf("کاندید ساده ۱", "کاندید ساده ۲"), selected)
     }
 
     @Test
-    fun `HARD quiz level selects highest confusability distractors`() {
+    fun `PROFESSIONAL quiz level selects highest confusability distractors`() {
         val candidates = listOf(
             QuizDistractorScorer.ScoredItem("کاندید ساده ۱", 0.10),
             QuizDistractorScorer.ScoredItem("متوسط", 0.50),
@@ -69,12 +69,12 @@ class QuizDistractorScoringTest {
             QuizDistractorScorer.ScoredItem("خیلی گمراه‌کننده ۲", 0.88)
         )
 
-        val selected = QuizDistractorScorer.selectDistractorTexts(QuizLevel.HARD, candidates, 2)
+        val selected = QuizDistractorScorer.selectDistractorTexts(QuizLevel.PROFESSIONAL, candidates, 2)
         assertEquals(listOf("خیلی گمراه‌کننده ۱", "خیلی گمراه‌کننده ۲"), selected)
     }
 
     @Test
-    fun `MEDIUM quiz level selects balanced confusability near half`() {
+    fun `NORMAL quiz level selects balanced confusability near half`() {
         val candidates = listOf(
             QuizDistractorScorer.ScoredItem("خیلی کم", 0.05),
             QuizDistractorScorer.ScoredItem("خیلی زیاد", 0.99),
@@ -82,7 +82,7 @@ class QuizDistractorScoringTest {
             QuizDistractorScorer.ScoredItem("متعادل ۲", 0.53)
         )
 
-        val selected = QuizDistractorScorer.selectDistractorTexts(QuizLevel.MEDIUM, candidates, 2)
+        val selected = QuizDistractorScorer.selectDistractorTexts(QuizLevel.NORMAL, candidates, 2)
         assertTrue(selected.contains("متعادل ۱"))
         assertTrue(selected.contains("متعادل ۲"))
     }

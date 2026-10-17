@@ -78,11 +78,7 @@ class Converters {
     fun fromQuizLevel(value: QuizLevel?): String? = value?.name
 
     @TypeConverter
-    fun toQuizLevel(value: String?): QuizLevel? = try {
-        value?.let { QuizLevel.valueOf(it) }
-    } catch (_: Exception) {
-        null
-    }
+    fun toQuizLevel(value: String?): QuizLevel? = QuizLevel.fromString(value)
 
     @TypeConverter
     fun fromSessionStatus(value: SessionStatus?): String = value?.name ?: SessionStatus.ACTIVE.name

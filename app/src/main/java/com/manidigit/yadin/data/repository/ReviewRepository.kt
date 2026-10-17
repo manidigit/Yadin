@@ -199,7 +199,7 @@ class ReviewRepository(
 
     suspend fun generateQuizQuestions(sessionId: String): List<QuizQuestion> = withContext(Dispatchers.Default) {
         val session = reviewSessionDao.getSessionById(sessionId)
-        val quizLevel = session?.quizLevel ?: QuizLevel.MEDIUM
+        val quizLevel = session?.quizLevel ?: QuizLevel.NORMAL
         val cards = fetchCardsForSession(sessionId)
         if (cards.isEmpty()) return@withContext emptyList()
 
@@ -300,9 +300,9 @@ class ReviewRepository(
             }
 
             val sortedCandidates = when (quizLevel) {
-                QuizLevel.EASY -> scoredCandidates.sortedBy { it.confusabilityScore }
-                QuizLevel.MEDIUM -> scoredCandidates.sortedBy { kotlin.math.abs(it.confusabilityScore - 0.5) }
-                QuizLevel.HARD -> scoredCandidates.sortedByDescending { it.confusabilityScore }
+                QuizLevel.BEGINNER -> scoredCandidates.sortedBy { it.confusabilityScore }
+                QuizLevel.NORMAL -> scoredCandidates.sortedBy { kotlin.math.abs(it.confusabilityScore - 0.5) }
+                QuizLevel.PROFESSIONAL -> scoredCandidates.sortedByDescending { it.confusabilityScore }
             }
 
             val chosenDistractors = mutableListOf<DistractorPoolItem>()

@@ -321,7 +321,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         type: ReviewType,
         mode: ReviewMode,
         direction: CardDirection = appLanguageDirection.value,
-        quizLevel: QuizLevel = QuizLevel.MEDIUM,
+        quizLevel: QuizLevel = QuizLevel.NORMAL,
         limit: Int = 20
     ) {
         startFilteredSession(

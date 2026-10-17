@@ -635,7 +635,7 @@ class SeedImporter(
                                 val dir = runCatching { CardDirection.valueOf(o.optString("direction", "NORMAL")) }.getOrDefault(CardDirection.NORMAL)
                                 val st = runCatching { SessionStatus.valueOf(o.optString("status", "COMPLETED")) }.getOrDefault(SessionStatus.COMPLETED)
                                 val qlStr = o.optString("quizLevel", "")
-                                val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
+                                val ql = if (qlStr.isNotEmpty()) QuizLevel.fromString(qlStr) else null
                                 recoveredSessions.add(
                                     ReviewSessionEntity(
                                         id = sid,
@@ -684,7 +684,7 @@ class SeedImporter(
                             val m = runCatching { ReviewMode.valueOf(o.optString("mode", "FLASHCARD")) }.getOrDefault(ReviewMode.FLASHCARD)
                             val sb = runCatching { Stage.valueOf(o.optString("stageBefore", "DAILY")) }.getOrDefault(Stage.DAILY)
                             val qlStr = o.optString("quizLevel", "")
-                            val ql = if (qlStr.isNotEmpty()) runCatching { QuizLevel.valueOf(qlStr) }.getOrNull() else null
+                            val ql = if (qlStr.isNotEmpty()) QuizLevel.fromString(qlStr) else null
                             val revAt = o.optLong("reviewedAt", System.currentTimeMillis())
                             val revDay = o.optString("reviewedDay", "").takeIf { it.length >= 10 }?.take(10)
                                 ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(revAt))

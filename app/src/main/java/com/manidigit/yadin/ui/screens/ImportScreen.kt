@@ -660,13 +660,13 @@ fun ImportScreen(
                             Icon(Icons.Default.Warning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp))
                             Column {
                                 Text(
-                                    text = "تعداد ${itemsNeedingReview.formatDigits()} واژه نیازمند بازبینی یا انتقال به یادداشت",
+                                    text = stringResource(R.string.import_screen_review_warning_title, itemsNeedingReview.formatDigits()),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     color = colors.warning
                                 )
                                 Text(
-                                    text = "برای جلوگیری از حذف اطلاعات، قبل از ذخیره آن‌ها را دستی بررسی و ویرایش کنید.",
+                                    text = stringResource(R.string.import_screen_review_warning_desc),
                                     fontSize = 11.sp,
                                     color = colors.onSurface
                                 )
@@ -677,7 +677,7 @@ fun ImportScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = colors.warning, contentColor = colors.surface),
                             shape = RoundedCornerShape(dimensions.cornerSmall)
                         ) {
-                            Text("ویرایش دستی", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.import_screen_btn_manual_review), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

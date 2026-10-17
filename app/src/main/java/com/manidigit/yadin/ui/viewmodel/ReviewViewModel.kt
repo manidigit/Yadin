@@ -160,7 +160,7 @@ class ReviewViewModel(
         type: ReviewType,
         mode: ReviewMode,
         direction: CardDirection = CardDirection.NORMAL,
-        quizLevel: QuizLevel = QuizLevel.MEDIUM,
+        quizLevel: QuizLevel = QuizLevel.NORMAL,
         limit: Int = 20,
         onSessionStarted: ((ReviewMode) -> Unit)? = null
     ) {

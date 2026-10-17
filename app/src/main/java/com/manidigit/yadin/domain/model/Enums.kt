@@ -62,11 +62,27 @@ enum class Stage {
     LEARNED
 }
 
+@StringRes
+fun Stage.toStringRes(): Int = when (this) {
+    Stage.DAILY -> R.string.stage_daily
+    Stage.WEEKLY -> R.string.stage_weekly
+    Stage.MONTHLY -> R.string.stage_monthly
+    Stage.LEARNED -> R.string.stage_learned
+}
+
 enum class VocabularyDifficulty {
     EASY,
     MEDIUM,
     HARD,
     VERY_HARD
+}
+
+@StringRes
+fun VocabularyDifficulty.toStringRes(): Int = when (this) {
+    VocabularyDifficulty.EASY -> R.string.difficulty_easy
+    VocabularyDifficulty.MEDIUM -> R.string.difficulty_medium
+    VocabularyDifficulty.HARD -> R.string.difficulty_hard
+    VocabularyDifficulty.VERY_HARD -> R.string.difficulty_very_hard
 }
 
 enum class ReviewType {
@@ -82,10 +98,44 @@ enum class ReviewMode {
     QUIZ
 }
 
+@StringRes
+fun ReviewMode.toStringRes(): Int = when (this) {
+    ReviewMode.FLASHCARD -> R.string.review_mode_flashcard
+    ReviewMode.QUIZ -> R.string.review_mode_quiz
+}
+
 enum class QuizLevel {
-    EASY,
-    MEDIUM,
-    HARD
+    BEGINNER,
+    NORMAL,
+    PROFESSIONAL;
+
+    companion object {
+        fun fromString(value: String?): QuizLevel? = when (value?.uppercase()) {
+            "BEGINNER", "EASY" -> BEGINNER
+            "NORMAL", "MEDIUM" -> NORMAL
+            "PROFESSIONAL", "HARD" -> PROFESSIONAL
+            else -> null
+        }
+    }
+}
+
+fun QuizLevel.toPersianLabel(): String = when (this) {
+    QuizLevel.BEGINNER -> "مبتدی"
+    QuizLevel.NORMAL -> "نرمال"
+    QuizLevel.PROFESSIONAL -> "حرفه‌ای"
+}
+
+fun QuizLevel.toEnglishLabel(): String = when (this) {
+    QuizLevel.BEGINNER -> "Beginner"
+    QuizLevel.NORMAL -> "Normal"
+    QuizLevel.PROFESSIONAL -> "Professional"
+}
+
+@StringRes
+fun QuizLevel.toStringRes(): Int = when (this) {
+    QuizLevel.BEGINNER -> R.string.quiz_level_beginner
+    QuizLevel.NORMAL -> R.string.quiz_level_normal
+    QuizLevel.PROFESSIONAL -> R.string.quiz_level_professional
 }
 
 enum class SessionStatus {
