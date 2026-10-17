@@ -321,7 +321,7 @@ object VocabularyParser {
                         if (currentSource == null) {
                             currentLineNumber = lineNum
                             currentSource = stripped
-                            currentConfidence = 0.8
+                            currentConfidence = 0.85
                             if (isNumbered(trimmed)) {
                                 currentConfidence = 0.9
                                 currentEvidence.add("numbered")
@@ -331,7 +331,7 @@ object VocabularyParser {
                                     currentTranslations.add(orphan.first)
                                 }
                                 currentEvidence.add("orphanPersianPaired")
-                                currentConfidence += 0.1
+                                currentConfidence = 1.0
                                 pendingOrphanTranslations.clear()
                             }
                         } else if (currentTranslations.isEmpty() && isContinuationLine(currentSource!!, trimmed)) {
@@ -344,7 +344,7 @@ object VocabularyParser {
                             flushEntry()
                             currentLineNumber = lineNum
                             currentSource = stripped
-                            currentConfidence = 0.8
+                            currentConfidence = 0.85
                             if (isNumbered(trimmed)) {
                                 currentConfidence = 0.9
                                 currentEvidence.add("numbered")
@@ -359,7 +359,7 @@ object VocabularyParser {
                         currentTranslations.add(extracted.first)
                         extracted.second?.let { currentNotes.add(it) }
                         currentEvidence.add("adjacentPersianTranslation")
-                        currentConfidence = (currentConfidence + 0.15).coerceAtMost(1.0)
+                        currentConfidence = 1.0
                     } else {
                         // Persian translation before Spanish word (support multiple consecutive orphan lines)
                         pendingOrphanTranslations.add(Pair(extracted.first, lineNum))
@@ -419,6 +419,11 @@ object VocabularyParser {
         val pair = splitPair(stripped)
         if (pair != null && hasLatin(pair.first) && hasPersian(pair.second)) {
             return LineType.ENTRY_HEADER
+        }
+
+        // If the line is predominantly Persian (e.g. "بخش وزنه‌های آزاد (دمبل و هالتر)" or "چراغ هشدار V-16")
+        if (TextUtilities.isRtlText(stripped)) {
+            return LineType.TRANSLATION
         }
 
         val script = detectScript(stripped)
@@ -547,14 +552,28 @@ object VocabularyParser {
         return trimmed.replace("\"\"", "\"")
     }
 
+    private fun isCrossLanguagePair(left: String, right: String): Boolean {
+        val leftLatin = hasLatin(left)
+        val rightPersian = hasPersian(right)
+        val leftPersian = hasPersian(left)
+        val rightLatin = hasLatin(right)
+        return (leftLatin && rightPersian) || (leftPersian && rightLatin)
+    }
+
     fun splitPairDetailed(s: String): SplitResult? {
         // Priority 0: CSV quoted/tab/comma fields (e.g. "\"hola, amigo\", \"سلام، دوست\"")
+        // Only split if one side is Spanish/Latin and the other side is Persian!
+        // Never split Spanish sentences with commas like "Hola, ¿cómo estás?" or "Uno, dos, tres".
         val csvFields = parseCsvFields(s)
         if (csvFields.size >= 2) {
             val left = csvFields[0]
             val right = csvFields[1]
-            if (left.isNotBlank() && right.isNotBlank() && (hasLatin(left) || hasPersian(left)) && (hasLatin(right) || hasPersian(right))) {
-                return SplitResult(left, right, "csv", 0.95)
+            if (left.isNotBlank() && right.isNotBlank() && isCrossLanguagePair(left, right)) {
+                return if (hasPersian(left) && !hasLatin(left) && hasLatin(right)) {
+                    SplitResult(right, left, "csv", 0.98)
+                } else {
+                    SplitResult(left, right, "csv", 0.98)
+                }
             }
         }
         // Priority 1: Arrow symbols & text arrows (Highest confidence 1.0)
@@ -568,34 +587,35 @@ object VocabularyParser {
                 }
             }
         }
-        // Priority 2: Colon (e.g. "casa: خانه", confidence 0.95)
+        // Priority 2: Colon (e.g. "casa: خانه", confidence 0.98)
         val colonIdx = s.indexOf(':')
         if (colonIdx in 1 until s.length - 1) {
             val left = cleanCsvField(s.substring(0, colonIdx))
             val right = cleanCsvField(s.substring(colonIdx + 1))
-            if (left.isNotBlank() && right.isNotBlank()) {
-                return SplitResult(left, right, "colon", 0.95)
+            if (left.isNotBlank() && right.isNotBlank() && isCrossLanguagePair(left, right)) {
+                return SplitResult(left, right, "colon", 0.98)
             }
         }
-        // Priority 2.5: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه", confidence 0.90)
+        // Priority 2.5: Dash enclosed in spaces or dash delimiter (e.g. "casa - خانه", confidence 0.98)
         val dashMatch = REGEX_DASH_SPLIT.find(s)
         if (dashMatch != null && dashMatch.range.first > 0 && dashMatch.range.last < s.length - 1) {
             val left = cleanCsvField(s.substring(0, dashMatch.range.first))
             val right = cleanCsvField(s.substring(dashMatch.range.last + 1))
-            if (left.isNotBlank() && right.isNotBlank()) {
-                return SplitResult(left, right, "dash", 0.90)
+            if (left.isNotBlank() && right.isNotBlank() && isCrossLanguagePair(left, right)) {
+                return SplitResult(left, right, "dash", 0.98)
             }
         }
-        // Priority 2.8: Equal sign (e.g. "casa = خانه", confidence 0.95)
+        // Priority 2.8: Equal sign (e.g. "casa = خانه", confidence 0.98)
         val equalsIdx = s.indexOf('=')
         if (equalsIdx in 1 until s.length - 1) {
             val left = cleanCsvField(s.substring(0, equalsIdx))
             val right = cleanCsvField(s.substring(equalsIdx + 1))
-            if (left.isNotBlank() && right.isNotBlank()) {
-                return SplitResult(left, right, "equals", 0.95)
+            if (left.isNotBlank() && right.isNotBlank() && isCrossLanguagePair(left, right)) {
+                return SplitResult(left, right, "equals", 0.98)
             }
         }
         // Priority 3: Slash, Semicolon, or Newline delimiter (e.g. "casa / خانه" or "casa; خانه")
+        // CRITICAL: Never split Latin/Latin slashes like "El monitor / La monitora" or "El / La"!
         for (delimiter in listOf(" / ", "/", ";", "\n")) {
             val idx = s.indexOf(delimiter)
             if (idx in 1 until s.length - delimiter.length) {
@@ -607,23 +627,22 @@ object VocabularyParser {
                     val leftHasPersian = hasPersian(left)
                     val rightHasLatin = hasLatin(right)
 
-                    if (leftHasLatin && rightHasPersian) {
-                        return SplitResult(left, right, "delimiter", 0.92)
-                    } else if (leftHasPersian && rightHasLatin) {
-                        return SplitResult(right, left, "delimiter", 0.92)
-                    } else if (leftHasLatin && rightHasLatin && delimiter.contains("/")) {
-                        return SplitResult(left, right, "delimiter", 0.85)
+                    if (leftHasLatin && !leftHasPersian && rightHasPersian) {
+                        return SplitResult(left, right, "delimiter", 0.98)
+                    } else if (leftHasPersian && !leftHasLatin && rightHasLatin) {
+                        return SplitResult(right, left, "delimiter", 0.98)
                     }
                 }
             }
         }
-        // Priority 5: Parentheses pair (e.g. "casa (خانه)", confidence 0.85) - only when no explicit delimiter exists
+        // Priority 5: Parentheses pair (e.g. "casa (خانه)", confidence 0.98) - ONLY when left is Latin and inside is Persian!
+        // Never split "El chancla (Las chanclas)" or "Press de banca (Bench press)"!
         val parenMatch = REGEX_PAREN_PAIR.find(s)
         if (parenMatch != null) {
             val left = cleanCsvField(parenMatch.groupValues[1])
             val right = cleanCsvField(parenMatch.groupValues[2])
-            if (left.isNotBlank() && right.isNotBlank()) {
-                return SplitResult(left, right, "parentheses", 0.85)
+            if (left.isNotBlank() && right.isNotBlank() && hasLatin(left) && !hasPersian(left) && hasPersian(right)) {
+                return SplitResult(left, right, "parentheses", 0.98)
             }
         }
         return null
@@ -633,21 +652,25 @@ object VocabularyParser {
         splitPairDetailed(s)?.let { Pair(it.first, it.second) }
 
     private fun extractParentheticalNote(translation: String): Pair<String, String?> {
+        // Parentheses in Persian translation lines (e.g. "دمپایی (دمپایی‌های لاانگشتی)" or
+        // "بخش وزنه‌های آزاد (دمبل و هالتر)") are integral parts of the Persian meaning/clarification.
+        // Only extract if explicitly prefixed with a note keyword inside the parentheses.
         val match = REGEX_PARENTHETICAL_NOTE.find(translation) ?: return Pair(translation, null)
         val mainText = match.groupValues[1].trim()
         val noteContent = match.groupValues[2].trim()
 
-        // Preserve short grammar qualifiers inside translation
-        val isGrammarQualifier = noteContent.length <= 8 && (
-            noteContent.contains("مذکر") || noteContent.contains("مؤنث") ||
-            noteContent.contains("فعل") || noteContent.contains("صفت") ||
-            noteContent.contains("جمع") || noteContent.contains("عام")
-        )
+        val lowerNote = noteContent.lowercase(Locale.ROOT)
+        val isExplicitNote = lowerNote.startsWith("نکته:") ||
+            lowerNote.startsWith("توضیح:") ||
+            lowerNote.startsWith("مثال:") ||
+            lowerNote.startsWith("یادداشت:") ||
+            lowerNote.startsWith("note:") ||
+            lowerNote.startsWith("ejemplo:")
 
-        return if (isGrammarQualifier) {
-            Pair(translation, null)
+        return if (isExplicitNote && mainText.isNotBlank()) {
+            Pair(mainText, noteContent)
         } else {
-            Pair(if (mainText.isNotBlank()) mainText else translation, noteContent)
+            Pair(translation, null)
         }
     }
 

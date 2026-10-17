@@ -128,6 +128,7 @@ class VocabularyAuditService(
             }
 
             // ۵. استخراج پرانتزها و کروشه‌ها (مانند "apple (n.)" یا "correr (دویدن)")
+            // عبارات معتبر واژگانی مانند "El chancla (Las chanclas)" یا "Press de banca (Bench press)" حفظ می‌شوند.
             var keepExtracting = true
             var loopCount = 0
             while (keepExtracting && loopCount < 5) {
@@ -137,13 +138,16 @@ class VocabularyAuditService(
                     val main = parenMatch.groupValues[1].trim()
                     val inside = parenMatch.groupValues[2].trim()
                     if (main.isNotBlank() && inside.isNotBlank()) {
-                        text = main
                         if (VocabularyParser.hasPersian(inside)) {
+                            text = main
                             extractedTranslations.addAll(TextUtilities.splitTranslations(inside))
                             modifications.add("استخراج ترجمه فارسی داخل پرانتز ($inside)")
-                        } else {
+                        } else if (FieldValidationEngine.isStrictGrammarPosTag(inside)) {
+                            text = main
                             extractedNotes.add("نقش/توضیح: $inside")
                             modifications.add("انتقال توضیحات داخل پرانتز به یادداشت ($inside)")
+                        } else {
+                            keepExtracting = false
                         }
                     } else {
                         keepExtracting = false

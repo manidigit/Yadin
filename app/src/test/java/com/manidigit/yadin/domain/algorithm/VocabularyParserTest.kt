@@ -151,5 +151,82 @@ class VocabularyParserTest {
         // Row 4 in file has the invalid entry
         assertEquals(4, result.warnings.first().lineNumber)
     }
+
+    @Test
+    fun parseBulkGymVocabularyListPreservesSlashesParenthesesAndSecondTranslations() {
+        val raw = """
+            El gimnasio
+            باشگاه ورزشی
+            سالن بدنسازی
+            El chancla (Las chanclas)
+            دمپایی (دمپایی‌های لاانگشتی)
+            La zona de peso libre
+            بخش وزنه‌های آزاد (دمبل و هالتر)
+            El monitor / La monitora de sala
+            مربی سالن
+            مربی شیفت باشگاه
+            El entrenador personal (Personal trainer)
+            مربی خصوصی
+            El compañero / La compañera de entrenamiento (El gymbro)
+            یار تمرینی
+            حریف تمرینی
+            La barra Z (Barra EZ)
+            هالتر خمیده
+            هالتر لاری
+            El entrenamiento de alta intensidad (HIIT)
+            تمرین تناوبی با شدت بالا (HIIT)
+            ¡Una más!
+            یکی دیگه! (تشویق برای تکرار آخر)
+        """.trimIndent()
+
+        val result = VocabularyParser.parse(raw)
+        assertEquals(0, result.warnings.size)
+        assertEquals(9, result.entries.size)
+
+        // 1. El gimnasio -> باشگاه ورزشی, سالن بدنسازی (100% confidence, no warning)
+        val e0 = result.entries[0]
+        assertEquals("El gimnasio", e0.sourceText)
+        assertEquals(listOf("باشگاه ورزشی", "سالن بدنسازی"), e0.translations)
+        assertEquals(null, e0.note)
+        assertEquals(1.0, e0.confidence, 0.001)
+
+        // 2. El chancla (Las chanclas) -> دمپایی (دمپایی‌های لاانگشتی) (parentheses preserved in both word and translation!)
+        val e1 = result.entries[1]
+        assertEquals("El chancla (Las chanclas)", e1.sourceText)
+        assertEquals(listOf("دمپایی (دمپایی‌های لاانگشتی)"), e1.translations)
+        assertEquals(null, e1.note)
+        assertEquals(1.0, e1.confidence, 0.001)
+
+        // 3. La zona de peso libre -> بخش وزنه‌های آزاد (دمبل و هالتر)
+        val e2 = result.entries[2]
+        assertEquals("La zona de peso libre", e2.sourceText)
+        assertEquals(listOf("بخش وزنه‌های آزاد (دمبل و هالتر)"), e2.translations)
+        assertEquals(null, e2.note)
+
+        // 4. El monitor / La monitora de sala -> slash NOT split into translation/note!
+        val e3 = result.entries[3]
+        assertEquals("El monitor / La monitora de sala", e3.sourceText)
+        assertEquals(listOf("مربی سالن", "مربی شیفت باشگاه"), e3.translations)
+        assertEquals(null, e3.note)
+        assertEquals(1.0, e3.confidence, 0.001)
+
+        // 5. El entrenador personal (Personal trainer) -> English in parens NOT moved to note!
+        val e4 = result.entries[4]
+        assertEquals("El entrenador personal (Personal trainer)", e4.sourceText)
+        assertEquals(listOf("مربی خصوصی"), e4.translations)
+        assertEquals(null, e4.note)
+
+        // 6. El compañero / La compañera de entrenamiento (El gymbro) -> both slash and parens preserved!
+        val e5 = result.entries[5]
+        assertEquals("El compañero / La compañera de entrenamiento (El gymbro)", e5.sourceText)
+        assertEquals(listOf("یار تمرینی", "حریف تمرینی"), e5.translations)
+        assertEquals(null, e5.note)
+
+        // 7. El entrenamiento de alta intensidad (HIIT) -> HIIT in Persian translation does not trigger Latin warning!
+        val e7 = result.entries[7]
+        assertEquals("El entrenamiento de alta intensidad (HIIT)", e7.sourceText)
+        assertEquals(listOf("تمرین تناوبی با شدت بالا (HIIT)"), e7.translations)
+        assertEquals(1.0, e7.confidence, 0.001)
+    }
 }
 

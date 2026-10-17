@@ -169,12 +169,14 @@ object FieldValidationEngine {
             )
         }
 
-        // ۴. بررسی پرانتزهای توضیحی/نقش کلمه (مانند correr (v.) یا apple [n.])
+        // ۴. بررسی پرانتزهای نقش گرامری کوتاه (فقط برچسب‌های صریح دستوری مانند correr (v.) یا apple [n.])
+        // عبارات معتبر واژگانی مانند "El chancla (Las chanclas)" یا "Press de banca (Bench press)" یا "Dominadas (Pull-ups)"
+        // بخشی از خود اصطلاح هستند و هرگز نباید به یادداشت منتقل شوند!
         val parenMatch = REGEX_PAREN_BRACKET.find(singleLine)
         if (parenMatch != null) {
             val main = parenMatch.groupValues[1].trim()
             val inside = parenMatch.groupValues[2].trim()
-            if (main.isNotBlank() && inside.isNotBlank()) {
+            if (main.isNotBlank() && inside.isNotBlank() && isStrictGrammarPosTag(inside)) {
                 val combinedNote = listOfNotNull(existingNote, "نقش/توضیح: $inside").joinToString("\n")
                 return FieldValidationResult(
                     action = ReviewAction.MOVE_TO_NOTE,
@@ -250,11 +252,12 @@ object FieldValidationEngine {
 
         // بررسی حضور اسپانیایی در فیلد ترجمه:
         // "وجود هم‌زمان فارسی و اسپانیایی به‌تنهایی دلیل خرابی نیست. مثلاً ممکن است ترجمه شامل یک نام اسپانیایی، کد فنی یا مثال معتبر باشد."
-        if (VocabularyParser.hasLatin(translationCombined)) {
-            // آیا یک کد فنی کوتاه است (مثل V-16 یا ABS یا USB یا 12V)؟
-            val latinWords = translationCombined.split(Regex("""\s+""")).filter { VocabularyParser.hasLatin(it) }
+        // اگر متن ترجمه عمدتاً فارسی است و واژه لاتین داخل پرانتز یا یک کد فنی/تایمر کوتاه (مثل HIIT، TRX، BMI، V-16، RPE) است، کاملاً سالم است.
+        val translationWithoutParens = translationCombined.replace(Regex("""[\(\[（][^\)\]）]*[\)\]）]"""), "").trim()
+        if (VocabularyParser.hasLatin(translationWithoutParens)) {
+            val latinWords = translationWithoutParens.split(Regex("""\s+""")).filter { VocabularyParser.hasLatin(it) }
             val allAreShortCodes = latinWords.all { wordToken ->
-                wordToken.length <= 5 || REGEX_TECHNICAL_CODE.matches(wordToken)
+                wordToken.length <= 6 || REGEX_TECHNICAL_CODE.matches(wordToken)
             }
             if (!allAreShortCodes) {
                 // آیا جداکننده صریح در ترجمه است مثل "اتومبیل - coche"؟
@@ -296,6 +299,18 @@ object FieldValidationEngine {
             suggestedNote = existingNote,
             reason = "کلمه اسپانیایی و ترجمه فارسی معتبر و سالم است"
         )
+    }
+
+    private val STRICT_POS_TAGS = setOf(
+        "n", "n.", "v", "v.", "vt", "vt.", "vi", "vi.", "adj", "adj.", "adv", "adv.",
+        "prep", "prep.", "conj", "conj.", "pron", "pron.", "interj", "interj.",
+        "m", "m.", "f", "f.", "pl", "pl.", "sing", "sing.", "inf", "inf.",
+        "noun", "verb", "adjective", "adverb", "sustantivo", "verbo", "adjetivo", "adverbio"
+    )
+
+    fun isStrictGrammarPosTag(inside: String): Boolean {
+        val normalized = inside.trim().lowercase()
+        return STRICT_POS_TAGS.contains(normalized)
     }
 
     private fun separateLatinAndPersian(text: String): Pair<String, String> {
