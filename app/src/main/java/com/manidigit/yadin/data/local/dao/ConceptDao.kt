@@ -40,8 +40,14 @@ interface ConceptDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertConcepts(concepts: List<ConceptEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertConceptsIgnore(concepts: List<ConceptEntity>)
+
     @Update
     suspend fun updateConcept(concept: ConceptEntity)
+
+    @Update
+    suspend fun updateConcepts(concepts: List<ConceptEntity>)
 
     @Query("SELECT * FROM concepts WHERE id = :id LIMIT 1")
     suspend fun getConceptById(id: String): ConceptEntity?

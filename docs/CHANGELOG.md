@@ -2,6 +2,19 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۴۹.۱] - ۲۰۲۶-۱۰-۱۷
+### رفع باگ بحرانی حذف آبشاری (`ON DELETE CASCADE`) در ارتقای دیتابیس اولیه و خودترمیمی خودکار آمار و پیشرفت
+- **۱. جلوگیری از حذف آبشاری رکوردهای پیشرفت هنگام به‌روزرسانی دیتابیس اولیه (`SeedImporter.kt`، `ConceptDao.kt` و `LearningDao.kt`):**
+  - ریشه‌یابی علت نمایش عدد `1` در آمار کل کلمات صفحه خانه و مرور پس از نصب آپدیت: در SQLite، اجرای `insertConcepts` با استراتژی `OnConflictStrategy.REPLACE` روی جدول والد `concepts` ابتدا سطرهای موجود را `DELETE` و سپس `INSERT` می‌کرد که به دلیل قید `ForeignKey(onDelete = ForeignKey.CASCADE)` باعث حذف آبشاری تمام رکوردهای `learning_states`، `difficulty_states` و `review_history` برای ۷,۲۹۵ واژه پایه می‌شد و تنها واژگان سفارشی خارج از فایل بذر باقی می‌ماندند.
+  - جایگزینی درج مفاهیم با `insertConceptsIgnore` (`OnConflictStrategy.IGNORE`) برای واژگان جدید و `updateConcepts` (`@Update`) برای واژگان موجود در `SeedImporter.kt` و `VocabularyAuditService.kt`؛ به‌گونه‌ای که سطرهای جدول والد `concepts` هرگز حذف نشده و هیچ تریگر `ON DELETE CASCADE` روی جداول پیشرفت فعال نمی‌شود.
+  - حفظ کامل یادداشت‌های شخصی کاربر (`note`) و ترجمه‌های سفارشی هنگام به‌روزرسانی جدول `contents`.
+- **۲. مکانیزم خودترمیمی دیتابیس و بازیابی خودکار پیشرفت (`SeedImporter.kt` و `MainViewModel.kt`):**
+  - افزودن بررسی خودترمیمی در `shouldImportSeed()` (`learningCount < totalCount * 2 || difficultyCount < totalCount * 2`) تا در صورت کسری هرگونه رکورد در `learning_states` یا `difficulty_states`، تعمیر خودکار بلافاصله در بدو ورود اجرا شود.
+  - پیاده‌سازی تابع `recoverProgressFromLocalBackupsIfAvailable` جهت بررسی خودکار پوشه‌های `safety_backups` و `backups` و بازیابی مراحل لایتنر، سطوح دشواری و تاریخچه مرور کاربر در صورت وجود فایل پشتیبان داخلی.
+  - بازسازی تضمین‌شده رکوردهای `learning_states` و `difficulty_states` (در هر دو جهت `NORMAL` و `REVERSE`) برای تمامی ۷,۲۹۵+ واژه موجود در دیتابیس با استفاده از `insertLearningStatesIgnore` و `insertDifficultyStatesIgnore` بدون بازنویسی پیشرفت فعلی کاربر.
+
+---
+
 ### [نسخه ۱.۴۹.۰] - ۲۰۲۶-۱۰-۱۷
 ### غنی‌سازی جامع ترجمه‌های فارسی دیتابیس واژگان اسپانیایی و رفع کامل خطاهای پارسر ورود گروهی (Bulk Import)
 - **۱. تکمیل و غنی‌سازی ترجمه‌های فارسی دیتابیس واژگان اسپانیایی (`vocabulary_seed.json`، `docs/yadin-custom-backup.json` و `SeedImporter.kt`):**

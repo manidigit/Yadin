@@ -696,7 +696,7 @@ class VocabularyAuditService(
                 }
 
                 if (conceptsToUpdate.isNotEmpty()) {
-                    conceptsToUpdate.chunked(500).forEach { conceptDao.insertConcepts(it) }
+                    conceptsToUpdate.chunked(500).forEach { conceptDao.updateConcepts(it) }
                 }
                 if (contentsToDeleteForConcepts.isNotEmpty()) {
                     contentsToDeleteForConcepts.distinct().chunked(500).forEach { conceptDao.deleteContentsForConcepts(it) }

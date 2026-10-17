@@ -36,8 +36,17 @@ interface LearningDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLearningStates(states: List<LearningStateEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLearningStatesIgnore(states: List<LearningStateEntity>)
+
     @Update
     suspend fun updateLearningState(state: LearningStateEntity)
+
+    @Query("SELECT COUNT(*) FROM learning_states")
+    suspend fun getLearningStateCount(): Int
+
+    @Query("SELECT COUNT(*) FROM difficulty_states")
+    suspend fun getDifficultyStateCount(): Int
 
     @Query("SELECT * FROM learning_states WHERE conceptId = :conceptId AND direction = :direction LIMIT 1")
     suspend fun getLearningState(conceptId: String, direction: CardDirection): LearningStateEntity?
@@ -53,6 +62,9 @@ interface LearningDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDifficultyStates(states: List<DifficultyStateEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertDifficultyStatesIgnore(states: List<DifficultyStateEntity>)
 
     @Update
     suspend fun updateDifficultyState(state: DifficultyStateEntity)

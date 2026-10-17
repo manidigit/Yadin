@@ -230,6 +230,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             _isSeeding.value = false
             _currentScreen.value = Screen.Home
+            statisticsVm.refreshStatistics()
             loadRecentWords()
         }
     }
