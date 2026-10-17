@@ -48,4 +48,30 @@ class TextUtilitiesTest {
         assertEquals("کتابها", TextUtilities.searchKey("کتاب\u200Cها")) // ZWNJ stripped for search
         assertEquals("کتاب", TextUtilities.searchKey("كِتاب")) // Arabic kaf + kasrah
     }
+
+    @Test
+    fun splitTranslations_doesNotSplitInsideParentheses() {
+        val raw = "بیمار (مذکر، مؤنث)، مراجعه\u200Cکننده (پزشکی، روان\u200Cشناسی)"
+        val split = TextUtilities.splitTranslations(raw)
+        assertEquals(listOf("بیمار", "مراجعه\u200Cکننده (پزشکی، روان\u200Cشناسی)"), split)
+    }
+
+    @Test
+    fun deduplicatePersianTranslations_removesBrokenParensGenderAndNormalizedDuplicates() {
+        val brokenAndGendered = listOf("بیمار", "بیمار (مذکر", "مؤنث)")
+        assertEquals(listOf("بیمار"), TextUtilities.deduplicatePersianTranslations(brokenAndGendered))
+
+        val genderPair = listOf("معلم مرد", "معلم زن")
+        assertEquals(listOf("معلم"), TextUtilities.deduplicatePersianTranslations(genderPair))
+
+        val combinedAndSplit = listOf("سرعت، شتاب، تندی", "سرعت", "شتاب", "تندی")
+        assertEquals(listOf("سرعت", "شتاب", "تندی"), TextUtilities.deduplicatePersianTranslations(combinedAndSplit))
+
+        val zwnjAndEzafe = listOf("جلوه ی ویژه", "جلوه\u200Cی ویژه", "چراغ قوه", "چراغ\u200Cقوه")
+        assertEquals(listOf("جلوه\u200Cی ویژه", "چراغ\u200Cقوه"), TextUtilities.deduplicatePersianTranslations(zwnjAndEzafe))
+
+        val redundantParen = listOf("حق تقدم", "حق تقدم (در رانندگی)")
+        assertEquals(listOf("حق تقدم"), TextUtilities.deduplicatePersianTranslations(redundantParen))
+    }
 }
+

@@ -72,45 +72,237 @@ object TextUtilities {
         return WHITESPACE_REGEX.replace(withoutLatinDiacritics.trim(), " ")
     }
 
-    fun splitTranslations(text: String?): List<String> {
-        if (text.isNullOrBlank()) return emptyList()
-        // First split by commas, semicolons, and newlines
-        val primarySegments = text.split(PRIMARY_SEGMENTS_REGEX)
-            .map { cleanText(it) }
-            .filter { it.isNotBlank() }
+    private val EZAFE_HEH_YEH_REGEX = Regex("""ه[\u200C\s]*ی(?:\s|$)""")
+    private val PERSIAN_NON_ALNUM_REGEX = Regex("""[\u200C\u200F\u200E\s\-_،,.;؛:!؟?()\[\]«»"'/\\]+""")
+    private val PARENTHETICAL_BLOCK_REGEX = Regex("""\([^)]*\)""")
+    private val GENDER_PAREN_ONLY_REGEX = Regex("""\(\s*(?:مذکر|مؤنث|مرد|زن|آقا|خانم)(?:\s*[/،,و]\s*(?:مذکر|مؤنث|مرد|زن|آقا|خانم))*\s*\)""")
+    private val TRAILING_GENDER_WORD_REGEX = Regex("""\s+(مرد|زن|مذکر|مؤنث)\s*$""")
 
+    /**
+     * Splits text by delimiters ONLY when outside parentheses (...), brackets [...], or guillemets «...».
+     */
+    private fun splitOutsideParens(input: String, delimiters: Set<Char>): List<String> {
         val result = mutableListOf<String>()
-        for (seg in primarySegments) {
-            if (seg.contains('/')) {
-                // If slash is surrounded by whitespace, e.g. "سیب / گلابی"
-                if (SLASH_SURROUNDED_BY_SPACE.containsMatchIn(seg)) {
-                    val sub = seg.split(SLASH_SURROUNDED_BY_SPACE)
-                        .map { cleanText(it) }
-                        .filter { it.isNotBlank() }
-                    result.addAll(sub)
-                } else {
-                    // Slash without spaces. Check word count.
-                    // If multi-word phrase like "روی کسی/چیزی حساب کردن" (more than 2 tokens), keep intact!
-                    val tokens = seg.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
-                    if (tokens.size > 2) {
-                        result.add(seg)
+        val sb = StringBuilder()
+        var parenDepth = 0
+        for (ch in input) {
+            when (ch) {
+                '(', '[', '«' -> {
+                    parenDepth++
+                    sb.append(ch)
+                }
+                ')', ']', '»' -> {
+                    if (parenDepth > 0) parenDepth--
+                    sb.append(ch)
+                }
+                in delimiters -> {
+                    if (parenDepth == 0) {
+                        result.add(sb.toString())
+                        sb.clear()
                     } else {
-                        // Isolated single tokens, e.g. "شاد/خوشحال"
-                        val sub = seg.split('/')
-                            .map { cleanText(it) }
-                            .filter { it.isNotBlank() }
-                        result.addAll(sub)
+                        sb.append(ch)
                     }
                 }
-            } else {
-                result.add(seg)
+                else -> sb.append(ch)
             }
         }
-        return result.distinct()
+        if (sb.isNotEmpty()) {
+            result.add(sb.toString())
+        }
+        return result
+    }
+
+    /**
+     * Normalized Persian comparison key for detecting duplicate Persian translations
+     * (ignores ZWNJ vs space, Arabic/Persian Yeh/Kaf/Alef, Ezafe ه‌ی vs ه, and punctuation).
+     */
+    fun persianDedupeKey(text: String?): String {
+        if (text.isNullOrBlank()) return ""
+        var s = cleanText(text).lowercase(Locale.ROOT)
+            .replace('ة', 'ه')
+            .replace('ؤ', 'و')
+            .replace('إ', 'ا')
+            .replace('أ', 'ا')
+            .replace('آ', 'ا')
+            .replace("هٔ", "ه")
+            .replace("الآن", "الان")
+        s = EZAFE_HEH_YEH_REGEX.replace(s, "ه")
+        s = ARABIC_PERSIAN_DIACRITICS_REGEX.replace(s, "")
+        return PERSIAN_NON_ALNUM_REGEX.replace(s, "")
+    }
+
+    /**
+     * Rejoins broken parentheses, strips redundant gender-only tags, splits combined non-sentence
+     * translations whose subparts duplicate existing items, and removes duplicate Persian translations.
+     */
+    fun deduplicatePersianTranslations(translations: List<String>): List<String> {
+        if (translations.isEmpty()) return emptyList()
+
+        // 1. Clean and rejoin adjacent items with unbalanced parentheses e.g. ["بیمار (مذکر", "مؤنث)"]
+        val rawCleaned = translations.map { cleanText(it) }.filter { it.isNotBlank() }
+        if (rawCleaned.isEmpty()) return emptyList()
+
+        val parenMerged = mutableListOf<String>()
+        var i = 0
+        while (i < rawCleaned.size) {
+            var cur = rawCleaned[i]
+            while (cur.count { it == '(' } > cur.count { it == ')' } && i + 1 < rawCleaned.size) {
+                i++
+                cur = "$cur، ${rawCleaned[i]}"
+            }
+            // Strip redundant gender-only parentheticals e.g. "(مذکر، مؤنث)" or "(مذکر / مؤنث)"
+            val strippedGenderParen = cleanText(GENDER_PAREN_ONLY_REGEX.replace(cur, ""))
+            if (strippedGenderParen.isNotBlank()) {
+                parenMerged.add(strippedGenderParen)
+            } else {
+                parenMerged.add(cur)
+            }
+            i++
+        }
+
+        // 2. If both "X مرد" and "X زن" exist in the same concept, collapse them to "X"
+        val strippedGenderMap = parenMerged.map { item ->
+            val match = TRAILING_GENDER_WORD_REGEX.find(item)
+            if (match != null) {
+                val base = cleanText(item.substring(0, match.range.first))
+                val gender = cleanText(match.groupValues[1])
+                Triple(item, base, gender)
+            } else {
+                Triple(item, item, "")
+            }
+        }
+        val baseToGenders = strippedGenderMap.filter { it.third.isNotEmpty() }
+            .groupBy({ persianDedupeKey(it.second) }, { it.third })
+        val genderCollapsed = strippedGenderMap.map { (orig, base, gender) ->
+            val gendersForBase = baseToGenders[persianDedupeKey(base)]?.toSet().orEmpty()
+            if (gender.isNotEmpty() && base.isNotBlank() &&
+                (("مرد" in gendersForBase && "زن" in gendersForBase) ||
+                 ("مذکر" in gendersForBase && "مؤنث" in gendersForBase) ||
+                 strippedGenderMap.any { it.third.isEmpty() && persianDedupeKey(it.first) == persianDedupeKey(base) })
+            ) {
+                base
+            } else {
+                orig
+            }
+        }
+
+        // 3. Expand combined items ("A / B" or "A، B" or "A؛ B") when they are word/phrase lists or overlap with other translations
+        val atomicCandidates = mutableListOf<String>()
+        val allIndividualKeys = genderCollapsed.map { persianDedupeKey(it) }.toSet()
+        for (item in genderCollapsed) {
+            val hasSpacedSlash = SLASH_SURROUNDED_BY_SPACE.containsMatchIn(item)
+            val delimiters = if (hasSpacedSlash) setOf('،', ',', ';', '؛', '/') else setOf('،', ',', ';', '؛')
+            val subParts = splitOutsideParens(item, delimiters)
+                .map { cleanText(it) }
+                .filter { it.isNotBlank() }
+            if (subParts.size > 1) {
+                val isSentence = item.endsWith(".") || item.endsWith("؟") || item.endsWith("?") || item.endsWith("!") ||
+                    item.split(WHITESPACE_REGEX).size >= 6
+                val anySubPartAlreadyExists = subParts.any { persianDedupeKey(it) in allIndividualKeys }
+                if (!isSentence || anySubPartAlreadyExists) {
+                    atomicCandidates.addAll(subParts)
+                } else {
+                    atomicCandidates.add(item)
+                }
+            } else {
+                atomicCandidates.add(item)
+            }
+        }
+
+        // 4. Deduplicate by normalized Persian key (preferring proper ZWNJ and standard spelling)
+        fun qualityScore(s: String): Int {
+            var score = 0
+            if (s.contains('\u200C')) score += 5
+            if (Regex("""ه\s+ی(?:\s|$)""").containsMatchIn(s)) score -= 5
+            if (s.contains("الآن")) score -= 2
+            return score
+        }
+
+        fun colloquialNormalizedKey(s: String): String {
+            val unified = s
+                .replace("مگه", "مگر")
+                .replace("دیگه", "دیگر")
+                .replace("می‌خواد", "می‌خواهد")
+                .replace("میخواد", "می‌خواهد")
+            return persianDedupeKey(unified)
+        }
+
+        val deduped = mutableListOf<String>()
+        val keyToIndex = mutableMapOf<String, Int>()
+        for (candidate in atomicCandidates) {
+            val key = colloquialNormalizedKey(candidate)
+            if (key.isEmpty()) continue
+            val existingIdx = keyToIndex[key]
+            if (existingIdx == null) {
+                keyToIndex[key] = deduped.size
+                deduped.add(candidate)
+            } else if (qualityScore(candidate) > qualityScore(deduped[existingIdx])) {
+                deduped[existingIdx] = candidate
+            }
+        }
+
+        // 5. If both "X" and "X (توضیح)" exist with the exact same base "X", keep only one
+        if (deduped.size > 1) {
+            val bareKeys = deduped.filter { !it.contains('(') }.map { persianDedupeKey(it) }.toSet()
+            if (bareKeys.isNotEmpty()) {
+                val filteredParens = deduped.filterNot { item ->
+                    item.contains('(') &&
+                        persianDedupeKey(PARENTHETICAL_BLOCK_REGEX.replace(item, "")) in bareKeys
+                }
+                if (filteredParens.isNotEmpty()) {
+                    return filteredParens
+                }
+            }
+        }
+
+        return deduped
+    }
+
+    fun splitTranslations(text: String?): List<String> {
+        if (text.isNullOrBlank()) return emptyList()
+        val lines = text.split('\n').map { cleanText(it) }.filter { it.isNotBlank() }
+        val rawResult = mutableListOf<String>()
+
+        for (line in lines) {
+            val looksLikeSentence = line.endsWith(".") || line.endsWith("؟") || line.endsWith("?") || line.endsWith("!") ||
+                line.split(WHITESPACE_REGEX).size >= 6
+            val primarySegments = if (looksLikeSentence) {
+                splitOutsideParens(line, setOf(';', '؛')).map { cleanText(it) }.filter { it.isNotBlank() }
+            } else {
+                splitOutsideParens(line, setOf('،', ',', ';', '؛')).map { cleanText(it) }.filter { it.isNotBlank() }
+            }
+
+            for (seg in primarySegments) {
+                val slashParts = splitOutsideParens(seg, setOf('/')).map { cleanText(it) }.filter { it.isNotBlank() }
+                if (slashParts.size > 1) {
+                    if (SLASH_SURROUNDED_BY_SPACE.containsMatchIn(seg)) {
+                        // Only split on " / " if it is not breaking a sentence at an inline word pair
+                        val segIsSentence = seg.endsWith(".") || seg.endsWith("؟") || seg.endsWith("?") || seg.endsWith("!")
+                        val firstHasEndPunct = slashParts.first().let { it.endsWith(".") || it.endsWith("؟") || it.endsWith("?") || it.endsWith("!") }
+                        if (segIsSentence && !firstHasEndPunct && slashParts.any { it.split(WHITESPACE_REGEX).size <= 2 }) {
+                            rawResult.add(seg)
+                        } else {
+                            rawResult.addAll(slashParts)
+                        }
+                    } else {
+                        val tokens = seg.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+                        if (tokens.size > 2) {
+                            rawResult.add(seg)
+                        } else {
+                            rawResult.addAll(slashParts)
+                        }
+                    }
+                } else {
+                    rawResult.add(seg)
+                }
+            }
+        }
+
+        return deduplicatePersianTranslations(rawResult)
     }
 
     fun formatTranslations(translations: List<String>): String {
-        return translations.filter { it.isNotBlank() }.distinct().joinToString(" / ")
+        return deduplicatePersianTranslations(translations.filter { it.isNotBlank() }).joinToString(" / ")
     }
 
     /**

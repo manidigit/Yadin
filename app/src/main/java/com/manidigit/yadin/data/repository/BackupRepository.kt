@@ -26,6 +26,7 @@ import com.manidigit.yadin.domain.model.SessionItemState
 import com.manidigit.yadin.domain.model.SessionStatus
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -1213,15 +1214,39 @@ class BackupRepository(
                         }
                     }
 
-                    // الحاق ترجمه‌ها و محتواهای جدید بدون تکرار
+                    // الحاق ترجمه‌ها و محتواهای جدید بدون تکرار (با بررسی کلید نرمال‌شده فارسی)
                     val bContents = incomingContentsByConcept[bConcept.id] ?: emptyList()
                     val existingLocalContents = existingContentsByConcept[localId] ?: emptyList()
-                    val existingKeys = existingLocalContents.map { it.languageCode to it.canonicalKey }.toSet()
+                    val existingKeys = existingLocalContents.map { it.languageCode to it.canonicalKey }.toMutableSet()
+                    val existingFaDedupeKeys = existingLocalContents
+                        .filter { it.languageCode == "fa" }
+                        .flatMap { TextUtilities.splitTranslations(it.text).ifEmpty { listOf(it.text) } }
+                        .map { TextUtilities.persianDedupeKey(it) }
+                        .filter { it.isNotEmpty() }
+                        .toMutableSet()
                     var nextIndex = (existingLocalContents.maxOfOrNull { it.translationIndex } ?: -1) + 1
 
                     for (bc in bContents) {
                         val keyPair = bc.languageCode to bc.canonicalKey
-                        if (!existingKeys.contains(keyPair)) {
+                        if (bc.languageCode == "fa") {
+                            val atomicParts = TextUtilities.splitTranslations(bc.text).ifEmpty { listOf(bc.text) }
+                            for (part in atomicParts) {
+                                val faKey = TextUtilities.persianDedupeKey(part)
+                                if (faKey.isNotEmpty() && faKey !in existingFaDedupeKeys) {
+                                    existingFaDedupeKeys.add(faKey)
+                                    finalContentsToInsert.add(
+                                        bc.copy(
+                                            id = UUID.randomUUID().toString(),
+                                            conceptId = localId,
+                                            text = part,
+                                            canonicalKey = TextUtilities.toCanonicalKey(part),
+                                            translationIndex = nextIndex++
+                                        )
+                                    )
+                                }
+                            }
+                        } else if (!existingKeys.contains(keyPair)) {
+                            existingKeys.add(keyPair)
                             finalContentsToInsert.add(
                                 bc.copy(
                                     id = UUID.randomUUID().toString(),

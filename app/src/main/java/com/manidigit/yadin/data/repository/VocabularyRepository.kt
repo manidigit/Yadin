@@ -417,10 +417,11 @@ class VocabularyRepository(
             val spanishWord = cleanTranslations.firstOrNull { it.isNotBlank() } ?: cleanSource
             val sourcePersianList = cleanSource.split("،", ",", "\n").map { it.trim() }.filter { it.isNotEmpty() }
             val extraPersianList = cleanTranslations.drop(1).filter { it.isNotBlank() }
-            val persianTranslations = (sourcePersianList + extraPersianList).distinct()
-            Pair(spanishWord, persianTranslations)
+            val persianTranslations = TextUtilities.deduplicatePersianTranslations(sourcePersianList + extraPersianList)
+            Pair(spanishWord, persianTranslations.ifEmpty { (sourcePersianList + extraPersianList).distinct() })
         } else {
-            Pair(cleanSource, cleanTranslations)
+            val deduped = TextUtilities.deduplicatePersianTranslations(cleanTranslations)
+            Pair(cleanSource, deduped.ifEmpty { cleanTranslations.distinct() })
         }
 
         val sourceCanonicalKey = TextUtilities.toCanonicalKey(finalSourceText)
@@ -588,10 +589,11 @@ class VocabularyRepository(
                 val spanishWord = cleanTranslations.firstOrNull { it.isNotBlank() } ?: cleanSource
                 val sourcePersianList = cleanSource.split("،", ",", "\n").map { it.trim() }.filter { it.isNotEmpty() }
                 val extraPersianList = cleanTranslations.drop(1).filter { it.isNotBlank() }
-                val persianTranslations = (sourcePersianList + extraPersianList).distinct()
-                Pair(spanishWord, persianTranslations)
+                val persianTranslations = TextUtilities.deduplicatePersianTranslations(sourcePersianList + extraPersianList)
+                Pair(spanishWord, persianTranslations.ifEmpty { (sourcePersianList + extraPersianList).distinct() })
             } else {
-                Pair(cleanSource, cleanTranslations)
+                val deduped = TextUtilities.deduplicatePersianTranslations(cleanTranslations)
+                Pair(cleanSource, deduped.ifEmpty { cleanTranslations })
             }
 
             // بررسی عدم تداخل کلید قانونی با واژه‌های فعال دیگر (Issue 1.1)
@@ -848,7 +850,8 @@ class VocabularyRepository(
                         DuplicatePolicy.MERGE -> {
                             val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
                             val existingTranslations = currentContents.filter { it.languageCode == targetLang }.map { it.text }
-                            val merged = (existingTranslations + entry.translations).distinct()
+                            val merged = TextUtilities.deduplicatePersianTranslations(existingTranslations + entry.translations)
+                                .ifEmpty { (existingTranslations + entry.translations).distinct() }
                             val currentSourceContent = currentContents.firstOrNull { it.languageCode == sourceLang }
                             val mergedNote = listOfNotNull(currentSourceContent?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
                             val res = updateWord(

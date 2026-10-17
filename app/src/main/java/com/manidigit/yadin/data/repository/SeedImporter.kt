@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7295_v1.49.1"
+        const val CURRENT_SEED_VERSION = "7295_v1.49.2"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -290,18 +290,23 @@ class SeedImporter(
                 }
             }
 
-            // ۲. حفظ یادداشت‌های شخصی کاربر و ترجمه‌های سفارشی هنگام به‌روزرسانی محتوای واژگان پایه
+            // ۲. حفظ یادداشت‌های شخصی معتبر کاربر و پاک‌سازی ترجمه‌های تکراری بدون دست زدن به جدول والد concepts
             val existingContentsByConcept = if (existingConceptIds.isNotEmpty()) {
                 conceptDao.getAllContents().groupBy { it.conceptId }
             } else {
                 emptyMap()
             }
 
+            val legacyNoteRegex = Regex("""^[\d۰-۹\s.،؛مترادفابعادزیادماشینحجمموتور]+$""")
             val mergedSeedContents = contents.map { seedContent ->
                 if (seedContent.languageCode != "fa") {
                     val existingSource = existingContentsByConcept[seedContent.conceptId]?.firstOrNull { it.languageCode != "fa" }
                     val existingNote = existingSource?.note?.takeIf { it.isNotBlank() }
-                    if (existingNote != null && seedContent.note.isNullOrBlank()) {
+                    val isCorruptedLegacyNote = existingNote != null && (
+                        existingNote.contains("توضیح جداشده") ||
+                        legacyNoteRegex.matches(existingNote.trim())
+                    )
+                    if (existingNote != null && !isCorruptedLegacyNote && seedContent.note.isNullOrBlank()) {
                         seedContent.copy(note = existingNote)
                     } else {
                         seedContent
@@ -311,18 +316,35 @@ class SeedImporter(
                 }
             }.toMutableList()
 
-            if (existingContentsByConcept.isNotEmpty()) {
-                val seedTargetKeysByConcept = contents.filter { it.languageCode == "fa" }
-                    .groupBy { it.conceptId }
-                    .mapValues { (_, list) -> list.map { it.canonicalKey }.toSet() }
+            // پاک‌سازی ترجمه‌های فارسی تکراری در واژگان شخصی کاربر (خارج از واژگان پایه) بدون حذف یا تغییر رکوردهای concepts
+            val seedConceptIdSet = concepts.map { it.id }.toSet()
+            val userConceptIdsToRefreshContents = mutableListOf<String>()
+            val cleanedUserContents = mutableListOf<ContentEntity>()
 
-                for ((cid, existingList) in existingContentsByConcept) {
-                    val seedKeys = seedTargetKeysByConcept[cid] ?: continue
-                    val maxSeedIdx = contents.filter { it.conceptId == cid && it.languageCode == "fa" }
-                        .maxOfOrNull { it.translationIndex } ?: 0
-                    var nextIdx = maxSeedIdx + 1
-                    existingList.filter { it.languageCode == "fa" && it.canonicalKey !in seedKeys }.forEach { customTarget ->
-                        mergedSeedContents.add(customTarget.copy(translationIndex = nextIdx++))
+            for ((cid, existingList) in existingContentsByConcept) {
+                if (cid in seedConceptIdSet) continue
+                val sourceRows = existingList.filter { it.languageCode != "fa" }
+                val faRows = existingList.filter { it.languageCode == "fa" }.sortedBy { it.translationIndex }
+                if (faRows.size > 1) {
+                    val originalFaTexts = faRows.map { it.text }
+                    val dedupedFaTexts = TextUtilities.deduplicatePersianTranslations(originalFaTexts)
+                    if (dedupedFaTexts.isNotEmpty() && dedupedFaTexts != originalFaTexts) {
+                        userConceptIdsToRefreshContents.add(cid)
+                        cleanedUserContents.addAll(sourceRows)
+                        dedupedFaTexts.forEachIndexed { idx, cleanFa ->
+                            val preservedId = faRows.getOrNull(idx)?.id ?: UUID.randomUUID().toString()
+                            cleanedUserContents.add(
+                                ContentEntity(
+                                    id = preservedId,
+                                    conceptId = cid,
+                                    languageCode = "fa",
+                                    text = cleanFa,
+                                    canonicalKey = TextUtilities.toCanonicalKey(cleanFa),
+                                    note = null,
+                                    translationIndex = idx
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -361,6 +383,12 @@ class SeedImporter(
                     conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
                 }
 
+                if (userConceptIdsToRefreshContents.isNotEmpty()) {
+                    userConceptIdsToRefreshContents.chunked(500).forEach { chunkIds ->
+                        conceptDao.deleteContentsForConcepts(chunkIds)
+                    }
+                }
+
                 if (allConceptCategories.isNotEmpty()) {
                     allConceptCategories.chunked(1000).forEach { chunk ->
                         conceptDao.insertConceptCategories(chunk)
@@ -369,6 +397,12 @@ class SeedImporter(
 
                 mergedSeedContents.chunked(1000).forEach { chunk ->
                     conceptDao.insertContents(chunk)
+                }
+
+                if (cleanedUserContents.isNotEmpty()) {
+                    cleanedUserContents.chunked(1000).forEach { chunk ->
+                        conceptDao.insertContents(chunk)
+                    }
                 }
 
                 // ۳. تضمین وجود رکوردهای learning_states و difficulty_states برای تمام واژگان (عادی و معکوس)

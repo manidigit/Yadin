@@ -529,10 +529,10 @@ class VocabularyAuditService(
                     existingTrans.addAll(dup.targetContents.map { it.text })
                     existingTrans.addAll(dup.cleanedResult.extractedTranslations)
                 }
-                val mergedTranslations = existingTrans
-                    .map { TextUtilities.cleanText(it) }
-                    .filter { it.isNotBlank() }
-                    .distinct()
+                val mergedTranslations = TextUtilities.deduplicatePersianTranslations(existingTrans)
+                    .ifEmpty {
+                        existingTrans.map { TextUtilities.cleanText(it) }.filter { it.isNotBlank() }.distinct()
+                    }
 
                 // ترکیب یادداشت‌ها
                 val allNotes = mutableListOf<String>()
@@ -640,8 +640,13 @@ class VocabularyAuditService(
                     val noteChanged = mergedNote != single.sourceContent?.note
 
                     val existingTargetTexts = single.targetContents.map { it.text }
-                    val newCombinedTargets = (cleanedTargets + single.cleanedResult.extractedTranslations).distinct()
+                    val rawCombinedTargets = (cleanedTargets + single.cleanedResult.extractedTranslations).distinct()
+                    val newCombinedTargets = TextUtilities.deduplicatePersianTranslations(rawCombinedTargets)
+                        .ifEmpty { rawCombinedTargets }
                     val targetsChanged = newCombinedTargets != existingTargetTexts
+                    if (targetsChanged && newCombinedTargets.size < existingTargetTexts.size) {
+                        targetMods.add("حذف ترجمه‌های فارسی تکراری")
+                    }
 
                     // فقط در صورت وجود تغییر واقعی دیتابیس آپدیت می‌شود
                     if ((sourceTextChanged || targetsChanged || noteChanged) && single.sourceContent != null) {
