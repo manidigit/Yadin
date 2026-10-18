@@ -17,6 +17,11 @@ data class DayCountRaw(
     val correctCount: Int
 )
 
+data class ReviewTimestampRaw(
+    val reviewedAt: Long,
+    val isCorrect: Boolean
+)
+
 @Dao
 interface ReviewSessionDao {
 
@@ -141,4 +146,7 @@ interface ReviewSessionDao {
 
     @Query("DELETE FROM review_sessions WHERE id NOT IN (SELECT DISTINCT sessionId FROM review_session_items)")
     suspend fun deleteEmptySessions()
+
+    @Query("SELECT reviewedAt, isCorrect FROM review_history ORDER BY reviewedAt DESC LIMIT :limit")
+    suspend fun getRecentReviewTimestamps(limit: Int = 2000): List<ReviewTimestampRaw>
 }

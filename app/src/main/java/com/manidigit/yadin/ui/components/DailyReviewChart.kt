@@ -2,9 +2,13 @@ package com.manidigit.yadin.ui.components
 
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +20,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,8 +40,13 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,16 +64,15 @@ import java.time.LocalDate
 
 enum class ChartTimeframe(@StringRes val titleRes: Int) {
     WEEKLY(R.string.chart_filter_weekly),
-    MONTHLY(R.string.chart_filter_monthly)
+    MONTHLY(R.string.chart_filter_monthly),
+    QUARTERLY(R.string.chart_filter_quarterly)
 }
 
 /**
- * کامپوننت نمودار میله‌ای فعالیت روزانه مرور و تمرین واژگان.
+ * نمودار تحلیلی تعاملی روند حجم مرورها و منحنی دقت (Dual-Trend Chart)
  *
- * نمایش گرافیکی تعداد مرورها به تفکیک روزهای هفته یا بازه‌های ۵روزه ماهانه
- * با رسم محور عمودی، برچسب‌های محلی‌سازی‌شده و نوار تفکیک برجسته روز جاری.
- *
- * @param dailyStats لیست آمارهای خام مرور روزانه استخراج‌شده از دیتابیس
+ * شامل ستون‌های میله‌ای مدرن برای حجم مرور و خط منحنی دقت پاسخ‌ها
+ * همراه با قابلیت لمس تعاملی برای نمایش جزئیات روز انتخابی.
  */
 @Composable
 fun DailyReviewChart(
@@ -71,59 +84,100 @@ fun DailyReviewChart(
     val dimensions = LocalYadinDimensions.current
     val shapes = LocalYadinShapes.current
     var selectedTimeframe by remember { mutableStateOf(ChartTimeframe.WEEKLY) }
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     val today = ClockAndDayMath.todayDayString()
-    val statMap = dailyStats.associateBy { it.reviewedDay }
+    val statMap = remember(dailyStats) { dailyStats.associateBy { it.reviewedDay } }
 
     val recentDaysLabel = stringResource(R.string.chart_recent_days)
 
-    val chartItems = if (selectedTimeframe == ChartTimeframe.WEEKLY) {
-        // 7 days: from (today - 6) up to today
-        (6 downTo 0).map { offset ->
-            val day = ClockAndDayMath.addDays(today, -offset)
-            val raw = statMap[day]
-            val dayName = getLocalizedDayOfWeek(day, context)
-            DayChartModel(
-                dayString = day,
-                shortLabel = dayName,
-                totalCount = raw?.totalCount ?: 0,
-                correctCount = raw?.correctCount ?: 0,
-                isToday = (day == today)
-            )
-        }
-    } else {
-        // 30 days: aggregated into 6 periods of 5 days
-        (5 downTo 0).map { sliceIndex ->
-            val sliceEndOffset = sliceIndex * 5
-            val sliceStartOffset = sliceEndOffset + 4
-            val endDay = ClockAndDayMath.addDays(today, -sliceEndOffset)
-            
-            var sliceTotal = 0
-            var sliceCorrect = 0
-            for (off in sliceStartOffset downTo sliceEndOffset) {
-                val d = ClockAndDayMath.addDays(today, -off)
-                statMap[d]?.let {
-                    sliceTotal += it.totalCount
-                    sliceCorrect += it.correctCount
+    val chartItems = remember(selectedTimeframe, statMap, today) {
+        when (selectedTimeframe) {
+            ChartTimeframe.WEEKLY -> {
+                // 7 روز اخیر
+                (6 downTo 0).map { offset ->
+                    val day = ClockAndDayMath.addDays(today, -offset)
+                    val raw = statMap[day]
+                    val dayName = getLocalizedDayOfWeek(day, context)
+                    DayChartModel(
+                        dayString = day,
+                        shortLabel = dayName,
+                        totalCount = raw?.totalCount ?: 0,
+                        correctCount = raw?.correctCount ?: 0,
+                        isToday = (day == today)
+                    )
                 }
             }
+            ChartTimeframe.MONTHLY -> {
+                // 30 روز: در 6 بازه 5 روزه
+                (5 downTo 0).map { sliceIndex ->
+                    val sliceEndOffset = sliceIndex * 5
+                    val sliceStartOffset = sliceEndOffset + 4
+                    val endDay = ClockAndDayMath.addDays(today, -sliceEndOffset)
 
-            val label = if (sliceIndex == 0) {
-                recentDaysLabel
-            } else {
-                context.getString(
-                    R.string.chart_days_ago,
-                    (sliceEndOffset + 1).formatDigits(),
-                    (sliceStartOffset + 1).formatDigits()
-                )
+                    var sliceTotal = 0
+                    var sliceCorrect = 0
+                    for (off in sliceStartOffset downTo sliceEndOffset) {
+                        val d = ClockAndDayMath.addDays(today, -off)
+                        statMap[d]?.let {
+                            sliceTotal += it.totalCount
+                            sliceCorrect += it.correctCount
+                        }
+                    }
+
+                    val label = if (sliceIndex == 0) {
+                        recentDaysLabel
+                    } else {
+                        context.getString(
+                            R.string.chart_days_ago,
+                            (sliceEndOffset + 1).formatDigits(),
+                            (sliceStartOffset + 1).formatDigits()
+                        )
+                    }
+                    DayChartModel(
+                        dayString = endDay,
+                        shortLabel = label,
+                        totalCount = sliceTotal,
+                        correctCount = sliceCorrect,
+                        isToday = (sliceIndex == 0)
+                    )
+                }
             }
-            DayChartModel(
-                dayString = endDay,
-                shortLabel = label,
-                totalCount = sliceTotal,
-                correctCount = sliceCorrect,
-                isToday = (sliceIndex == 0)
-            )
+            ChartTimeframe.QUARTERLY -> {
+                // 90 روز: در 6 بازه 15 روزه
+                (5 downTo 0).map { sliceIndex ->
+                    val sliceEndOffset = sliceIndex * 15
+                    val sliceStartOffset = sliceEndOffset + 14
+                    val endDay = ClockAndDayMath.addDays(today, -sliceEndOffset)
+
+                    var sliceTotal = 0
+                    var sliceCorrect = 0
+                    for (off in sliceStartOffset downTo sliceEndOffset) {
+                        val d = ClockAndDayMath.addDays(today, -off)
+                        statMap[d]?.let {
+                            sliceTotal += it.totalCount
+                            sliceCorrect += it.correctCount
+                        }
+                    }
+
+                    val label = if (sliceIndex == 0) {
+                        recentDaysLabel
+                    } else {
+                        context.getString(
+                            R.string.chart_days_ago,
+                            (sliceEndOffset + 1).formatDigits(),
+                            (sliceStartOffset + 1).formatDigits()
+                        )
+                    }
+                    DayChartModel(
+                        dayString = endDay,
+                        shortLabel = label,
+                        totalCount = sliceTotal,
+                        correctCount = sliceCorrect,
+                        isToday = (sliceIndex == 0)
+                    )
+                }
+            }
         }
     }
 
@@ -143,30 +197,51 @@ fun DailyReviewChart(
         backgroundColor = colors.surface
     ) {
         Column(
-            modifier = Modifier.padding(dimensions.sectionGap),
-            verticalArrangement = Arrangement.spacedBy(dimensions.contentGap)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Header Row with Timeframe Selector (هفتگی / ماهانه)
+            // سطر هدر با عنوان و سوئیچ بازه زمانی
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.chart_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.chart_total_reviews, totalReviews.formatDigits()),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.primary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ShowChart,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = stringResource(R.string.chart_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.chart_total_reviews, totalReviews.formatDigits()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            fontSize = 11.sp
+                        )
+                    }
                 }
 
-                // Segmented Toggle for Weekly vs Monthly
+                // سگمنت سوئیچ بازه زمانی
                 Row(
                     modifier = Modifier
                         .clip(shapes.extraSmall)
@@ -174,19 +249,22 @@ fun DailyReviewChart(
                         .padding(2.dp),
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    ChartTimeframe.values().forEach { tf ->
+                    ChartTimeframe.entries.forEach { tf ->
                         val isSelected = (selectedTimeframe == tf)
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(if (isSelected) colors.primary else Color.Transparent)
-                                .clickable { selectedTimeframe = tf }
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                                .clickable {
+                                    selectedTimeframe = tf
+                                    selectedIndex = null
+                                }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = stringResource(tf.titleRes),
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
                             )
@@ -195,58 +273,102 @@ fun DailyReviewChart(
                 }
             }
 
-            // Axis Label Indicator
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+            // بنر شناور تول‌تیپ تعاملی هنگام لمس هر ستون
+            AnimatedVisibility(
+                visible = selectedIndex != null && selectedIndex in chartItems.indices,
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
-                Text(
-                    text = stringResource(R.string.chart_axis_label),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.onSurfaceVariant
-                )
+                val item = selectedIndex?.let { chartItems.getOrNull(it) }
+                if (item != null) {
+                    val acc = if (item.totalCount > 0) ((item.correctCount.toFloat() / item.totalCount) * 100).toInt() else 0
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.primary.copy(alpha = 0.1f))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.chart_tooltip_fmt,
+                                    item.shortLabel,
+                                    item.totalCount.formatDigits(),
+                                    item.correctCount.formatDigits(),
+                                    acc.formatDigits()
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.primary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
             }
 
-            // Custom Canvas Chart with Y-Axis and X-Axis
+            // رسم بوم Canvas با حجم مرورها و منحنی دقت
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
-                    .padding(top = 8.dp, bottom = 4.dp)
+                    .height(190.dp)
+                    .padding(top = 4.dp, bottom = 4.dp)
             ) {
                 val primaryColor = colors.primary
                 val secondaryColor = colors.secondary
+                val accuracyLineColor = colors.success
                 val surfaceVariantColor = colors.surfaceVariant
                 val textColorPrimary = colors.onSurface.toArgb()
                 val textColorVariant = colors.onSurfaceVariant.toArgb()
 
-                Canvas(modifier = Modifier.fillMaxSize()) {
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(chartItems) {
+                            detectTapGestures { tapOffset ->
+                                val yAxisWidth = 34.dp.toPx()
+                                val chartWidth = size.width - yAxisWidth
+                                val barCount = chartItems.size
+                                val slotWidth = chartWidth / barCount
+                                if (tapOffset.x >= yAxisWidth) {
+                                    val idx = ((tapOffset.x - yAxisWidth) / slotWidth).toInt().coerceIn(0, barCount - 1)
+                                    selectedIndex = if (selectedIndex == idx) null else idx
+                                }
+                            }
+                        }
+                ) {
                     val canvasWidth = size.width
                     val canvasHeight = size.height
-                    
+
                     val yAxisWidth = 34.dp.toPx()
                     val bottomLabelSpace = 24.dp.toPx()
                     val chartHeight = canvasHeight - bottomLabelSpace
                     val chartWidth = canvasWidth - yAxisWidth
 
-                    // Draw Y-Axis lines and numbers (0, mid, max)
+                    // خطوط شبکه محور Y
                     val steps = 3
                     for (i in 0..steps) {
                         val frac = i.toFloat() / steps
                         val y = chartHeight - (frac * (chartHeight * 0.85f))
                         val value = (frac * maxCount).toInt()
 
-                        // Grid line
                         drawLine(
-                            color = surfaceVariantColor.copy(alpha = if (i == 0) 0.8f else 0.4f),
+                            color = surfaceVariantColor.copy(alpha = if (i == 0) 0.8f else 0.35f),
                             start = Offset(yAxisWidth, y),
                             end = Offset(canvasWidth, y),
                             strokeWidth = if (i == 0) 1.5f else 1f
                         )
 
-                        // Y-axis value label
                         drawContext.canvas.nativeCanvas.apply {
                             val axisPaint = android.graphics.Paint().apply {
                                 color = textColorVariant
@@ -260,28 +382,30 @@ fun DailyReviewChart(
 
                     val barCount = chartItems.size
                     val slotWidth = chartWidth / barCount
-                    val barWidth = (slotWidth * 0.45f).coerceIn(12.dp.toPx(), 28.dp.toPx())
+                    val barWidth = (slotWidth * 0.45f).coerceIn(10.dp.toPx(), 26.dp.toPx())
 
+                    val accuracyPoints = mutableListOf<Offset>()
+
+                    // رسم ستون‌های میله‌ای
                     chartItems.forEachIndexed { index, item ->
                         val centerX = yAxisWidth + (index * slotWidth) + (slotWidth / 2f)
                         val barHeight = if (item.totalCount > 0) {
                             (item.totalCount.toFloat() / maxCount) * (chartHeight * 0.85f)
                         } else {
-                            3.dp.toPx() // Minimum indicator
+                            3.dp.toPx()
                         }
 
                         val barTop = chartHeight - barHeight
                         val barLeft = centerX - (barWidth / 2f)
 
-                        val barColor = if (item.isToday) {
-                            primaryColor
-                        } else if (item.totalCount > 0) {
-                            secondaryColor.copy(alpha = 0.85f)
-                        } else {
-                            surfaceVariantColor.copy(alpha = 0.6f)
+                        val isHighlighted = selectedIndex == index
+                        val barColor = when {
+                            isHighlighted -> primaryColor
+                            item.isToday -> primaryColor
+                            item.totalCount > 0 -> secondaryColor.copy(alpha = 0.85f)
+                            else -> surfaceVariantColor.copy(alpha = 0.5f)
                         }
 
-                        // Draw Bar
                         drawRoundRect(
                             color = barColor,
                             topLeft = Offset(barLeft, barTop),
@@ -289,36 +413,80 @@ fun DailyReviewChart(
                             cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
                         )
 
-                        // Draw value above bar if > 0
+                        // عدد روی ستون
                         if (item.totalCount > 0) {
                             drawContext.canvas.nativeCanvas.apply {
                                 val paint = android.graphics.Paint().apply {
-                                    color = if (item.isToday) textColorPrimary else textColorVariant
+                                    color = if (item.isToday || isHighlighted) textColorPrimary else textColorVariant
                                     textSize = 10.sp.toPx()
                                     textAlign = android.graphics.Paint.Align.CENTER
                                     isAntiAlias = true
-                                    isFakeBoldText = item.isToday
+                                    isFakeBoldText = (item.isToday || isHighlighted)
                                 }
                                 drawText(item.totalCount.formatDigits(), centerX, barTop - 5.dp.toPx(), paint)
                             }
                         }
 
-                        // Draw X-axis Day label
+                        // برچسب محور افقی (روز)
                         drawContext.canvas.nativeCanvas.apply {
                             val labelPaint = android.graphics.Paint().apply {
-                                color = if (item.isToday) textColorPrimary else textColorVariant
+                                color = if (item.isToday || isHighlighted) textColorPrimary else textColorVariant
                                 textSize = 9.sp.toPx()
                                 textAlign = android.graphics.Paint.Align.CENTER
                                 isAntiAlias = true
-                                isFakeBoldText = item.isToday
+                                isFakeBoldText = (item.isToday || isHighlighted)
                             }
                             drawText(item.shortLabel, centerX, canvasHeight - 3.dp.toPx(), labelPaint)
                         }
+
+                        // محاسبه نقطه منحنی دقت
+                        if (item.totalCount > 0) {
+                            val accuracyPct = (item.correctCount.toFloat() / item.totalCount).coerceIn(0f, 1f)
+                            val accuracyY = chartHeight - (accuracyPct * (chartHeight * 0.85f))
+                            accuracyPoints.add(Offset(centerX, accuracyY))
+                        }
+                    }
+
+                    // رسم منحنی دقت (Accuracy Line)
+                    if (accuracyPoints.size >= 2) {
+                        val path = Path().apply {
+                            moveTo(accuracyPoints[0].x, accuracyPoints[0].y)
+                            for (i in 1 until accuracyPoints.size) {
+                                val prev = accuracyPoints[i - 1]
+                                val cur = accuracyPoints[i]
+                                val cpx = (prev.x + cur.x) / 2f
+                                cubicTo(cpx, prev.y, cpx, cur.y, cur.x, cur.y)
+                            }
+                        }
+
+                        drawPath(
+                            path = path,
+                            color = accuracyLineColor,
+                            style = Stroke(
+                                width = 2.5.dp.toPx(),
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            )
+                        )
+                    }
+
+                    // رسم نقاط دایره‌ای روی منحنی دقت
+                    accuracyPoints.forEach { pt ->
+                        drawCircle(
+                            color = colors.surface,
+                            radius = 5.dp.toPx(),
+                            center = pt
+                        )
+                        drawCircle(
+                            color = accuracyLineColor,
+                            radius = 3.5.dp.toPx(),
+                            center = pt
+                        )
                     }
                 }
             }
 
-            // Legend
+            // راهنما (Legend)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -326,18 +494,18 @@ fun DailyReviewChart(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapSmall)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(modifier = Modifier.size(dimensions.itemGapMedium).clip(shapes.circle).background(colors.primary))
-                    Text(stringResource(R.string.chart_legend_today), fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(colors.primary))
+                    Text(stringResource(R.string.chart_volume_bars_label), fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
-                Spacer(modifier = Modifier.width(dimensions.sectionGap))
+                Spacer(modifier = Modifier.width(16.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(dimensions.itemGapSmall)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(modifier = Modifier.size(dimensions.itemGapMedium).clip(shapes.circle).background(colors.secondary))
-                    Text(stringResource(R.string.chart_legend_past), fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(colors.success))
+                    Text(stringResource(R.string.chart_accuracy_curve_label), fontSize = 11.sp, color = colors.onSurfaceVariant)
                 }
             }
         }

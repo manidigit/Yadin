@@ -160,6 +160,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val progressStatistics: StateFlow<StatisticsSummary> = statisticsVm.getProgressStatisticsFlow(settingsVm.appLanguageDirection)
     val achievements: StateFlow<List<AchievementEntity>> get() = statisticsVm.achievements
     val totalCorrectReviewsCount: StateFlow<Int> = statisticsVm.totalCorrectReviewsCount
+    val retentionMetrics: StateFlow<com.manidigit.yadin.domain.model.RetentionMetrics> = statisticsVm.getRetentionMetricsFlow(settingsVm.appLanguageDirection)
+    val upcomingForecast: StateFlow<List<com.manidigit.yadin.domain.model.ReviewForecastItem>> = statisticsVm.getUpcomingForecastFlow(settingsVm.appLanguageDirection)
+    val studyHourBuckets: StateFlow<List<com.manidigit.yadin.domain.model.StudyHourBucket>> get() = statisticsVm.studyHourBuckets
+    val categoryMastery: StateFlow<List<com.manidigit.yadin.domain.model.CategoryMasteryItem>> = statisticsVm.getCategoryMasteryFlow(settingsVm.appLanguageDirection)
 
     // ==========================================
     // تفویض وضعیت کتابخانه و ورود (LibraryViewModel)

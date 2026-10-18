@@ -52,8 +52,16 @@ import com.manidigit.yadin.domain.model.AchievementTier
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.StatisticsSummary
 import com.manidigit.yadin.domain.model.TieredGroupState
+import com.manidigit.yadin.domain.model.CategoryMasteryItem
+import com.manidigit.yadin.domain.model.RetentionMetrics
+import com.manidigit.yadin.domain.model.ReviewForecastItem
+import com.manidigit.yadin.domain.model.StudyHourBucket
 import com.manidigit.yadin.domain.time.ClockAndDayMath
+import com.manidigit.yadin.ui.components.CategoryMasteryCard
 import com.manidigit.yadin.ui.components.DailyReviewChart
+import com.manidigit.yadin.ui.components.RetentionGaugeCard
+import com.manidigit.yadin.ui.components.StudyHabitsCard
+import com.manidigit.yadin.ui.components.UpcomingForecastCard
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -69,6 +77,10 @@ fun ProgressScreen(
     activeDirection: CardDirection,
     achievements: List<com.manidigit.yadin.data.local.entity.AchievementEntity> = emptyList(),
     totalCorrectCount: Int = 0,
+    retentionMetrics: RetentionMetrics? = null,
+    upcomingForecast: List<ReviewForecastItem> = emptyList(),
+    studyHourBuckets: List<StudyHourBucket> = emptyList(),
+    categoryMastery: List<CategoryMasteryItem> = emptyList(),
     onRefresh: () -> Unit = {},
     onBack: () -> Unit
 ) {
@@ -365,70 +377,76 @@ fun ProgressScreen(
             }
         }
 
-        // ۳. حفظ ماندگار:
-        // - تعداد پاسخ‌های درست از کل پاسخ‌ها
-        // - درصد
-        // - نوار پیشرفت
-        item {
-            YadinCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = colors.surface
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+        if (retentionMetrics != null) {
+            item {
+                RetentionGaugeCard(metrics = retentionMetrics)
+            }
+        } else {
+            item {
+                YadinCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = colors.surface
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.progress_deep_retention),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface
+                                )
+                                Text(
+                                    text = stringResource(
+                                        R.string.progress_retention_ratio,
+                                        totalCorrectCount.formatDigits(),
+                                        totalReviewed.formatDigits()
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.onSurfaceVariant,
+                                    fontSize = 12.sp
+                                )
+                            }
+
                             Text(
-                                text = stringResource(R.string.progress_deep_retention),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
-                            )
-                            Text(
-                                text = stringResource(
-                                    R.string.progress_retention_ratio,
-                                    totalCorrectCount.formatDigits(),
-                                    totalReviewed.formatDigits()
-                                ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.onSurfaceVariant,
-                                fontSize = 12.sp
+                                text = "${totalAccuracy.formatDigits()}%",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Black,
+                                color = colors.success
                             )
                         }
 
-                        Text(
-                            text = "${totalAccuracy.formatDigits()}%",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Black,
-                            color = colors.success
+                        LinearProgressIndicator(
+                            progress = { (totalAccuracy / 100f).coerceIn(0f, 1f) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = colors.success,
+                            trackColor = colors.success.copy(alpha = 0.18f)
                         )
                     }
-
-                    LinearProgressIndicator(
-                        progress = { (totalAccuracy / 100f).coerceIn(0f, 1f) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = colors.success,
-                        trackColor = colors.success.copy(alpha = 0.18f)
-                    )
                 }
             }
         }
 
-        // ۴. فعالیت مرور:
-        // - فیلتر بازه زمانی: ماهانه، هفتگی
-        // - نمودار میله‌ای تعداد مرور به تفکیک روزهای هفته
-        // - برچسب محور: تعداد مرور
+        // نمودار تعاملی روند حجم مرورها و منحنی دقت
         item {
             DailyReviewChart(dailyStats = dailyStats)
+        }
+
+        // پیش‌بینی موعد مرورهای آینده
+        if (upcomingForecast.isNotEmpty()) {
+            item {
+                UpcomingForecastCard(forecastItems = upcomingForecast)
+            }
         }
 
         // ۵. مراحل یادگیری: (نوار پیشرفت)
@@ -532,6 +550,20 @@ fun ProgressScreen(
                         color = colors.error
                     )
                 }
+            }
+        }
+
+        // تحلیل عادات مطالعه و ساعات طلایی
+        if (studyHourBuckets.isNotEmpty()) {
+            item {
+                StudyHabitsCard(buckets = studyHourBuckets)
+            }
+        }
+
+        // گزارش تسلط به تفکیک موضوعات
+        if (categoryMastery.isNotEmpty()) {
+            item {
+                CategoryMasteryCard(categoryItems = categoryMastery)
             }
         }
 

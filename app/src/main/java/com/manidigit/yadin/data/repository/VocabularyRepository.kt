@@ -968,4 +968,111 @@ class VocabularyRepository(
     ): com.manidigit.yadin.domain.model.LibraryAuditReport {
         return auditService.auditAndMergeLibrary(direction, onProgress)
     }
+
+    suspend fun getRetentionMetrics(direction: CardDirection): com.manidigit.yadin.domain.model.RetentionMetrics {
+        val totalActive = conceptDao.getActiveConceptCount()
+        val learned = learningDao.getCountByStage(direction, Stage.LEARNED)
+        val monthly = learningDao.getCountByStage(direction, Stage.MONTHLY)
+        val weekly = learningDao.getCountByStage(direction, Stage.WEEKLY)
+        val daily = learningDao.getCountByStage(direction, Stage.DAILY)
+        val practiced = learningDao.getTotalPracticedWordsCount(direction)
+        val unreviewed = (totalActive - practiced).coerceAtLeast(0)
+
+        val weightedScore = if (totalActive > 0) {
+            val raw = (learned * 100.0 + monthly * 80.0 + weekly * 60.0 + (practiced - learned - monthly - weekly).coerceAtLeast(0) * 35.0) / totalActive
+            raw.toInt().coerceIn(0, 100)
+        } else 0
+
+        return com.manidigit.yadin.domain.model.RetentionMetrics(
+            retentionScore = weightedScore,
+            totalWords = totalActive,
+            practicedWords = practiced,
+            learnedWords = learned,
+            monthlyWords = monthly,
+            weeklyWords = weekly,
+            dailyWords = daily,
+            unreviewedWords = unreviewed
+        )
+    }
+
+    suspend fun getUpcomingDueForecast(direction: CardDirection): List<com.manidigit.yadin.domain.model.ReviewForecastItem> {
+        val today = ClockAndDayMath.todayDayString()
+        val day1 = ClockAndDayMath.addDays(today, 1)
+        val day3 = ClockAndDayMath.addDays(today, 3)
+        val day7 = ClockAndDayMath.addDays(today, 7)
+
+        val scheduledList = learningDao.getScheduledReviewsByDay(direction, day1, day7)
+        val scheduledMap = scheduledList.associateBy { it.nextReviewDay }
+
+        val tomorrowCount = scheduledMap[day1]?.count ?: 0
+
+        var next3DaysCount = 0
+        for (i in 1..3) {
+            val d = ClockAndDayMath.addDays(today, i)
+            next3DaysCount += scheduledMap[d]?.count ?: 0
+        }
+
+        var next7DaysCount = 0
+        for (i in 1..7) {
+            val d = ClockAndDayMath.addDays(today, i)
+            next7DaysCount += scheduledMap[d]?.count ?: 0
+        }
+
+        return listOf(
+            com.manidigit.yadin.domain.model.ReviewForecastItem(dayOffset = 1, dayString = day1, dueCount = tomorrowCount),
+            com.manidigit.yadin.domain.model.ReviewForecastItem(dayOffset = 3, dayString = day3, dueCount = next3DaysCount),
+            com.manidigit.yadin.domain.model.ReviewForecastItem(dayOffset = 7, dayString = day7, dueCount = next7DaysCount)
+        )
+    }
+
+    suspend fun getStudyHourBuckets(): List<com.manidigit.yadin.domain.model.StudyHourBucket> {
+        val history = reviewSessionDao.getRecentReviewTimestamps(2000)
+        val zone = java.time.ZoneId.systemDefault()
+
+        val buckets = com.manidigit.yadin.domain.model.StudyHourSlot.entries.associateWith {
+            mutableListOf<Boolean>()
+        }
+
+        for (item in history) {
+            val hour = try {
+                java.time.Instant.ofEpochMilli(item.reviewedAt).atZone(zone).hour
+            } catch (_: Exception) {
+                12
+            }
+            val slot = when (hour) {
+                in 6..11 -> com.manidigit.yadin.domain.model.StudyHourSlot.MORNING
+                in 12..16 -> com.manidigit.yadin.domain.model.StudyHourSlot.AFTERNOON
+                in 17..20 -> com.manidigit.yadin.domain.model.StudyHourSlot.EVENING
+                else -> com.manidigit.yadin.domain.model.StudyHourSlot.NIGHT
+            }
+            buckets[slot]?.add(item.isCorrect)
+        }
+
+        return com.manidigit.yadin.domain.model.StudyHourSlot.entries.map { slot ->
+            val list = buckets[slot] ?: emptyList()
+            val total = list.size
+            val correct = list.count { it }
+            val acc = if (total > 0) ((correct.toFloat() / total) * 100).toInt() else 0
+            com.manidigit.yadin.domain.model.StudyHourBucket(
+                slot = slot,
+                reviewCount = total,
+                correctCount = correct,
+                accuracyPercent = acc
+            )
+        }
+    }
+
+    suspend fun getCategoryMasteryBreakdown(direction: CardDirection): List<com.manidigit.yadin.domain.model.CategoryMasteryItem> {
+        val raw = conceptDao.getCategoryMasteryRaw(direction)
+        return raw.map { r ->
+            val pct = if (r.totalWords > 0) ((r.learnedWords.toFloat() / r.totalWords) * 100).toInt() else 0
+            com.manidigit.yadin.domain.model.CategoryMasteryItem(
+                categoryId = r.categoryId,
+                categoryName = r.categoryName,
+                totalWords = r.totalWords,
+                learnedWords = r.learnedWords,
+                masteryPercent = pct
+            )
+        }
+    }
 }

@@ -31,6 +31,13 @@ data class ConceptCategoryJoin(
     val isDefault: Boolean
 )
 
+data class CategoryMasteryRaw(
+    val categoryId: String,
+    val categoryName: String,
+    val totalWords: Int,
+    val learnedWords: Int
+)
+
 @Dao
 interface ConceptDao {
 
@@ -267,4 +274,20 @@ interface ConceptDao {
 
     @Query("DELETE FROM categories WHERE isDefault = 0")
     suspend fun clearCustomCategories()
+
+    @Query("""
+        SELECT 
+            cat.id AS categoryId,
+            cat.name AS categoryName,
+            COUNT(DISTINCT c.id) AS totalWords,
+            COUNT(DISTINCT CASE WHEN ls.stage = 'LEARNED' THEN c.id END) AS learnedWords
+        FROM categories cat
+        INNER JOIN concept_categories cc ON cc.categoryId = cat.id
+        INNER JOIN concepts c ON cc.conceptId = c.id
+        LEFT JOIN learning_states ls ON (ls.conceptId = c.id AND ls.direction = :direction)
+        WHERE c.active = 1
+        GROUP BY cat.id
+        ORDER BY totalWords DESC
+    """)
+    suspend fun getCategoryMasteryRaw(direction: CardDirection): List<CategoryMasteryRaw>
 }

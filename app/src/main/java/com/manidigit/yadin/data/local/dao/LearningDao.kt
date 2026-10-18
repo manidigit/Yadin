@@ -27,6 +27,11 @@ data class ProgressCalculationRaw(
     val totalActive: Int
 )
 
+data class DayScheduledRaw(
+    val nextReviewDay: String,
+    val count: Int
+)
+
 @Dao
 interface LearningDao {
 
@@ -117,6 +122,14 @@ interface LearningDao {
         WHERE c.active = 1 AND ls.direction = :direction AND ls.stage = :stage
     """)
     fun getCountByStageFlow(direction: CardDirection, stage: Stage): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(*) 
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction AND ls.stage = :stage
+    """)
+    suspend fun getCountByStage(direction: CardDirection, stage: Stage): Int
 
     @Query("""
         SELECT COUNT(*) 
@@ -339,4 +352,19 @@ interface LearningDao {
 
     @Query("DELETE FROM difficulty_states WHERE conceptId NOT IN (SELECT id FROM concepts)")
     suspend fun deleteOrphanDifficultyStates()
+
+    @Query("""
+        SELECT ls.nextReviewDay, COUNT(*) AS count
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction AND ls.stage != 'LEARNED'
+          AND ls.nextReviewDay IS NOT NULL
+          AND ls.nextReviewDay >= :startDay AND ls.nextReviewDay <= :endDay
+        GROUP BY ls.nextReviewDay
+    """)
+    suspend fun getScheduledReviewsByDay(
+        direction: CardDirection,
+        startDay: String,
+        endDay: String
+    ): List<DayScheduledRaw>
 }

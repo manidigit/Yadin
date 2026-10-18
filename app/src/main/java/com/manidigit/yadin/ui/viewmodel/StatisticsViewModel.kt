@@ -114,6 +114,48 @@ class StatisticsViewModel(
     val totalCorrectReviewsCount: StateFlow<Int> = vocabularyRepo.getTotalCorrectReviewsCountFlow()
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0)
 
+    fun getRetentionMetricsFlow(directionFlow: StateFlow<CardDirection>): StateFlow<com.manidigit.yadin.domain.model.RetentionMetrics> {
+        return combine(directionFlow, _refreshTrigger) { dir, _ -> dir }
+            .flatMapLatest { dir ->
+                kotlinx.coroutines.flow.flow {
+                    emit(vocabularyRepo.getRetentionMetrics(dir))
+                }
+            }
+            .stateIn(
+                scope,
+                SharingStarted.WhileSubscribed(5000),
+                com.manidigit.yadin.domain.model.RetentionMetrics(0, 0, 0, 0, 0, 0, 0, 0)
+            )
+    }
+
+    fun getUpcomingForecastFlow(directionFlow: StateFlow<CardDirection>): StateFlow<List<com.manidigit.yadin.domain.model.ReviewForecastItem>> {
+        return combine(directionFlow, _refreshTrigger) { dir, _ -> dir }
+            .flatMapLatest { dir ->
+                kotlinx.coroutines.flow.flow {
+                    emit(vocabularyRepo.getUpcomingDueForecast(dir))
+                }
+            }
+            .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+
+    val studyHourBuckets: StateFlow<List<com.manidigit.yadin.domain.model.StudyHourBucket>> = _refreshTrigger
+        .flatMapLatest {
+            kotlinx.coroutines.flow.flow {
+                emit(vocabularyRepo.getStudyHourBuckets())
+            }
+        }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun getCategoryMasteryFlow(directionFlow: StateFlow<CardDirection>): StateFlow<List<com.manidigit.yadin.domain.model.CategoryMasteryItem>> {
+        return combine(directionFlow, _refreshTrigger) { dir, _ -> dir }
+            .flatMapLatest { dir ->
+                kotlinx.coroutines.flow.flow {
+                    emit(vocabularyRepo.getCategoryMasteryBreakdown(dir))
+                }
+            }
+            .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+
     /**
      * همگام‌سازی جهت زبان محلی با جهت سراسری تنظیمات برنامه (ISS-58).
      */

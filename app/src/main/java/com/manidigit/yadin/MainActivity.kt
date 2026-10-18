@@ -543,6 +543,10 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val activeDirection by viewModel.progressDirection.collectAsStateWithLifecycle()
             val achievements by viewModel.achievements.collectAsStateWithLifecycle()
             val totalCorrectCount by viewModel.totalCorrectReviewsCount.collectAsStateWithLifecycle()
+            val retentionMetrics by viewModel.retentionMetrics.collectAsStateWithLifecycle()
+            val upcomingForecast by viewModel.upcomingForecast.collectAsStateWithLifecycle()
+            val studyHourBuckets by viewModel.studyHourBuckets.collectAsStateWithLifecycle()
+            val categoryMastery by viewModel.categoryMastery.collectAsStateWithLifecycle()
 
             ProgressScreen(
                 progressPercent = progressPercent,
@@ -552,6 +556,10 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 activeDirection = activeDirection,
                 achievements = achievements,
                 totalCorrectCount = totalCorrectCount,
+                retentionMetrics = retentionMetrics,
+                upcomingForecast = upcomingForecast,
+                studyHourBuckets = studyHourBuckets,
+                categoryMastery = categoryMastery,
                 onRefresh = { viewModel.refreshStatistics() },
                 onBack = {
                     if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Home)
