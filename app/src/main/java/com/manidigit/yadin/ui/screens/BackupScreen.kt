@@ -27,27 +27,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.SaveAlt
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.TableChart
-import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -95,6 +74,7 @@ import com.manidigit.yadin.ui.components.getDifficultyIcon
 import com.manidigit.yadin.ui.components.getVocabStatIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.formatDigits
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -231,7 +211,7 @@ fun BackupScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CloudUpload,
+                                imageVector = YadinIcons.backupExport,
                                 contentDescription = null,
                                 tint = colors.primary,
                                 modifier = Modifier.size(20.dp)
@@ -266,7 +246,7 @@ fun BackupScreen(
                     val containerColor = if (isError) colors.error.copy(alpha = 0.12f) else colors.success.copy(alpha = 0.12f)
                     val contentColor = if (isError) colors.error else colors.success
                     val borderColor = if (isError) colors.error.copy(alpha = 0.35f) else colors.success.copy(alpha = 0.35f)
-                    val icon = if (isError) Icons.Default.Warning else Icons.Default.CheckCircle
+                    val icon = if (isError) YadinIcons.statusWarning else YadinIcons.statusSuccess
 
                     Box(
                         modifier = Modifier
@@ -305,7 +285,7 @@ fun BackupScreen(
             ) {
                 TabButton(
                     title = stringResource(R.string.backup_tab_backup),
-                    icon = Icons.Default.CloudUpload,
+                    icon = YadinIcons.backupExport,
                     isSelected = activeTab == 0,
                     modifier = Modifier.weight(1f)
                 ) {
@@ -314,7 +294,7 @@ fun BackupScreen(
 
                 TabButton(
                     title = stringResource(R.string.backup_tab_restore),
-                    icon = Icons.Default.CloudDownload,
+                    icon = YadinIcons.backupRestore,
                     isSelected = activeTab == 1,
                     modifier = Modifier.weight(1f)
                 ) {
@@ -335,7 +315,7 @@ fun BackupScreen(
                     ) {
                         YadinSectionHeader(
                             title = stringResource(R.string.backup_db_status_title),
-                            icon = Icons.Default.Storage,
+                            icon = YadinIcons.databaseStorage,
                             iconTint = colors.primary
                         )
 
@@ -352,7 +332,7 @@ fun BackupScreen(
                             StatBox(
                                 label = stringResource(R.string.backup_db_categories),
                                 value = totalCategories.formatDigits(),
-                                icon = Icons.Default.Category,
+                                icon = YadinIcons.categoryDefault,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -370,7 +350,7 @@ fun BackupScreen(
                         YadinSectionHeader(
                             title = stringResource(R.string.backup_scope_title),
                             subtitle = stringResource(R.string.backup_scope_subtitle),
-                            icon = Icons.Default.CheckCircle,
+                            icon = YadinIcons.backupScopeChecklist,
                             iconTint = colors.primary
                         )
 
@@ -433,7 +413,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_cat_title),
                             subtitle = stringResource(R.string.backup_cat_sub),
-                            icon = Icons.Default.Category,
+                            icon = YadinIcons.categoryDefault,
                             isChecked = backupOptions.includeCategories,
                             onCheckedChange = { onToggleOption("categories", it) }
                         )
@@ -449,7 +429,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_streak_title),
                             subtitle = stringResource(R.string.backup_streak_sub),
-                            icon = Icons.Default.LocalFireDepartment,
+                            icon = YadinIcons.streakFire,
                             isChecked = backupOptions.includeStreakAndProgress,
                             onCheckedChange = { onToggleOption("streak", it) }
                         )
@@ -457,7 +437,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_leitner_title),
                             subtitle = stringResource(R.string.backup_leitner_sub),
-                            icon = getVocabStatIcon(VocabStatType.MASTERED),
+                            icon = YadinIcons.leitnerBox,
                             isChecked = backupOptions.includeReviewStats,
                             onCheckedChange = { onToggleOption("reviewStats", it) }
                         )
@@ -465,7 +445,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_process_title),
                             subtitle = stringResource(R.string.backup_process_sub),
-                            icon = Icons.Default.History,
+                            icon = YadinIcons.processHistory,
                             isChecked = backupOptions.includeProcessHistory,
                             onCheckedChange = { onToggleOption("process", it) }
                         )
@@ -473,7 +453,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_settings_title),
                             subtitle = stringResource(R.string.backup_settings_sub),
-                            icon = Icons.Default.Settings,
+                            icon = YadinIcons.navSettings,
                             isChecked = backupOptions.includeSettings,
                             onCheckedChange = { onToggleOption("settings", it) }
                         )
@@ -490,7 +470,7 @@ fun BackupScreen(
                     ) {
                         YadinSectionHeader(
                             title = stringResource(R.string.backup_format_title),
-                            icon = Icons.Default.Description,
+                            icon = YadinIcons.formatJson,
                             iconTint = colors.primary
                         )
 
@@ -501,7 +481,7 @@ fun BackupScreen(
                             YadinSelectableChip(
                                 text = stringResource(R.string.backup_fmt_json_title),
                                 subtitle = ".json",
-                                icon = Icons.Default.Description,
+                                icon = YadinIcons.formatJson,
                                 isSelected = !isExcelSelected,
                                 accentColor = colors.primary,
                                 preserveAccentWhenUnselected = true,
@@ -515,7 +495,7 @@ fun BackupScreen(
                             YadinSelectableChip(
                                 text = stringResource(R.string.backup_fmt_excel_title),
                                 subtitle = ".csv",
-                                icon = Icons.Default.TableChart,
+                                icon = YadinIcons.formatCsvExcel,
                                 isSelected = isExcelSelected,
                                 accentColor = colors.secondary,
                                 preserveAccentWhenUnselected = true,
@@ -567,7 +547,7 @@ fun BackupScreen(
                         border = BorderStroke(1.dp, colors.primary)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.FolderOpen,
+                            imageVector = YadinIcons.folderOpen,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -593,7 +573,7 @@ fun BackupScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.SaveAlt,
+                            imageVector = YadinIcons.saveFile,
                             contentDescription = null,
                             tint = colors.onPrimary,
                             modifier = Modifier.size(18.dp)
@@ -615,23 +595,11 @@ fun BackupScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FolderOpen,
-                                contentDescription = null,
-                                tint = colors.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.backup_internal_files_title, internalBackups.size.formatDigits()),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
-                            )
-                        }
+                        YadinSectionHeader(
+                            title = stringResource(R.string.backup_internal_files_title, internalBackups.size.formatDigits()),
+                            icon = YadinIcons.folderOpen,
+                            iconTint = colors.primary
+                        )
 
                         if (internalBackups.isEmpty()) {
                             Text(
@@ -661,29 +629,11 @@ fun BackupScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = null,
-                                tint = colors.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.backup_restore_card_title),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
-                            )
-                        }
-
-                        Text(
-                            text = stringResource(R.string.backup_restore_card_desc),
-                            fontSize = 12.sp,
-                            color = colors.onSurfaceVariant,
-                            lineHeight = 18.sp
+                        YadinSectionHeader(
+                            title = stringResource(R.string.backup_restore_card_title),
+                            subtitle = stringResource(R.string.backup_restore_card_desc),
+                            icon = YadinIcons.backupRestore,
+                            iconTint = colors.primary
                         )
 
                         // File picker button
@@ -700,7 +650,7 @@ fun BackupScreen(
                             border = BorderStroke(1.dp, if (loadedFileContent != null) colors.success else colors.primary)
                         ) {
                             Icon(
-                                imageVector = if (loadedFileContent != null) Icons.Default.CheckCircle else Icons.Default.FolderOpen,
+                                imageVector = if (loadedFileContent != null) YadinIcons.statusSuccess else YadinIcons.folderOpen,
                                 contentDescription = null,
                                 tint = if (loadedFileContent != null) colors.success else colors.primary,
                                 modifier = Modifier.size(20.dp)
@@ -801,7 +751,7 @@ fun BackupScreen(
                                 )
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.CloudDownload,
+                                    imageVector = YadinIcons.backupRestore,
                                     contentDescription = null,
                                     tint = if (isReplaceMode) colors.onError else colors.onPrimary,
                                     modifier = Modifier.size(18.dp)
@@ -1017,7 +967,7 @@ private fun SavedBackupItemRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = if (isCsv) Icons.Default.TableChart else Icons.Default.Description,
+                imageVector = if (isCsv) YadinIcons.formatCsvExcel else YadinIcons.formatJson,
                 contentDescription = null,
                 tint = if (isCsv) colors.secondary else colors.primary,
                 modifier = Modifier.size(20.dp)
@@ -1043,7 +993,7 @@ private fun SavedBackupItemRow(
             modifier = Modifier.size(34.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Share,
+                imageVector = YadinIcons.share,
                 contentDescription = stringResource(R.string.action_share),
                 tint = colors.primary,
                 modifier = Modifier.size(18.dp)
@@ -1054,7 +1004,7 @@ private fun SavedBackupItemRow(
             modifier = Modifier.size(34.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Delete,
+                imageVector = YadinIcons.delete,
                 contentDescription = stringResource(R.string.action_delete),
                 tint = colors.error,
                 modifier = Modifier.size(18.dp)

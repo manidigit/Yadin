@@ -10,10 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CheckCircleOutline
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.ReviewForecastItem
 import com.manidigit.yadin.ui.theme.LocalYadinColors
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.formatDigits
 
 /**
@@ -54,41 +51,12 @@ fun UpcomingForecastCard(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // هدر
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(colors.primary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = stringResource(R.string.forecast_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.forecast_subtitle),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                        fontSize = 11.sp
-                    )
-                }
-            }
+            YadinSectionHeader(
+                title = stringResource(R.string.forecast_title),
+                subtitle = stringResource(R.string.forecast_subtitle),
+                icon = YadinIcons.forecastCalendar,
+                iconTint = colors.primary
+            )
 
             // سه ستون پیش‌بینی
             Row(
@@ -160,7 +128,7 @@ private fun ForecastColumn(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = if (count > 0) Icons.Default.Schedule else Icons.Default.CheckCircleOutline,
+                    imageVector = if (count > 0) YadinIcons.dueSchedule else YadinIcons.dueClear,
                     contentDescription = null,
                     tint = if (count > 0) accentColor else colors.success,
                     modifier = Modifier.size(13.dp)

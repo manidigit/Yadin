@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.ui.theme.LocalYadinColors
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
@@ -59,7 +58,7 @@ fun SplashScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.AutoAwesome,
+                    imageVector = YadinIcons.brandSparkle,
                     contentDescription = stringResource(R.string.app_name),
                     tint = colors.onHero,
                     modifier = Modifier.size(44.dp)

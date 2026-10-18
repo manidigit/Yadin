@@ -16,15 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -100,7 +95,7 @@ fun ImportReviewScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = YadinIcons.check,
                         contentDescription = null,
                         tint = colors.primary,
                         modifier = Modifier.size(48.dp)
@@ -226,7 +221,7 @@ private fun ReviewItemCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = YadinIcons.statusWarning,
                         contentDescription = null,
                         tint = if (item.confidence < 80) colors.error else colors.warning,
                         modifier = Modifier.size(18.dp)
@@ -311,7 +306,7 @@ private fun ReviewItemCard(
                         }
                     }
                 ) {
-                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(YadinIcons.noteText, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(stringResource(R.string.import_review_move_to_note), fontSize = 12.sp)
                 }
@@ -324,14 +319,14 @@ private fun ReviewItemCard(
             ) {
                 IconButton(onClick = onReject) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = YadinIcons.close,
                         contentDescription = stringResource(R.string.import_review_desc_reject),
                         tint = colors.error
                     )
                 }
                 IconButton(onClick = { onApprove(item) }) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = YadinIcons.check,
                         contentDescription = stringResource(R.string.import_review_desc_approve),
                         tint = colors.primary
                     )

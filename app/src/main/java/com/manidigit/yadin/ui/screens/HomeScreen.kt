@@ -15,11 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,6 +45,7 @@ import com.manidigit.yadin.ui.components.getVocabStatColor
 import com.manidigit.yadin.ui.components.getVocabStatIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.formatDigits
 
 /**
@@ -101,7 +97,7 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.AutoAwesome,
+                            imageVector = YadinIcons.brandSparkle,
                             contentDescription = null,
                             tint = colors.onHero,
                             modifier = Modifier.size(22.dp)
@@ -144,7 +140,7 @@ fun HomeScreen(
                 ) {
                     YadinSectionHeader(
                         title = stringResource(R.string.home_vocab_summary),
-                        icon = Icons.AutoMirrored.Filled.MenuBook,
+                        icon = YadinIcons.vocabTotal,
                         iconTint = colors.primary
                     )
 
@@ -198,7 +194,7 @@ fun HomeScreen(
                 ) {
                     YadinSectionHeader(
                         title = stringResource(R.string.home_leitner_box),
-                        icon = Icons.Default.School,
+                        icon = YadinIcons.leitnerBox,
                         iconTint = colors.primary
                     )
 
@@ -262,7 +258,7 @@ fun HomeScreen(
                 ) {
                     YadinSectionHeader(
                         title = stringResource(R.string.home_difficulty_spectrum),
-                        icon = Icons.Default.Tune,
+                        icon = YadinIcons.difficultySpectrum,
                         iconTint = colors.warning
                     )
 

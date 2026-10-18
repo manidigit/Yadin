@@ -23,9 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -57,6 +54,7 @@ import com.manidigit.yadin.R
 import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.theme.LocalYadinColors
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.LocalYadinShapes
 import com.manidigit.yadin.ui.util.formatDigits
@@ -201,82 +199,48 @@ fun DailyReviewChart(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // سطر هدر با عنوان و سوئیچ بازه زمانی
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(colors.primary.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
+            // سطر هدر با عنوان و سوئیچ بازه زمانی استاندارد
+            YadinSectionHeader(
+                title = stringResource(R.string.chart_title),
+                subtitle = stringResource(R.string.chart_total_reviews, totalReviews.formatDigits()),
+                icon = YadinIcons.chartTrend,
+                iconTint = colors.primary,
+                trailingContent = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ShowChart,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Column {
-                        Text(
-                            text = stringResource(R.string.chart_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
-                        Text(
-                            text = stringResource(R.string.chart_total_reviews, totalReviews.formatDigits()),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-
-                // سگمنت سوئیچ بازه زمانی (استایل چیپ استاندارد M3)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    ChartTimeframe.entries.forEach { tf ->
-                        val isSelected = (selectedTimeframe == tf)
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    if (isSelected) colors.primary.copy(alpha = 0.18f)
-                                    else colors.primary.copy(alpha = 0.06f)
+                        ChartTimeframe.entries.forEach { tf ->
+                            val isSelected = (selectedTimeframe == tf)
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (isSelected) colors.primary.copy(alpha = 0.18f)
+                                        else colors.primary.copy(alpha = 0.06f)
+                                    )
+                                    .border(
+                                        width = if (isSelected) 1.5.dp else 1.dp,
+                                        color = if (isSelected) colors.primary else colors.primary.copy(alpha = 0.28f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable {
+                                        selectedTimeframe = tf
+                                        selectedIndex = null
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(tf.titleRes),
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) colors.primary else colors.onSurface
                                 )
-                                .border(
-                                    width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) colors.primary else colors.primary.copy(alpha = 0.28f),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .clickable {
-                                    selectedTimeframe = tf
-                                    selectedIndex = null
-                                }
-                                .padding(horizontal = 8.dp, vertical = 5.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(tf.titleRes),
-                                fontSize = 10.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) colors.primary else colors.onSurface
-                            )
+                            }
                         }
                     }
                 }
-            }
+            )
 
             // بنر شناور تول‌تیپ تعاملی هنگام لمس هر ستون
             AnimatedVisibility(
@@ -299,7 +263,7 @@ fun DailyReviewChart(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Info,
+                                imageVector = YadinIcons.aboutInfo,
                                 contentDescription = null,
                                 tint = colors.primary,
                                 modifier = Modifier.size(16.dp)

@@ -25,19 +25,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.RateReview
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -206,7 +197,7 @@ fun ImportScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CheckCircle,
+                                imageVector = YadinIcons.statusSuccess,
                                 contentDescription = null,
                                 tint = colors.success,
                                 modifier = Modifier.size(36.dp)
@@ -352,7 +343,7 @@ fun ImportScreen(
                         shape = RoundedCornerShape(dimensions.cornerSmall),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                     ) {
-                        Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Icon(YadinIcons.pasteClipboard, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Paste", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
@@ -371,7 +362,7 @@ fun ImportScreen(
                         shape = RoundedCornerShape(dimensions.cornerSmall),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                     ) {
-                        Icon(Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Icon(YadinIcons.fileOpen, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.import_btn_select_file), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
@@ -388,7 +379,7 @@ fun ImportScreen(
                             shape = RoundedCornerShape(dimensions.cornerSmall),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                         ) {
-                            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(15.dp))
+                            Icon(YadinIcons.clear, contentDescription = null, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(stringResource(R.string.import_btn_clear), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
@@ -466,7 +457,7 @@ fun ImportScreen(
                                 inputText = ""
                                 isShowingSample = false
                             }) {
-                                Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_clear))
+                                Icon(YadinIcons.clear, contentDescription = stringResource(R.string.action_clear))
                             }
                         }
                     },
@@ -485,7 +476,7 @@ fun ImportScreen(
                         contentColor = colors.onPrimary
                     )
                 ) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Icon(YadinIcons.smartAudit, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.import_btn_parse), fontWeight = FontWeight.Bold)
                 }
@@ -588,7 +579,7 @@ fun ImportScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Warning,
+                                imageVector = YadinIcons.statusWarning,
                                 contentDescription = null,
                                 tint = colors.warning,
                                 modifier = Modifier.size(18.dp)
@@ -637,7 +628,7 @@ fun ImportScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.Warning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp))
+                            Icon(YadinIcons.statusWarning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp))
                             Column {
                                 Text(
                                     text = stringResource(R.string.import_screen_review_warning_title, itemsNeedingReview.formatDigits()),
@@ -707,7 +698,7 @@ fun ImportScreen(
                             .height(48.dp),
                         shape = RoundedCornerShape(dimensions.cornerMedium)
                     ) {
-                        Icon(Icons.Default.RateReview, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(YadinIcons.manualReview, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.import_review_before_save, parseResult.entries.size.formatDigits()),
@@ -728,7 +719,7 @@ fun ImportScreen(
                         contentColor = colors.onSuccess
                     )
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.import_btn_confirm_save), fontWeight = FontWeight.Bold)
                 }

@@ -15,27 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.AssignmentTurnedIn
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material.icons.filled.FactCheck
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.filled.Style
-import androidx.compose.material.icons.filled.Today
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Verified
-import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +45,7 @@ import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.LocalYadinShapes
 import com.manidigit.yadin.ui.theme.YadinColors
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.TtsManager
 import com.manidigit.yadin.ui.util.formatDigits
 
@@ -74,10 +54,7 @@ import com.manidigit.yadin.ui.util.formatDigits
  * - آزمون ۴ گزینه‌ای: FactCheck (برگه آزمون با چک‌باکس و تیک)
  * - فلش‌کارت تعاملی: Style (دو کارت روی هم با زاویه ملایم)
  */
-fun getReviewModeIcon(mode: ReviewMode): ImageVector = when (mode) {
-    ReviewMode.QUIZ -> Icons.Default.FactCheck
-    ReviewMode.FLASHCARD -> Icons.Default.Style
-}
+fun getReviewModeIcon(mode: ReviewMode): ImageVector = YadinIcons.forReviewMode(mode)
 
 fun getReviewModeColor(mode: ReviewMode, colors: YadinColors): Color = when (mode) {
     ReviewMode.QUIZ -> colors.primary
@@ -98,12 +75,7 @@ fun getStageColor(stage: Stage, colors: YadinColors): Color = when (stage) {
     Stage.LEARNED -> colors.success
 }
 
-fun getStageIcon(stage: Stage): ImageVector = when (stage) {
-    Stage.DAILY -> Icons.Default.Today
-    Stage.WEEKLY -> Icons.Default.DateRange
-    Stage.MONTHLY -> Icons.Default.CalendarMonth
-    Stage.LEARNED -> Icons.Default.Verified
-}
+fun getStageIcon(stage: Stage): ImageVector = YadinIcons.forStage(stage)
 
 /**
  * ۳. وضعیت یادگیری / فیلترهای تمرین (ReviewType)
@@ -111,13 +83,7 @@ fun getStageIcon(stage: Stage): ImageVector = when (stage) {
  * - یادگرفته: Verified (نشان ستاره‌دار تیک‌دار)
  * - روزانه / هفتگی / ماهانه: مطابق دوره‌های زمانی لایتنر
  */
-fun getReviewTypeIcon(type: ReviewType): ImageVector = when (type) {
-    ReviewType.DAILY -> getStageIcon(Stage.DAILY)
-    ReviewType.WEEKLY -> getStageIcon(Stage.WEEKLY)
-    ReviewType.MONTHLY -> getStageIcon(Stage.MONTHLY)
-    ReviewType.LEARNED -> getStageIcon(Stage.LEARNED)
-    ReviewType.RANDOM -> Icons.Default.Shuffle
-}
+fun getReviewTypeIcon(type: ReviewType): ImageVector = YadinIcons.forReviewType(type)
 
 fun getReviewTypeColor(type: ReviewType, colors: YadinColors): Color = when (type) {
     ReviewType.DAILY -> getStageColor(Stage.DAILY, colors)
@@ -141,12 +107,7 @@ fun getDifficultyColor(difficulty: VocabularyDifficulty, colors: YadinColors): C
     VocabularyDifficulty.VERY_HARD -> colors.difficultyVeryHard
 }
 
-fun getDifficultyIcon(difficulty: VocabularyDifficulty): ImageVector = when (difficulty) {
-    VocabularyDifficulty.EASY -> Icons.Default.CheckCircle
-    VocabularyDifficulty.MEDIUM -> Icons.Default.Tune
-    VocabularyDifficulty.HARD -> Icons.Default.LocalFireDepartment
-    VocabularyDifficulty.VERY_HARD -> Icons.Default.Bolt
-}
+fun getDifficultyIcon(difficulty: VocabularyDifficulty): ImageVector = YadinIcons.forDifficulty(difficulty)
 
 /**
  * ۵. سطح مهارت کاربر در آزمون (Proficiency / QuizLevel)
@@ -154,11 +115,7 @@ fun getDifficultyIcon(difficulty: VocabularyDifficulty): ImageVector = when (dif
  * - نرمال: Shield (سپر دفاعی ساده)
  * - حرفه‌ای: WorkspacePremium (نشان/تاج طلایی ویژه)
  */
-fun getQuizLevelIcon(level: QuizLevel): ImageVector = when (level) {
-    QuizLevel.BEGINNER -> Icons.Default.Eco
-    QuizLevel.NORMAL -> Icons.Default.Shield
-    QuizLevel.PROFESSIONAL -> Icons.Default.WorkspacePremium
-}
+fun getQuizLevelIcon(level: QuizLevel): ImageVector = YadinIcons.forQuizLevel(level)
 
 fun getQuizLevelColor(level: QuizLevel, colors: YadinColors): Color = when (level) {
     QuizLevel.BEGINNER -> colors.success
@@ -181,10 +138,10 @@ enum class VocabStatType {
 }
 
 fun getVocabStatIcon(type: VocabStatType): ImageVector = when (type) {
-    VocabStatType.TOTAL -> Icons.AutoMirrored.Filled.LibraryBooks
-    VocabStatType.PRACTICED -> Icons.Default.AssignmentTurnedIn
-    VocabStatType.UNPRACTICED -> Icons.Default.HourglassEmpty
-    VocabStatType.MASTERED -> getStageIcon(Stage.LEARNED)
+    VocabStatType.TOTAL -> YadinIcons.vocabTotal
+    VocabStatType.PRACTICED -> YadinIcons.vocabPracticed
+    VocabStatType.UNPRACTICED -> YadinIcons.vocabUnpracticed
+    VocabStatType.MASTERED -> YadinIcons.vocabLearned
 }
 
 fun getVocabStatColor(type: VocabStatType, colors: YadinColors): Color = when (type) {
@@ -499,7 +456,7 @@ fun StreakChip(streakDays: Int, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
-            imageVector = Icons.Default.LocalFireDepartment,
+            imageVector = YadinIcons.streakFire,
             contentDescription = stringResource(R.string.content_desc_streak),
             tint = colors.warning,
             modifier = Modifier.size(18.dp)
@@ -529,7 +486,7 @@ fun SpeakButton(
         modifier = modifier.size(36.dp)
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+            imageVector = YadinIcons.speakAudio,
             contentDescription = stringResource(R.string.content_desc_speak),
             tint = colors.primary,
             modifier = Modifier.size(20.dp)
@@ -568,7 +525,7 @@ fun YadinScreenHeader(
                     .border(1.dp, colors.outline.copy(alpha = 0.25f), CircleShape)
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = YadinIcons.back,
                     contentDescription = stringResource(R.string.action_back),
                     tint = colors.onSurface,
                     modifier = Modifier.size(20.dp)

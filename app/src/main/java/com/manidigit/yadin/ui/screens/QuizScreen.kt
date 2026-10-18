@@ -20,17 +20,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -140,7 +134,7 @@ fun QuizScreen(
                         .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = YadinIcons.close,
                         contentDescription = stringResource(R.string.quiz_exit_confirm_title),
                         tint = colors.onSurface
                     )
@@ -276,7 +270,7 @@ fun QuizScreen(
                                     .background(colors.surfaceVariant)
                             ) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                                    imageVector = YadinIcons.helpGuide,
                                     contentDescription = stringResource(R.string.quiz_help_tooltip),
                                     tint = colors.primary,
                                     modifier = Modifier.size(20.dp)
@@ -375,14 +369,14 @@ fun QuizScreen(
                             if (hasAnswered) {
                                 if (isCorrect) {
                                     Icon(
-                                        imageVector = Icons.Default.Check,
+                                        imageVector = YadinIcons.check,
                                         contentDescription = stringResource(R.string.quiz_correct_badge),
                                         tint = colors.success,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 } else if (isSelected) {
                                     Icon(
-                                        imageVector = Icons.Default.Close,
+                                        imageVector = YadinIcons.close,
                                         contentDescription = stringResource(R.string.quiz_wrong_badge),
                                         tint = colors.error,
                                         modifier = Modifier.size(20.dp)
@@ -426,7 +420,7 @@ fun QuizScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = YadinIcons.back,
                         contentDescription = stringResource(R.string.quiz_previous_question),
                         modifier = Modifier.size(16.dp)
                     )
@@ -470,7 +464,7 @@ fun QuizScreen(
                     if (hasAnswered) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            imageVector = YadinIcons.forward,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -498,7 +492,7 @@ fun QuizScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Lightbulb,
+                        imageVector = YadinIcons.hintLightbulb,
                         contentDescription = null,
                         tint = colors.warning
                     )

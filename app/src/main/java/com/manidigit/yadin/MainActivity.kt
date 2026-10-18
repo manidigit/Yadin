@@ -12,12 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -54,6 +48,7 @@ import com.manidigit.yadin.ui.screens.SplashScreen
 import com.manidigit.yadin.ui.screens.WordDetailScreen
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.theme.YadinTheme
 import com.manidigit.yadin.ui.viewmodel.MainViewModel
 import com.manidigit.yadin.ui.viewmodel.Screen
@@ -176,11 +171,11 @@ fun YadinBottomBar(
     val dimensions = LocalYadinDimensions.current
 
     val items = listOf(
-        Triple(Screen.Home, androidx.compose.ui.res.stringResource(R.string.nav_home), Icons.Default.Home),
-        Triple(Screen.ReviewSetup(), androidx.compose.ui.res.stringResource(R.string.nav_review), Icons.Default.History),
-        Triple(Screen.Library, androidx.compose.ui.res.stringResource(R.string.nav_library), Icons.AutoMirrored.Filled.MenuBook),
-        Triple(Screen.ProgressStats, androidx.compose.ui.res.stringResource(R.string.nav_progress), Icons.Default.BarChart),
-        Triple(Screen.Settings, androidx.compose.ui.res.stringResource(R.string.nav_settings), Icons.Default.Settings)
+        Triple(Screen.Home, androidx.compose.ui.res.stringResource(R.string.nav_home), YadinIcons.navHome),
+        Triple(Screen.ReviewSetup(), androidx.compose.ui.res.stringResource(R.string.nav_review), YadinIcons.navReview),
+        Triple(Screen.Library, androidx.compose.ui.res.stringResource(R.string.nav_library), YadinIcons.navLibrary),
+        Triple(Screen.ProgressStats, androidx.compose.ui.res.stringResource(R.string.nav_progress), YadinIcons.navProgress),
+        Triple(Screen.Settings, androidx.compose.ui.res.stringResource(R.string.nav_settings), YadinIcons.navSettings)
     )
 
     NavigationBar(

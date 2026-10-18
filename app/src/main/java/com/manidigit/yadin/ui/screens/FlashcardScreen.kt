@@ -23,16 +23,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Flip
 import androidx.activity.compose.BackHandler
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -108,7 +104,7 @@ fun FlashcardScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        imageVector = YadinIcons.categoryBook,
                         contentDescription = null,
                         tint = colors.primary,
                         modifier = Modifier.size(34.dp)
@@ -197,7 +193,7 @@ fun FlashcardScreen(
                         .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = YadinIcons.close,
                         contentDescription = stringResource(R.string.flashcard_exit_confirm_title),
                         tint = colors.onSurface
                     )
@@ -304,7 +300,7 @@ fun FlashcardScreen(
                         contentColor = colors.error
                     )
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(YadinIcons.close, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(stringResource(R.string.flashcard_forgot), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
@@ -317,7 +313,7 @@ fun FlashcardScreen(
                         .background(colors.surfaceVariant)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Flip,
+                        imageVector = YadinIcons.flipCard,
                         contentDescription = stringResource(R.string.flashcard_flip_back),
                         tint = colors.onSurface,
                         modifier = Modifier.size(20.dp)
@@ -335,7 +331,7 @@ fun FlashcardScreen(
                         contentColor = colors.onSuccess
                     )
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(stringResource(R.string.flashcard_remembered), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
@@ -353,7 +349,7 @@ fun FlashcardScreen(
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Default.Flip,
+                    imageVector = YadinIcons.flipCard,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
@@ -471,7 +467,7 @@ private fun FlashcardFrontFace(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Flip,
+                imageVector = YadinIcons.flipCard,
                 contentDescription = null,
                 tint = colors.onSurfaceVariant,
                 modifier = Modifier.size(16.dp)

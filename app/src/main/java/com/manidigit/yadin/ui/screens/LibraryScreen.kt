@@ -21,24 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.RateReview
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.graphics.Color
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.mutableStateListOf
@@ -165,7 +149,7 @@ fun LibraryScreen(
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.AutoAwesome,
+                                imageVector = YadinIcons.smartAudit,
                                 contentDescription = stringResource(R.string.library_audit_btn),
                                 modifier = Modifier.size(18.dp)
                             )
@@ -189,12 +173,12 @@ fun LibraryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
                 leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = colors.onSurfaceVariant)
+                    Icon(YadinIcons.search, contentDescription = null, tint = colors.onSurfaceVariant)
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { onSearchChange("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.action_clear), tint = colors.onSurfaceVariant)
+                            Icon(YadinIcons.clear, contentDescription = stringResource(R.string.action_clear), tint = colors.onSurfaceVariant)
                         }
                     }
                 },
@@ -230,13 +214,13 @@ fun LibraryScreen(
                     LibraryFilterDropdown(
                         label = stringResource(R.string.filter_status),
                         selectedOption = if (showOnlyInactive) statusTrashLabel else statusActiveLabel,
-                        icon = if (showOnlyInactive) Icons.Default.Delete else Icons.Default.CheckCircle,
+                        icon = if (showOnlyInactive) YadinIcons.delete else YadinIcons.statusSuccess,
                         isFilterActive = showOnlyInactive,
                         activeAccentColor = colors.error,
                         onClearFilter = if (showOnlyInactive) ({ onInactiveFilterToggle(false) }) else null,
                         options = listOf(
-                            LibraryFilterOption(statusActiveLabel, Icons.Default.CheckCircle, colors.primary) { onInactiveFilterToggle(false) },
-                            LibraryFilterOption(statusTrashLabel, Icons.Default.Delete, colors.error) { onInactiveFilterToggle(true) }
+                            LibraryFilterOption(statusActiveLabel, YadinIcons.statusSuccess, colors.primary) { onInactiveFilterToggle(false) },
+                            LibraryFilterOption(statusTrashLabel, YadinIcons.delete, colors.error) { onInactiveFilterToggle(true) }
                         ),
                         modifier = Modifier.weight(1f)
                     )
@@ -413,7 +397,7 @@ fun LibraryScreen(
             contentColor = colors.onPrimary,
             shape = CircleShape
         ) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.library_add_word))
+            Icon(YadinIcons.add, contentDescription = stringResource(R.string.library_add_word))
         }
 
         // Dialog for adding single or batch
@@ -612,7 +596,7 @@ fun AddWordChoiceDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = YadinIcons.add,
                     contentDescription = null,
                     tint = colors.primary
                 )
@@ -656,7 +640,7 @@ fun AddWordChoiceDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Edit,
+                                imageVector = YadinIcons.edit,
                                 contentDescription = null,
                                 tint = colors.primary,
                                 modifier = Modifier.size(20.dp)
@@ -701,7 +685,7 @@ fun AddWordChoiceDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.FileUpload,
+                                imageVector = YadinIcons.batchImport,
                                 contentDescription = null,
                                 tint = colors.success,
                                 modifier = Modifier.size(20.dp)
@@ -780,7 +764,7 @@ fun LibraryAuditDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.AutoAwesome,
+                    imageVector = YadinIcons.smartAudit,
                     contentDescription = null,
                     tint = colors.primary
                 )
@@ -892,7 +876,7 @@ fun LibraryAuditDialog(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(Icons.Default.Warning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(18.dp))
+                                    Icon(YadinIcons.statusWarning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(18.dp))
                                     Text(
                                         text = stringResource(R.string.audit_needs_review_count),
                                         fontWeight = FontWeight.Bold,
@@ -917,7 +901,7 @@ fun LibraryAuditDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = colors.warning, contentColor = colors.surface)
                                 ) {
-                                    Icon(Icons.Default.RateReview, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(YadinIcons.manualReview, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = stringResource(R.string.audit_btn_review_items, reviewItemsState.size.formatDigits()),
@@ -939,7 +923,7 @@ fun LibraryAuditDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success)
+                            Icon(YadinIcons.statusSuccess, contentDescription = null, tint = colors.success)
                             Text(
                                 text = stringResource(R.string.audit_applied_success),
                                 style = MaterialTheme.typography.bodySmall,
@@ -957,7 +941,7 @@ fun LibraryAuditDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success)
+                            Icon(YadinIcons.statusSuccess, contentDescription = null, tint = colors.success)
                             Text(
                                 text = stringResource(R.string.audit_no_issues),
                                 style = MaterialTheme.typography.bodySmall,
@@ -1096,7 +1080,7 @@ fun AuditManualReviewDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.RateReview,
+                    imageVector = YadinIcons.manualReview,
                     contentDescription = null,
                     tint = colors.primary
                 )
@@ -1175,7 +1159,7 @@ private fun AuditReviewItemCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = YadinIcons.statusWarning,
                         contentDescription = null,
                         tint = if (item.confidence < 0.8) colors.error else colors.warning,
                         modifier = Modifier.size(16.dp)
@@ -1268,7 +1252,7 @@ private fun AuditReviewItemCard(
                         }
                     }
                 ) {
-                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Icon(YadinIcons.noteText, contentDescription = null, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(stringResource(R.string.audit_btn_move_to_note), fontSize = 11.sp)
                 }
@@ -1371,7 +1355,7 @@ private fun LibraryFilterDropdown(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Clear,
+                            imageVector = YadinIcons.clear,
                             contentDescription = stringResource(R.string.action_clear),
                             tint = activeAccentColor,
                             modifier = Modifier.size(14.dp)
@@ -1379,7 +1363,7 @@ private fun LibraryFilterDropdown(
                     }
                 }
                 Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
+                    imageVector = YadinIcons.dropdown,
                     contentDescription = null,
                     tint = accentColor,
                     modifier = Modifier.size(18.dp)
@@ -1421,7 +1405,7 @@ private fun LibraryFilterDropdown(
                             if (isSelected) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
-                                    imageVector = Icons.Default.Check,
+                                    imageVector = YadinIcons.check,
                                     contentDescription = null,
                                     tint = option.tint,
                                     modifier = Modifier.size(16.dp)

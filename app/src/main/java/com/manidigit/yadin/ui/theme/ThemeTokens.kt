@@ -98,6 +98,7 @@ val LocalYadinColors = staticCompositionLocalOf { GeminiTheme.DarkColors }
 val LocalYadinDimensions = staticCompositionLocalOf { GeminiTheme.Dimensions }
 val LocalYadinShapes = staticCompositionLocalOf { GeminiTheme.Shapes }
 val LocalYadinIconSizes = staticCompositionLocalOf { GeminiTheme.IconSizes }
+val LocalYadinIcons = staticCompositionLocalOf { YadinIcons }
 
 /**
  * دسترسی مستقیم، تایپ‌شده و سراسری به توکن‌های تم جاری:
@@ -105,6 +106,7 @@ val LocalYadinIconSizes = staticCompositionLocalOf { GeminiTheme.IconSizes }
  * - `YadinTheme.dimensions`
  * - `YadinTheme.shapes`
  * - `YadinTheme.iconSizes`
+ * - `YadinTheme.icons`
  * - `YadinTheme.typography`
  */
 object YadinTheme {
@@ -127,6 +129,11 @@ object YadinTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalYadinIconSizes.current
+
+    val icons: YadinIcons
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalYadinIcons.current
 
     val typography: Typography
         @Composable

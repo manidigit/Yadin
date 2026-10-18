@@ -11,25 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Flight
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,25 +40,9 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.ui.theme.LocalYadinColors
+import com.manidigit.yadin.ui.theme.YadinIcons
 
-fun getCategoryIcon(categoryName: String?): ImageVector {
-    if (categoryName == null) return Icons.Default.Category
-    val lower = categoryName.lowercase()
-    return when {
-        lower.contains("سفر") || lower.contains("گردش") || lower.contains("flight") || lower.contains("travel") -> Icons.Default.Flight
-        lower.contains("غذا") || lower.contains("خوراک") || lower.contains("نوشیدنی") || lower.contains("food") -> Icons.Default.Restaurant
-        lower.contains("مکالمه") || lower.contains("احوال") || lower.contains("گفتگو") || lower.contains("chat") -> Icons.AutoMirrored.Filled.Chat
-        lower.contains("اصطلاح") || lower.contains("ضرب") || lower.contains("idiom") -> Icons.Default.Lightbulb
-        lower.contains("گرامر") || lower.contains("قواعد") || lower.contains("دستور") || lower.contains("grammar") -> Icons.Default.Description
-        lower.contains("فعل") || lower.contains("افعال") || lower.contains("verb") -> Icons.Default.Bolt
-        lower.contains("کار") || lower.contains("شغل") || lower.contains("کسب") || lower.contains("business") -> Icons.Default.Work
-        lower.contains("طبیعت") || lower.contains("آب") || lower.contains("محیط") || lower.contains("nature") -> Icons.Default.Eco
-        lower.contains("خانه") || lower.contains("منزل") || lower.contains("خانواده") || lower.contains("home") -> Icons.Default.Home
-        lower.contains("خرید") || lower.contains("پوشاک") || lower.contains("لباس") || lower.contains("shop") -> Icons.Default.ShoppingBag
-        lower.contains("هنر") || lower.contains("فرهنگ") || lower.contains("art") -> Icons.Default.Palette
-        else -> Icons.Default.Category
-    }
-}
+fun getCategoryIcon(categoryName: String?): ImageVector = YadinIcons.forCategoryName(categoryName)
 
 @Composable
 fun ExposedCategoryDropdown(
@@ -290,7 +255,7 @@ fun ExposedCategoryDropdown(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Clear,
+                            imageVector = YadinIcons.clear,
                             contentDescription = stringResource(R.string.category_clear_selection),
                             tint = colors.primary,
                             modifier = Modifier.size(14.dp)
@@ -298,7 +263,7 @@ fun ExposedCategoryDropdown(
                     }
                 }
                 Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
+                    imageVector = YadinIcons.dropdown,
                     contentDescription = null,
                     tint = accentColor,
                     modifier = Modifier.size(18.dp)
@@ -318,7 +283,7 @@ fun ExposedCategoryDropdown(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Category,
+                            imageVector = YadinIcons.categoryDefault,
                             contentDescription = null,
                             tint = colors.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
@@ -377,7 +342,7 @@ fun ExposedCategoryDropdown(
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Edit,
+                                            imageVector = YadinIcons.edit,
                                             contentDescription = stringResource(R.string.category_btn_edit),
                                             tint = colors.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
@@ -393,7 +358,7 @@ fun ExposedCategoryDropdown(
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Delete,
+                                            imageVector = YadinIcons.delete,
                                             contentDescription = stringResource(R.string.category_btn_delete),
                                             tint = colors.error,
                                             modifier = Modifier.size(16.dp)
@@ -402,7 +367,7 @@ fun ExposedCategoryDropdown(
                                 }
                                 if (isSelected) {
                                     Icon(
-                                        imageVector = Icons.Default.Check,
+                                        imageVector = YadinIcons.check,
                                         contentDescription = null,
                                         tint = colors.primary,
                                         modifier = Modifier.size(18.dp)
@@ -427,7 +392,7 @@ fun ExposedCategoryDropdown(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Add,
+                                imageVector = YadinIcons.add,
                                 contentDescription = null,
                                 tint = colors.primary,
                                 modifier = Modifier.size(18.dp)

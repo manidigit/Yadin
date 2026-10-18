@@ -15,16 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,6 +45,7 @@ import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.components.getDifficultyIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.formatDigits
 
 /**
@@ -111,7 +102,7 @@ fun SettingsScreen(
             ) {
                 YadinSectionHeader(
                     title = stringResource(R.string.settings_appearance_section),
-                    icon = Icons.Default.Palette,
+                    icon = YadinIcons.themePalette,
                     iconTint = colors.primary
                 )
 
@@ -156,7 +147,7 @@ fun SettingsScreen(
                             .background(colors.surfaceVariant)
                     ) {
                         Icon(
-                            imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            imageVector = if (isDark) YadinIcons.lightMode else YadinIcons.darkMode,
                             contentDescription = stringResource(R.string.settings_toggle_dark_mode),
                             tint = if (isDark) colors.warning else colors.primary,
                             modifier = Modifier.size(22.dp)
@@ -218,7 +209,7 @@ fun SettingsScreen(
             ) {
                 YadinSectionHeader(
                     title = stringResource(R.string.settings_language_direction_title),
-                    icon = Icons.Default.Translate,
+                    icon = YadinIcons.languageDirection,
                     iconTint = colors.primary
                 )
 
@@ -258,7 +249,7 @@ fun SettingsScreen(
             ) {
                 YadinSectionHeader(
                     title = stringResource(R.string.settings_ui_lang_title),
-                    icon = Icons.Default.Language,
+                    icon = YadinIcons.uiLanguage,
                     iconTint = colors.accentPurple
                 )
                 Row(
@@ -299,7 +290,7 @@ fun SettingsScreen(
                 YadinSectionHeader(
                     title = stringResource(R.string.settings_purge_title),
                     subtitle = stringResource(R.string.settings_purge_desc),
-                    icon = Icons.Default.DeleteForever,
+                    icon = YadinIcons.purgeTrash,
                     iconTint = colors.error,
                     modifier = Modifier.weight(1f),
                     trailingContent = {
@@ -374,7 +365,7 @@ fun SettingsScreen(
             YadinSectionHeader(
                 title = stringResource(R.string.settings_backup_title),
                 subtitle = stringResource(R.string.settings_backup_desc),
-                icon = Icons.Default.CloudDownload,
+                icon = YadinIcons.backupRestore,
                 iconTint = colors.info,
                 modifier = Modifier.padding(14.dp)
             )
@@ -389,7 +380,7 @@ fun SettingsScreen(
             YadinSectionHeader(
                 title = stringResource(R.string.settings_about_title),
                 subtitle = stringResource(R.string.settings_about_desc),
-                icon = Icons.Default.Info,
+                icon = YadinIcons.aboutInfo,
                 iconTint = colors.primary,
                 modifier = Modifier.padding(14.dp)
             )
@@ -404,7 +395,7 @@ fun SettingsScreen(
             YadinSectionHeader(
                 title = stringResource(R.string.settings_help_title),
                 subtitle = stringResource(R.string.settings_help_desc),
-                icon = Icons.AutoMirrored.Filled.HelpOutline,
+                icon = YadinIcons.helpGuide,
                 iconTint = colors.accentPurple,
                 modifier = Modifier.padding(14.dp)
             )

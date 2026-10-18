@@ -19,14 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -50,8 +42,10 @@ import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSectionHeader
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
@@ -143,11 +137,10 @@ fun AboutScreen(onBack: () -> Unit) {
                     modifier = Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.about_tech_specs_title),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
+                    YadinSectionHeader(
+                        title = stringResource(R.string.about_tech_specs_title),
+                        icon = YadinIcons.aboutInfo,
+                        iconTint = colors.primary
                     )
 
                     TechRow(stringResource(R.string.about_developer_label), stringResource(R.string.about_developer_name))
@@ -190,7 +183,7 @@ fun AboutScreen(onBack: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Code,
+                            imageVector = YadinIcons.developerCode,
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(20.dp)
@@ -223,7 +216,7 @@ fun AboutScreen(onBack: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Chat,
+                            imageVector = YadinIcons.contactSupport,
                             contentDescription = null,
                             tint = colors.success,
                             modifier = Modifier.size(20.dp)
@@ -240,7 +233,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
             // Scientific Principles
             AboutFeatureCard(
-                icon = Icons.Default.Psychology,
+                icon = YadinIcons.retentionBrain,
                 title = stringResource(R.string.about_feature1_title),
                 description = stringResource(R.string.about_feature1_desc),
                 color = colors.info
@@ -248,7 +241,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
             // Difficulty & State Engine
             AboutFeatureCard(
-                icon = Icons.Default.School,
+                icon = YadinIcons.leitnerBox,
                 title = stringResource(R.string.about_feature2_title),
                 description = stringResource(R.string.about_feature2_desc),
                 color = colors.warning
@@ -256,7 +249,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
             // Database & Offline First
             AboutFeatureCard(
-                icon = Icons.Default.Storage,
+                icon = YadinIcons.databaseStorage,
                 title = stringResource(R.string.about_feature3_title),
                 description = stringResource(R.string.about_feature3_desc),
                 color = colors.success
@@ -276,7 +269,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     color = colors.onSurfaceVariant
                 )
                 Icon(
-                    imageVector = Icons.Default.AutoAwesome,
+                    imageVector = YadinIcons.brandSparkle,
                     contentDescription = null,
                     tint = colors.primary,
                     modifier = Modifier.size(14.dp)

@@ -13,15 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -80,7 +75,7 @@ fun SessionSummaryScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.EmojiEvents,
+                    imageVector = YadinIcons.achievementTrophy,
                     contentDescription = stringResource(R.string.summary_celebration_icon),
                     tint = colors.onHero,
                     modifier = Modifier.size(46.dp)
@@ -143,14 +138,14 @@ fun SessionSummaryScreen(
                     YadinStatTile(
                         title = stringResource(R.string.summary_correct_count_label),
                         value = correctCount.formatDigits(),
-                        icon = Icons.Default.CheckCircle,
+                        icon = YadinIcons.statusSuccess,
                         accentColor = colors.success,
                         modifier = Modifier.weight(1f)
                     )
                     YadinStatTile(
                         title = stringResource(R.string.summary_wrong_count_label),
                         value = wrongCount.formatDigits(),
-                        icon = Icons.Default.Cancel,
+                        icon = YadinIcons.statusError,
                         accentColor = colors.error,
                         modifier = Modifier.weight(1f)
                     )
@@ -173,7 +168,7 @@ fun SessionSummaryScreen(
                     contentColor = colors.onPrimary
                 )
             ) {
-                Icon(Icons.Default.Home, contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(YadinIcons.navHome, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(stringResource(R.string.summary_back_home), fontWeight = FontWeight.Bold)
             }
@@ -185,7 +180,7 @@ fun SessionSummaryScreen(
                     .height(52.dp),
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(YadinIcons.refresh, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(stringResource(R.string.summary_review_again), fontWeight = FontWeight.Bold)
             }

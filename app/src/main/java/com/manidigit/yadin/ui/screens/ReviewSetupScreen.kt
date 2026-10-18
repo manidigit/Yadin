@@ -17,13 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -404,7 +401,7 @@ fun ReviewSetupScreen(
                         // Session Card Limit selector
                         YadinSectionHeader(
                             title = stringResource(R.string.review_setup_count),
-                            icon = Icons.Default.FormatListNumbered,
+                            icon = YadinIcons.sessionCardCount,
                             iconTint = colors.primary
                         )
                         Row(
@@ -461,7 +458,7 @@ fun ReviewSetupScreen(
             )
         ) {
             Icon(
-                imageVector = if (isReady) Icons.Default.PlayArrow else Icons.Default.FilterList,
+                imageVector = if (isReady) YadinIcons.play else YadinIcons.filter,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp)
             )

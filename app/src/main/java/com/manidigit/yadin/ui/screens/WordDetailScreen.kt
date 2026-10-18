@@ -16,14 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.components.YadinSectionHeader
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -144,7 +142,7 @@ fun WordDetailScreen(
                             .border(1.dp, colors.error.copy(alpha = 0.3f), CircleShape)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Delete,
+                            imageVector = YadinIcons.delete,
                             contentDescription = stringResource(R.string.action_delete),
                             tint = colors.error,
                             modifier = Modifier.size(20.dp)
@@ -256,11 +254,10 @@ fun WordDetailScreen(
                     modifier = Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.word_target_translations_header),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
+                    YadinSectionHeader(
+                        title = stringResource(R.string.word_target_translations_header),
+                        icon = YadinIcons.languageDirection,
+                        iconTint = colors.primary
                     )
                     word.targetContents.forEach { content ->
                         Row(
@@ -318,11 +315,10 @@ fun WordDetailScreen(
                     modifier = Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.word_learning_normal_header),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
+                    YadinSectionHeader(
+                        title = stringResource(R.string.word_learning_normal_header),
+                        icon = YadinIcons.leitnerBox,
+                        iconTint = colors.primary
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -389,11 +385,10 @@ fun WordDetailScreen(
                     modifier = Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.word_learning_reverse_header),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.accentPurple
+                    YadinSectionHeader(
+                        title = stringResource(R.string.word_learning_reverse_header),
+                        icon = YadinIcons.leitnerBox,
+                        iconTint = colors.accentPurple
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -464,7 +459,7 @@ fun WordDetailScreen(
                 contentColor = colors.onPrimary
             )
         ) {
-            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp))
+            Icon(YadinIcons.edit, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.word_btn_edit), fontWeight = FontWeight.Bold)
         }

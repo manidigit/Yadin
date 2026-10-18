@@ -22,7 +22,8 @@ fun YadinTheme(
         LocalYadinColors provides colors,
         LocalYadinDimensions provides dimensions,
         LocalYadinShapes provides shapes,
-        LocalYadinIconSizes provides iconSizes
+        LocalYadinIconSizes provides iconSizes,
+        LocalYadinIcons provides YadinIcons
     ) {
         MaterialTheme(
             colorScheme = materialColors,

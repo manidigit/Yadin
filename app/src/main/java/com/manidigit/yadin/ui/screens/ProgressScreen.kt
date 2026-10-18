@@ -16,18 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -179,7 +171,7 @@ fun ProgressScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.LocalFireDepartment,
+                        imageVector = YadinIcons.streakFire,
                         contentDescription = null,
                         tint = colors.warning,
                         modifier = Modifier.size(24.dp)
@@ -521,7 +513,7 @@ fun ProgressScreen(
                             unlockedCount.formatDigits(),
                             totalAchievements.formatDigits()
                         ),
-                        icon = Icons.Default.EmojiEvents,
+                        icon = YadinIcons.achievementTrophy,
                         iconTint = colors.warning,
                         trailingContent = {
                             Text(
@@ -575,7 +567,7 @@ fun ProgressScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        imageVector = YadinIcons.refresh,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
@@ -742,7 +734,7 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (group.isMaxLevel) Icons.Default.CheckCircle else Icons.Default.EmojiEvents,
+                        imageVector = if (group.isMaxLevel) YadinIcons.statusSuccess else YadinIcons.achievementTrophy,
                         contentDescription = null,
                         tint = tierColor,
                         modifier = Modifier.size(26.dp)
@@ -785,7 +777,7 @@ private fun TieredAchievementCard(group: TieredGroupState) {
 
                 if (group.isMaxLevel) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
+                        imageVector = YadinIcons.statusSuccess,
                         contentDescription = stringResource(R.string.ach_completed),
                         tint = colors.success,
                         modifier = Modifier.size(22.dp)
