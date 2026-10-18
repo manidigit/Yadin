@@ -66,6 +66,20 @@ enum class BackupExportFormat {
 }
 
 /**
+ * تشخیص هوشمند نوع خروجی اکسل (CSV) بر اساس تیک‌های انتخاب‌شده توسط کاربر در BackupOptions.
+ */
+fun BackupOptions.resolveExcelExportFormat(): BackupExportFormat {
+    val hasVocab = includeVocabulary
+    val hasProgress = includeStreakAndProgress || includeProcessHistory
+    val hasSettings = includeSettings
+    return when {
+        hasVocab && !hasProgress && !hasSettings -> BackupExportFormat.EXCEL_CSV_VOCABULARY
+        !hasVocab && hasProgress && !hasSettings -> BackupExportFormat.EXCEL_CSV_PROGRESS
+        else -> BackupExportFormat.EXCEL_CSV_COMPLETE
+    }
+}
+
+/**
  * ساختار نگاشت شناسه‌ها (RestoreContext) برای اتصال یکپارچه واژگان و پیشرفت.
  *
  * طبق الگوریتم ۶.۱۴ سند مشخصات یادین، در حالت ادغام (MERGE):

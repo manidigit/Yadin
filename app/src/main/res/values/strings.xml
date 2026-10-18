@@ -566,9 +566,11 @@ libro: کتاب</string>
     <string name="backup_process_sub">ریز سوابق آزمون‌ها، فلش‌کارت‌ها، دقت و زمان جلسات</string>
     <string name="backup_settings_title">تنظیمات و دستاوردها (Settings &amp; Achievements)</string>
     <string name="backup_settings_sub">پیکربندی‌ها، تم رنگی، تنظیمات صوت و نشان‌های کسب‌شده</string>
-    <string name="backup_format_title">انتخاب فرمت خروجی</string>
-    <string name="backup_fmt_json_title">فایل پشتیبان یادین (.json)</string>
-    <string name="backup_fmt_json_sub">قالب استاندارد JSON برای بازیابی کامل و اتمیک با تنظیمات انتخابی</string>
+    <string name="backup_format_title">انتخاب مدل خروجی</string>
+    <string name="backup_fmt_json_title">فایل پشتیبان (JSON)</string>
+    <string name="backup_fmt_json_sub">قالب استاندارد JSON برای بازیابی کامل در یادین بر اساس موارد انتخاب‌شده در بالا</string>
+    <string name="backup_fmt_excel_title">فایل اکسل (CSV)</string>
+    <string name="backup_fmt_excel_sub">جدول استاندارد اکسل (با پشتیبانی کامل فارسی UTF-8) دقیقاً بر اساس موارد انتخاب‌شده در بالا</string>
     <string name="backup_fmt_csv_vocab_title">خروجی اکسل کلمات و دسته‌بندی‌ها (.csv)</string>
     <string name="backup_fmt_csv_vocab_sub">جدول اکسل با UTF-8 BOM شامل کلمات، معانی فارسی، دسته‌ها و سختی</string>
     <string name="backup_fmt_csv_streak_title">خروجی اکسل گزارش پیشرفت و رگبار (.csv)</string>

@@ -566,9 +566,11 @@ libro: book</string>
     <string name="backup_process_sub">Detailed quiz logs, flashcard reviews, accuracy, and times</string>
     <string name="backup_settings_title">Settings &amp; Achievements</string>
     <string name="backup_settings_sub">Configurations, color theme, audio settings, and earned badges</string>
-    <string name="backup_format_title">Select Export Format</string>
-    <string name="backup_fmt_json_title">Yadin Backup File (.json)</string>
-    <string name="backup_fmt_json_sub">Standard JSON format for full and atomic restore with chosen settings</string>
+    <string name="backup_format_title">Select Output Format</string>
+    <string name="backup_fmt_json_title">Backup File (JSON)</string>
+    <string name="backup_fmt_json_sub">Standard JSON format for full restore in Yadin based on the items selected above</string>
+    <string name="backup_fmt_excel_title">Excel File (CSV)</string>
+    <string name="backup_fmt_excel_sub">UTF-8 Excel spreadsheet containing the exact items selected above</string>
     <string name="backup_fmt_csv_vocab_title">Vocabulary &amp; Categories Excel (.csv)</string>
     <string name="backup_fmt_csv_vocab_sub">Excel CSV table with UTF-8 BOM containing words, meanings, categories, difficulty</string>
     <string name="backup_fmt_csv_streak_title">Progress &amp; Streak Excel Report (.csv)</string>

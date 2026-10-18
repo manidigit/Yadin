@@ -84,6 +84,7 @@ import com.manidigit.yadin.R
 import com.manidigit.yadin.data.repository.BackupExportFormat
 import com.manidigit.yadin.data.repository.BackupOptions
 import com.manidigit.yadin.data.repository.BackupType
+import com.manidigit.yadin.data.repository.resolveExcelExportFormat
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
 import com.manidigit.yadin.ui.components.YadinSelectableChip
@@ -123,7 +124,8 @@ fun BackupScreen(
     val dimensions = LocalYadinDimensions.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedFormat by remember { mutableStateOf(BackupExportFormat.JSON) }
+    var isExcelSelected by remember { mutableStateOf(false) }
+    val selectedFormat = if (isExcelSelected) backupOptions.resolveExcelExportFormat() else BackupExportFormat.JSON
     var activeTab by remember { mutableStateOf(0) } // 0 = Export, 1 = Restore
 
     // Restore state
@@ -509,7 +511,7 @@ fun BackupScreen(
                     }
                 }
 
-                // 3. Export Format Choice
+                // 3. Export Format Choice (2 side-by-side buttons: JSON or Excel CSV based on selected options above)
                 YadinCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier
@@ -535,36 +537,46 @@ fun BackupScreen(
                             )
                         }
 
-                        FormatChoiceCard(
-                            title = stringResource(R.string.backup_fmt_json_title),
-                            subtitle = stringResource(R.string.backup_fmt_json_sub),
-                            icon = Icons.Default.Description,
-                            isSelected = selectedFormat == BackupExportFormat.JSON,
-                            onClick = { selectedFormat = BackupExportFormat.JSON }
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            YadinSelectableChip(
+                                text = stringResource(R.string.backup_fmt_json_title),
+                                subtitle = ".json",
+                                icon = Icons.Default.Description,
+                                isSelected = !isExcelSelected,
+                                accentColor = colors.primary,
+                                preserveAccentWhenUnselected = true,
+                                verticalLayout = true,
+                                minHeight = 64.dp,
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f),
+                                onClick = { isExcelSelected = false }
+                            )
 
-                        FormatChoiceCard(
-                            title = stringResource(R.string.backup_fmt_csv_vocab_title),
-                            subtitle = stringResource(R.string.backup_fmt_csv_vocab_sub),
-                            icon = Icons.Default.TableChart,
-                            isSelected = selectedFormat == BackupExportFormat.EXCEL_CSV_VOCABULARY,
-                            onClick = { selectedFormat = BackupExportFormat.EXCEL_CSV_VOCABULARY }
-                        )
+                            YadinSelectableChip(
+                                text = stringResource(R.string.backup_fmt_excel_title),
+                                subtitle = ".csv",
+                                icon = Icons.Default.TableChart,
+                                isSelected = isExcelSelected,
+                                accentColor = colors.secondary,
+                                preserveAccentWhenUnselected = true,
+                                verticalLayout = true,
+                                minHeight = 64.dp,
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f),
+                                onClick = { isExcelSelected = true }
+                            )
+                        }
 
-                        FormatChoiceCard(
-                            title = stringResource(R.string.backup_fmt_csv_streak_title),
-                            subtitle = stringResource(R.string.backup_fmt_csv_streak_sub),
-                            icon = Icons.Default.BarChart,
-                            isSelected = selectedFormat == BackupExportFormat.EXCEL_CSV_PROGRESS,
-                            onClick = { selectedFormat = BackupExportFormat.EXCEL_CSV_PROGRESS }
-                        )
-
-                        FormatChoiceCard(
-                            title = stringResource(R.string.backup_fmt_csv_master_title),
-                            subtitle = stringResource(R.string.backup_fmt_csv_master_sub),
-                            icon = Icons.Default.Storage,
-                            isSelected = selectedFormat == BackupExportFormat.EXCEL_CSV_COMPLETE,
-                            onClick = { selectedFormat = BackupExportFormat.EXCEL_CSV_COMPLETE }
+                        Text(
+                            text = stringResource(
+                                if (!isExcelSelected) R.string.backup_fmt_json_sub else R.string.backup_fmt_excel_sub
+                            ),
+                            fontSize = 11.sp,
+                            color = colors.onSurfaceVariant,
+                            lineHeight = 16.sp
                         )
                     }
                 }
@@ -1014,68 +1026,6 @@ private fun StatBox(
                 color = colors.onSurfaceVariant
             )
         }
-    }
-}
-
-@Composable
-private fun FormatChoiceCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-
-    val borderColor = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.4f)
-    val bgColor = if (isSelected) colors.primary.copy(alpha = 0.08f) else colors.surfaceVariant
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(bgColor)
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(if (isSelected) colors.primary else colors.background),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isSelected) colors.primary else colors.onSurface
-            )
-            Text(
-                text = subtitle,
-                fontSize = 11.sp,
-                color = colors.onSurfaceVariant,
-                lineHeight = 15.sp
-            )
-        }
-
-        RadioButton(
-            selected = isSelected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(selectedColor = colors.primary)
-        )
     }
 }
 
