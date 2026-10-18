@@ -257,23 +257,29 @@ fun SettingsScreen(
                     listOf(1, 2, 3, 4, 5).forEach { thresholdValue ->
                         val isSelected = (difficultyThreshold == thresholdValue)
                         val label = thresholdValue.formatDigits()
+                        val shape = RoundedCornerShape(10.dp)
 
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(shape)
                                 .background(
-                                    if (isSelected) colors.primary else colors.surfaceVariant
+                                    if (isSelected) colors.primary.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f)
+                                )
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.25f),
+                                    shape = shape
                                 )
                                 .clickable { onSetDifficultyThreshold(thresholdValue) }
-                                .padding(vertical = 10.dp, horizontal = 2.dp),
+                                .padding(vertical = 9.dp, horizontal = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) colors.onPrimary else colors.onSurface,
+                                color = if (isSelected) colors.primary else colors.onSurface,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                                 fontSize = 13.sp
                             )
@@ -574,13 +580,13 @@ fun SettingsScreen(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(colors.info.copy(alpha = 0.15f)),
+                        .background(colors.accentPurple.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.HelpOutline,
                         contentDescription = null,
-                        tint = colors.info,
+                        tint = colors.accentPurple,
                         modifier = Modifier.size(20.dp)
                     )
                 }

@@ -105,14 +105,14 @@ fun UpcomingForecastCard(
                 ForecastColumn(
                     title = stringResource(R.string.forecast_next_3_days),
                     count = next3DaysCount,
-                    accentColor = colors.info,
+                    accentColor = colors.accentPurple,
                     modifier = Modifier.weight(1f)
                 )
 
                 ForecastColumn(
                     title = stringResource(R.string.forecast_next_7_days),
                     count = next7DaysCount,
-                    accentColor = colors.secondary,
+                    accentColor = colors.warning,
                     modifier = Modifier.weight(1f)
                 )
             }

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Visibility
@@ -34,18 +35,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.manidigit.yadin.domain.model.ReviewMode
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.StatisticsSummary
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.ui.components.DifficultyCounterRow
 import com.manidigit.yadin.ui.components.StreakChip
 import com.manidigit.yadin.ui.components.YadinCard
-import com.manidigit.yadin.R
-import androidx.compose.ui.res.stringResource
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -53,8 +53,8 @@ import com.manidigit.yadin.ui.util.formatDigits
 /**
  * صفحه اصلی (Home) برنامه یادین.
  *
- * نمایش‌دهنده هدر تمیز و بدون تکرار، خلاصه آمار جامع واژگان (کل، تمرین‌شده، تمرین‌نشده، یادگرفته)،
- * مراحل تثبیت حافظه لایتنر با طراحی گرافیکی خوانا و مدرن، و طیف دشواری واژگان.
+ * نمایش‌دهنده هدر تمیز و بدون تکرار، خلاصه آمار جامع کلمات (کل، تمرین‌شده، تمرین‌نشده، یادگرفته)،
+ * مراحل تثبیت حافظه لایتنر با رنگ‌بندی و آیکون‌های متمایز، و طیف دشواری کلمات با آیکون‌های اختصاصی.
  */
 @Composable
 fun HomeScreen(
@@ -79,7 +79,7 @@ fun HomeScreen(
             .padding(horizontal = dimensions.screenPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Clean, Unified Header (بدون تکرار نام تم و بدون دکمه‌های تم/دارک‌مود)
+        // 1. Clean, Unified Header
         item {
             Spacer(modifier = Modifier.height(10.dp))
             Row(
@@ -130,7 +130,7 @@ fun HomeScreen(
             }
         }
 
-        // 2. Vocabulary Statistics Overview Card (خلاصه آمار کلمات و واژگان)
+        // 2. Vocabulary Statistics Overview Card (خلاصه وضعیت کلمات)
         item {
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -164,7 +164,7 @@ fun HomeScreen(
                         }
                     }
 
-                    // 4 Metric Tiles: کل کلمات، تمرین‌شده‌ها، تمرین‌نشده‌ها، یادگرفته‌شده‌ها
+                    // 4 Metric Tiles: کل کلمات، تمرین‌شده‌ها، تمرین‌نشده‌ها، یادگرفته‌ها
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -187,14 +187,14 @@ fun HomeScreen(
                             title = stringResource(R.string.home_unpracticed_words),
                             count = unpracticedCount,
                             icon = Icons.Default.VisibilityOff,
-                            accentColor = colors.warning, // Amber/Orange
+                            accentColor = colors.warning,
                             modifier = Modifier.weight(1f)
                         )
                         VocabStatTile(
                             title = stringResource(R.string.home_mastered_words),
                             count = learnedCount,
                             icon = Icons.Default.CheckCircle,
-                            accentColor = colors.success, // Emerald Green
+                            accentColor = colors.success,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -202,7 +202,7 @@ fun HomeScreen(
             }
         }
 
-        // 3. Redesigned Leitner Spaced Memory Stages (طراحی بازآرایی‌شده و خوانای مراحل لایتنر)
+        // 3. Leitner Spaced Memory Stages (مراحل تثبیت حافظه لایتنر با رنگ متمایز برای هر مرحله)
         item {
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -254,7 +254,7 @@ fun HomeScreen(
                             title = stringResource(R.string.stage_weekly),
                             totalCount = statistics.weeklyStageCount,
                             dueCount = statistics.dueWeeklyCount,
-                            accentColor = colors.info,
+                            accentColor = colors.accentPurple,
                             icon = Icons.Default.AutoAwesome,
                             modifier = Modifier.weight(1f),
                             onClick = { onOpenReviewSetup(ReviewType.WEEKLY) }
@@ -284,7 +284,7 @@ fun HomeScreen(
             }
         }
 
-        // 4. Adaptive Difficulty Matrix in YadinCard (یکدست‌سازی کادر طیف دشواری واژگان)
+        // 4. Adaptive Difficulty Matrix in YadinCard (طیف دشواری کلمات با آیکون‌های متمایز)
         item {
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -299,7 +299,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.AutoAwesome,
+                            imageVector = Icons.Default.Speed,
                             contentDescription = null,
                             tint = colors.primary,
                             modifier = Modifier.size(18.dp)
@@ -327,7 +327,7 @@ fun HomeScreen(
 }
 
 /**
- * ویجت نمایش‌دهنده یک آمار کلیدی از وضعیت واژگان.
+ * ویجت نمایش‌دهنده یک آمار کلیدی از وضعیت کلمات.
  */
 @Composable
 private fun VocabStatTile(
@@ -343,10 +343,10 @@ private fun VocabStatTile(
     Box(
         modifier = modifier
             .clip(shape)
-            .background(accentColor.copy(alpha = 0.08f))
+            .background(accentColor.copy(alpha = 0.10f))
             .border(
                 width = 1.dp,
-                color = accentColor.copy(alpha = 0.25f),
+                color = accentColor.copy(alpha = 0.35f),
                 shape = shape
             )
             .padding(vertical = 10.dp, horizontal = 4.dp),
@@ -360,7 +360,7 @@ private fun VocabStatTile(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(18.dp)
             )
             Text(
                 text = count.formatDigits(),
@@ -372,9 +372,10 @@ private fun VocabStatTile(
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
-                color = LocalYadinColors.current.onSurfaceVariant,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Medium
+                color = LocalYadinColors.current.onSurface,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
             )
         }
     }
@@ -400,7 +401,7 @@ private fun LeitnerStageBox(
     Box(
         modifier = modifier
             .clip(shape)
-            .background(accentColor.copy(alpha = 0.08f))
+            .background(accentColor.copy(alpha = 0.10f))
             .border(
                 width = 1.dp,
                 color = accentColor.copy(alpha = 0.35f),

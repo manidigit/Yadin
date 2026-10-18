@@ -57,12 +57,19 @@ import com.manidigit.yadin.domain.model.RetentionMetrics
 import com.manidigit.yadin.domain.model.ReviewForecastItem
 import com.manidigit.yadin.domain.model.StudyHourBucket
 import com.manidigit.yadin.domain.time.ClockAndDayMath
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.manidigit.yadin.domain.model.Stage
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.ui.components.CategoryMasteryCard
 import com.manidigit.yadin.ui.components.DailyReviewChart
 import com.manidigit.yadin.ui.components.RetentionGaugeCard
 import com.manidigit.yadin.ui.components.StudyHabitsCard
 import com.manidigit.yadin.ui.components.UpcomingForecastCard
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.getDifficultyColor
+import com.manidigit.yadin.ui.components.getDifficultyIcon
+import com.manidigit.yadin.ui.components.getStageColor
+import com.manidigit.yadin.ui.components.getStageIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.YadinPalette
@@ -293,7 +300,7 @@ fun ProgressScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                             contentDescription = null,
-                            tint = colors.info,
+                            tint = colors.accentPurple,
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
@@ -370,7 +377,7 @@ fun ProgressScreen(
                     ) {
                         FormulaScorePill(stringResource(R.string.progress_formula_learned), colors.success, Modifier.weight(1f))
                         FormulaScorePill(stringResource(R.string.progress_formula_monthly), colors.warning, Modifier.weight(1f))
-                        FormulaScorePill(stringResource(R.string.progress_formula_weekly), colors.info, Modifier.weight(1f))
+                        FormulaScorePill(stringResource(R.string.progress_formula_weekly), colors.accentPurple, Modifier.weight(1f))
                         FormulaScorePill(stringResource(R.string.progress_formula_daily), colors.primary, Modifier.weight(1f))
                     }
                 }
@@ -477,25 +484,29 @@ fun ProgressScreen(
                         title = stringResource(R.string.stage_daily),
                         count = statistics.dailyStageCount,
                         total = total,
-                        color = colors.primary
+                        color = getStageColor(Stage.DAILY, colors),
+                        icon = getStageIcon(Stage.DAILY)
                     )
                     ProgressRow(
                         title = stringResource(R.string.stage_weekly),
                         count = statistics.weeklyStageCount,
                         total = total,
-                        color = colors.info
+                        color = getStageColor(Stage.WEEKLY, colors),
+                        icon = getStageIcon(Stage.WEEKLY)
                     )
                     ProgressRow(
                         title = stringResource(R.string.stage_monthly),
                         count = statistics.monthlyStageCount,
                         total = total,
-                        color = colors.warning
+                        color = getStageColor(Stage.MONTHLY, colors),
+                        icon = getStageIcon(Stage.MONTHLY)
                     )
                     ProgressRow(
                         title = stringResource(R.string.stage_learned),
                         count = statistics.learnedStageCount,
                         total = total,
-                        color = colors.success
+                        color = getStageColor(Stage.LEARNED, colors),
+                        icon = getStageIcon(Stage.LEARNED)
                     )
                 }
             }
@@ -529,25 +540,29 @@ fun ProgressScreen(
                         title = stringResource(R.string.diff_easy),
                         count = statistics.easyCount,
                         total = diffTotal,
-                        color = colors.success
+                        color = getDifficultyColor(VocabularyDifficulty.EASY, colors),
+                        icon = getDifficultyIcon(VocabularyDifficulty.EASY)
                     )
                     ProgressRow(
                         title = stringResource(R.string.diff_medium),
                         count = statistics.mediumCount,
                         total = diffTotal,
-                        color = colors.info
+                        color = getDifficultyColor(VocabularyDifficulty.MEDIUM, colors),
+                        icon = getDifficultyIcon(VocabularyDifficulty.MEDIUM)
                     )
                     ProgressRow(
                         title = stringResource(R.string.diff_hard),
                         count = statistics.hardCount,
                         total = diffTotal,
-                        color = colors.warning
+                        color = getDifficultyColor(VocabularyDifficulty.HARD, colors),
+                        icon = getDifficultyIcon(VocabularyDifficulty.HARD)
                     )
                     ProgressRow(
                         title = stringResource(R.string.diff_very_hard),
                         count = statistics.veryHardCount,
                         total = diffTotal,
-                        color = colors.error
+                        color = getDifficultyColor(VocabularyDifficulty.VERY_HARD, colors),
+                        icon = getDifficultyIcon(VocabularyDifficulty.VERY_HARD)
                     )
                 }
             }
@@ -601,7 +616,7 @@ fun ProgressScreen(
                         correct = weekCorrect,
                         total = weekTotal,
                         percentage = weekPercent,
-                        color = colors.info
+                        color = colors.accentPurple
                     )
                     AccuracyRow(
                         label = stringResource(R.string.progress_acc_month),
@@ -753,7 +768,8 @@ private fun ProgressRow(
     title: String,
     count: Int,
     total: Int,
-    color: Color
+    color: Color,
+    icon: ImageVector? = null
 ) {
     val fraction = if (total > 0) (count.toFloat() / total).coerceIn(0f, 1f) else 0f
     val percent = (fraction * 100).toInt()
@@ -768,12 +784,21 @@ private fun ProgressRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(color)
-                )
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(16.dp)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                    )
+                }
                 Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
             }
             Text(

@@ -26,14 +26,20 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.mutableStateListOf
 import com.manidigit.yadin.domain.algorithm.VocabularyParser
@@ -82,6 +88,10 @@ import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.getDifficultyColor
+import com.manidigit.yadin.ui.components.getDifficultyIcon
+import com.manidigit.yadin.ui.components.getStageColor
+import com.manidigit.yadin.ui.components.getStageIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -217,7 +227,7 @@ fun LibraryScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 3-Combobox Compact Filter Toolbar (وضعیت، مرحله مرور، سطح سختی)
+            // Unified 2x2 Filter Grid (وضعیت، مرحله مرور، سطح سختی، دسته‌بندی موضوعی)
             val statusActiveLabel = stringResource(R.string.filter_status_active)
             val statusTrashLabel = stringResource(R.string.filter_status_trash)
             val stageAllLabel = stringResource(R.string.stage_all)
@@ -231,77 +241,122 @@ fun LibraryScreen(
             val diffHardLabel = stringResource(R.string.diff_hard)
             val diffVeryHardLabel = stringResource(R.string.diff_very_hard)
 
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Combobox 1: Status
-                LibraryFilterDropdown(
-                    label = stringResource(R.string.filter_status),
-                    selectedOption = if (showOnlyInactive) statusTrashLabel else statusActiveLabel,
-                    options = listOf(
-                        statusActiveLabel to { onInactiveFilterToggle(false) },
-                        statusTrashLabel to { onInactiveFilterToggle(true) }
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Filter 1: Status (وضعیت)
+                    LibraryFilterDropdown(
+                        label = stringResource(R.string.filter_status),
+                        selectedOption = if (showOnlyInactive) statusTrashLabel else statusActiveLabel,
+                        icon = if (showOnlyInactive) Icons.Default.Delete else Icons.Default.CheckCircle,
+                        isFilterActive = showOnlyInactive,
+                        activeAccentColor = colors.error,
+                        onClearFilter = if (showOnlyInactive) ({ onInactiveFilterToggle(false) }) else null,
+                        options = listOf(
+                            LibraryFilterOption(statusActiveLabel, Icons.Default.CheckCircle, colors.primary) { onInactiveFilterToggle(false) },
+                            LibraryFilterOption(statusTrashLabel, Icons.Default.Delete, colors.error) { onInactiveFilterToggle(true) }
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
 
-                // Combobox 2: Stage
-                val currentStageLabel = when (selectedStage) {
-                    Stage.DAILY -> stageDailyLabel
-                    Stage.WEEKLY -> stageWeeklyLabel
-                    Stage.MONTHLY -> stageMonthlyLabel
-                    Stage.LEARNED -> stageLearnedLabel
-                    null -> stageAllLabel
+                    // Filter 2: Stage (مرحله مرور)
+                    val currentStageLabel = when (selectedStage) {
+                        Stage.DAILY -> stageDailyLabel
+                        Stage.WEEKLY -> stageWeeklyLabel
+                        Stage.MONTHLY -> stageMonthlyLabel
+                        Stage.LEARNED -> stageLearnedLabel
+                        null -> stageAllLabel
+                    }
+                    val stageIcon = if (selectedStage != null) getStageIcon(selectedStage) else Icons.Default.School
+                    val stageAccentColor = if (selectedStage != null) getStageColor(selectedStage, colors) else colors.primary
+
+                    LibraryFilterDropdown(
+                        label = stringResource(R.string.filter_stage),
+                        selectedOption = currentStageLabel,
+                        icon = stageIcon,
+                        isFilterActive = selectedStage != null,
+                        activeAccentColor = stageAccentColor,
+                        onClearFilter = if (selectedStage != null) ({ onStageFilterChange(null) }) else null,
+                        options = listOf(
+                            LibraryFilterOption(stageAllLabel, Icons.Default.School, colors.primary) { onStageFilterChange(null) },
+                            LibraryFilterOption(stageDailyLabel, getStageIcon(Stage.DAILY), getStageColor(Stage.DAILY, colors)) { onStageFilterChange(Stage.DAILY) },
+                            LibraryFilterOption(stageWeeklyLabel, getStageIcon(Stage.WEEKLY), getStageColor(Stage.WEEKLY, colors)) { onStageFilterChange(Stage.WEEKLY) },
+                            LibraryFilterOption(stageMonthlyLabel, getStageIcon(Stage.MONTHLY), getStageColor(Stage.MONTHLY, colors)) { onStageFilterChange(Stage.MONTHLY) },
+                            LibraryFilterOption(stageLearnedLabel, getStageIcon(Stage.LEARNED), getStageColor(Stage.LEARNED, colors)) { onStageFilterChange(Stage.LEARNED) }
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-                LibraryFilterDropdown(
-                    label = stringResource(R.string.filter_stage),
-                    selectedOption = currentStageLabel,
-                    options = listOf(
-                        stageAllLabel to { onStageFilterChange(null) },
-                        stageDailyLabel to { onStageFilterChange(Stage.DAILY) },
-                        stageWeeklyLabel to { onStageFilterChange(Stage.WEEKLY) },
-                        stageMonthlyLabel to { onStageFilterChange(Stage.MONTHLY) },
-                        stageLearnedLabel to { onStageFilterChange(Stage.LEARNED) }
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
 
-                // Combobox 3: Difficulty
-                val currentDiffLabel = when (selectedDifficulty) {
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> diffEasyLabel
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> diffMedLabel
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> diffHardLabel
-                    com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> diffVeryHardLabel
-                    null -> diffAllLabel
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Filter 3: Difficulty (سطح سختی)
+                    val currentDiffLabel = when (selectedDifficulty) {
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY -> diffEasyLabel
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM -> diffMedLabel
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD -> diffHardLabel
+                        com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> diffVeryHardLabel
+                        null -> diffAllLabel
+                    }
+                    val diffIcon = if (selectedDifficulty != null) getDifficultyIcon(selectedDifficulty) else Icons.Default.Speed
+                    val diffAccentColor = if (selectedDifficulty != null) getDifficultyColor(selectedDifficulty, colors) else colors.primary
+
+                    LibraryFilterDropdown(
+                        label = stringResource(R.string.filter_difficulty),
+                        selectedOption = currentDiffLabel,
+                        icon = diffIcon,
+                        isFilterActive = selectedDifficulty != null,
+                        activeAccentColor = diffAccentColor,
+                        onClearFilter = if (selectedDifficulty != null) ({ onDifficultyFilterChange(null) }) else null,
+                        options = listOf(
+                            LibraryFilterOption(
+                                diffAllLabel,
+                                Icons.Default.Speed,
+                                colors.primary
+                            ) { onDifficultyFilterChange(null) },
+                            LibraryFilterOption(
+                                diffEasyLabel,
+                                getDifficultyIcon(com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY),
+                                getDifficultyColor(com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY, colors)
+                            ) { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY) },
+                            LibraryFilterOption(
+                                diffMedLabel,
+                                getDifficultyIcon(com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM),
+                                getDifficultyColor(com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM, colors)
+                            ) { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM) },
+                            LibraryFilterOption(
+                                diffHardLabel,
+                                getDifficultyIcon(com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD),
+                                getDifficultyColor(com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD, colors)
+                            ) { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD) },
+                            LibraryFilterOption(
+                                diffVeryHardLabel,
+                                getDifficultyIcon(com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD),
+                                getDifficultyColor(com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD, colors)
+                            ) { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD) }
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Filter 4: Category (دسته‌بندی موضوعی)
+                    ExposedCategoryDropdown(
+                        categories = categories,
+                        selectedCategoryId = selectedCategory,
+                        onSelectCategory = { onCategoryFilterChange(it) },
+                        label = stringResource(R.string.category_label),
+                        onAddNewCategory = onAddNewCategory,
+                        onEditCategory = onEditCategory,
+                        onDeleteCategory = onDeleteCategory,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-                LibraryFilterDropdown(
-                    label = stringResource(R.string.filter_difficulty),
-                    selectedOption = currentDiffLabel,
-                    options = listOf(
-                        diffAllLabel to { onDifficultyFilterChange(null) },
-                        diffEasyLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY) },
-                        diffMedLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM) },
-                        diffHardLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD) },
-                        diffVeryHardLabel to { onDifficultyFilterChange(com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD) }
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Dropdown Menu for Categories
-            if (categories.isNotEmpty()) {
-                ExposedCategoryDropdown(
-                    categories = categories,
-                    selectedCategoryId = selectedCategory,
-                    onSelectCategory = { onCategoryFilterChange(it) },
-                    label = stringResource(R.string.category_label),
-                    onAddNewCategory = onAddNewCategory,
-                    onEditCategory = onEditCategory,
-                    onDeleteCategory = onDeleteCategory
-                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -1256,51 +1311,103 @@ private fun AuditReviewItemCard(
     }
 }
 
+private data class LibraryFilterOption(
+    val title: String,
+    val icon: ImageVector,
+    val tint: Color,
+    val onSelect: () -> Unit
+)
+
 @Composable
 private fun LibraryFilterDropdown(
     label: String,
     selectedOption: String,
-    options: List<Pair<String, () -> Unit>>,
+    icon: ImageVector,
+    isFilterActive: Boolean,
+    activeAccentColor: Color,
+    onClearFilter: (() -> Unit)? = null,
+    options: List<LibraryFilterOption>,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     val colors = LocalYadinColors.current
 
+    val shape = RoundedCornerShape(12.dp)
+    val bgColor = if (isFilterActive) activeAccentColor.copy(alpha = 0.10f) else colors.surface
+    val borderColor = if (isFilterActive) activeAccentColor.copy(alpha = 0.55f) else colors.outline.copy(alpha = 0.25f)
+    val accentColor = if (isFilterActive) activeAccentColor else colors.onSurfaceVariant
+
     Box(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(colors.surface)
-                .border(1.dp, colors.outline.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                .clip(shape)
+                .background(bgColor)
+                .border(if (isFilterActive) 1.2.dp else 1.dp, borderColor, shape)
                 .clickable { expanded = true }
-                .padding(horizontal = 8.dp, vertical = 7.dp),
+                .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.onSurfaceVariant,
-                    fontSize = 9.sp
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
                 )
-                Text(
-                    text = selectedOption,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 11.sp
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 9.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = selectedOption,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isFilterActive) activeAccentColor else colors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 11.5.sp
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (isFilterActive && onClearFilter != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { onClearFilter() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.action_clear),
+                            tint = activeAccentColor,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
                 )
             }
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = null,
-                tint = colors.onSurfaceVariant,
-                modifier = Modifier.size(16.dp)
-            )
         }
 
         DropdownMenu(
@@ -1308,18 +1415,45 @@ private fun LibraryFilterDropdown(
             onDismissRequest = { expanded = false },
             modifier = Modifier.background(colors.surface)
         ) {
-            options.forEach { (title, onSelect) ->
+            options.forEach { option ->
+                val isSelected = option.title == selectedOption
                 DropdownMenuItem(
                     text = {
-                        Text(
-                            text = title,
-                            fontSize = 12.sp,
-                            fontWeight = if (title == selectedOption) FontWeight.Bold else FontWeight.Normal,
-                            color = if (title == selectedOption) colors.primary else colors.onSurface
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = option.icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected) option.tint else colors.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = option.title,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) option.tint else colors.onSurface
+                                )
+                            }
+                            if (isSelected) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = option.tint,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     },
                     onClick = {
-                        onSelect()
+                        option.onSelect()
                         expanded = false
                     }
                 )

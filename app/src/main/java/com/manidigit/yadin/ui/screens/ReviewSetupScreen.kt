@@ -24,8 +24,11 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Quiz
+import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Today
@@ -61,12 +64,18 @@ import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.toStringRes
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.getDifficultyColor
+import com.manidigit.yadin.ui.components.getDifficultyIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
 
-private data class ReviewTypeItem(val type: ReviewType, val title: String, val icon: ImageVector)
-private data class DiffItem(val diff: VocabularyDifficulty, val label: String, val color: Color)
+private data class DiffItem(
+    val diff: VocabularyDifficulty,
+    val label: String,
+    val color: Color,
+    val icon: ImageVector
+)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -123,70 +132,64 @@ fun ReviewSetupScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
-            .padding(horizontal = dimensions.screenPadding, vertical = 12.dp),
+            .padding(horizontal = dimensions.screenPadding, vertical = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         LazyColumn(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Header
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     IconButton(
                         onClick = onBack,
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(colors.surfaceVariant)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
-                            tint = colors.onSurface
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
-                    Column {
-                        Text(
-                            text = stringResource(R.string.review_setup_title),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.review_setup_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
                 }
             }
 
-            // Card 1: Practice Mode
+            // Card 1: Practice Mode (Compact M3 Segmented Chips)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
                     backgroundColor = colors.surface
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.review_setup_mode),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
 
-                        // Mode selector: Segmented Control
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(colors.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             ModeSelectButton(
                                 title = stringResource(R.string.review_mode_quiz),
@@ -207,123 +210,104 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 2: Source & Category
+            // Card 2: Source & Category (Compact Leitner Stages + Free Review + Category)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
                     backgroundColor = colors.surface
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.review_setup_source_title),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
 
-                        // Category A: Leitner Repetition Cycle
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = stringResource(R.string.review_setup_leitner_cycle),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.onSurfaceVariant
+                        // Category A: Leitner Repetition Cycle (Distinct Colors: Daily Blue, Weekly Purple, Monthly Amber)
+                        val stats = statistics
+                        val dueDaily = stats?.dueDailyCount ?: 0
+                        val totalDaily = stats?.dailyStageCount ?: 0
+
+                        val dueWeekly = stats?.dueWeeklyCount ?: 0
+                        val totalWeekly = stats?.weeklyStageCount ?: 0
+
+                        val dueMonthly = stats?.dueMonthlyCount ?: 0
+                        val totalMonthly = stats?.monthlyStageCount ?: 0
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            LeitnerSelectableStageBox(
+                                title = stringResource(R.string.stage_daily),
+                                dueCount = dueDaily,
+                                totalCount = totalDaily,
+                                accentColor = colors.primary,
+                                icon = Icons.Default.Today,
+                                isSelected = (selectedType == ReviewType.DAILY),
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedType = ReviewType.DAILY }
                             )
 
-                            val stats = statistics
-                            val dueDaily = stats?.dueDailyCount ?: 0
-                            val totalDaily = stats?.dailyStageCount ?: 0
+                            LeitnerSelectableStageBox(
+                                title = stringResource(R.string.stage_weekly),
+                                dueCount = dueWeekly,
+                                totalCount = totalWeekly,
+                                accentColor = colors.accentPurple,
+                                icon = Icons.Default.AutoAwesome,
+                                isSelected = (selectedType == ReviewType.WEEKLY),
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedType = ReviewType.WEEKLY }
+                            )
 
-                            val dueWeekly = stats?.dueWeeklyCount ?: 0
-                            val totalWeekly = stats?.weeklyStageCount ?: 0
-
-                            val dueMonthly = stats?.dueMonthlyCount ?: 0
-                            val totalMonthly = stats?.monthlyStageCount ?: 0
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                LeitnerSelectableStageBox(
-                                    title = stringResource(R.string.stage_daily),
-                                    dueCount = dueDaily,
-                                    totalCount = totalDaily,
-                                    accentColor = colors.primary,
-                                    icon = Icons.Default.Today,
-                                    isSelected = (selectedType == ReviewType.DAILY),
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { selectedType = ReviewType.DAILY }
-                                )
-
-                                LeitnerSelectableStageBox(
-                                    title = stringResource(R.string.stage_weekly),
-                                    dueCount = dueWeekly,
-                                    totalCount = totalWeekly,
-                                    accentColor = colors.info,
-                                    icon = Icons.Default.AutoAwesome,
-                                    isSelected = (selectedType == ReviewType.WEEKLY),
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { selectedType = ReviewType.WEEKLY }
-                                )
-
-                                LeitnerSelectableStageBox(
-                                    title = stringResource(R.string.stage_monthly),
-                                    dueCount = dueMonthly,
-                                    totalCount = totalMonthly,
-                                    accentColor = colors.warning,
-                                    icon = Icons.Default.Star,
-                                    isSelected = (selectedType == ReviewType.MONTHLY),
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { selectedType = ReviewType.MONTHLY }
-                                )
-                            }
+                            LeitnerSelectableStageBox(
+                                title = stringResource(R.string.stage_monthly),
+                                dueCount = dueMonthly,
+                                totalCount = totalMonthly,
+                                accentColor = colors.warning,
+                                icon = Icons.Default.Star,
+                                isSelected = (selectedType == ReviewType.MONTHLY),
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedType = ReviewType.MONTHLY }
+                            )
                         }
 
-                        // Category B: Additional & Free Review Modes
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = stringResource(R.string.review_setup_additional_modes),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.onSurfaceVariant
+                        // Category B: Compact Additional & Free Review Modes (Horizontal layout to save vertical space)
+                        val dueRandom = stats?.dueTodayCount ?: 0
+                        val totalRandom = stats?.totalWords ?: 0
+
+                        val dueLearned = stats?.availableLearnedCount ?: 0
+                        val totalLearned = stats?.learnedStageCount ?: 0
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            CompactHorizontalSourceBox(
+                                title = stringResource(R.string.review_setup_mode_random),
+                                dueCount = dueRandom,
+                                totalCount = totalRandom,
+                                accentColor = colors.info,
+                                icon = Icons.Default.Shuffle,
+                                isSelected = (selectedType == ReviewType.RANDOM),
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedType = ReviewType.RANDOM }
                             )
 
-                            val stats = statistics
-                            val dueRandom = stats?.dueTodayCount ?: 0
-                            val totalRandom = stats?.totalWords ?: 0
-
-                            val dueLearned = stats?.availableLearnedCount ?: 0
-                            val totalLearned = stats?.learnedStageCount ?: 0
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                LeitnerSelectableStageBox(
-                                    title = stringResource(R.string.review_setup_mode_random),
-                                    dueCount = dueRandom,
-                                    totalCount = totalRandom,
-                                    accentColor = colors.primary,
-                                    icon = Icons.Default.Shuffle,
-                                    isSelected = (selectedType == ReviewType.RANDOM),
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { selectedType = ReviewType.RANDOM }
-                                )
-
-                                LeitnerSelectableStageBox(
-                                    title = stringResource(R.string.stage_learned),
-                                    dueCount = dueLearned,
-                                    totalCount = totalLearned,
-                                    accentColor = colors.success,
-                                    icon = Icons.Default.CheckCircle,
-                                    isSelected = (selectedType == ReviewType.LEARNED),
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { selectedType = ReviewType.LEARNED }
-                                )
-                            }
+                            CompactHorizontalSourceBox(
+                                title = stringResource(R.string.stage_learned),
+                                dueCount = dueLearned,
+                                totalCount = totalLearned,
+                                accentColor = colors.success,
+                                icon = Icons.Default.CheckCircle,
+                                isSelected = (selectedType == ReviewType.LEARNED),
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedType = ReviewType.LEARNED }
+                            )
                         }
 
                         // Category Dropdown
@@ -339,28 +323,48 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 3: Difficulty & Limit Filter
+            // Card 3: Difficulty, Quiz Option Difficulty & Session Limit (Unified M3 Chips & Segmented Controls)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
                     backgroundColor = colors.surface
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.review_setup_diff_filter),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
                         )
 
                         val diffItems = listOf(
-                            DiffItem(VocabularyDifficulty.EASY, stringResource(R.string.difficulty_easy), colors.success),
-                            DiffItem(VocabularyDifficulty.MEDIUM, stringResource(R.string.difficulty_medium), colors.info),
-                            DiffItem(VocabularyDifficulty.HARD, stringResource(R.string.difficulty_hard), colors.warning),
-                            DiffItem(VocabularyDifficulty.VERY_HARD, stringResource(R.string.difficulty_very_hard), colors.error)
+                            DiffItem(
+                                VocabularyDifficulty.EASY,
+                                stringResource(R.string.difficulty_easy),
+                                getDifficultyColor(VocabularyDifficulty.EASY, colors),
+                                getDifficultyIcon(VocabularyDifficulty.EASY)
+                            ),
+                            DiffItem(
+                                VocabularyDifficulty.MEDIUM,
+                                stringResource(R.string.difficulty_medium),
+                                getDifficultyColor(VocabularyDifficulty.MEDIUM, colors),
+                                getDifficultyIcon(VocabularyDifficulty.MEDIUM)
+                            ),
+                            DiffItem(
+                                VocabularyDifficulty.HARD,
+                                stringResource(R.string.difficulty_hard),
+                                getDifficultyColor(VocabularyDifficulty.HARD, colors),
+                                getDifficultyIcon(VocabularyDifficulty.HARD)
+                            ),
+                            DiffItem(
+                                VocabularyDifficulty.VERY_HARD,
+                                stringResource(R.string.difficulty_very_hard),
+                                getDifficultyColor(VocabularyDifficulty.VERY_HARD, colors),
+                                getDifficultyIcon(VocabularyDifficulty.VERY_HARD)
+                            )
                         )
 
                         Row(
@@ -373,6 +377,7 @@ fun ReviewSetupScreen(
                                 CompactDiffBadge(
                                     label = item.label,
                                     count = count,
+                                    icon = item.icon,
                                     isSelected = isSelected,
                                     color = item.color,
                                     modifier = Modifier.weight(1f),
@@ -388,48 +393,44 @@ fun ReviewSetupScreen(
                             }
                         }
 
-                        // Quiz level
+                        // Quiz option difficulty (Unified M3 Segmented Chips with Icons)
                         if (selectedMode == ReviewMode.QUIZ) {
                             Text(
                                 text = stringResource(R.string.review_setup_quiz_level),
-                                style = MaterialTheme.typography.titleSmall,
+                                style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = colors.onSurface,
-                                modifier = Modifier.padding(top = 4.dp)
+                                color = colors.onSurface
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                QuizLevel.entries.map { it to stringResource(it.toStringRes()) }.forEach { (lvl, title) ->
+                                QuizLevel.entries.forEach { lvl ->
+                                    val title = stringResource(lvl.toStringRes())
                                     val isSelected = (selectedQuizLevel == lvl)
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isSelected) colors.secondary else colors.surfaceVariant)
-                                            .clickable { selectedQuizLevel = lvl }
-                                            .padding(vertical = 7.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = title,
-                                            fontSize = 11.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isSelected) colors.onSecondary else colors.onSurfaceVariant
-                                        )
+                                    val (lvlIcon, lvlColor) = when (lvl) {
+                                        QuizLevel.BEGINNER -> Icons.Default.SentimentSatisfied to colors.success
+                                        QuizLevel.NORMAL -> Icons.Default.Speed to colors.primary
+                                        QuizLevel.PROFESSIONAL -> Icons.Default.Psychology to colors.warning
                                     }
+                                    YadinSelectableChipButton(
+                                        text = title,
+                                        icon = lvlIcon,
+                                        isSelected = isSelected,
+                                        accentColor = lvlColor,
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { selectedQuizLevel = lvl }
+                                    )
                                 }
                             }
                         }
 
-                        // Card limit selector
+                        // Session Card Limit selector (Unified M3 Segmented Chips)
                         Text(
                             text = stringResource(R.string.review_setup_count),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            color = colors.onSurface,
-                            modifier = Modifier.padding(top = 4.dp)
+                            color = colors.onSurface
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -437,30 +438,18 @@ fun ReviewSetupScreen(
                         ) {
                             listOf(10, 20, 30, 50, 100).forEach { limit ->
                                 val isSelected = (selectedMaxCards == limit)
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isSelected) colors.primary else colors.surfaceVariant)
-                                        .clickable { selectedMaxCards = limit }
-                                        .padding(vertical = 7.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = limit.formatDigits(),
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
-                                    )
-                                }
+                                YadinSelectableChipButton(
+                                    text = limit.formatDigits(),
+                                    icon = null,
+                                    isSelected = isSelected,
+                                    accentColor = colors.primary,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedMaxCards = limit }
+                                )
                             }
                         }
                     }
                 }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(6.dp))
             }
         }
 
@@ -485,7 +474,7 @@ fun ReviewSetupScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)
-                .height(52.dp),
+                .height(48.dp),
             shape = RoundedCornerShape(dimensions.cornerMedium),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colors.primary,
@@ -518,12 +507,22 @@ fun ModeSelectButton(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
+    val shape = RoundedCornerShape(10.dp)
+    val bgColor = if (isSelected) colors.primary.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f)
+    val borderColor = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.25f)
+    val contentColor = if (isSelected) colors.primary else colors.onSurfaceVariant
+
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) colors.primary else colors.surfaceVariant)
+            .clip(shape)
+            .background(bgColor)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = shape
+            )
             .clickable { onClick() }
-            .padding(vertical = 10.dp, horizontal = 8.dp),
+            .padding(vertical = 8.dp, horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -533,14 +532,65 @@ fun ModeSelectButton(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                tint = contentColor,
                 modifier = Modifier.size(16.dp)
             )
             Text(
                 text = title,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) colors.onPrimary else colors.onSurface
+                color = if (isSelected) colors.primary else colors.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun YadinSelectableChipButton(
+    text: String,
+    icon: ImageVector?,
+    isSelected: Boolean,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val shape = RoundedCornerShape(10.dp)
+    val bgColor = if (isSelected) accentColor.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f)
+    val borderColor = if (isSelected) accentColor else colors.outline.copy(alpha = 0.25f)
+    val contentColor = if (isSelected) accentColor else colors.onSurfaceVariant
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(bgColor)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = shape
+            )
+            .clickable { onClick() }
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+            Text(
+                text = text,
+                fontSize = 11.5.sp,
+                maxLines = 1,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) accentColor else colors.onSurface
             )
         }
     }
@@ -557,20 +607,19 @@ private fun LeitnerSelectableStageBox(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val dimensions = LocalYadinDimensions.current
     val colors = LocalYadinColors.current
-    val shape = RoundedCornerShape(dimensions.cornerSmall)
+    val shape = RoundedCornerShape(10.dp)
 
     val containerBg = if (isSelected) {
-        accentColor.copy(alpha = 0.22f)
+        accentColor.copy(alpha = 0.18f)
     } else {
-        accentColor.copy(alpha = 0.08f)
+        accentColor.copy(alpha = 0.07f)
     }
 
     val borderColor = if (isSelected) {
         accentColor
     } else {
-        accentColor.copy(alpha = 0.35f)
+        accentColor.copy(alpha = 0.30f)
     }
 
     Box(
@@ -578,46 +627,122 @@ private fun LeitnerSelectableStageBox(
             .clip(shape)
             .background(containerBg)
             .border(
-                width = if (isSelected) 2.dp else 1.dp,
+                width = if (isSelected) 1.5.dp else 1.dp,
                 color = borderColor,
                 shape = shape
             )
             .clickable { onClick() }
-            .padding(vertical = 10.dp, horizontal = 4.dp),
+            .padding(vertical = 7.dp, horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = accentColor,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
-                fontSize = 11.5.sp,
-                maxLines = 1
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) accentColor else colors.onSurface,
+                    fontSize = 11.sp,
+                    maxLines = 1
+                )
+            }
             Text(
                 text = if (dueCount > 0) stringResource(R.string.home_due_ready, dueCount.formatDigits()) else stringResource(R.string.home_reviewed_done),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (dueCount > 0) accentColor else colors.onSurfaceVariant.copy(alpha = 0.7f),
-                fontSize = 11.5.sp,
+                fontSize = 10.5.sp,
                 maxLines = 1
             )
             Text(
                 text = stringResource(R.string.home_of_total_words, totalCount.formatDigits()),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant.copy(alpha = 0.8f),
-                fontSize = 9.5.sp,
+                fontSize = 9.sp,
                 maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactHorizontalSourceBox(
+    title: String,
+    dueCount: Int,
+    totalCount: Int,
+    accentColor: Color,
+    icon: ImageVector,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val shape = RoundedCornerShape(10.dp)
+    val containerBg = if (isSelected) accentColor.copy(alpha = 0.18f) else accentColor.copy(alpha = 0.07f)
+    val borderColor = if (isSelected) accentColor else accentColor.copy(alpha = 0.30f)
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(containerBg)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = shape
+            )
+            .clickable { onClick() }
+            .padding(vertical = 7.dp, horizontal = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(16.dp)
+                )
+                Column {
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) accentColor else colors.onSurface,
+                        fontSize = 10.5.sp,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = stringResource(R.string.home_of_total_words, totalCount.formatDigits()),
+                        color = colors.onSurfaceVariant.copy(alpha = 0.8f),
+                        fontSize = 9.sp,
+                        maxLines = 1
+                    )
+                }
+            }
+            Text(
+                text = dueCount.formatDigits(),
+                fontWeight = FontWeight.ExtraBold,
+                color = accentColor,
+                fontSize = 12.sp
             )
         }
     }
@@ -627,35 +752,48 @@ private fun LeitnerSelectableStageBox(
 fun CompactDiffBadge(
     label: String,
     count: Int,
+    icon: ImageVector,
     isSelected: Boolean,
     color: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
+    val shape = RoundedCornerShape(10.dp)
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) color.copy(alpha = 0.18f) else colors.surfaceVariant.copy(alpha = 0.7f))
+            .clip(shape)
+            .background(if (isSelected) color.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f))
             .border(
                 width = if (isSelected) 1.5.dp else 1.dp,
                 color = if (isSelected) color else colors.outline.copy(alpha = 0.25f),
-                shape = RoundedCornerShape(10.dp)
+                shape = shape
             )
             .clickable { onClick() }
-            .padding(vertical = 8.dp, horizontal = 2.dp),
+            .padding(vertical = 7.dp, horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text(
-                text = count.formatDigits(),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isSelected) color else colors.onSurface
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (isSelected) color else colors.onSurfaceVariant,
+                    modifier = Modifier.size(13.dp)
+                )
+                Text(
+                    text = count.formatDigits(),
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) color else colors.onSurface
+                )
+            }
             Text(
                 text = label,
                 fontSize = 10.5.sp,

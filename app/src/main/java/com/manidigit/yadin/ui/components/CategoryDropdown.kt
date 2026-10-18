@@ -1,7 +1,10 @@
 package com.manidigit.yadin.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,14 +14,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lightbulb
@@ -29,10 +33,8 @@ import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,14 +49,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.ui.theme.LocalYadinColors
-import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
 fun getCategoryIcon(categoryName: String?): ImageVector {
     if (categoryName == null) return Icons.Default.Category
@@ -75,7 +79,6 @@ fun getCategoryIcon(categoryName: String?): ImageVector {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExposedCategoryDropdown(
     categories: List<Category>,
@@ -88,7 +91,6 @@ fun ExposedCategoryDropdown(
     onDeleteCategory: ((String) -> Unit)? = null
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
     var expanded by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
     var newCategoryText by remember { mutableStateOf("") }
@@ -101,6 +103,7 @@ fun ExposedCategoryDropdown(
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
     val displayText = selectedCategory?.name ?: defaultAllText
     val icon = getCategoryIcon(selectedCategory?.name)
+    val isFilterActive = selectedCategoryId != null
 
     if (showAddDialog) {
         AlertDialog(
@@ -225,47 +228,85 @@ fun ExposedCategoryDropdown(
         )
     }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = displayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(resolvedLabel) },
-            leadingIcon = {
+    val shape = RoundedCornerShape(12.dp)
+    val bgColor = if (isFilterActive) colors.primary.copy(alpha = 0.10f) else colors.surface
+    val borderColor = if (isFilterActive) colors.primary.copy(alpha = 0.55f) else colors.outline.copy(alpha = 0.25f)
+    val accentColor = if (isFilterActive) colors.primary else colors.onSurfaceVariant
+
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(bgColor)
+                .border(if (isFilterActive) 1.2.dp else 1.dp, borderColor, shape)
+                .clickable { expanded = true }
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = colors.primary,
-                    modifier = Modifier.size(20.dp)
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
                 )
-            },
-            trailingIcon = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (selectedCategoryId != null) {
-                        IconButton(onClick = { onSelectCategory(null) }) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.category_clear_selection),
-                                tint = colors.onSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = resolvedLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 9.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = displayText,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isFilterActive) colors.primary else colors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 11.5.sp
+                    )
                 }
-            },
-            shape = RoundedCornerShape(dimensions.cornerMedium),
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-        )
+            }
 
-        ExposedDropdownMenu(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (isFilterActive) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { onSelectCategory(null) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.category_clear_selection),
+                            tint = colors.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.background(colors.surface)
@@ -282,7 +323,11 @@ fun ExposedCategoryDropdown(
                             tint = colors.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
-                        Text(defaultAllText, fontWeight = if (selectedCategoryId == null) FontWeight.Bold else FontWeight.Normal)
+                        Text(
+                            text = defaultAllText,
+                            fontWeight = if (selectedCategoryId == null) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selectedCategoryId == null) colors.primary else colors.onSurface
+                        )
                     }
                 },
                 onClick = {

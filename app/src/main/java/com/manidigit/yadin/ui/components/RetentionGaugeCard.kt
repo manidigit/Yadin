@@ -221,7 +221,7 @@ fun RetentionGaugeCard(
                     label = stringResource(R.string.retention_stat_in_progress),
                     count = metrics.monthlyWords + metrics.weeklyWords,
                     total = metrics.totalWords,
-                    color = colors.info
+                    color = colors.accentPurple
                 )
                 RetentionStageRow(
                     label = stringResource(R.string.retention_stat_fresh),
