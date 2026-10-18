@@ -85,9 +85,14 @@ import com.manidigit.yadin.data.repository.BackupExportFormat
 import com.manidigit.yadin.data.repository.BackupOptions
 import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.data.repository.resolveExcelExportFormat
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.ui.components.VocabStatType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSectionHeader
 import com.manidigit.yadin.ui.components.YadinSelectableChip
+import com.manidigit.yadin.ui.components.getDifficultyIcon
+import com.manidigit.yadin.ui.components.getVocabStatIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -328,23 +333,11 @@ fun BackupScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Storage,
-                                contentDescription = null,
-                                tint = colors.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.backup_db_status_title),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
-                            )
-                        }
+                        YadinSectionHeader(
+                            title = stringResource(R.string.backup_db_status_title),
+                            icon = Icons.Default.Storage,
+                            iconTint = colors.primary
+                        )
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -353,7 +346,7 @@ fun BackupScreen(
                             StatBox(
                                 label = stringResource(R.string.backup_db_total_words),
                                 value = totalConcepts.formatDigits(),
-                                icon = Icons.Default.Translate,
+                                icon = getVocabStatIcon(VocabStatType.TOTAL),
                                 modifier = Modifier.weight(1f)
                             )
                             StatBox(
@@ -374,36 +367,12 @@ fun BackupScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = colors.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Column {
-                                    Text(
-                                        text = stringResource(R.string.backup_scope_title),
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.onSurface
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.backup_scope_subtitle),
-                                        fontSize = 11.sp,
-                                        color = colors.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
+                        YadinSectionHeader(
+                            title = stringResource(R.string.backup_scope_title),
+                            subtitle = stringResource(R.string.backup_scope_subtitle),
+                            icon = Icons.Default.CheckCircle,
+                            iconTint = colors.primary
+                        )
 
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 4.dp),
@@ -456,7 +425,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_vocab_title),
                             subtitle = stringResource(R.string.backup_vocab_sub),
-                            icon = Icons.Default.Translate,
+                            icon = getVocabStatIcon(VocabStatType.TOTAL),
                             isChecked = backupOptions.includeVocabulary,
                             onCheckedChange = { onToggleOption("vocabulary", it) }
                         )
@@ -472,7 +441,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_diff_title),
                             subtitle = stringResource(R.string.backup_diff_sub),
-                            icon = Icons.Default.Speed,
+                            icon = getDifficultyIcon(VocabularyDifficulty.MEDIUM),
                             isChecked = backupOptions.includeDifficulty,
                             onCheckedChange = { onToggleOption("difficulty", it) }
                         )
@@ -488,7 +457,7 @@ fun BackupScreen(
                         BackupOptionCheckboxRow(
                             title = stringResource(R.string.backup_leitner_title),
                             subtitle = stringResource(R.string.backup_leitner_sub),
-                            icon = Icons.Default.School,
+                            icon = getVocabStatIcon(VocabStatType.MASTERED),
                             isChecked = backupOptions.includeReviewStats,
                             onCheckedChange = { onToggleOption("reviewStats", it) }
                         )
@@ -519,23 +488,11 @@ fun BackupScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Description,
-                                contentDescription = null,
-                                tint = colors.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.backup_format_title),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
-                            )
-                        }
+                        YadinSectionHeader(
+                            title = stringResource(R.string.backup_format_title),
+                            icon = Icons.Default.Description,
+                            iconTint = colors.primary
+                        )
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),

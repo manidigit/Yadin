@@ -1,10 +1,8 @@
 package com.manidigit.yadin.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,21 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,29 +41,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSectionHeader
 import com.manidigit.yadin.ui.components.YadinSelectableChip
+import com.manidigit.yadin.ui.components.getDifficultyIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.R
-import androidx.compose.ui.res.stringResource
 import com.manidigit.yadin.ui.util.formatDigits
 
 /**
- * صفحه تنظیمات اصلی برنامه یادین.
- *
- * شامل تنظیم پوسته ظاهری Gemini، حالت شب/روز،
- * آستانه پاسخ‌های متوالی تغییر سختی، جهت زبان یادگیری، پاک‌سازی سطل بازیافت و دسترسی به پشتیبان‌گیری.
- *
- * @param currentThemeId شناسه پوسته فعال
- * @param isDark آیا حالت شب فعال است
- * @param difficultyThreshold آستانه پاسخ متوالی جهت تغییر سطح سختی
- * @param languageDirection جهت زبان فعال مطالعه
- * @param uiLanguage زبان رابط کاربری
+ * صفحه تنظیمات اصلی برنامه یادین با طراحی یکپارچه کارت‌ها، هدرها و چیپ‌های M3.
  */
 @Composable
 fun SettingsScreen(
@@ -100,115 +90,81 @@ fun SettingsScreen(
             .background(colors.background)
             .padding(dimensions.screenPadding)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(colors.surfaceVariant)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.action_back),
-                    tint = colors.onSurface
-                )
-            }
-
-            Text(
-                text = stringResource(R.string.settings_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface
-            )
-        }
-
-        // Section: Appearance & Theme Hub (Dropdown + Compact Dark Mode button)
-        Text(
-            text = stringResource(R.string.settings_appearance_section),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = colors.onSurface
+        // Standardized Screen Header
+        YadinScreenHeader(
+            title = stringResource(R.string.settings_title),
+            onBack = onBack
         )
 
+        // Section: Appearance & Theme Hub
         YadinCard(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = colors.surface
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Gemini Theme Info
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_appearance_section),
+                    icon = Icons.Default.Palette,
+                    iconTint = colors.primary
+                )
+
                 Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(colors.surfaceVariant)
-                        .clickable { onSelectTheme(currentThemeId.ifBlank { "gemini" }) }
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Palette,
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.settings_theme_label),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.onSurfaceVariant,
-                            fontSize = 10.sp
-                        )
-                        Text(
-                            text = stringResource(R.string.settings_theme_gemini),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.surfaceVariant)
+                            .clickable { onSelectTheme(currentThemeId.ifBlank { "gemini" }) }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.settings_theme_label),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSurfaceVariant,
+                                fontSize = 10.sp
+                            )
+                            Text(
+                                text = stringResource(R.string.settings_theme_gemini),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    IconButton(
+                        onClick = { onToggleDarkMode(!isDark) },
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = stringResource(R.string.settings_toggle_dark_mode),
+                            tint = if (isDark) colors.warning else colors.primary,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                // Compact Dark/Light Mode Button
-                IconButton(
-                    onClick = { onToggleDarkMode(!isDark) },
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(colors.surfaceVariant)
-                ) {
-                    Icon(
-                        imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
-                        contentDescription = stringResource(R.string.settings_toggle_dark_mode),
-                        tint = if (isDark) colors.warning else colors.primary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
             }
         }
-
-        // Section Title: Learning & Review Settings
-        Text(
-            text = stringResource(R.string.settings_learning_section),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = colors.onSurface
-        )
 
         // Difficulty Transition Threshold Card
         YadinCard(
@@ -221,36 +177,12 @@ fun SettingsScreen(
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape)
-                            .background(colors.warning.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Bolt,
-                            contentDescription = null,
-                            tint = colors.warning,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_diff_threshold_title),
+                    icon = getDifficultyIcon(VocabularyDifficulty.MEDIUM),
+                    iconTint = colors.warning
+                )
 
-                    Column {
-                        Text(
-                            text = stringResource(R.string.settings_diff_threshold_title),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onSurface
-                        )
-                    }
-                }
-
-                // Threshold Selector Buttons (1, 2, 3, 4, 5)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -282,35 +214,13 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape)
-                            .background(colors.primary.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Translate,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    Text(
-                        text = stringResource(R.string.settings_language_direction_title),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                }
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_language_direction_title),
+                    icon = Icons.Default.Translate,
+                    iconTint = colors.primary
+                )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -346,13 +256,11 @@ fun SettingsScreen(
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(Icons.Default.Language, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
-                    Text(stringResource(R.string.settings_ui_lang_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
-                }
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_ui_lang_title),
+                    icon = Icons.Default.Language,
+                    iconTint = colors.accentPurple
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -388,23 +296,21 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_purge_title),
+                    subtitle = stringResource(R.string.settings_purge_desc),
+                    icon = Icons.Default.DeleteForever,
+                    iconTint = colors.error,
                     modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(Icons.Default.DeleteForever, contentDescription = null, tint = colors.error, modifier = Modifier.size(22.dp))
-                    Column {
-                        Text(stringResource(R.string.settings_purge_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.onSurface)
-                        Text(stringResource(R.string.settings_purge_desc), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, fontSize = 11.sp)
+                    trailingContent = {
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { showPurgeConfirmDialog = true },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.error)
+                        ) {
+                            Text(stringResource(R.string.settings_purge_button), fontWeight = FontWeight.Bold)
+                        }
                     }
-                }
-                androidx.compose.material3.OutlinedButton(
-                    onClick = { showPurgeConfirmDialog = true },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.error)
-                ) {
-                    Text(stringResource(R.string.settings_purge_button), fontWeight = FontWeight.Bold)
-                }
+                )
             }
         }
 
@@ -465,42 +371,13 @@ fun SettingsScreen(
             backgroundColor = colors.surface,
             onClick = onOpenBackup
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.info.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CloudDownload,
-                        contentDescription = null,
-                        tint = colors.info,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = stringResource(R.string.settings_backup_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_backup_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
+            YadinSectionHeader(
+                title = stringResource(R.string.settings_backup_title),
+                subtitle = stringResource(R.string.settings_backup_desc),
+                icon = Icons.Default.CloudDownload,
+                iconTint = colors.info,
+                modifier = Modifier.padding(14.dp)
+            )
         }
 
         // About Us Button
@@ -509,42 +386,13 @@ fun SettingsScreen(
             backgroundColor = colors.surface,
             onClick = onOpenAbout
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.primary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = stringResource(R.string.settings_about_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_about_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
+            YadinSectionHeader(
+                title = stringResource(R.string.settings_about_title),
+                subtitle = stringResource(R.string.settings_about_desc),
+                icon = Icons.Default.Info,
+                iconTint = colors.primary,
+                modifier = Modifier.padding(14.dp)
+            )
         }
 
         // Help & Guide Button
@@ -553,42 +401,13 @@ fun SettingsScreen(
             backgroundColor = colors.surface,
             onClick = onOpenHelp
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.accentPurple.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                        contentDescription = null,
-                        tint = colors.accentPurple,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = stringResource(R.string.settings_help_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_help_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
+            YadinSectionHeader(
+                title = stringResource(R.string.settings_help_title),
+                subtitle = stringResource(R.string.settings_help_desc),
+                icon = Icons.AutoMirrored.Filled.HelpOutline,
+                iconTint = colors.accentPurple,
+                modifier = Modifier.padding(14.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))

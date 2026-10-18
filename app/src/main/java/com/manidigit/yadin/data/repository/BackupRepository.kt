@@ -615,8 +615,8 @@ class BackupRepository(
         writer.write(listOf("پاسخ‌های نادرست", "$wrongReviews بار", "تعداد پاسخ‌های اشتباه در جلسات").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write(listOf("درصد دقت پاسخ‌ها", "$accuracyPct%", "نسبت پاسخ‌های درست به کل مرورها").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write(listOf("تعداد کل جلسات تمرین", "${allSessions.size} جلسه", "مجموع جلسات فلش‌کارت و کوییز برگزار شده").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات تثبیت‌شده (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات تثبیت‌شده (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات یادگرفته (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf("کلمات یادگرفته (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write(listOf("کلمات مرحله ماهانه (عادی / برعکس)", "$normalMonthly / $reverseMonthly واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write(listOf("کلمات مرحله هفتگی (عادی / برعکس)", "$normalWeekly / $reverseWeekly واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write(listOf("کلمات مرحله روزانه (عادی / برعکس)", "$normalDaily / $reverseDaily واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) } + "\n")
@@ -669,7 +669,7 @@ class BackupRepository(
                 Stage.DAILY -> "روزانه"
                 Stage.WEEKLY -> "هفتگی"
                 Stage.MONTHLY -> "ماهانه"
-                Stage.LEARNED -> "تثبیت‌شده"
+                Stage.LEARNED -> "یادگرفته"
             }
             val formattedDate = try {
                 SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(h.reviewedAt))
@@ -1504,7 +1504,7 @@ class BackupRepository(
             Stage.DAILY -> "روزانه (Daily)"
             Stage.WEEKLY -> "هفتگی (Weekly)"
             Stage.MONTHLY -> "ماهانه (Monthly)"
-            Stage.LEARNED -> "تثبیت‌شده (Learned)"
+            Stage.LEARNED -> "یادگرفته (Learned)"
         }
     }
 

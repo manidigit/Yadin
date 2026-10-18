@@ -40,7 +40,7 @@
     <string name="stage_daily">روزانه</string>
     <string name="stage_weekly">هفتگی</string>
     <string name="stage_monthly">ماهانه</string>
-    <string name="stage_learned">تثبیت‌شده</string>
+    <string name="stage_learned">یادگرفته</string>
     <string name="stage_all">همه مراحل</string>
     <string name="difficulty_easy">آسان</string>
     <string name="difficulty_medium">متوسط</string>
@@ -52,8 +52,8 @@
     <string name="home_total_words">کل کلمات</string>
     <string name="home_practiced_words">تمرین‌شده‌ها</string>
     <string name="home_unpracticed_words">تمرین‌نشده</string>
-    <string name="home_mastered_words">یادگرفته‌ها</string>
-    <string name="home_leitner_box">مراحل تثبیت حافظه لایتنر</string>
+    <string name="home_mastered_words">یادگرفته</string>
+    <string name="home_leitner_box">مراحل یادگیری لایتنر</string>
     <string name="home_difficulty_spectrum">طیف دشواری کلمات</string>
     <string name="home_start_review">شروع مرور</string>
     <string name="home_quiz_4options">آزمون ۴ گزینه‌ای</string>
@@ -74,8 +74,8 @@
     <string name="review_setup_stage">مرحله مورد نظر جهت مرور:</string>
     <string name="review_setup_source_title">منبع کلمات و تکرار فاصله‌دار</string>
     <string name="review_setup_leitner_cycle">چرخه تکرار فاصله‌دار (لایتنر):</string>
-    <string name="review_setup_additional_modes">حالات تکمیلی و مرور آزاد:</string>
-    <string name="review_setup_mode_random">تصادفی (آزاد)</string>
+    <string name="review_setup_additional_modes">حالات تکمیلی و مرور تصادفی (رندوم):</string>
+    <string name="review_setup_mode_random">تصادفی (رندوم)</string>
     <string name="review_setup_category_label">دسته‌بندی موضوعی کلمات</string>
     <string name="review_setup_diff_filter">فیلتر سطح دشواری کلمات</string>
     <string name="review_setup_quiz_level">سطح سختی گزینه‌های آزمون</string>
@@ -283,7 +283,7 @@
     <string name="summary_title">جلسه مرور به پایان رسید!</string>
     <string name="summary_subtitle">نتایج و خلاصه عملکرد شما در این نشست:</string>
     <string name="summary_celebration_icon">جشن پایان جلسه</string>
-    <string name="summary_congrats_high">عالی بود! کلمات با موفقیت در لایتنر تثبیت شدند.</string>
+    <string name="summary_congrats_high">عالی بود! کلمات با موفقیت در لایتنر یادگرفته شدند.</string>
     <string name="summary_congrats_low">تمرین خوبی بود! با تکرار منظم به تسلط کامل می‌رسید.</string>
     <string name="summary_performance_title">خلاصه عملکرد</string>
     <string name="summary_total_reviewed_label">کل کلمات مرور شده:</string>
@@ -341,7 +341,7 @@
     <string name="help_step1_desc">یادین یک سامانه مرور فاصله‌دار هوشمند (جعبه لایتنر مدرن) است که به شما کمک می‌کند کلمات زبان جدید را به حافظه بلندمدت بسپارید. واژه‌ها بر اساس برنامه علمی تکرار، سررسید می‌شوند.</string>
     <string name="help_step2_number">۲</string>
     <string name="help_step2_title">مرحله‌های یادگیری</string>
-    <string name="help_step2_desc">هر واژه از ۴ مرحله عبور می‌کند:\n• روزانه (Daily): شروع یادگیری، مرور هر روز\n• هفتگی (Weekly): با یک پاسخ درست، مرور بعد از ۷ روز\n• ماهانه (Monthly): با پاسخ درست بعدی، مرور بعد از ۳۰ روز\n• یادگرفته‌شده (Learned): تثبیت کامل در حافظه دائمی\n* هر زمان به واژه‌ای پاسخ غلط بدهید، بلافاصله به مرحله روزانه بازمی‌گردد.</string>
+    <string name="help_step2_desc">هر واژه از ۴ مرحله عبور می‌کند:\n• روزانه (Daily): شروع یادگیری، مرور هر روز\n• هفتگی (Weekly): با یک پاسخ درست، مرور بعد از ۷ روز\n• ماهانه (Monthly): با پاسخ درست بعدی، مرور بعد از ۳۰ روز\n• یادگرفته (Learned): ثبت کامل در حافظه دائمی\n* هر زمان به واژه‌ای پاسخ غلط بدهید، بلافاصله به مرحله روزانه بازمی‌گردد.</string>
     <string name="help_step3_number">۳</string>
     <string name="help_step3_title">مرور هر روز و سررسید</string>
     <string name="help_step3_desc">سیستم هر روز کارت‌هایی که تاریخ سررسید آن‌ها فرارسیده را در صف مرور قرار می‌دهد. مرور منظم و روزانه باعث افزایش رگبار (Streak) شما می‌شود.</string>
@@ -435,7 +435,7 @@
     <string name="word_streak_wrong_fmt">❌ %1$s غلط متوالی</string>
     <string name="word_streak_none">۰ (بدون تسلسل)</string>
     <string name="word_stat_due_date">تاریخ سررسید مرور بعدی:</string>
-    <string name="word_due_permanent_memory">تثبیت‌شده در حافظه دائم</string>
+    <string name="word_due_permanent_memory">یادگرفته (حافظه دائم)</string>
     <string name="word_due_today">سررسید امروز</string>
     <string name="word_not_in_review">در صف مرور قرار نگرفته</string>
     <string name="word_btn_edit">ویرایش این واژه</string>
@@ -636,7 +636,7 @@ libro: کتاب</string>
     <string name="ach_100_percent">تکمیل ۱۰۰٪</string>
     <string name="ach_cat_vocabulary">دایره کلمات</string>
     <string name="ach_cat_streak">رگبار و مداومت</string>
-    <string name="ach_cat_retention">تثبیت لایتنر</string>
+    <string name="ach_cat_retention">کلمات یادگرفته لایتنر</string>
     <string name="ach_cat_hard_words">کلمات سخت</string>
     <string name="ach_cat_quiz">مهارت آزمون</string>
     <string name="ach_title_first_ten">آشنایی با کلمات</string>
@@ -655,12 +655,12 @@ libro: کتاب</string>
     <string name="ach_desc_streak_30">۳۰ روز متوالی مرور بدون وقفه داشته باشید</string>
     <string name="ach_title_streak_100">اراده پولادین</string>
     <string name="ach_desc_streak_100">۱۰۰ روز متوالی پرچم یادگیری را بالا نگه دارید</string>
-    <string name="ach_title_retention_bronze">اولین جوانه‌های تثبیت</string>
-    <string name="ach_desc_retention_bronze">۵ واژه را به مرحله تثبیت دائمی (یادگرفته) برسانید</string>
+    <string name="ach_title_retention_bronze">اولین کلمات یادگرفته</string>
+    <string name="ach_desc_retention_bronze">۵ واژه را به مرحله یادگرفته برسانید</string>
     <string name="ach_title_retention_silver">ستون‌های حافظه</string>
-    <string name="ach_desc_retention_silver">۲۵ واژه را به مرحله تثبیت دائمی برسانید</string>
+    <string name="ach_desc_retention_silver">۲۵ واژه را به مرحله یادگرفته برسانید</string>
     <string name="ach_title_retention_gold">گنجینه پایدار</string>
-    <string name="ach_desc_retention_gold">۱۰۰ واژه را به مرحله یادگرفته‌شده برسانید</string>
+    <string name="ach_desc_retention_gold">۱۰۰ واژه را به مرحله یادگرفته برسانید</string>
     <string name="ach_title_retention_platinum">استاد ماندگاری</string>
     <string name="ach_desc_retention_platinum">۵۰۰ واژه را در حافظه بلندمدت حک کنید</string>
     <string name="ach_title_hard_bronze">شکارچی واژه‌های سخت</string>
@@ -691,12 +691,12 @@ libro: کتاب</string>
     <string name="chart_volume_bars_label">حجم مرورها</string>
     <string name="chart_tooltip_fmt">%1$s: %2$s مرور | %3$s درست (دقت: %4$s٪)</string>
     <string name="retention_gauge_title">شاخص پایداری و ماندگاری حافظه</string>
-    <string name="retention_gauge_desc">محاسبه‌شده بر پایه منحنی فراموشی و سرعت تثبیت در جعبه لایتنر</string>
+    <string name="retention_gauge_desc">محاسبه‌شده بر پایه منحنی فراموشی و سرعت یادگیری در جعبه لایتنر</string>
     <string name="retention_level_high">پایداری عالی</string>
     <string name="retention_level_medium">پایداری خوب</string>
     <string name="retention_level_growing">در حال رشد</string>
-    <string name="retention_stat_mastered">تثبیت در حافظه بلندمدت</string>
-    <string name="retention_stat_in_progress">در حال تثبیت (هفتگی و ماهانه)</string>
+    <string name="retention_stat_mastered">یادگرفته (حافظه بلندمدت)</string>
+    <string name="retention_stat_in_progress">در حال یادگیری (هفتگی و ماهانه)</string>
     <string name="retention_stat_fresh">مرورهای جاری و روزانه</string>
     <string name="retention_stat_unstarted">کلمات جدید هنوز مرور نشده</string>
     <string name="forecast_title">پیش‌بینی موعد مرورهای آینده</string>
@@ -719,6 +719,6 @@ libro: کتاب</string>
     <string name="habits_best_slot_fmt">ساعت طلایی مطالعه شما: %1$s با میانگین دقت %2$s٪</string>
     <string name="habits_no_data">با ثبت جلسات بیشتر، ساعات اوج یادگیری شما مشخص خواهد شد.</string>
     <string name="category_mastery_title">میزان تسلط به تفکیک موضوعات</string>
-    <string name="category_mastery_subtitle">نسبت کلمات تثبیت‌شده به کل کلمات هر دسته‌بندی</string>
-    <string name="category_mastery_fmt">%1$s از %2$s کلمه تثبیت‌شده</string>
+    <string name="category_mastery_subtitle">نسبت کلمات یادگرفته به کل کلمات هر دسته‌بندی</string>
+    <string name="category_mastery_fmt">%1$s از %2$s کلمه یادگرفته</string>
 </resources>

@@ -82,16 +82,20 @@ import com.manidigit.yadin.domain.model.AuditActionType
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.LibraryAuditReport
 import com.manidigit.yadin.domain.model.Stage
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
+import com.manidigit.yadin.ui.components.VocabStatType
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinScreenHeader
 import com.manidigit.yadin.ui.components.getDifficultyColor
 import com.manidigit.yadin.ui.components.getDifficultyIcon
 import com.manidigit.yadin.ui.components.getStageColor
 import com.manidigit.yadin.ui.components.getStageIcon
+import com.manidigit.yadin.ui.components.getVocabStatIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -148,60 +152,33 @@ fun LibraryScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.surfaceVariant)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.action_back),
-                        tint = colors.onSurface
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (showOnlyInactive) stringResource(R.string.library_trash_title) else stringResource(R.string.library_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.library_loaded_words_count, words.size.formatDigits()),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-
-                if (!showOnlyInactive) {
-                    FilledTonalButton(
-                        onClick = { showAuditDialog = true },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = stringResource(R.string.library_audit_btn),
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.library_audit_btn_text),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+            // Standardized Header
+            YadinScreenHeader(
+                title = if (showOnlyInactive) stringResource(R.string.library_trash_title) else stringResource(R.string.library_title),
+                subtitle = stringResource(R.string.library_loaded_words_count, words.size.formatDigits()),
+                onBack = onBack,
+                trailingContent = if (!showOnlyInactive) {
+                    {
+                        FilledTonalButton(
+                            onClick = { showAuditDialog = true },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = stringResource(R.string.library_audit_btn),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.library_audit_btn_text),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                }
-            }
+                } else null
+            )
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -272,7 +249,7 @@ fun LibraryScreen(
                         Stage.LEARNED -> stageLearnedLabel
                         null -> stageAllLabel
                     }
-                    val stageIcon = if (selectedStage != null) getStageIcon(selectedStage) else Icons.Default.School
+                    val stageIcon = if (selectedStage != null) getStageIcon(selectedStage) else getVocabStatIcon(VocabStatType.MASTERED)
                     val stageAccentColor = if (selectedStage != null) getStageColor(selectedStage, colors) else colors.primary
 
                     LibraryFilterDropdown(
@@ -283,7 +260,7 @@ fun LibraryScreen(
                         activeAccentColor = stageAccentColor,
                         onClearFilter = if (selectedStage != null) ({ onStageFilterChange(null) }) else null,
                         options = listOf(
-                            LibraryFilterOption(stageAllLabel, Icons.Default.School, colors.primary) { onStageFilterChange(null) },
+                            LibraryFilterOption(stageAllLabel, getVocabStatIcon(VocabStatType.MASTERED), colors.primary) { onStageFilterChange(null) },
                             LibraryFilterOption(stageDailyLabel, getStageIcon(Stage.DAILY), getStageColor(Stage.DAILY, colors)) { onStageFilterChange(Stage.DAILY) },
                             LibraryFilterOption(stageWeeklyLabel, getStageIcon(Stage.WEEKLY), getStageColor(Stage.WEEKLY, colors)) { onStageFilterChange(Stage.WEEKLY) },
                             LibraryFilterOption(stageMonthlyLabel, getStageIcon(Stage.MONTHLY), getStageColor(Stage.MONTHLY, colors)) { onStageFilterChange(Stage.MONTHLY) },
@@ -305,7 +282,7 @@ fun LibraryScreen(
                         com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD -> diffVeryHardLabel
                         null -> diffAllLabel
                     }
-                    val diffIcon = if (selectedDifficulty != null) getDifficultyIcon(selectedDifficulty) else Icons.Default.Speed
+                    val diffIcon = if (selectedDifficulty != null) getDifficultyIcon(selectedDifficulty) else getDifficultyIcon(VocabularyDifficulty.MEDIUM)
                     val diffAccentColor = if (selectedDifficulty != null) getDifficultyColor(selectedDifficulty, colors) else colors.primary
 
                     LibraryFilterDropdown(
@@ -318,7 +295,7 @@ fun LibraryScreen(
                         options = listOf(
                             LibraryFilterOption(
                                 diffAllLabel,
-                                Icons.Default.Speed,
+                                getDifficultyIcon(VocabularyDifficulty.MEDIUM),
                                 colors.primary
                             ) { onDifficultyFilterChange(null) },
                             LibraryFilterOption(

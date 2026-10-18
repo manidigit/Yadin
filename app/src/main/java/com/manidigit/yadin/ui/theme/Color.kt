@@ -19,11 +19,13 @@ object YadinPalette {
     val GeminiOutlineLight = Color(0xFFCBD5E1)
     val GeminiOutlineDark = Color(0xFF2E3E5B)
 
-    // Semantic Status Colors
+    // Semantic Status & Difficulty Spectrum Colors
     val SuccessGreen = Color(0xFF138A5B)
     val SuccessGreenLight = Color(0xFF52D49A)
     val WarningAmber = Color(0xFFF59E0B)
     val WarningAmberLight = Color(0xFFFBBF24)
+    val HardOrange = Color(0xFFEA580C)
+    val HardOrangeLight = Color(0xFFFB923C)
     val ErrorRed = Color(0xFFD92D48)
     val ErrorRedLight = Color(0xFFFF8A9A)
     val InfoBlue = Color(0xFF3B82F6)

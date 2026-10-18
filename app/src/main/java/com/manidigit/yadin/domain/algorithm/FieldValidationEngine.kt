@@ -282,7 +282,7 @@ object FieldValidationEngine {
                         suggestedWord = singleLine,
                         suggestedTranslation = translationCombined,
                         suggestedNote = existingNote,
-                        reason = "فیلد ترجمه شامل واژگان لاتین است؛ نیازمند بازبینی دستی"
+                        reason = "فیلد ترجمه شامل کلمات لاتین است؛ نیازمند بازبینی دستی"
                     )
                 }
             }

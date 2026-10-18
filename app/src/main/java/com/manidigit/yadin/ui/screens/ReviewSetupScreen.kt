@@ -16,26 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material.icons.filled.SentimentSatisfied
-import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Style
-import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,14 +48,26 @@ import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
+import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.toStringRes
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
+import com.manidigit.yadin.ui.components.VocabStatType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSectionHeader
 import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.components.getDifficultyColor
 import com.manidigit.yadin.ui.components.getDifficultyIcon
+import com.manidigit.yadin.ui.components.getQuizLevelColor
+import com.manidigit.yadin.ui.components.getQuizLevelIcon
+import com.manidigit.yadin.ui.components.getReviewModeColor
+import com.manidigit.yadin.ui.components.getReviewModeIcon
+import com.manidigit.yadin.ui.components.getReviewTypeColor
+import com.manidigit.yadin.ui.components.getReviewTypeIcon
+import com.manidigit.yadin.ui.components.getStageColor
+import com.manidigit.yadin.ui.components.getStageIcon
+import com.manidigit.yadin.ui.components.getVocabStatIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -149,7 +149,7 @@ fun ReviewSetupScreen(
                 )
             }
 
-            // Card 1: Practice Mode (Standardized M3 Segmented Chips with Distinct Semantic Colors)
+            // Card 1: Practice Mode (نوع محتوا / حالت مطالعه)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -159,11 +159,10 @@ fun ReviewSetupScreen(
                         modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.review_setup_mode),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
+                        YadinSectionHeader(
+                            title = stringResource(R.string.review_setup_mode),
+                            icon = getReviewModeIcon(selectedMode),
+                            iconTint = getReviewModeColor(selectedMode, colors)
                         )
 
                         Row(
@@ -172,18 +171,18 @@ fun ReviewSetupScreen(
                         ) {
                             YadinSelectableChip(
                                 text = stringResource(R.string.review_mode_quiz),
-                                icon = Icons.Default.Quiz,
+                                icon = getReviewModeIcon(ReviewMode.QUIZ),
                                 isSelected = selectedMode == ReviewMode.QUIZ,
-                                accentColor = colors.primary,
+                                accentColor = getReviewModeColor(ReviewMode.QUIZ, colors),
                                 preserveAccentWhenUnselected = true,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.QUIZ }
                             )
                             YadinSelectableChip(
                                 text = stringResource(R.string.review_mode_flashcard),
-                                icon = Icons.Default.Style,
+                                icon = getReviewModeIcon(ReviewMode.FLASHCARD),
                                 isSelected = selectedMode == ReviewMode.FLASHCARD,
-                                accentColor = colors.accentPurple,
+                                accentColor = getReviewModeColor(ReviewMode.FLASHCARD, colors),
                                 preserveAccentWhenUnselected = true,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.FLASHCARD }
@@ -193,7 +192,7 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 2: Source & Category (Leitner Stages + Free Review + Category)
+            // Card 2: Source & Category (دوره‌های زمانی، وضعیت یادگیری و دسته‌بندی)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -203,11 +202,10 @@ fun ReviewSetupScreen(
                         modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.review_setup_source_title),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
+                        YadinSectionHeader(
+                            title = stringResource(R.string.review_setup_source_title),
+                            icon = getVocabStatIcon(VocabStatType.TOTAL),
+                            iconTint = getReviewTypeColor(selectedType, colors)
                         )
 
                         val stats = statistics
@@ -228,8 +226,8 @@ fun ReviewSetupScreen(
                                 title = stringResource(R.string.stage_daily),
                                 dueCount = dueDaily,
                                 totalCount = totalDaily,
-                                accentColor = colors.primary,
-                                icon = Icons.Default.Today,
+                                accentColor = getStageColor(Stage.DAILY, colors),
+                                icon = getStageIcon(Stage.DAILY),
                                 isSelected = (selectedType == ReviewType.DAILY),
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedType = ReviewType.DAILY }
@@ -239,8 +237,8 @@ fun ReviewSetupScreen(
                                 title = stringResource(R.string.stage_weekly),
                                 dueCount = dueWeekly,
                                 totalCount = totalWeekly,
-                                accentColor = colors.accentPurple,
-                                icon = Icons.Default.AutoAwesome,
+                                accentColor = getStageColor(Stage.WEEKLY, colors),
+                                icon = getStageIcon(Stage.WEEKLY),
                                 isSelected = (selectedType == ReviewType.WEEKLY),
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedType = ReviewType.WEEKLY }
@@ -250,8 +248,8 @@ fun ReviewSetupScreen(
                                 title = stringResource(R.string.stage_monthly),
                                 dueCount = dueMonthly,
                                 totalCount = totalMonthly,
-                                accentColor = colors.warning,
-                                icon = Icons.Default.Star,
+                                accentColor = getStageColor(Stage.MONTHLY, colors),
+                                icon = getStageIcon(Stage.MONTHLY),
                                 isSelected = (selectedType == ReviewType.MONTHLY),
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedType = ReviewType.MONTHLY }
@@ -272,8 +270,8 @@ fun ReviewSetupScreen(
                                 title = stringResource(R.string.review_setup_mode_random),
                                 dueCount = dueRandom,
                                 totalCount = totalRandom,
-                                accentColor = colors.secondary,
-                                icon = Icons.Default.Shuffle,
+                                accentColor = getReviewTypeColor(ReviewType.RANDOM, colors),
+                                icon = getReviewTypeIcon(ReviewType.RANDOM),
                                 isSelected = (selectedType == ReviewType.RANDOM),
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedType = ReviewType.RANDOM }
@@ -283,8 +281,8 @@ fun ReviewSetupScreen(
                                 title = stringResource(R.string.stage_learned),
                                 dueCount = dueLearned,
                                 totalCount = totalLearned,
-                                accentColor = colors.success,
-                                icon = Icons.Default.CheckCircle,
+                                accentColor = getReviewTypeColor(ReviewType.LEARNED, colors),
+                                icon = getReviewTypeIcon(ReviewType.LEARNED),
                                 isSelected = (selectedType == ReviewType.LEARNED),
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedType = ReviewType.LEARNED }
@@ -303,7 +301,7 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 3: Difficulty, Quiz Option Difficulty & Session Limit (100% Unified M3 Tile/Chip Styling)
+            // Card 3: Difficulty, Quiz Option Proficiency & Session Limit
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -313,11 +311,10 @@ fun ReviewSetupScreen(
                         modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.review_setup_diff_filter),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
+                        YadinSectionHeader(
+                            title = stringResource(R.string.review_setup_diff_filter),
+                            icon = getDifficultyIcon(VocabularyDifficulty.MEDIUM),
+                            iconTint = colors.warning
                         )
 
                         val diffItems = listOf(
@@ -373,13 +370,12 @@ fun ReviewSetupScreen(
                             }
                         }
 
-                        // Quiz option difficulty (Unified Vertical/Tinted Tile Style matching Difficulty & Leitner boxes)
+                        // ۵. سطح مهارت کاربر در آزمون (Proficiency / QuizLevel)
                         if (selectedMode == ReviewMode.QUIZ) {
-                            Text(
-                                text = stringResource(R.string.review_setup_quiz_level),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface
+                            YadinSectionHeader(
+                                title = stringResource(R.string.review_setup_quiz_level),
+                                icon = getQuizLevelIcon(selectedQuizLevel),
+                                iconTint = getQuizLevelColor(selectedQuizLevel, colors)
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -388,11 +384,8 @@ fun ReviewSetupScreen(
                                 QuizLevel.entries.forEach { lvl ->
                                     val title = stringResource(lvl.toStringRes())
                                     val isSelected = (selectedQuizLevel == lvl)
-                                    val (lvlIcon, lvlColor) = when (lvl) {
-                                        QuizLevel.BEGINNER -> Icons.Default.SentimentSatisfied to colors.success
-                                        QuizLevel.NORMAL -> Icons.Default.Speed to colors.primary
-                                        QuizLevel.PROFESSIONAL -> Icons.Default.Psychology to colors.warning
-                                    }
+                                    val lvlIcon = getQuizLevelIcon(lvl)
+                                    val lvlColor = getQuizLevelColor(lvl, colors)
                                     YadinSelectableChip(
                                         text = title,
                                         icon = lvlIcon,
@@ -408,12 +401,11 @@ fun ReviewSetupScreen(
                             }
                         }
 
-                        // Session Card Limit selector (Unified M3 Tinted Chips)
-                        Text(
-                            text = stringResource(R.string.review_setup_count),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface
+                        // Session Card Limit selector
+                        YadinSectionHeader(
+                            title = stringResource(R.string.review_setup_count),
+                            icon = Icons.Default.FormatListNumbered,
+                            iconTint = colors.primary
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),

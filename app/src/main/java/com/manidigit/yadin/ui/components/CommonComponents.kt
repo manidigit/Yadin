@@ -17,15 +17,25 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AssignmentTurnedIn
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.SentimentSatisfied
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +57,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
+import com.manidigit.yadin.domain.model.QuizLevel
+import com.manidigit.yadin.domain.model.ReviewMode
+import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.ui.theme.LocalYadinColors
@@ -56,6 +69,28 @@ import com.manidigit.yadin.ui.theme.YadinColors
 import com.manidigit.yadin.ui.util.TtsManager
 import com.manidigit.yadin.ui.util.formatDigits
 
+/**
+ * ۱. نوع محتوا / حالت مطالعه (ReviewMode)
+ * - آزمون ۴ گزینه‌ای: FactCheck (برگه آزمون با چک‌باکس و تیک)
+ * - فلش‌کارت تعاملی: Style (دو کارت روی هم با زاویه ملایم)
+ */
+fun getReviewModeIcon(mode: ReviewMode): ImageVector = when (mode) {
+    ReviewMode.QUIZ -> Icons.Default.FactCheck
+    ReviewMode.FLASHCARD -> Icons.Default.Style
+}
+
+fun getReviewModeColor(mode: ReviewMode, colors: YadinColors): Color = when (mode) {
+    ReviewMode.QUIZ -> colors.primary
+    ReviewMode.FLASHCARD -> colors.accentPurple
+}
+
+/**
+ * ۲. دوره‌های زمانی (Leitner Stage) و ۳. وضعیت یادگیری یادگرفته
+ * - روزانه: Today (تقویم تک‌برگی روزانه)
+ * - هفتگی: DateRange (برگه تقویم هفتگی)
+ * - ماهانه: CalendarMonth (تقویم شبکه‌ای کامل ماهانه)
+ * - یادگرفته: Verified (نشان/مدال ستاره‌دار تیک‌دار رسمی)
+ */
 fun getStageColor(stage: Stage, colors: YadinColors): Color = when (stage) {
     Stage.DAILY -> colors.primary
     Stage.WEEKLY -> colors.accentPurple
@@ -65,23 +100,98 @@ fun getStageColor(stage: Stage, colors: YadinColors): Color = when (stage) {
 
 fun getStageIcon(stage: Stage): ImageVector = when (stage) {
     Stage.DAILY -> Icons.Default.Today
-    Stage.WEEKLY -> Icons.Default.AutoAwesome
-    Stage.MONTHLY -> Icons.Default.Star
-    Stage.LEARNED -> Icons.Default.CheckCircle
+    Stage.WEEKLY -> Icons.Default.DateRange
+    Stage.MONTHLY -> Icons.Default.CalendarMonth
+    Stage.LEARNED -> Icons.Default.Verified
 }
 
+/**
+ * ۳. وضعیت یادگیری / فیلترهای تمرین (ReviewType)
+ * - تصادفی (رندوم): Shuffle (دو فلش متقاطع شافل)
+ * - یادگرفته: Verified (نشان ستاره‌دار تیک‌دار)
+ * - روزانه / هفتگی / ماهانه: مطابق دوره‌های زمانی لایتنر
+ */
+fun getReviewTypeIcon(type: ReviewType): ImageVector = when (type) {
+    ReviewType.DAILY -> getStageIcon(Stage.DAILY)
+    ReviewType.WEEKLY -> getStageIcon(Stage.WEEKLY)
+    ReviewType.MONTHLY -> getStageIcon(Stage.MONTHLY)
+    ReviewType.LEARNED -> getStageIcon(Stage.LEARNED)
+    ReviewType.RANDOM -> Icons.Default.Shuffle
+}
+
+fun getReviewTypeColor(type: ReviewType, colors: YadinColors): Color = when (type) {
+    ReviewType.DAILY -> getStageColor(Stage.DAILY, colors)
+    ReviewType.WEEKLY -> getStageColor(Stage.WEEKLY, colors)
+    ReviewType.MONTHLY -> getStageColor(Stage.MONTHLY, colors)
+    ReviewType.LEARNED -> getStageColor(Stage.LEARNED, colors)
+    ReviewType.RANDOM -> colors.secondary
+}
+
+/**
+ * ۴. سطح دشواری محتوا (VocabularyDifficulty)
+ * - آسان: CheckCircle (دایره سبز ساده با تیک) - رنگ سبز
+ * - متوسط: Tune (نماد سنجش نیمه‌پر / دو خط موج‌دار) - رنگ زرد/کهربایی
+ * - سخت: LocalFireDepartment (شعله آتش کوچک) - رنگ نارنجی
+ * - خیلی سخت: Bolt (صاعقه پرانرژی) - رنگ قرمز
+ */
 fun getDifficultyColor(difficulty: VocabularyDifficulty, colors: YadinColors): Color = when (difficulty) {
-    VocabularyDifficulty.EASY -> colors.success
-    VocabularyDifficulty.MEDIUM -> colors.info
-    VocabularyDifficulty.HARD -> colors.warning
-    VocabularyDifficulty.VERY_HARD -> colors.error
+    VocabularyDifficulty.EASY -> colors.difficultyEasy
+    VocabularyDifficulty.MEDIUM -> colors.difficultyMedium
+    VocabularyDifficulty.HARD -> colors.difficultyHard
+    VocabularyDifficulty.VERY_HARD -> colors.difficultyVeryHard
 }
 
 fun getDifficultyIcon(difficulty: VocabularyDifficulty): ImageVector = when (difficulty) {
-    VocabularyDifficulty.EASY -> Icons.Default.SentimentSatisfied
-    VocabularyDifficulty.MEDIUM -> Icons.Default.Speed
-    VocabularyDifficulty.HARD -> Icons.Default.Psychology
-    VocabularyDifficulty.VERY_HARD -> Icons.Default.LocalFireDepartment
+    VocabularyDifficulty.EASY -> Icons.Default.CheckCircle
+    VocabularyDifficulty.MEDIUM -> Icons.Default.Tune
+    VocabularyDifficulty.HARD -> Icons.Default.LocalFireDepartment
+    VocabularyDifficulty.VERY_HARD -> Icons.Default.Bolt
+}
+
+/**
+ * ۵. سطح مهارت کاربر در آزمون (Proficiency / QuizLevel)
+ * - مبتدی: Eco (جوانه گیاه دو‌برگی)
+ * - نرمال: Shield (سپر دفاعی ساده)
+ * - حرفه‌ای: WorkspacePremium (نشان/تاج طلایی ویژه)
+ */
+fun getQuizLevelIcon(level: QuizLevel): ImageVector = when (level) {
+    QuizLevel.BEGINNER -> Icons.Default.Eco
+    QuizLevel.NORMAL -> Icons.Default.Shield
+    QuizLevel.PROFESSIONAL -> Icons.Default.WorkspacePremium
+}
+
+fun getQuizLevelColor(level: QuizLevel, colors: YadinColors): Color = when (level) {
+    QuizLevel.BEGINNER -> colors.success
+    QuizLevel.NORMAL -> colors.primary
+    QuizLevel.PROFESSIONAL -> colors.warning
+}
+
+/**
+ * ۶. آمار و فیلترهای واژگان (VocabStatType)
+ * - کل کلمات: LibraryBooks (کتابخانه / پشته‌ای از کتاب‌ها)
+ * - تمرین‌شده‌ها: AssignmentTurnedIn (برگه با قلم و تیک تأیید)
+ * - تمرین‌نشده: HourglassEmpty (ساعت شنی دست‌نخورده)
+ * - یادگرفته: Verified (یکپارچه با مرحله یادگرفته)
+ */
+enum class VocabStatType {
+    TOTAL,
+    PRACTICED,
+    UNPRACTICED,
+    MASTERED
+}
+
+fun getVocabStatIcon(type: VocabStatType): ImageVector = when (type) {
+    VocabStatType.TOTAL -> Icons.AutoMirrored.Filled.LibraryBooks
+    VocabStatType.PRACTICED -> Icons.Default.AssignmentTurnedIn
+    VocabStatType.UNPRACTICED -> Icons.Default.HourglassEmpty
+    VocabStatType.MASTERED -> getStageIcon(Stage.LEARNED)
+}
+
+fun getVocabStatColor(type: VocabStatType, colors: YadinColors): Color = when (type) {
+    VocabStatType.TOTAL -> colors.primary
+    VocabStatType.PRACTICED -> colors.accentPurple
+    VocabStatType.UNPRACTICED -> colors.warning
+    VocabStatType.MASTERED -> getStageColor(Stage.LEARNED, colors)
 }
 
 @Composable
@@ -122,6 +232,140 @@ fun YadinCard(
     )
 }
 
+/**
+ * هدر استاندارد درون‌کارتی برای تمامی بخش‌های برنامه با آیکون دایره‌ای رنگی، عنوان و زیرعنوان اختیاری
+ */
+@Composable
+fun YadinSectionHeader(
+    title: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    iconTint: Color = LocalYadinColors.current.primary,
+    subtitle: String? = null,
+    trailingContent: (@Composable RowScope.() -> Unit)? = null
+) {
+    val colors = LocalYadinColors.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(iconTint.copy(alpha = 0.14f))
+                    .border(0.8.dp, iconTint.copy(alpha = 0.32f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+
+        if (trailingContent != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                content = trailingContent
+            )
+        }
+    }
+}
+
+/**
+ * کاشی آماری استاندارد و یکپارچه برای نمایش آمار واژگان، خلاصه نشست و شاخص‌های کلیدی در تمام صفحات
+ */
+@Composable
+fun YadinStatTile(
+    title: String,
+    value: String,
+    icon: ImageVector,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+    val shape = RoundedCornerShape(dimensions.cornerSmall)
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(accentColor.copy(alpha = 0.10f))
+            .border(
+                width = 1.dp,
+                color = accentColor.copy(alpha = 0.35f),
+                shape = shape
+            )
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable { onClick() }
+                } else Modifier
+            )
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accentColor,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = accentColor,
+                fontSize = 15.sp,
+                maxLines = 1
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
 @Composable
 fun DifficultyCounterRow(
     counts: Map<VocabularyDifficulty, Int>,
@@ -130,7 +374,6 @@ fun DifficultyCounterRow(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
-    val shape = RoundedCornerShape(dimensions.cornerSmall)
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -148,51 +391,14 @@ fun DifficultyCounterRow(
             val color = getDifficultyColor(diff, colors)
             val icon = getDifficultyIcon(diff)
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(shape)
-                    .background(color.copy(alpha = 0.10f))
-                    .border(
-                        width = 1.dp,
-                        color = color.copy(alpha = 0.35f),
-                        shape = shape
-                    )
-                    .then(
-                        if (onSelectDifficulty != null) {
-                            Modifier.clickable { onSelectDifficulty(diff) }
-                        } else Modifier
-                    )
-                    .padding(vertical = 10.dp, horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = count.formatDigits(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = color,
-                        fontSize = 15.sp
-                    )
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface,
-                        maxLines = 1
-                    )
-                }
-            }
+            YadinStatTile(
+                title = label,
+                value = count.formatDigits(),
+                icon = icon,
+                accentColor = color,
+                modifier = Modifier.weight(1f),
+                onClick = if (onSelectDifficulty != null) ({ onSelectDifficulty(diff) }) else null
+            )
         }
     }
 }
@@ -403,7 +609,7 @@ fun YadinScreenHeader(
 
 /**
  * دکمه و چیپ انتخابگر استاندارد Material 3 برای تمام بخش‌های برنامه
- * (حالت مرور، سطح سختی گزینه‌های آزمون، سقف تعداد کلمات، فیلتر سختی، تگ دسته‌بندی، سیاست تکرار و تنظیمات)
+ * (حالت مرور، سطح مهارت گزینه‌های آزمون، سقف تعداد کلمات، فیلتر سختی، تگ دسته‌بندی، سیاست تکرار و تنظیمات)
  * در هر دو حالت انتخاب‌شده و انتخاب‌نشده دارای تینت و کادر رنگی معنایی ظریف است تا کاملاً با کاشی‌های لایتنر هم‌خانواده باشد.
  */
 @Composable
@@ -473,7 +679,7 @@ fun YadinSelectableChip(
                             imageVector = icon,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                     }
                     if (badgeText != null) {
@@ -516,7 +722,7 @@ fun YadinSelectableChip(
                         imageVector = icon,
                         contentDescription = null,
                         tint = iconTint,
-                        modifier = Modifier.size(15.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
                 Text(

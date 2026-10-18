@@ -40,7 +40,7 @@
     <string name="stage_daily">Daily</string>
     <string name="stage_weekly">Weekly</string>
     <string name="stage_monthly">Monthly</string>
-    <string name="stage_learned">Mastered</string>
+    <string name="stage_learned">Learned</string>
     <string name="stage_all">All Stages</string>
     <string name="difficulty_easy">Easy</string>
     <string name="difficulty_medium">Medium</string>
@@ -52,7 +52,7 @@
     <string name="home_total_words">Total Words</string>
     <string name="home_practiced_words">Practiced</string>
     <string name="home_unpracticed_words">Unpracticed</string>
-    <string name="home_mastered_words">Mastered</string>
+    <string name="home_mastered_words">Learned</string>
     <string name="home_leitner_box">Leitner Memory Stages</string>
     <string name="home_difficulty_spectrum">Difficulty Spectrum</string>
     <string name="home_start_review">Start Review</string>
@@ -74,8 +74,8 @@
     <string name="review_setup_stage">Target Leitner Stage:</string>
     <string name="review_setup_source_title">Vocabulary Source &amp; Spaced Repetition</string>
     <string name="review_setup_leitner_cycle">Leitner Repetition Cycle:</string>
-    <string name="review_setup_additional_modes">Additional &amp; Free Review Modes:</string>
-    <string name="review_setup_mode_random">Random (Free Review)</string>
+    <string name="review_setup_additional_modes">Additional &amp; Random Review Modes:</string>
+    <string name="review_setup_mode_random">Random</string>
     <string name="review_setup_category_label">Subject Category</string>
     <string name="review_setup_diff_filter">Difficulty Level Filter</string>
     <string name="review_setup_quiz_level">Quiz Distractor Difficulty</string>

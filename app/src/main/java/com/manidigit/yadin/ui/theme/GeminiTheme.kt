@@ -40,6 +40,10 @@ object GeminiTheme {
         info = YadinPalette.InfoBlue,
         onInfo = Color(0xFFFFFFFF),
         accentPurple = YadinPalette.GeminiPurple,
+        difficultyEasy = YadinPalette.SuccessGreen,
+        difficultyMedium = YadinPalette.WarningAmber,
+        difficultyHard = YadinPalette.HardOrange,
+        difficultyVeryHard = YadinPalette.ErrorRed,
         heroGradient = Brush.linearGradient(
             listOf(YadinPalette.GeminiBlue, YadinPalette.GeminiSky, YadinPalette.GeminiPurple)
         ),
@@ -76,6 +80,10 @@ object GeminiTheme {
         info = YadinPalette.InfoBlueLight,
         onInfo = Color(0xFF060B14),
         accentPurple = YadinPalette.GeminiPurpleLight,
+        difficultyEasy = YadinPalette.SuccessGreenLight,
+        difficultyMedium = YadinPalette.WarningAmberLight,
+        difficultyHard = YadinPalette.HardOrangeLight,
+        difficultyVeryHard = YadinPalette.ErrorRedLight,
         heroGradient = Brush.linearGradient(
             listOf(YadinPalette.GeminiBlueLight, YadinPalette.GeminiSkyLight, YadinPalette.GeminiPurpleLight)
         ),
