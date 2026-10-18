@@ -83,12 +83,12 @@ fun RetentionGaugeCard(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // گیج نیمه‌دایره مدرن
+                // گیج دایره‌ای مدرن (۳۶۰ درجه کامل با حلقه پس‌زمینه کمرنگ)
                 Box(
                     modifier = Modifier.size(110.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    val trackColor = colors.surfaceVariant
+                    val trackColor = statusColor.copy(alpha = 0.22f)
                     val arcColor = statusColor
 
                     Canvas(modifier = Modifier.size(96.dp)) {
@@ -97,28 +97,30 @@ fun RetentionGaugeCard(
                         val topLeft = androidx.compose.ui.geometry.Offset(strokeWidth / 2, strokeWidth / 2)
                         val arcSize = androidx.compose.ui.geometry.Size(diameter, diameter)
 
-                        // Track Arc (240 degrees from 150 to 390)
+                        // حلقه کامل پس‌زمینه (Track Circle - 360 درجه با رنگ کمرنگ جهت مشخص بودن کامل دایره)
                         drawArc(
                             color = trackColor,
-                            startAngle = 150f,
-                            sweepAngle = 240f,
+                            startAngle = -90f,
+                            sweepAngle = 360f,
                             useCenter = false,
                             topLeft = topLeft,
                             size = arcSize,
                             style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                         )
 
-                        // Progress Arc
-                        val progressSweep = (animatedScore / 100f).coerceIn(0f, 1f) * 240f
-                        drawArc(
-                            color = arcColor,
-                            startAngle = 150f,
-                            sweepAngle = progressSweep,
-                            useCenter = false,
-                            topLeft = topLeft,
-                            size = arcSize,
-                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                        )
+                        // کمان پرشده پیشرفت (Progress Arc - شروع از بالای دایره در جهت عقربه‌های ساعت)
+                        val progressSweep = (animatedScore / 100f).coerceIn(0f, 1f) * 360f
+                        if (progressSweep > 0f) {
+                            drawArc(
+                                color = arcColor,
+                                startAngle = -90f,
+                                sweepAngle = progressSweep,
+                                useCenter = false,
+                                topLeft = topLeft,
+                                size = arcSize,
+                                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                            )
+                        }
                     }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {

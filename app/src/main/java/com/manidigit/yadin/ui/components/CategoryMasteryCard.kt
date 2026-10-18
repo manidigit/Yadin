@@ -97,7 +97,7 @@ fun CategoryMasteryCard(
                                 .height(6.dp)
                                 .clip(RoundedCornerShape(3.dp)),
                             color = color,
-                            trackColor = colors.surfaceVariant
+                            trackColor = color.copy(alpha = 0.18f)
                         )
                     }
                 }

@@ -814,14 +814,15 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                     )
                 }
 
+                val barColor = if (group.isMaxLevel) colors.success else tierColor
                 LinearProgressIndicator(
                     progress = { progressFraction },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp)),
-                    color = if (group.isMaxLevel) colors.success else tierColor,
-                    trackColor = colors.surfaceVariant
+                    color = barColor,
+                    trackColor = barColor.copy(alpha = 0.18f)
                 )
             }
         }

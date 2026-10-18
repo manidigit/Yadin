@@ -164,7 +164,7 @@ fun StudyHabitsCard(
                                 .height(6.dp)
                                 .clip(RoundedCornerShape(3.dp)),
                             color = if (isPeak) colors.primary else colors.primary.copy(alpha = 0.6f),
-                            trackColor = colors.surfaceVariant
+                            trackColor = colors.primary.copy(alpha = 0.18f)
                         )
                     }
                 }
