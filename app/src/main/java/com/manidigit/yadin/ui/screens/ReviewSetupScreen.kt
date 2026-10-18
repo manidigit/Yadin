@@ -64,6 +64,8 @@ import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.toStringRes
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.components.getDifficultyColor
 import com.manidigit.yadin.ui.components.getDifficultyIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
@@ -132,45 +134,22 @@ fun ReviewSetupScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
-            .padding(horizontal = dimensions.screenPadding, vertical = 8.dp),
+            .padding(horizontal = dimensions.screenPadding, vertical = 10.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Header
+            // Standardized Screen Header
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(colors.surfaceVariant)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                            tint = colors.onSurface,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Text(
-                        text = stringResource(R.string.review_setup_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                }
+                YadinScreenHeader(
+                    title = stringResource(R.string.review_setup_title),
+                    onBack = onBack
+                )
             }
 
-            // Card 1: Practice Mode (Compact M3 Segmented Chips)
+            // Card 1: Practice Mode (Standardized M3 Segmented Chips with Distinct Semantic Colors)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -191,17 +170,21 @@ fun ReviewSetupScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ModeSelectButton(
-                                title = stringResource(R.string.review_mode_quiz),
+                            YadinSelectableChip(
+                                text = stringResource(R.string.review_mode_quiz),
                                 icon = Icons.Default.Quiz,
                                 isSelected = selectedMode == ReviewMode.QUIZ,
+                                accentColor = colors.primary,
+                                preserveAccentWhenUnselected = true,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.QUIZ }
                             )
-                            ModeSelectButton(
-                                title = stringResource(R.string.review_mode_flashcard),
+                            YadinSelectableChip(
+                                text = stringResource(R.string.review_mode_flashcard),
                                 icon = Icons.Default.Style,
                                 isSelected = selectedMode == ReviewMode.FLASHCARD,
+                                accentColor = colors.accentPurple,
+                                preserveAccentWhenUnselected = true,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.FLASHCARD }
                             )
@@ -210,7 +193,7 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 2: Source & Category (Compact Leitner Stages + Free Review + Category)
+            // Card 2: Source & Category (Leitner Stages + Free Review + Category)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -227,7 +210,6 @@ fun ReviewSetupScreen(
                             color = colors.onSurface
                         )
 
-                        // Category A: Leitner Repetition Cycle (Distinct Colors: Daily Blue, Weekly Purple, Monthly Amber)
                         val stats = statistics
                         val dueDaily = stats?.dueDailyCount ?: 0
                         val totalDaily = stats?.dailyStageCount ?: 0
@@ -276,7 +258,6 @@ fun ReviewSetupScreen(
                             )
                         }
 
-                        // Category B: Compact Additional & Free Review Modes (Horizontal layout to save vertical space)
                         val dueRandom = stats?.dueTodayCount ?: 0
                         val totalRandom = stats?.totalWords ?: 0
 
@@ -291,7 +272,7 @@ fun ReviewSetupScreen(
                                 title = stringResource(R.string.review_setup_mode_random),
                                 dueCount = dueRandom,
                                 totalCount = totalRandom,
-                                accentColor = colors.info,
+                                accentColor = colors.secondary,
                                 icon = Icons.Default.Shuffle,
                                 isSelected = (selectedType == ReviewType.RANDOM),
                                 modifier = Modifier.weight(1f),
@@ -310,7 +291,6 @@ fun ReviewSetupScreen(
                             )
                         }
 
-                        // Category Dropdown
                         if (categories.isNotEmpty()) {
                             ExposedCategoryDropdown(
                                 categories = categories,
@@ -323,7 +303,7 @@ fun ReviewSetupScreen(
                 }
             }
 
-            // Card 3: Difficulty, Quiz Option Difficulty & Session Limit (Unified M3 Chips & Segmented Controls)
+            // Card 3: Difficulty, Quiz Option Difficulty & Session Limit (100% Unified M3 Tile/Chip Styling)
             item {
                 YadinCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -393,7 +373,7 @@ fun ReviewSetupScreen(
                             }
                         }
 
-                        // Quiz option difficulty (Unified M3 Segmented Chips with Icons)
+                        // Quiz option difficulty (Unified Vertical/Tinted Tile Style matching Difficulty & Leitner boxes)
                         if (selectedMode == ReviewMode.QUIZ) {
                             Text(
                                 text = stringResource(R.string.review_setup_quiz_level),
@@ -413,11 +393,14 @@ fun ReviewSetupScreen(
                                         QuizLevel.NORMAL -> Icons.Default.Speed to colors.primary
                                         QuizLevel.PROFESSIONAL -> Icons.Default.Psychology to colors.warning
                                     }
-                                    YadinSelectableChipButton(
+                                    YadinSelectableChip(
                                         text = title,
                                         icon = lvlIcon,
                                         isSelected = isSelected,
                                         accentColor = lvlColor,
+                                        preserveAccentWhenUnselected = true,
+                                        verticalLayout = true,
+                                        fontSize = 11.sp,
                                         modifier = Modifier.weight(1f),
                                         onClick = { selectedQuizLevel = lvl }
                                     )
@@ -425,7 +408,7 @@ fun ReviewSetupScreen(
                             }
                         }
 
-                        // Session Card Limit selector (Unified M3 Segmented Chips)
+                        // Session Card Limit selector (Unified M3 Tinted Chips)
                         Text(
                             text = stringResource(R.string.review_setup_count),
                             style = MaterialTheme.typography.labelLarge,
@@ -438,11 +421,13 @@ fun ReviewSetupScreen(
                         ) {
                             listOf(10, 20, 30, 50, 100).forEach { limit ->
                                 val isSelected = (selectedMaxCards == limit)
-                                YadinSelectableChipButton(
+                                YadinSelectableChip(
                                     text = limit.formatDigits(),
                                     icon = null,
                                     isSelected = isSelected,
                                     accentColor = colors.primary,
+                                    preserveAccentWhenUnselected = true,
+                                    fontSize = 12.sp,
                                     modifier = Modifier.weight(1f),
                                     onClick = { selectedMaxCards = limit }
                                 )
@@ -493,104 +478,6 @@ fun ReviewSetupScreen(
                 text = buttonText,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun ModeSelectButton(
-    title: String,
-    icon: ImageVector,
-    isSelected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-    val shape = RoundedCornerShape(10.dp)
-    val bgColor = if (isSelected) colors.primary.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f)
-    val borderColor = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.25f)
-    val contentColor = if (isSelected) colors.primary else colors.onSurfaceVariant
-
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(bgColor)
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = borderColor,
-                shape = shape
-            )
-            .clickable { onClick() }
-            .padding(vertical = 8.dp, horizontal = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(16.dp)
-            )
-            Text(
-                text = title,
-                fontSize = 12.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) colors.primary else colors.onSurface
-            )
-        }
-    }
-}
-
-@Composable
-private fun YadinSelectableChipButton(
-    text: String,
-    icon: ImageVector?,
-    isSelected: Boolean,
-    accentColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val colors = LocalYadinColors.current
-    val shape = RoundedCornerShape(10.dp)
-    val bgColor = if (isSelected) accentColor.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f)
-    val borderColor = if (isSelected) accentColor else colors.outline.copy(alpha = 0.25f)
-    val contentColor = if (isSelected) accentColor else colors.onSurfaceVariant
-
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(bgColor)
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = borderColor,
-                shape = shape
-            )
-            .clickable { onClick() }
-            .padding(vertical = 8.dp, horizontal = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = contentColor,
-                    modifier = Modifier.size(14.dp)
-                )
-            }
-            Text(
-                text = text,
-                fontSize = 11.5.sp,
-                maxLines = 1,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) accentColor else colors.onSurface
             )
         }
     }
@@ -758,49 +645,16 @@ fun CompactDiffBadge(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val colors = LocalYadinColors.current
-    val shape = RoundedCornerShape(10.dp)
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(if (isSelected) color.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f))
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) color else colors.outline.copy(alpha = 0.25f),
-                shape = shape
-            )
-            .clickable { onClick() }
-            .padding(vertical = 7.dp, horizontal = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (isSelected) color else colors.onSurfaceVariant,
-                    modifier = Modifier.size(13.dp)
-                )
-                Text(
-                    text = count.formatDigits(),
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isSelected) color else colors.onSurface
-                )
-            }
-            Text(
-                text = label,
-                fontSize = 10.5.sp,
-                maxLines = 1,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) color else colors.onSurfaceVariant
-            )
-        }
-    }
+    YadinSelectableChip(
+        text = label,
+        icon = icon,
+        badgeText = count.formatDigits(),
+        isSelected = isSelected,
+        accentColor = color,
+        preserveAccentWhenUnselected = true,
+        verticalLayout = true,
+        fontSize = 10.5.sp,
+        modifier = modifier,
+        onClick = onClick
+    )
 }

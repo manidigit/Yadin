@@ -49,6 +49,8 @@ import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.WordDetail
 import com.manidigit.yadin.domain.text.TextUtilities
+import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 
@@ -122,32 +124,10 @@ fun AddEditWordScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.surfaceVariant)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.action_back),
-                        tint = colors.onSurface
-                    )
-                }
-
-                Text(
-                    text = if (initialWord != null) stringResource(R.string.word_edit_title) else stringResource(R.string.word_add_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
-            }
+            YadinScreenHeader(
+                title = if (initialWord != null) stringResource(R.string.word_edit_title) else stringResource(R.string.word_add_title),
+                onBack = onBack
+            )
 
             val sourceLabel = if (isNormal) stringResource(R.string.word_source_label_es) else stringResource(R.string.word_source_label_fa)
             val sourcePlaceholder = if (isNormal) stringResource(R.string.word_source_placeholder_es) else stringResource(R.string.word_source_placeholder_fa)
@@ -197,26 +177,20 @@ fun AddEditWordScreen(
                 ) {
                     items(categories, key = { it.id }) { cat ->
                         val isSelected = selectedCategoryIds.contains(cat.id)
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(dimensions.cornerSmall))
-                                .background(if (isSelected) colors.primary else colors.surfaceVariant)
-                                .clickable {
-                                    selectedCategoryIds = if (isSelected) {
-                                        selectedCategoryIds - cat.id
-                                    } else {
-                                        selectedCategoryIds + cat.id
-                                    }
+                        YadinSelectableChip(
+                            text = cat.name,
+                            isSelected = isSelected,
+                            accentColor = colors.primary,
+                            preserveAccentWhenUnselected = true,
+                            fontSize = 12.sp,
+                            onClick = {
+                                selectedCategoryIds = if (isSelected) {
+                                    selectedCategoryIds - cat.id
+                                } else {
+                                    selectedCategoryIds + cat.id
                                 }
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = cat.name,
-                                color = if (isSelected) colors.onPrimary else colors.onSurface,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             }

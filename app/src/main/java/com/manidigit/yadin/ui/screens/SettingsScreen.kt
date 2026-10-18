@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.R
@@ -257,33 +258,16 @@ fun SettingsScreen(
                     listOf(1, 2, 3, 4, 5).forEach { thresholdValue ->
                         val isSelected = (difficultyThreshold == thresholdValue)
                         val label = thresholdValue.formatDigits()
-                        val shape = RoundedCornerShape(10.dp)
 
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(shape)
-                                .background(
-                                    if (isSelected) colors.primary.copy(alpha = 0.16f) else colors.surfaceVariant.copy(alpha = 0.45f)
-                                )
-                                .border(
-                                    width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.25f),
-                                    shape = shape
-                                )
-                                .clickable { onSetDifficultyThreshold(thresholdValue) }
-                                .padding(vertical = 9.dp, horizontal = 2.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) colors.primary else colors.onSurface,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                fontSize = 13.sp
-                            )
-                        }
+                        YadinSelectableChip(
+                            text = label,
+                            isSelected = isSelected,
+                            accentColor = colors.warning,
+                            preserveAccentWhenUnselected = true,
+                            fontSize = 13.sp,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSetDifficultyThreshold(thresholdValue) }
+                        )
                     }
                 }
             }
@@ -620,39 +604,16 @@ private fun LanguageDirectionPill(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(dimensions.cornerSmall))
-            .background(if (isSelected) colors.primary.copy(alpha = 0.15f) else colors.surfaceVariant.copy(alpha = 0.5f))
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(dimensions.cornerSmall)
-            )
-            .clickable { onClick() }
-            .padding(10.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) colors.primary else colors.onSurface,
-                fontSize = 12.sp
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (isSelected) colors.primary.copy(alpha = 0.8f) else colors.onSurfaceVariant,
-                fontSize = 9.sp,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-        }
-    }
+    YadinSelectableChip(
+        text = title,
+        subtitle = subtitle,
+        isSelected = isSelected,
+        accentColor = colors.primary,
+        preserveAccentWhenUnselected = true,
+        verticalLayout = true,
+        minHeight = 46.dp,
+        fontSize = 12.sp,
+        modifier = modifier,
+        onClick = onClick
+    )
 }

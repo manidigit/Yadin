@@ -51,9 +51,11 @@ import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.SpeakButton
 import com.manidigit.yadin.ui.components.StageBadge
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinScreenHeader
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
+import androidx.compose.foundation.border
 
 @Composable
 fun WordDetailScreen(
@@ -115,37 +117,11 @@ fun WordDetailScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(colors.surfaceVariant)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.action_back),
-                        tint = colors.onSurface
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.word_detail_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onSurface
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+            // Standardized Header
+            YadinScreenHeader(
+                title = stringResource(R.string.word_detail_title),
+                onBack = onBack,
+                trailingContent = {
                     if (!word.concept.active) {
                         Text(
                             text = stringResource(R.string.word_status_inactive),
@@ -155,18 +131,27 @@ fun WordDetailScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(colors.error.copy(alpha = 0.15f))
+                                .border(1.dp, colors.error.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
-                    IconButton(onClick = { showDeleteDialog = true }) {
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(colors.error.copy(alpha = 0.12f))
+                            .border(1.dp, colors.error.copy(alpha = 0.3f), CircleShape)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = stringResource(R.string.action_delete),
-                            tint = colors.error
+                            tint = colors.error,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-            }
+            )
 
             // Inactive Word Alert Banner
             if (!word.concept.active) {
@@ -245,13 +230,15 @@ fun WordDetailScreen(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(colors.surfaceVariant)
+                                        .background(colors.primary.copy(alpha = 0.12f))
+                                        .border(1.dp, colors.primary.copy(alpha = 0.30f), RoundedCornerShape(8.dp))
                                         .padding(horizontal = 10.dp, vertical = 4.dp)
                                  ) {
                                     Text(
                                         text = cat.name,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = colors.onSurfaceVariant
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.primary
                                     )
                                 }
                             }
@@ -406,7 +393,7 @@ fun WordDetailScreen(
                         text = stringResource(R.string.word_learning_reverse_header),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
+                        color = colors.accentPurple
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),

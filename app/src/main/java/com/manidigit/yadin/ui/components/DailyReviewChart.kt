@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -241,32 +242,36 @@ fun DailyReviewChart(
                     }
                 }
 
-                // سگمنت سوئیچ بازه زمانی
+                // سگمنت سوئیچ بازه زمانی (استایل چیپ استاندارد M3)
                 Row(
-                    modifier = Modifier
-                        .clip(shapes.extraSmall)
-                        .background(colors.surfaceVariant)
-                        .padding(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     ChartTimeframe.entries.forEach { tf ->
                         val isSelected = (selectedTimeframe == tf)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(if (isSelected) colors.primary else Color.Transparent)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isSelected) colors.primary.copy(alpha = 0.18f)
+                                    else colors.primary.copy(alpha = 0.06f)
+                                )
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) colors.primary else colors.primary.copy(alpha = 0.28f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
                                 .clickable {
                                     selectedTimeframe = tf
                                     selectedIndex = null
                                 }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = 8.dp, vertical = 5.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = stringResource(tf.titleRes),
                                 fontSize = 10.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) colors.primary else colors.onSurface
                             )
                         }
                     }

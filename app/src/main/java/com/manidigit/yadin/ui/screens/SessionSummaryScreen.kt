@@ -37,6 +37,15 @@ import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
 
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.sp
+
 @Composable
 fun SessionSummaryScreen(
     correctCount: Int,
@@ -58,15 +67,15 @@ fun SessionSummaryScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(90.dp)
+                    .size(84.dp)
                     .clip(CircleShape)
                     .background(colors.heroGradient),
                 contentAlignment = Alignment.Center
@@ -75,7 +84,7 @@ fun SessionSummaryScreen(
                     imageVector = Icons.Default.EmojiEvents,
                     contentDescription = stringResource(R.string.summary_celebration_icon),
                     tint = colors.onHero,
-                    modifier = Modifier.size(50.dp)
+                    modifier = Modifier.size(46.dp)
                 )
             }
 
@@ -99,8 +108,8 @@ fun SessionSummaryScreen(
             backgroundColor = colors.surface
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     text = stringResource(R.string.summary_performance_title),
@@ -111,34 +120,42 @@ fun SessionSummaryScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(stringResource(R.string.summary_total_reviewed_label), color = colors.onSurfaceVariant)
-                    Text(stringResource(R.string.summary_cards_count, total.formatDigits()), fontWeight = FontWeight.Bold, color = colors.onSurface)
+                    SummaryStatTile(
+                        label = stringResource(R.string.summary_total_reviewed_label),
+                        value = stringResource(R.string.summary_cards_count, total.formatDigits()),
+                        icon = Icons.Default.Layers,
+                        accentColor = colors.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SummaryStatTile(
+                        label = stringResource(R.string.summary_accuracy_label),
+                        value = "${accuracy.formatDigits()}%",
+                        icon = Icons.Default.Speed,
+                        accentColor = colors.accentPurple,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(stringResource(R.string.summary_correct_count_label), color = colors.onSurfaceVariant)
-                    Text(correctCount.formatDigits(), fontWeight = FontWeight.Bold, color = colors.success)
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(stringResource(R.string.summary_wrong_count_label), color = colors.onSurfaceVariant)
-                    Text(wrongCount.formatDigits(), fontWeight = FontWeight.Bold, color = colors.error)
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(stringResource(R.string.summary_accuracy_label), color = colors.onSurfaceVariant)
-                    Text("${accuracy.formatDigits()}%", fontWeight = FontWeight.Bold, color = colors.primary)
+                    SummaryStatTile(
+                        label = stringResource(R.string.summary_correct_count_label),
+                        value = correctCount.formatDigits(),
+                        icon = Icons.Default.CheckCircle,
+                        accentColor = colors.success,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SummaryStatTile(
+                        label = stringResource(R.string.summary_wrong_count_label),
+                        value = wrongCount.formatDigits(),
+                        icon = Icons.Default.Cancel,
+                        accentColor = colors.error,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -174,6 +191,56 @@ fun SessionSummaryScreen(
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(stringResource(R.string.summary_review_again), fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+@Composable
+private fun SummaryStatTile(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    accentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalYadinColors.current
+    val shape = RoundedCornerShape(10.dp)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(accentColor.copy(alpha = 0.10f))
+            .border(1.dp, accentColor.copy(alpha = 0.32f), shape)
+            .padding(vertical = 10.dp, horizontal = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = value,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = accentColor
+                )
+            }
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.onSurfaceVariant,
+                maxLines = 1
+            )
         }
     }
 }

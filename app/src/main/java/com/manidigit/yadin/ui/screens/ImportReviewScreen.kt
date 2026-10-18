@@ -51,6 +51,7 @@ import com.manidigit.yadin.domain.algorithm.VocabularyParser
 import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.domain.text.TextUtilities
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinScreenHeader
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -82,33 +83,11 @@ fun ImportReviewScreen(
             .background(colors.background)
             .padding(dimensions.screenPadding)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(colors.surfaceVariant)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.action_back),
-                    tint = colors.onSurface
-                )
-            }
-            Text(
-                text = stringResource(R.string.import_review_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface
-            )
-            Spacer(modifier = Modifier.width(38.dp))
-        }
+        // Standardized Header
+        YadinScreenHeader(
+            title = stringResource(R.string.import_review_title),
+            onBack = onBack
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 

@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
@@ -36,6 +40,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
@@ -320,5 +328,216 @@ fun SpeakButton(
             tint = colors.primary,
             modifier = Modifier.size(20.dp)
         )
+    }
+}
+
+/**
+ * هدر استاندارد و یکپارچه تمامی صفحات فرعی برنامه (مجهز به دکمه بازگشت ۳۸dp، عنوان، زیرعنوان اختیاری و اکشن‌های سمت چپ)
+ */
+@Composable
+fun YadinScreenHeader(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    trailingContent: (@Composable RowScope.() -> Unit)? = null
+) {
+    val colors = LocalYadinColors.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(colors.surfaceVariant)
+                    .border(1.dp, colors.outline.copy(alpha = 0.25f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.action_back),
+                    tint = colors.onSurface,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+
+        if (trailingContent != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                content = trailingContent
+            )
+        }
+    }
+}
+
+/**
+ * دکمه و چیپ انتخابگر استاندارد Material 3 برای تمام بخش‌های برنامه
+ * (حالت مرور، سطح سختی گزینه‌های آزمون، سقف تعداد کلمات، فیلتر سختی، تگ دسته‌بندی، سیاست تکرار و تنظیمات)
+ * در هر دو حالت انتخاب‌شده و انتخاب‌نشده دارای تینت و کادر رنگی معنایی ظریف است تا کاملاً با کاشی‌های لایتنر هم‌خانواده باشد.
+ */
+@Composable
+fun YadinSelectableChip(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    badgeText: String? = null,
+    subtitle: String? = null,
+    accentColor: Color? = null,
+    preserveAccentWhenUnselected: Boolean = true,
+    verticalLayout: Boolean = false,
+    minHeight: Dp = 38.dp,
+    fontSize: TextUnit = 11.5.sp
+) {
+    val colors = LocalYadinColors.current
+    val effectiveAccent = accentColor ?: colors.primary
+    val shape = RoundedCornerShape(10.dp)
+
+    val bgColor = when {
+        isSelected -> effectiveAccent.copy(alpha = 0.18f)
+        preserveAccentWhenUnselected -> effectiveAccent.copy(alpha = 0.07f)
+        else -> colors.surfaceVariant.copy(alpha = 0.55f)
+    }
+
+    val borderColor = when {
+        isSelected -> effectiveAccent
+        preserveAccentWhenUnselected -> effectiveAccent.copy(alpha = 0.30f)
+        else -> colors.outline.copy(alpha = 0.30f)
+    }
+
+    val iconTint = when {
+        isSelected -> effectiveAccent
+        preserveAccentWhenUnselected -> effectiveAccent.copy(alpha = 0.85f)
+        else -> colors.onSurfaceVariant
+    }
+
+    val textColor = if (isSelected) effectiveAccent else colors.onSurface
+
+    Box(
+        modifier = modifier
+            .heightIn(min = minHeight)
+            .clip(shape)
+            .background(bgColor)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = shape
+            )
+            .clickable { onClick() }
+            .padding(vertical = 7.dp, horizontal = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (verticalLayout) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    if (icon != null) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                    if (badgeText != null) {
+                        Text(
+                            text = badgeText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (isSelected || preserveAccentWhenUnselected) effectiveAccent else colors.onSurface,
+                            maxLines = 1
+                        )
+                    }
+                }
+                Text(
+                    text = text,
+                    fontSize = fontSize,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = textColor,
+                    textAlign = TextAlign.Center
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        fontSize = 9.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = colors.onSurfaceVariant.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+                Text(
+                    text = text,
+                    fontSize = fontSize,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = textColor,
+                    textAlign = TextAlign.Center
+                )
+                if (badgeText != null) {
+                    Text(
+                        text = badgeText,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = effectiveAccent,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
     }
 }

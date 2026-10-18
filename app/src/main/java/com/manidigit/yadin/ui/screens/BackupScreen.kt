@@ -85,6 +85,8 @@ import com.manidigit.yadin.data.repository.BackupExportFormat
 import com.manidigit.yadin.data.repository.BackupOptions
 import com.manidigit.yadin.data.repository.BackupType
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -197,40 +199,12 @@ fun BackupScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(colors.surfaceVariant)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.action_back),
-                        tint = colors.onSurface
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.backup_title),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.backup_subtitle),
-                        fontSize = 12.sp,
-                        color = colors.onSurfaceVariant
-                    )
-                }
-            }
+            // Standardized Header
+            YadinScreenHeader(
+                title = stringResource(R.string.backup_title),
+                subtitle = stringResource(R.string.backup_subtitle),
+                onBack = onBack
+            )
 
             // Progress Banner
             AnimatedVisibility(
@@ -317,14 +291,10 @@ fun BackupScreen(
                 }
             }
 
-            // Tabs Selector
+            // Tabs Selector (Standardized M3 Segmented Chips)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(colors.surfaceVariant)
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TabButton(
                     title = stringResource(R.string.backup_tab_backup),
@@ -995,33 +965,17 @@ private fun TabButton(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) colors.primary else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
-                modifier = Modifier.size(16.dp)
-            )
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
-            )
-        }
-    }
+    YadinSelectableChip(
+        text = title,
+        icon = icon,
+        isSelected = isSelected,
+        accentColor = colors.primary,
+        preserveAccentWhenUnselected = true,
+        minHeight = 42.dp,
+        fontSize = 13.sp,
+        modifier = modifier,
+        onClick = onClick
+    )
 }
 
 @Composable
@@ -1035,7 +989,8 @@ private fun StatBox(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(colors.surfaceVariant)
+            .background(colors.primary.copy(alpha = 0.08f))
+            .border(1.dp, colors.primary.copy(alpha = 0.28f), RoundedCornerShape(10.dp))
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)

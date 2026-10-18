@@ -69,6 +69,8 @@ import com.manidigit.yadin.domain.model.ParseResult
 import com.manidigit.yadin.domain.model.ParsedEntry
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.YadinCard
+import com.manidigit.yadin.ui.components.YadinScreenHeader
+import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
@@ -167,39 +169,17 @@ fun ImportScreen(
             .padding(dimensions.screenPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            IconButton(
-                onClick = {
-                    if (parseResult != null && onResetParse != null) {
-                        onResetParse()
-                    } else {
-                        onBack()
-                    }
-                },
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(colors.surfaceVariant)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.action_back),
-                    tint = colors.onSurface
-                )
+        // Standardized Header
+        YadinScreenHeader(
+            title = stringResource(R.string.import_title),
+            onBack = {
+                if (parseResult != null && onResetParse != null) {
+                    onResetParse()
+                } else {
+                    onBack()
+                }
             }
-
-            Text(
-                text = stringResource(R.string.import_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface
-            )
-        }
+        )
 
         if (importSummary != null) {
             // SUCCESS REPORT CARD
@@ -765,30 +745,16 @@ fun PolicyChip(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-
-    Box(
-        modifier = modifier
-            .heightIn(min = 40.dp)
-            .clip(RoundedCornerShape(dimensions.cornerSmall))
-            .background(if (isSelected) colors.primary.copy(alpha = 0.15f) else colors.surface)
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.35f),
-                shape = RoundedCornerShape(dimensions.cornerSmall)
-            )
-            .clickable { onClick() }
-            .padding(vertical = 10.dp, horizontal = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) colors.primary else colors.onSurface,
-            textAlign = TextAlign.Center
-        )
-    }
+    YadinSelectableChip(
+        text = label,
+        isSelected = isSelected,
+        accentColor = colors.primary,
+        preserveAccentWhenUnselected = true,
+        minHeight = 40.dp,
+        fontSize = 12.sp,
+        modifier = modifier,
+        onClick = onClick
+    )
 }
 
 @Composable
@@ -851,16 +817,24 @@ fun ParsedEntryCard(
                 }
             }
 
+            val confPercent = (entry.confidence * 100).toInt()
+            val confColor = when {
+                confPercent >= 95 -> colors.success
+                confPercent >= 80 -> colors.primary
+                else -> colors.warning
+            }
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(colors.surfaceVariant)
+                    .background(confColor.copy(alpha = 0.12f))
+                    .border(1.dp, confColor.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.import_review_confidence, (entry.confidence * 100).toInt().formatDigits()),
+                    text = stringResource(R.string.import_review_confidence, confPercent.formatDigits()),
                     fontSize = 10.sp,
-                    color = colors.onSurfaceVariant
+                    fontWeight = FontWeight.Bold,
+                    color = confColor
                 )
             }
         }
