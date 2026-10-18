@@ -60,26 +60,8 @@ fun AboutScreen(onBack: () -> Unit) {
     val dimensions = LocalYadinDimensions.current
     val context = LocalContext.current
 
-    val (currentVersionName, currentVersionCode) = remember(context) {
-        try {
-            val pInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getPackageInfo(context.packageName, 0)
-            }
-            val vName = pInfo.versionName ?: com.manidigit.yadin.BuildConfig.VERSION_NAME
-            val vCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                pInfo.longVersionCode.toString()
-            } else {
-                @Suppress("DEPRECATION")
-                pInfo.versionCode.toString()
-            }
-            Pair(vName, vCode)
-        } catch (_: Exception) {
-            Pair(com.manidigit.yadin.BuildConfig.VERSION_NAME, com.manidigit.yadin.BuildConfig.VERSION_CODE.toString())
-        }
-    }
+    val currentVersionName = com.manidigit.yadin.BuildConfig.VERSION_NAME
+    val currentVersionCode = com.manidigit.yadin.BuildConfig.VERSION_CODE.toString()
 
     Column(
         modifier = Modifier
