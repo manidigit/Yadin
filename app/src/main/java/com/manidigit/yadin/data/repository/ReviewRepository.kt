@@ -15,6 +15,7 @@ import com.manidigit.yadin.domain.algorithm.QuizDistractorScorer
 import com.manidigit.yadin.domain.model.AchievementId
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.EntryType
+import com.manidigit.yadin.domain.model.LanguageConstants
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.QuizOption
 import com.manidigit.yadin.domain.model.QuizQuestion
@@ -162,13 +163,39 @@ class ReviewRepository(
     suspend fun fetchCardsForSession(sessionId: String): List<ReviewCard> {
         val items = reviewSessionDao.getItemsForSession(sessionId)
         val cards = mutableListOf<ReviewCard>()
+        var orphanCount = 0
+
+        val baseTargetLang = LanguageConstants.DEFAULT_TARGET_LANGUAGE
 
         for (item in items) {
-            val concept = conceptDao.getConceptById(item.conceptId) ?: continue
+            val concept = conceptDao.getConceptById(item.conceptId)
+            if (concept == null) {
+                reviewSessionDao.deleteSessionItemById(item.id)
+                orphanCount++
+                continue
+            }
             val contents = conceptDao.getContentsForConcept(item.conceptId)
-            val sourceContent = contents.firstOrNull { it.languageCode != "fa" } ?: contents.firstOrNull() ?: continue
-            val targetContents = contents.filter { it.languageCode == "fa" || it.id != sourceContent.id }
-            val targetTranslations = targetContents.map { it.text }.ifEmpty { listOf(sourceContent.text) }
+                .filter { it.text.isNotBlank() }
+
+            val sourceContents = contents.filter { it.languageCode != baseTargetLang }
+            val targetContents = contents.filter { it.languageCode == baseTargetLang }
+
+            val primarySource = sourceContents.firstOrNull() ?: contents.firstOrNull()
+            if (primarySource == null) {
+                reviewSessionDao.deleteSessionItemById(item.id)
+                orphanCount++
+                continue
+            }
+
+            val sourceVariants = sourceContents.map { it.text.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .ifEmpty { listOf(primarySource.text.trim()) }
+
+            val targetTranslations = targetContents.map { it.text.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .ifEmpty { sourceVariants }
 
             val learning = learningDao.getLearningState(item.conceptId, item.direction)
             val stage = learning?.stage ?: Stage.DAILY
@@ -176,8 +203,18 @@ class ReviewRepository(
             val diff = diffState?.current ?: VocabularyDifficulty.EASY
             val category = concept.categoryId?.let { conceptDao.getCategoryById(it)?.name }
 
-            val prompt = if (item.direction == CardDirection.NORMAL) sourceContent.text else targetTranslations.joinToString("، ")
-            val answers = if (item.direction == CardDirection.NORMAL) targetTranslations else listOf(sourceContent.text)
+            val prompt = if (item.direction == CardDirection.NORMAL) {
+                sourceVariants.joinToString(" / ")
+            } else {
+                targetTranslations.joinToString("، ")
+            }
+            val answers = if (item.direction == CardDirection.NORMAL) {
+                targetTranslations
+            } else {
+                sourceVariants
+            }
+            val cardNote = primarySource.note
+                ?: targetContents.firstOrNull { !it.note.isNullOrBlank() }?.note
 
             cards.add(
                 ReviewCard(
@@ -185,7 +222,7 @@ class ReviewRepository(
                     direction = item.direction,
                     sourceText = prompt,
                     targetTranslations = answers,
-                    note = sourceContent.note,
+                    note = cardNote,
                     categoryName = category,
                     stage = stage,
                     difficulty = diff,
@@ -194,6 +231,16 @@ class ReviewRepository(
                 )
             )
         }
+
+        if (orphanCount > 0) {
+            val currentSession = reviewSessionDao.getSessionById(sessionId)
+            if (currentSession != null) {
+                reviewSessionDao.updateSession(
+                    currentSession.copy(totalItems = cards.size)
+                )
+            }
+        }
+
         return cards
     }
 
@@ -342,19 +389,27 @@ class ReviewRepository(
             // according to Spec 6.6 step 5 and Decision D0.2, random filling is prohibited:
             // this question strictly falls back to flashcard and is omitted from 4-option quiz questions.
             if (chosenDistractors.size < 3) {
+                reviewSessionDao.getItemForSessionAndConcept(sessionId, card.conceptId)?.let { item ->
+                    reviewSessionDao.updateItemState(item.id, SessionItemState.SKIPPED)
+                }
                 continue
             }
 
-            val chosenTexts = chosenDistractors.map { it.text }
-            val optionsList = (chosenTexts.map { QuizOption(it, "") } + QuizOption(correctAnswer, card.conceptId)).shuffled()
+            val chosenOptions = chosenDistractors.map { QuizOption(it.text, it.conceptId) }
+            val optionsList = (chosenOptions + QuizOption(correctAnswer, card.conceptId)).shuffled()
             val distinctNormOptions = optionsList.map { it.text.trim().lowercase() }.distinct()
             
             // Spec 6.6 step 8 final validation: exactly 4 pairwise-distinct options
             if (optionsList.size != 4 || distinctNormOptions.size != 4) {
+                reviewSessionDao.getItemForSessionAndConcept(sessionId, card.conceptId)?.let { item ->
+                    reviewSessionDao.updateItemState(item.id, SessionItemState.SKIPPED)
+                }
                 continue
             }
 
-            val correctIdx = optionsList.indexOfFirst { it.text == correctAnswer }.coerceAtLeast(0)
+            val correctIdx = optionsList.indexOfFirst { it.conceptId == card.conceptId }
+                .takeIf { it >= 0 }
+                ?: optionsList.indexOfFirst { it.text == correctAnswer }.coerceAtLeast(0)
 
             questions.add(
                 QuizQuestion(
@@ -373,6 +428,23 @@ class ReviewRepository(
                 )
             )
         }
+
+        if (questions.isEmpty()) {
+            // If all questions lacked distractors and session falls back to flashcards, restore items to PENDING
+            reviewSessionDao.updateSessionItemsStateWhere(
+                sessionId = sessionId,
+                currentState = SessionItemState.SKIPPED,
+                newState = SessionItemState.PENDING
+            )
+        } else if (questions.size != cards.size) {
+            val currentSession = reviewSessionDao.getSessionById(sessionId)
+            if (currentSession != null) {
+                reviewSessionDao.updateSession(
+                    currentSession.copy(totalItems = questions.size)
+                )
+            }
+        }
+
         questions
     }
 
@@ -622,9 +694,19 @@ class ReviewRepository(
     suspend fun completeSession(sessionId: String) {
         val session = runInTransaction {
             val s = reviewSessionDao.getSessionById(sessionId) ?: return@runInTransaction null
+            // Mark any remaining PENDING items (e.g., omitted quiz items) as SKIPPED so no orphan PENDING items remain
+            reviewSessionDao.updateSessionItemsStateWhere(
+                sessionId = sessionId,
+                currentState = SessionItemState.PENDING,
+                newState = SessionItemState.SKIPPED
+            )
+            val answeredCount = reviewSessionDao.getItemsForSession(sessionId)
+                .count { it.state == SessionItemState.ANSWERED }
             val updated = s.copy(
                 status = SessionStatus.COMPLETED,
-                endedAt = s.endedAt ?: System.currentTimeMillis()
+                endedAt = s.endedAt ?: System.currentTimeMillis(),
+                currentPosition = answeredCount,
+                totalItems = if (answeredCount > 0) answeredCount else s.totalItems
             )
             reviewSessionDao.updateSession(updated)
             updated

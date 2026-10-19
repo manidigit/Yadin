@@ -46,6 +46,16 @@ interface ReviewSessionDao {
     @Query("UPDATE review_session_items SET state = :state WHERE id = :itemId")
     suspend fun updateItemState(itemId: String, state: SessionItemState)
 
+    @Query("UPDATE review_session_items SET state = :newState WHERE sessionId = :sessionId AND state = :currentState")
+    suspend fun updateSessionItemsStateWhere(
+        sessionId: String,
+        currentState: SessionItemState,
+        newState: SessionItemState
+    )
+
+    @Query("DELETE FROM review_session_items WHERE id = :itemId")
+    suspend fun deleteSessionItemById(itemId: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHistoryItem(item: ReviewHistoryEntity)
 
