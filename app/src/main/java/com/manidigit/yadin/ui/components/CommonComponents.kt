@@ -580,6 +580,7 @@ fun YadinSelectableChip(
     subtitle: String? = null,
     accentColor: Color? = null,
     preserveAccentWhenUnselected: Boolean = true,
+    highContrastSelection: Boolean = false,
     verticalLayout: Boolean = false,
     minHeight: Dp = 38.dp,
     fontSize: TextUnit = 11.5.sp
@@ -589,24 +590,52 @@ fun YadinSelectableChip(
     val shape = RoundedCornerShape(10.dp)
 
     val bgColor = when {
+        isSelected && highContrastSelection -> effectiveAccent.copy(alpha = 0.28f)
         isSelected -> effectiveAccent.copy(alpha = 0.18f)
+        highContrastSelection -> colors.surfaceVariant.copy(alpha = 0.22f)
         preserveAccentWhenUnselected -> effectiveAccent.copy(alpha = 0.07f)
         else -> colors.surfaceVariant.copy(alpha = 0.55f)
     }
 
     val borderColor = when {
         isSelected -> effectiveAccent
+        highContrastSelection -> effectiveAccent.copy(alpha = 0.16f)
         preserveAccentWhenUnselected -> effectiveAccent.copy(alpha = 0.30f)
         else -> colors.outline.copy(alpha = 0.30f)
     }
 
+    val borderWidth = when {
+        isSelected && highContrastSelection -> 2.dp
+        isSelected -> 1.5.dp
+        highContrastSelection -> 0.8.dp
+        else -> 1.dp
+    }
+
     val iconTint = when {
         isSelected -> effectiveAccent
+        highContrastSelection -> effectiveAccent.copy(alpha = 0.42f)
         preserveAccentWhenUnselected -> effectiveAccent.copy(alpha = 0.85f)
         else -> colors.onSurfaceVariant
     }
 
-    val textColor = if (isSelected) effectiveAccent else colors.onSurface
+    val textColor = when {
+        isSelected -> effectiveAccent
+        highContrastSelection -> colors.onSurfaceVariant.copy(alpha = 0.50f)
+        else -> colors.onSurface
+    }
+
+    val badgeColor = when {
+        isSelected -> effectiveAccent
+        highContrastSelection -> effectiveAccent.copy(alpha = 0.45f)
+        preserveAccentWhenUnselected -> effectiveAccent
+        else -> colors.onSurface
+    }
+
+    val subtitleColor = when {
+        isSelected -> colors.onSurfaceVariant.copy(alpha = 0.9f)
+        highContrastSelection -> colors.onSurfaceVariant.copy(alpha = 0.42f)
+        else -> colors.onSurfaceVariant.copy(alpha = 0.8f)
+    }
 
     Box(
         modifier = modifier
@@ -614,7 +643,7 @@ fun YadinSelectableChip(
             .clip(shape)
             .background(bgColor)
             .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
+                width = borderWidth,
                 color = borderColor,
                 shape = shape
             )
@@ -643,8 +672,8 @@ fun YadinSelectableChip(
                         Text(
                             text = badgeText,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = if (isSelected || preserveAccentWhenUnselected) effectiveAccent else colors.onSurface,
+                            fontWeight = if (isSelected || !highContrastSelection) FontWeight.ExtraBold else FontWeight.SemiBold,
+                            color = badgeColor,
                             maxLines = 1
                         )
                     }
@@ -664,7 +693,7 @@ fun YadinSelectableChip(
                         fontSize = 9.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = colors.onSurfaceVariant.copy(alpha = 0.8f),
+                        color = subtitleColor,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -695,8 +724,8 @@ fun YadinSelectableChip(
                     Text(
                         text = badgeText,
                         fontSize = 10.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = effectiveAccent,
+                        fontWeight = if (isSelected || !highContrastSelection) FontWeight.ExtraBold else FontWeight.SemiBold,
+                        color = badgeColor,
                         maxLines = 1
                     )
                 }

@@ -226,55 +226,6 @@ fun ProgressScreen(
             }
         }
 
-        // ۲. پیشرفت یادگیری:
-        // - درصد پیشرفت کلی
-        // - نوار پیشرفت
-        item {
-            YadinCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = colors.surface
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    YadinSectionHeader(
-                        title = stringResource(R.string.progress_learning_title),
-                        subtitle = stringResource(R.string.progress_learning_formula_desc),
-                        icon = getVocabStatIcon(VocabStatType.MASTERED),
-                        iconTint = colors.primary,
-                        trailingContent = {
-                            Text(
-                                text = "${progressPercent.toInt().formatDigits()}%",
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Black,
-                                color = colors.primary
-                            )
-                        }
-                    )
-
-                    LinearProgressIndicator(
-                        progress = { (progressPercent / 100.0).toFloat().coerceIn(0f, 1f) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp)),
-                        color = colors.primary,
-                        trackColor = colors.primary.copy(alpha = 0.2f)
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        FormulaScorePill(stringResource(R.string.progress_formula_learned), getStageColor(Stage.LEARNED, colors), Modifier.weight(1f))
-                        FormulaScorePill(stringResource(R.string.progress_formula_monthly), getStageColor(Stage.MONTHLY, colors), Modifier.weight(1f))
-                        FormulaScorePill(stringResource(R.string.progress_formula_weekly), getStageColor(Stage.WEEKLY, colors), Modifier.weight(1f))
-                        FormulaScorePill(stringResource(R.string.progress_formula_daily), getStageColor(Stage.DAILY, colors), Modifier.weight(1f))
-                    }
-                }
-            }
-        }
 
         if (retentionMetrics != null) {
             item {
@@ -826,28 +777,5 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun FormulaScorePill(
-    label: String,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(color.copy(alpha = 0.14f))
-            .padding(vertical = 4.dp, horizontal = 2.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            color = color,
-            textAlign = TextAlign.Center
-        )
     }
 }

@@ -36,12 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
@@ -55,8 +55,6 @@ import com.manidigit.yadin.data.local.dao.DayCountRaw
 import com.manidigit.yadin.domain.time.ClockAndDayMath
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.YadinIcons
-import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.theme.LocalYadinShapes
 import com.manidigit.yadin.ui.util.formatDigits
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -68,10 +66,8 @@ enum class ChartTimeframe(@StringRes val titleRes: Int) {
 }
 
 /**
- * نمودار تحلیلی تعاملی روند حجم مرورها و منحنی دقت (Dual-Trend Chart)
- *
- * شامل ستون‌های میله‌ای مدرن برای حجم مرور و خط منحنی دقت پاسخ‌ها
- * همراه با قابلیت لمس تعاملی برای نمایش جزئیات روز انتخابی.
+ * نمودار تحلیلی تعاملی فعالیت مرور با ستون‌های کپسولی دو‌بخشی (حجم کل مرور و سهم پاسخ‌های صحیح)
+ * همراه با قابلیت لمس تعاملی برای نمایش جزئیات روز یا بازه انتخابی.
  */
 @Composable
 fun DailyReviewChart(
@@ -80,8 +76,6 @@ fun DailyReviewChart(
 ) {
     val context = LocalContext.current
     val colors = LocalYadinColors.current
-    val dimensions = LocalYadinDimensions.current
-    val shapes = LocalYadinShapes.current
     var selectedTimeframe by remember { mutableStateOf(ChartTimeframe.WEEKLY) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -286,7 +280,7 @@ fun DailyReviewChart(
                 }
             }
 
-            // رسم بوم Canvas با حجم مرورها و منحنی دقت
+            // رسم بوم Canvas با ستون‌های کپسولی دو‌بخشی (کل مرورها و سهم پاسخ صحیح)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -295,7 +289,6 @@ fun DailyReviewChart(
             ) {
                 val primaryColor = colors.primary
                 val secondaryColor = colors.secondary
-                val accuracyLineColor = colors.success
                 val surfaceVariantColor = colors.surfaceVariant
                 val textColorPrimary = colors.onSurface.toArgb()
                 val textColorVariant = colors.onSurfaceVariant.toArgb()
@@ -352,38 +345,67 @@ fun DailyReviewChart(
                     val barCount = chartItems.size
                     val slotWidth = chartWidth / barCount
                     val barWidth = (slotWidth * 0.45f).coerceIn(10.dp.toPx(), 26.dp.toPx())
+                    val radius = barWidth / 2f
 
-                    val accuracyPoints = mutableListOf<Offset>()
-
-                    // رسم ستون‌های میله‌ای
+                    // رسم ستون‌های میله‌ای دو‌بخشی
                     chartItems.forEachIndexed { index, item ->
                         val centerX = yAxisWidth + (index * slotWidth) + (slotWidth / 2f)
-                        val barHeight = if (item.totalCount > 0) {
-                            (item.totalCount.toFloat() / maxCount) * (chartHeight * 0.85f)
-                        } else {
-                            3.dp.toPx()
-                        }
-
-                        val barTop = chartHeight - barHeight
-                        val barLeft = centerX - (barWidth / 2f)
-
+                        val barLeft = centerX - radius
                         val isHighlighted = selectedIndex == index
-                        val barColor = when {
-                            isHighlighted -> primaryColor
-                            item.isToday -> primaryColor
-                            item.totalCount > 0 -> secondaryColor.copy(alpha = 0.85f)
-                            else -> surfaceVariantColor.copy(alpha = 0.5f)
-                        }
 
-                        drawRoundRect(
-                            color = barColor,
-                            topLeft = Offset(barLeft, barTop),
-                            size = Size(barWidth, barHeight),
-                            cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
-                        )
-
-                        // عدد روی ستون
                         if (item.totalCount > 0) {
+                            val totalBarHeight = ((item.totalCount.toFloat() / maxCount) * (chartHeight * 0.85f))
+                                .coerceAtLeast(6.dp.toPx())
+                            val barTop = chartHeight - totalBarHeight
+
+                            val baseTone = when {
+                                isHighlighted -> primaryColor
+                                item.isToday -> primaryColor
+                                else -> secondaryColor
+                            }
+
+                            val capsulePath = Path().apply {
+                                addRoundRect(
+                                    RoundRect(
+                                        rect = Rect(
+                                            left = barLeft,
+                                            top = barTop,
+                                            right = barLeft + barWidth,
+                                            bottom = chartHeight
+                                        ),
+                                        cornerRadius = CornerRadius(radius, radius)
+                                    )
+                                )
+                            }
+
+                            // ۱. پس‌زمینه کمرنگ ستون (نشان‌دهنده کل مرورها / سهم پاسخ‌های نادرست)
+                            drawPath(
+                                path = capsulePath,
+                                color = baseTone.copy(alpha = if (isHighlighted || item.isToday) 0.24f else 0.20f)
+                            )
+
+                            // ۲. بخش پررنگ پایینی ستون (نشان‌دهنده سهم پاسخ‌های صحیح برش‌خورده درون کپسول)
+                            val correctRatio = (item.correctCount.toFloat() / item.totalCount).coerceIn(0f, 1f)
+                            if (correctRatio > 0f) {
+                                val correctHeight = totalBarHeight * correctRatio
+                                val correctTop = chartHeight - correctHeight
+                                clipPath(capsulePath) {
+                                    drawRect(
+                                        color = if (isHighlighted || item.isToday) baseTone else baseTone.copy(alpha = 0.90f),
+                                        topLeft = Offset(barLeft, correctTop),
+                                        size = Size(barWidth, correctHeight)
+                                    )
+                                }
+                            }
+
+                            // ۳. کادر ظریف دور کل کپسول برای تفکیک واضح سقف مرورها
+                            drawPath(
+                                path = capsulePath,
+                                color = baseTone.copy(alpha = if (isHighlighted) 0.85f else 0.40f),
+                                style = Stroke(width = if (isHighlighted) 1.5.dp.toPx() else 1.dp.toPx())
+                            )
+
+                            // عدد کل مرور روی ستون
                             drawContext.canvas.nativeCanvas.apply {
                                 val paint = android.graphics.Paint().apply {
                                     color = if (item.isToday || isHighlighted) textColorPrimary else textColorVariant
@@ -394,9 +416,19 @@ fun DailyReviewChart(
                                 }
                                 drawText(item.totalCount.formatDigits(), centerX, barTop - 5.dp.toPx(), paint)
                             }
+                        } else {
+                            // روزهای بدون مرور: نشانگر کوتاه خاکستری در کف محور
+                            val emptyHeight = 3.dp.toPx()
+                            val barTop = chartHeight - emptyHeight
+                            drawRoundRect(
+                                color = surfaceVariantColor.copy(alpha = 0.5f),
+                                topLeft = Offset(barLeft, barTop),
+                                size = Size(barWidth, emptyHeight),
+                                cornerRadius = CornerRadius(radius, radius)
+                            )
                         }
 
-                        // برچسب محور افقی (روز)
+                        // برچسب محور افقی (روز / بازه)
                         drawContext.canvas.nativeCanvas.apply {
                             val labelPaint = android.graphics.Paint().apply {
                                 color = if (item.isToday || isHighlighted) textColorPrimary else textColorVariant
@@ -407,55 +439,11 @@ fun DailyReviewChart(
                             }
                             drawText(item.shortLabel, centerX, canvasHeight - 3.dp.toPx(), labelPaint)
                         }
-
-                        // محاسبه نقطه منحنی دقت
-                        if (item.totalCount > 0) {
-                            val accuracyPct = (item.correctCount.toFloat() / item.totalCount).coerceIn(0f, 1f)
-                            val accuracyY = chartHeight - (accuracyPct * (chartHeight * 0.85f))
-                            accuracyPoints.add(Offset(centerX, accuracyY))
-                        }
-                    }
-
-                    // رسم منحنی دقت (Accuracy Line)
-                    if (accuracyPoints.size >= 2) {
-                        val path = Path().apply {
-                            moveTo(accuracyPoints[0].x, accuracyPoints[0].y)
-                            for (i in 1 until accuracyPoints.size) {
-                                val prev = accuracyPoints[i - 1]
-                                val cur = accuracyPoints[i]
-                                val cpx = (prev.x + cur.x) / 2f
-                                cubicTo(cpx, prev.y, cpx, cur.y, cur.x, cur.y)
-                            }
-                        }
-
-                        drawPath(
-                            path = path,
-                            color = accuracyLineColor,
-                            style = Stroke(
-                                width = 2.5.dp.toPx(),
-                                cap = StrokeCap.Round,
-                                join = StrokeJoin.Round
-                            )
-                        )
-                    }
-
-                    // رسم نقاط دایره‌ای روی منحنی دقت
-                    accuracyPoints.forEach { pt ->
-                        drawCircle(
-                            color = colors.surface,
-                            radius = 5.dp.toPx(),
-                            center = pt
-                        )
-                        drawCircle(
-                            color = accuracyLineColor,
-                            radius = 3.5.dp.toPx(),
-                            center = pt
-                        )
                     }
                 }
             }
 
-            // راهنما (Legend)
+            // راهنما (Legend): بخش پررنگ (پاسخ‌های صحیح) و بخش کمرنگ کادردار (کل مرورها)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -465,16 +453,35 @@ fun DailyReviewChart(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(colors.primary))
-                    Text(stringResource(R.string.chart_volume_bars_label), fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(colors.primary)
+                    )
+                    Text(
+                        text = stringResource(R.string.chart_accuracy_curve_label),
+                        fontSize = 11.sp,
+                        color = colors.onSurfaceVariant
+                    )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(colors.success))
-                    Text(stringResource(R.string.chart_accuracy_curve_label), fontSize = 11.sp, color = colors.onSurfaceVariant)
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(colors.primary.copy(alpha = 0.22f))
+                            .border(1.dp, colors.primary.copy(alpha = 0.5f), CircleShape)
+                    )
+                    Text(
+                        text = stringResource(R.string.chart_volume_bars_label),
+                        fontSize = 11.sp,
+                        color = colors.onSurfaceVariant
+                    )
                 }
             }
         }

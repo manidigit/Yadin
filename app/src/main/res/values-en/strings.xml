@@ -685,4 +685,9 @@ libro: book</string>
     <string name="import_screen_review_warning_title">%1$s words need review or transfer to notes</string>
     <string name="import_screen_review_warning_desc">To prevent data loss, manually inspect and edit before saving.</string>
     <string name="import_screen_btn_manual_review">Manual Edit</string>
+    <!-- Advanced Analytics & Mastery Strings -->
+    <string name="chart_filter_quarterly">Quarterly (90d)</string>
+    <string name="chart_accuracy_curve_label">Correct Answers</string>
+    <string name="chart_volume_bars_label">Total Reviews</string>
+    <string name="chart_tooltip_fmt">%1$s: %2$s reviews | %3$s correct (Accuracy: %4$s%%)</string>
 </resources>

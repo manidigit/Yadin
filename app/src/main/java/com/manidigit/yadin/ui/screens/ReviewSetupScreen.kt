@@ -172,6 +172,7 @@ fun ReviewSetupScreen(
                                 isSelected = selectedMode == ReviewMode.QUIZ,
                                 accentColor = getReviewModeColor(ReviewMode.QUIZ, colors),
                                 preserveAccentWhenUnselected = true,
+                                highContrastSelection = true,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.QUIZ }
                             )
@@ -181,6 +182,7 @@ fun ReviewSetupScreen(
                                 isSelected = selectedMode == ReviewMode.FLASHCARD,
                                 accentColor = getReviewModeColor(ReviewMode.FLASHCARD, colors),
                                 preserveAccentWhenUnselected = true,
+                                highContrastSelection = true,
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedMode = ReviewMode.FLASHCARD }
                             )
@@ -389,6 +391,7 @@ fun ReviewSetupScreen(
                                         isSelected = isSelected,
                                         accentColor = lvlColor,
                                         preserveAccentWhenUnselected = true,
+                                        highContrastSelection = true,
                                         verticalLayout = true,
                                         fontSize = 11.sp,
                                         modifier = Modifier.weight(1f),
@@ -416,6 +419,7 @@ fun ReviewSetupScreen(
                                     isSelected = isSelected,
                                     accentColor = colors.primary,
                                     preserveAccentWhenUnselected = true,
+                                    highContrastSelection = true,
                                     fontSize = 12.sp,
                                     modifier = Modifier.weight(1f),
                                     onClick = { selectedMaxCards = limit }
@@ -487,15 +491,40 @@ private fun LeitnerSelectableStageBox(
     val shape = RoundedCornerShape(10.dp)
 
     val containerBg = if (isSelected) {
-        accentColor.copy(alpha = 0.18f)
+        accentColor.copy(alpha = 0.28f)
     } else {
-        accentColor.copy(alpha = 0.07f)
+        colors.surfaceVariant.copy(alpha = 0.22f)
     }
 
     val borderColor = if (isSelected) {
         accentColor
     } else {
-        accentColor.copy(alpha = 0.30f)
+        accentColor.copy(alpha = 0.16f)
+    }
+
+    val iconTint = if (isSelected) {
+        accentColor
+    } else {
+        accentColor.copy(alpha = 0.42f)
+    }
+
+    val titleColor = if (isSelected) {
+        accentColor
+    } else {
+        colors.onSurfaceVariant.copy(alpha = 0.50f)
+    }
+
+    val dueColor = when {
+        isSelected && dueCount > 0 -> accentColor
+        isSelected -> colors.onSurfaceVariant.copy(alpha = 0.80f)
+        dueCount > 0 -> accentColor.copy(alpha = 0.45f)
+        else -> colors.onSurfaceVariant.copy(alpha = 0.38f)
+    }
+
+    val totalColor = if (isSelected) {
+        colors.onSurfaceVariant.copy(alpha = 0.85f)
+    } else {
+        colors.onSurfaceVariant.copy(alpha = 0.42f)
     }
 
     Box(
@@ -503,7 +532,7 @@ private fun LeitnerSelectableStageBox(
             .clip(shape)
             .background(containerBg)
             .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
+                width = if (isSelected) 2.dp else 0.8.dp,
                 color = borderColor,
                 shape = shape
             )
@@ -522,14 +551,14 @@ private fun LeitnerSelectableStageBox(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = accentColor,
+                    tint = iconTint,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isSelected) accentColor else colors.onSurface,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = titleColor,
                     fontSize = 11.sp,
                     maxLines = 1
                 )
@@ -537,15 +566,15 @@ private fun LeitnerSelectableStageBox(
             Text(
                 text = if (dueCount > 0) stringResource(R.string.home_due_ready, dueCount.formatDigits()) else stringResource(R.string.home_reviewed_done),
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (dueCount > 0) accentColor else colors.onSurfaceVariant.copy(alpha = 0.7f),
+                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                color = dueColor,
                 fontSize = 10.5.sp,
                 maxLines = 1
             )
             Text(
                 text = stringResource(R.string.home_of_total_words, totalCount.formatDigits()),
                 style = MaterialTheme.typography.labelSmall,
-                color = colors.onSurfaceVariant.copy(alpha = 0.8f),
+                color = totalColor,
                 fontSize = 9.sp,
                 maxLines = 1
             )
@@ -566,15 +595,19 @@ private fun CompactHorizontalSourceBox(
 ) {
     val colors = LocalYadinColors.current
     val shape = RoundedCornerShape(10.dp)
-    val containerBg = if (isSelected) accentColor.copy(alpha = 0.18f) else accentColor.copy(alpha = 0.07f)
-    val borderColor = if (isSelected) accentColor else accentColor.copy(alpha = 0.30f)
+    val containerBg = if (isSelected) accentColor.copy(alpha = 0.28f) else colors.surfaceVariant.copy(alpha = 0.22f)
+    val borderColor = if (isSelected) accentColor else accentColor.copy(alpha = 0.16f)
+    val iconTint = if (isSelected) accentColor else accentColor.copy(alpha = 0.42f)
+    val titleColor = if (isSelected) accentColor else colors.onSurfaceVariant.copy(alpha = 0.50f)
+    val totalColor = if (isSelected) colors.onSurfaceVariant.copy(alpha = 0.85f) else colors.onSurfaceVariant.copy(alpha = 0.42f)
+    val dueColor = if (isSelected) accentColor else accentColor.copy(alpha = 0.45f)
 
     Box(
         modifier = modifier
             .clip(shape)
             .background(containerBg)
             .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
+                width = if (isSelected) 2.dp else 0.8.dp,
                 color = borderColor,
                 shape = shape
             )
@@ -595,20 +628,20 @@ private fun CompactHorizontalSourceBox(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = accentColor,
+                    tint = iconTint,
                     modifier = Modifier.size(16.dp)
                 )
                 Column {
                     Text(
                         text = title,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) accentColor else colors.onSurface,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = titleColor,
                         fontSize = 10.5.sp,
                         maxLines = 1
                     )
                     Text(
                         text = stringResource(R.string.home_of_total_words, totalCount.formatDigits()),
-                        color = colors.onSurfaceVariant.copy(alpha = 0.8f),
+                        color = totalColor,
                         fontSize = 9.sp,
                         maxLines = 1
                     )
@@ -616,8 +649,8 @@ private fun CompactHorizontalSourceBox(
             }
             Text(
                 text = dueCount.formatDigits(),
-                fontWeight = FontWeight.ExtraBold,
-                color = accentColor,
+                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                color = dueColor,
                 fontSize = 12.sp
             )
         }
@@ -641,6 +674,7 @@ fun CompactDiffBadge(
         isSelected = isSelected,
         accentColor = color,
         preserveAccentWhenUnselected = true,
+        highContrastSelection = true,
         verticalLayout = true,
         fontSize = 10.5.sp,
         modifier = modifier,

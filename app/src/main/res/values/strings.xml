@@ -687,8 +687,8 @@ libro: کتاب</string>
     <string name="import_screen_btn_manual_review">ویرایش دستی</string>
     <!-- Advanced Analytics & Mastery Strings -->
     <string name="chart_filter_quarterly">فصلی (۹۰ روز)</string>
-    <string name="chart_accuracy_curve_label">منحنی دقت پاسخ‌ها (٪)</string>
-    <string name="chart_volume_bars_label">حجم مرورها</string>
+    <string name="chart_accuracy_curve_label">پاسخ‌های صحیح</string>
+    <string name="chart_volume_bars_label">کل مرورها</string>
     <string name="chart_tooltip_fmt">%1$s: %2$s مرور | %3$s درست (دقت: %4$s٪)</string>
     <string name="retention_gauge_title">شاخص پایداری و ماندگاری حافظه</string>
     <string name="retention_gauge_desc">محاسبه‌شده بر پایه منحنی فراموشی و سرعت یادگیری در جعبه لایتنر</string>
