@@ -37,7 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
+import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.domain.model.toSubtitleRes
+import com.manidigit.yadin.domain.model.toTitleRes
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
 import com.manidigit.yadin.ui.components.YadinSectionHeader
@@ -58,11 +61,15 @@ fun SettingsScreen(
     difficultyThreshold: Int = 3,
     languageDirection: CardDirection = CardDirection.NORMAL,
     uiLanguage: String = "fa",
+    reviewAlgorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
+    fsrsDesiredRetention: Double = 0.90,
     onSelectTheme: (String) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onSetDifficultyThreshold: (Int) -> Unit = {},
     onSetLanguageDirection: (CardDirection) -> Unit = {},
     onSetUiLanguage: (String) -> Unit = {},
+    onSetReviewAlgorithm: (SpacedRepetitionAlgorithm) -> Unit = {},
+    onSetFsrsDesiredRetention: (Double) -> Unit = {},
     onPurgeInactiveWords: (onComplete: (Int) -> Unit) -> Unit = {},
     onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
@@ -191,6 +198,92 @@ fun SettingsScreen(
                             modifier = Modifier.weight(1f),
                             onClick = { onSetDifficultyThreshold(thresholdValue) }
                         )
+                    }
+                }
+            }
+        }
+
+        // Spaced Repetition Algorithm Selector Card (Yadin vs SM-2 vs FSRS)
+        YadinCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_algo_section_title),
+                    subtitle = stringResource(R.string.settings_algo_section_desc),
+                    icon = YadinIcons.retentionBrain,
+                    iconTint = colors.info
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    SpacedRepetitionAlgorithm.entries.forEach { algo ->
+                        val isSelected = (reviewAlgorithm == algo)
+                        val algoIcon = when (algo) {
+                            SpacedRepetitionAlgorithm.YADIN -> YadinIcons.leitnerBox
+                            SpacedRepetitionAlgorithm.SM2 -> YadinIcons.retentionBrain
+                            SpacedRepetitionAlgorithm.FSRS -> YadinIcons.brandSparkle
+                        }
+                        val algoAccent = when (algo) {
+                            SpacedRepetitionAlgorithm.YADIN -> colors.primary
+                            SpacedRepetitionAlgorithm.SM2 -> colors.info
+                            SpacedRepetitionAlgorithm.FSRS -> colors.accentPurple
+                        }
+                        YadinSelectableChip(
+                            text = stringResource(algo.toTitleRes()),
+                            subtitle = stringResource(algo.toSubtitleRes()),
+                            icon = algoIcon,
+                            isSelected = isSelected,
+                            accentColor = algoAccent,
+                            preserveAccentWhenUnselected = true,
+                            highContrastSelection = true,
+                            verticalLayout = true,
+                            minHeight = 56.dp,
+                            fontSize = 11.sp,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSetReviewAlgorithm(algo) }
+                        )
+                    }
+                }
+
+                if (reviewAlgorithm == SpacedRepetitionAlgorithm.FSRS) {
+                    Text(
+                        text = stringResource(R.string.settings_fsrs_retention_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 11.sp
+                    )
+                    val retentionOptions = listOf(
+                        0.85 to R.string.settings_fsrs_retention_85,
+                        0.90 to R.string.settings_fsrs_retention_90,
+                        0.95 to R.string.settings_fsrs_retention_95
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        retentionOptions.forEach { (retVal, labelRes) ->
+                            val isRetSelected = kotlin.math.abs(fsrsDesiredRetention - retVal) < 0.02
+                            YadinSelectableChip(
+                                text = stringResource(labelRes),
+                                isSelected = isRetSelected,
+                                accentColor = colors.accentPurple,
+                                preserveAccentWhenUnselected = true,
+                                highContrastSelection = true,
+                                fontSize = 11.sp,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onSetFsrsDesiredRetention(retVal) }
+                            )
+                        }
                     }
                 }
             }

@@ -67,25 +67,78 @@ class SeedImporter(
         if (seedVersion != CURRENT_SEED_VERSION) {
             return@withContext true
         }
-        // Self-healing check: ensure every concept has both NORMAL and REVERSE learning and difficulty states
-        val learningCount = learningDao.getLearningStateCount()
-        val difficultyCount = learningDao.getDifficultyStateCount()
-        if (learningCount < totalCount * 2 || difficultyCount < totalCount * 2) {
-            return@withContext true
-        }
         val alreadyImported = settingsDao.getSetting("seedImported") == "true"
         if (alreadyImported) {
+            val learningCount = learningDao.getLearningStateCount()
+            val difficultyCount = learningDao.getDifficultyStateCount()
+            if (learningCount < totalCount * 2 || difficultyCount < totalCount * 2) {
+                repairMissingStatesQuickly()
+            }
             return@withContext false
         }
         totalCount == 0
     }
 
-    suspend fun importSeedIfNeeded(onProgress: (Float, String) -> Unit) = withContext(Dispatchers.IO) {
-        if (!shouldImportSeed()) {
-            ensureDefaultAchievements()
-            return@withContext
-        }
+    private suspend fun repairMissingStatesQuickly() {
+        try {
+            val allConceptIds = conceptDao.getAllConcepts().map { it.id }
+            val existingLearningKeys = learningDao.getAllLearningStates()
+                .map { it.conceptId to it.direction }
+                .toSet()
+            val existingDiffKeys = learningDao.getAllDifficultyStates()
+                .map { it.conceptId to it.direction }
+                .toSet()
 
+            val now = System.currentTimeMillis()
+            val today = ClockAndDayMath.todayDayString()
+            val missingLearningBatch = mutableListOf<LearningStateEntity>()
+            val missingDiffBatch = mutableListOf<DifficultyStateEntity>()
+
+            for (cid in allConceptIds) {
+                for (dir in listOf(CardDirection.NORMAL, CardDirection.REVERSE)) {
+                    val key = cid to dir
+                    if (key !in existingLearningKeys) {
+                        missingLearningBatch.add(
+                            LearningStateEntity(
+                                id = UUID.randomUUID().toString(),
+                                conceptId = cid,
+                                direction = dir,
+                                stage = Stage.DAILY,
+                                nextReviewDay = today,
+                                lastReviewedDay = null,
+                                createdAt = now,
+                                updatedAt = now
+                            )
+                        )
+                    }
+                    if (key !in existingDiffKeys) {
+                        missingDiffBatch.add(
+                            DifficultyStateEntity(
+                                id = UUID.randomUUID().toString(),
+                                conceptId = cid,
+                                direction = dir,
+                                current = VocabularyDifficulty.EASY
+                            )
+                        )
+                    }
+                }
+            }
+
+            if (missingLearningBatch.isNotEmpty() || missingDiffBatch.isNotEmpty()) {
+                database.withTransaction {
+                    missingLearningBatch.chunked(1000).forEach {
+                        learningDao.insertLearningStatesIgnore(it)
+                    }
+                    missingDiffBatch.chunked(1000).forEach {
+                        learningDao.insertDifficultyStatesIgnore(it)
+                    }
+                }
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    suspend fun importSeedIfNeeded(onProgress: (Float, String) -> Unit) = withContext(Dispatchers.IO) {
         onProgress(0.05f, context.getString(R.string.seed_reading_initial_data))
 
         try {
@@ -377,17 +430,21 @@ class SeedImporter(
                     }
                 }
 
-                // به‌روزرسانی جدول محتوا و دسته‌بندی برای واژگان پایه (بدون دست زدن به جدول والد concepts)
-                concepts.map { it.id }.chunked(500).forEach { chunkIds ->
-                    conceptDao.deleteContentsForConcepts(chunkIds)
-                    conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
-                }
-
-                if (userConceptIdsToRefreshContents.isNotEmpty()) {
-                    userConceptIdsToRefreshContents.chunked(500).forEach { chunkIds ->
+                if (existingConceptIds.isNotEmpty()) {
+                    // به‌روزرسانی جدول محتوا و دسته‌بندی برای واژگان پایه (بدون دست زدن به جدول والد concepts)
+                    concepts.map { it.id }.chunked(500).forEach { chunkIds ->
                         conceptDao.deleteContentsForConcepts(chunkIds)
+                        conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
+                    }
+
+                    if (userConceptIdsToRefreshContents.isNotEmpty()) {
+                        userConceptIdsToRefreshContents.chunked(500).forEach { chunkIds ->
+                            conceptDao.deleteContentsForConcepts(chunkIds)
+                        }
                     }
                 }
+
+                onProgress(0.65f, context.getString(R.string.seed_categorizing_topics))
 
                 if (allConceptCategories.isNotEmpty()) {
                     allConceptCategories.chunked(1000).forEach { chunk ->
@@ -404,6 +461,8 @@ class SeedImporter(
                         conceptDao.insertContents(chunk)
                     }
                 }
+
+                onProgress(0.85f, context.getString(R.string.seed_categorizing_topics))
 
                 // ۳. تضمین وجود رکوردهای learning_states و difficulty_states برای تمام واژگان (عادی و معکوس)
                 // بدون بازنویسی رکوردهای موجود کاربر (استفاده از IGNORE و فیلتر کلیدهای موجود)

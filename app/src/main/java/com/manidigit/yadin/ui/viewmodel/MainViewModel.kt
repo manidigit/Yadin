@@ -19,6 +19,7 @@ import com.manidigit.yadin.data.repository.ReviewRepository
 import com.manidigit.yadin.data.repository.SeedImporter
 import com.manidigit.yadin.data.repository.SettingsRepository
 import com.manidigit.yadin.data.repository.VocabularyRepository
+import com.manidigit.yadin.domain.algorithm.Sm2Quality
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.DuplicatePolicy
@@ -30,6 +31,7 @@ import com.manidigit.yadin.domain.model.ReviewCard
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewSession
 import com.manidigit.yadin.domain.model.ReviewType
+import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.StatisticsSummary
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
@@ -145,6 +147,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val quizAutoAdvanceSeconds: StateFlow<Int> get() = settingsVm.quizAutoAdvanceSeconds
     val defaultQuizLevel: StateFlow<QuizLevel> get() = settingsVm.defaultQuizLevel
     val defaultReviewMode: StateFlow<ReviewMode> get() = settingsVm.defaultReviewMode
+    val reviewAlgorithm: StateFlow<SpacedRepetitionAlgorithm> get() = settingsVm.reviewAlgorithm
+    val fsrsDesiredRetention: StateFlow<Double> get() = settingsVm.fsrsDesiredRetention
 
     // ==========================================
     // تفویض وضعیت آمار و پیشرفت (StatisticsViewModel)
@@ -157,7 +161,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val progressScorePercent: StateFlow<Double> = statisticsVm.getProgressScoreFlow(settingsVm.appLanguageDirection)
     val dailyStats: StateFlow<List<DayCountRaw>> get() = statisticsVm.dailyStats
     val practicedWordsCount: StateFlow<Int> = statisticsVm.getPracticedWordsCountFlow(settingsVm.appLanguageDirection)
-    val progressStatistics: StateFlow<StatisticsSummary> = statisticsVm.getProgressStatisticsFlow(settingsVm.appLanguageDirection)
+    val progressStatistics: StateFlow<StatisticsSummary> get() = statistics
     val achievements: StateFlow<List<AchievementEntity>> get() = statisticsVm.achievements
     val totalCorrectReviewsCount: StateFlow<Int> = statisticsVm.totalCorrectReviewsCount
     val retentionMetrics: StateFlow<com.manidigit.yadin.domain.model.RetentionMetrics> = statisticsVm.getRetentionMetricsFlow(settingsVm.appLanguageDirection)
@@ -192,6 +196,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ==========================================
     val setupCandidateCount: StateFlow<Int> get() = reviewVm.setupCandidateCount
     val activeSession: StateFlow<ReviewSession?> get() = reviewVm.activeSession
+    val activeAlgorithm: StateFlow<SpacedRepetitionAlgorithm> get() = reviewVm.activeAlgorithm
     val sessionCards: StateFlow<List<ReviewCard>> get() = reviewVm.sessionCards
     val quizQuestions: StateFlow<List<QuizQuestion>> get() = reviewVm.quizQuestions
     val currentCardIndex: StateFlow<Int> get() = reviewVm.currentCardIndex
@@ -215,27 +220,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         initializeDatabase()
-        viewModelScope.launch {
-            settingsVm.appLanguageDirection.collect { dir ->
-                statisticsVm.syncDirection(dir)
-                libraryVm.loadRecentWords(dir)
-            }
-        }
     }
 
     private fun initializeDatabase() {
         viewModelScope.launch {
-            if (seedImporter.shouldImportSeed()) {
-                _isSeeding.value = true
-                seedImporter.importSeedIfNeeded { progress, msg ->
-                    _seedProgress.value = progress
-                    _seedMessage.value = msg
+            try {
+                if (seedImporter.shouldImportSeed()) {
+                    _isSeeding.value = true
+                    seedImporter.importSeedIfNeeded { progress, msg ->
+                        _seedProgress.value = progress
+                        _seedMessage.value = msg
+                    }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isSeeding.value = false
+                _currentScreen.value = Screen.Home
             }
-            _isSeeding.value = false
-            _currentScreen.value = Screen.Home
             statisticsVm.refreshStatistics()
             loadRecentWords()
+            viewModelScope.launch {
+                settingsVm.appLanguageDirection.collect { dir ->
+                    statisticsVm.syncDirection(dir)
+                    libraryVm.loadRecentWords(dir)
+                }
+            }
         }
     }
 
@@ -293,6 +303,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setQuizAutoAdvanceSeconds(seconds: Int) = settingsVm.setQuizAutoAdvanceSeconds(seconds)
     fun setDefaultQuizLevel(level: QuizLevel) = settingsVm.setDefaultQuizLevel(level)
     fun setDefaultReviewMode(mode: ReviewMode) = settingsVm.setDefaultReviewMode(mode)
+    fun setReviewAlgorithm(algorithm: SpacedRepetitionAlgorithm) = settingsVm.setReviewAlgorithm(algorithm)
+    fun setFsrsDesiredRetention(retention: Double) = settingsVm.setFsrsDesiredRetention(retention)
     fun purgeInactiveWords(onComplete: (Int) -> Unit = {}) {
         viewModelScope.launch {
             val count = vocabularyRepo.purgeInactiveWords()
@@ -313,8 +325,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateSetupFilters(filters: ReviewFilters) = reviewVm.updateSetupFilters(filters)
 
     fun startFilteredSession(filters: ReviewFilters) {
-        // تضمین همخوانی قطعی با جهت سراسری تنظیمات برنامه (ISS-58)
-        val unifiedFilters = filters.copy(direction = appLanguageDirection.value)
+        // تضمین همخوانی قطعی با جهت سراسری تنظیمات برنامه (ISS-58) و نرخ ماندگاری FSRS
+        val unifiedFilters = filters.copy(
+            direction = appLanguageDirection.value,
+            fsrsDesiredRetention = fsrsDesiredRetention.value
+        )
         reviewVm.startFilteredSession(unifiedFilters) { mode ->
             val targetScreen = if (mode == ReviewMode.FLASHCARD) Screen.Flashcard else Screen.Quiz
             navigateTo(targetScreen)
@@ -347,6 +362,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             difficultyThreshold = difficultyThreshold.value,
             onSessionCompleted = {
                 // حل نقص ISS-56: انتقال استاندارد به خلاصه نشست و هماهنگ‌سازی پشته ناوبری
+                navigateTo(Screen.SessionSummary)
+            }
+        )
+    }
+
+    fun submitFlashcardSm2Answer(quality: Sm2Quality) {
+        reviewVm.submitFlashcardAnswer(
+            isCorrect = quality.isCorrect,
+            difficultyThreshold = difficultyThreshold.value,
+            sm2Quality = quality,
+            onSessionCompleted = {
                 navigateTo(Screen.SessionSummary)
             }
         )

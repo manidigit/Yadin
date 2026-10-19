@@ -251,6 +251,14 @@ class BackupRepository(
                 jsonWriter.name("nextReviewDay").value(ls.nextReviewDay)
                 jsonWriter.name("lastReviewedDay").value(ls.lastReviewedDay)
                 jsonWriter.name("updatedAt").value(ls.updatedAt)
+                jsonWriter.name("sm2Repetitions").value(ls.sm2Repetitions.toLong())
+                jsonWriter.name("sm2EasinessFactor").value(ls.sm2EasinessFactor)
+                jsonWriter.name("sm2IntervalDays").value(ls.sm2IntervalDays.toLong())
+                jsonWriter.name("fsrsStability").value(ls.fsrsStability)
+                jsonWriter.name("fsrsDifficulty").value(ls.fsrsDifficulty)
+                jsonWriter.name("fsrsReps").value(ls.fsrsReps.toLong())
+                jsonWriter.name("fsrsLapses").value(ls.fsrsLapses.toLong())
+                jsonWriter.name("fsrsState").value(ls.fsrsState.toLong())
                 jsonWriter.endObject()
             }
             jsonWriter.endArray()
@@ -994,7 +1002,15 @@ class BackupRepository(
                             stage = stage,
                             nextReviewDay = nextDay,
                             lastReviewedDay = lastDay,
-                            updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
+                            updatedAt = o.optLong("updatedAt", System.currentTimeMillis()),
+                            sm2Repetitions = o.optInt("sm2Repetitions", 0),
+                            sm2EasinessFactor = o.optDouble("sm2EasinessFactor", 2.5).let { if (it.isNaN() || it < 1.3) 2.5 else it },
+                            sm2IntervalDays = o.optInt("sm2IntervalDays", 0),
+                            fsrsStability = o.optDouble("fsrsStability", 0.0).let { if (it.isNaN() || it < 0.0) 0.0 else it },
+                            fsrsDifficulty = o.optDouble("fsrsDifficulty", 5.0).let { if (it.isNaN() || it < 1.0 || it > 10.0) 5.0 else it },
+                            fsrsReps = o.optInt("fsrsReps", 0),
+                            fsrsLapses = o.optInt("fsrsLapses", 0),
+                            fsrsState = o.optInt("fsrsState", 0)
                         )
                     )
                 }

@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.manidigit.yadin.data.repository.ReviewFilters
 import com.manidigit.yadin.data.repository.ReviewRepository
+import com.manidigit.yadin.domain.algorithm.FsrsAlgorithm
+import com.manidigit.yadin.domain.algorithm.Sm2Quality
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.QuizQuestion
@@ -12,6 +14,7 @@ import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewSession
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.SessionStatus
+import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,6 +53,14 @@ class ReviewViewModel(
     private val _activeSession = MutableStateFlow<ReviewSession?>(null)
     /** نشست فعال جاری (در صورت وجود) */
     val activeSession: StateFlow<ReviewSession?> = _activeSession.asStateFlow()
+
+    private val _activeAlgorithm = MutableStateFlow(SpacedRepetitionAlgorithm.YADIN)
+    /** الگوریتم فعال در نشست جاری (یادین، SM-2 یا FSRS) */
+    val activeAlgorithm: StateFlow<SpacedRepetitionAlgorithm> = _activeAlgorithm.asStateFlow()
+
+    private val _activeFsrsRetention = MutableStateFlow(FsrsAlgorithm.DEFAULT_DESIRED_RETENTION)
+    /** نرخ هدف ماندگاری حافظه برای الگوریتم FSRS در نشست جاری */
+    val activeFsrsRetention: StateFlow<Double> = _activeFsrsRetention.asStateFlow()
 
     private val _sessionCards = MutableStateFlow<List<ReviewCard>>(emptyList())
     /** کارت‌های فلش‌کارت بارگذاری‌شده برای نشست فعال */
@@ -122,7 +133,14 @@ class ReviewViewModel(
         scope.launch {
             try {
                 _reviewErrorMessage.value = null
-                val session = reviewRepo.createFilteredSession(filters)
+                val resolvedAlgo = when (filters.reviewType) {
+                    ReviewType.SM2 -> SpacedRepetitionAlgorithm.SM2
+                    ReviewType.FSRS -> SpacedRepetitionAlgorithm.FSRS
+                    else -> filters.algorithm
+                }
+                _activeAlgorithm.value = resolvedAlgo
+                _activeFsrsRetention.value = filters.fsrsDesiredRetention
+                val session = reviewRepo.createFilteredSession(filters.copy(algorithm = resolvedAlgo))
                 _activeSession.value = session
                 _currentCardIndex.value = 0
                 _isCardFlipped.value = false
@@ -193,6 +211,7 @@ class ReviewViewModel(
     fun submitFlashcardAnswer(
         isCorrect: Boolean,
         difficultyThreshold: Int = 3,
+        sm2Quality: Sm2Quality? = null,
         onSessionCompleted: (() -> Unit)? = null
     ) {
         if (isSubmittingFlashcard) return
@@ -203,6 +222,7 @@ class ReviewViewModel(
 
         isSubmittingFlashcard = true
         val currentCard = cards[idx]
+        val effectiveIsCorrect = sm2Quality?.isCorrect ?: isCorrect
         val attemptId = "${session.id}_${currentCard.conceptId}_${currentCard.direction}_$idx"
         scope.launch {
             try {
@@ -211,13 +231,16 @@ class ReviewViewModel(
                     sessionId = session.id,
                     conceptId = currentCard.conceptId,
                     direction = currentCard.direction,
-                    isCorrect = isCorrect,
+                    isCorrect = effectiveIsCorrect,
                     mode = ReviewMode.FLASHCARD,
                     difficultyThreshold = difficultyThreshold,
-                    reviewAttemptId = attemptId
+                    reviewAttemptId = attemptId,
+                    sm2Quality = sm2Quality,
+                    algorithm = _activeAlgorithm.value,
+                    fsrsDesiredRetention = _activeFsrsRetention.value
                 )
 
-                if (isCorrect) {
+                if (effectiveIsCorrect) {
                     _sessionCorrectCount.value += 1
                 } else {
                     _sessionWrongCount.value += 1
@@ -282,7 +305,9 @@ class ReviewViewModel(
                     selectedIndex = optionIndex,
                     correctIndex = q.correctIndex,
                     difficultyThreshold = difficultyThreshold,
-                    reviewAttemptId = attemptId
+                    reviewAttemptId = attemptId,
+                    algorithm = _activeAlgorithm.value,
+                    fsrsDesiredRetention = _activeFsrsRetention.value
                 )
                 // حل نقص ISS-90: هماهنگ‌سازی زمان‌بندی افزایش شمارنده‌ها دقیقاً پس از ثبت موفق در هر دو حالت
                 if (isCorrect) {

@@ -189,7 +189,7 @@ interface LearningDao {
             (:reviewType = 'WEEKLY' AND ls.stage = 'WEEKLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'MONTHLY' AND ls.stage = 'MONTHLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
-            (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
+            ((:reviewType = 'RANDOM' OR :reviewType = 'SM2' OR :reviewType = 'FSRS') AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
         )
         AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
@@ -226,7 +226,7 @@ interface LearningDao {
             (:reviewType = 'WEEKLY' AND ls.stage = 'WEEKLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'MONTHLY' AND ls.stage = 'MONTHLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
-            (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
+            ((:reviewType = 'RANDOM' OR :reviewType = 'SM2' OR :reviewType = 'FSRS') AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
         )
         AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))

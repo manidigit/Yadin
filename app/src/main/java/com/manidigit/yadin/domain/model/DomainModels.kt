@@ -34,7 +34,15 @@ data class LearningState(
     val nextReviewDay: String?, // YYYY-MM-DD
     val lastReviewedDay: String?, // YYYY-MM-DD
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val sm2Repetitions: Int = 0,
+    val sm2EasinessFactor: Double = 2.5,
+    val sm2IntervalDays: Int = 0,
+    val fsrsStability: Double = 0.0,
+    val fsrsDifficulty: Double = 5.0,
+    val fsrsReps: Int = 0,
+    val fsrsLapses: Int = 0,
+    val fsrsState: Int = 0
 )
 
 data class DifficultyState(
@@ -111,7 +119,16 @@ data class ReviewCard(
     val stage: Stage,
     val difficulty: VocabularyDifficulty,
     val consecutiveCorrect: Int = 0,
-    val consecutiveWrong: Int = 0
+    val consecutiveWrong: Int = 0,
+    val sm2Repetitions: Int = 0,
+    val sm2EasinessFactor: Double = 2.5,
+    val sm2IntervalDays: Int = 0,
+    val fsrsStability: Double = 0.0,
+    val fsrsDifficulty: Double = 5.0,
+    val fsrsReps: Int = 0,
+    val fsrsLapses: Int = 0,
+    val fsrsState: Int = 0,
+    val lastReviewedDay: String? = null
 )
 
 data class QuizQuestion(

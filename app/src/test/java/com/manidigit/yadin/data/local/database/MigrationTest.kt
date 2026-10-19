@@ -29,6 +29,18 @@ class MigrationTest {
 
         assertEquals(7, YadinDatabase.MIGRATION_7_8.startVersion)
         assertEquals(8, YadinDatabase.MIGRATION_7_8.endVersion)
+
+        assertEquals(8, YadinDatabase.MIGRATION_8_9.startVersion)
+        assertEquals(9, YadinDatabase.MIGRATION_8_9.endVersion)
+
+        assertEquals(8, YadinDatabase.MIGRATION_8_10.startVersion)
+        assertEquals(10, YadinDatabase.MIGRATION_8_10.endVersion)
+
+        assertEquals(9, YadinDatabase.MIGRATION_9_10.startVersion)
+        assertEquals(10, YadinDatabase.MIGRATION_9_10.endVersion)
+
+        assertEquals(10, YadinDatabase.MIGRATION_10_11.startVersion)
+        assertEquals(11, YadinDatabase.MIGRATION_10_11.endVersion)
     }
 
     @Test
@@ -51,5 +63,14 @@ class MigrationTest {
         assert(executedSql.any { it.contains("FOREIGN KEY(`conceptId`) REFERENCES `concepts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE") })
         assert(executedSql.any { it.contains("ALTER TABLE `contents_new` RENAME TO `contents`") })
         assert(executedSql.any { it.contains("ALTER TABLE `concept_categories_new` RENAME TO `concept_categories`") })
+
+        executedSql.clear()
+        YadinDatabase.MIGRATION_10_11.migrate(dummyDb)
+        assert(executedSql.any { it.contains("CREATE TABLE `learning_states_new`") })
+        assert(executedSql.any { it.contains("`fsrsStability` REAL NOT NULL") })
+        assert(executedSql.any { it.contains("`fsrsDifficulty` REAL NOT NULL") })
+        assert(executedSql.any { it.contains("`fsrsReps` INTEGER NOT NULL") })
+        assert(executedSql.any { it.contains("`fsrsLapses` INTEGER NOT NULL") })
+        assert(executedSql.any { it.contains("`fsrsState` INTEGER NOT NULL") })
     }
 }

@@ -59,6 +59,12 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
             }
         }
 
+    val reviewAlgorithmFlow: Flow<com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm> = settingsDao.getSettingFlow("reviewAlgorithm")
+        .map { com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm.fromString(it) }
+
+    val fsrsDesiredRetentionFlow: Flow<Double> = settingsDao.getSettingFlow("fsrsDesiredRetention")
+        .map { it?.toDoubleOrNull()?.coerceIn(0.75, 0.97) ?: 0.90 }
+
     suspend fun setThemeId(themeId: String) {
         settingsDao.setSetting(SettingEntity("themeId", themeId.ifBlank { "gemini" }))
     }
@@ -114,5 +120,14 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     suspend fun setDefaultReviewMode(mode: com.manidigit.yadin.domain.model.ReviewMode) {
         settingsDao.setSetting(SettingEntity("defaultReviewMode", mode.name))
+    }
+
+    suspend fun setReviewAlgorithm(algorithm: com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm) {
+        settingsDao.setSetting(SettingEntity("reviewAlgorithm", algorithm.name))
+    }
+
+    suspend fun setFsrsDesiredRetention(retention: Double) {
+        val clamped = retention.coerceIn(0.75, 0.97)
+        settingsDao.setSetting(SettingEntity("fsrsDesiredRetention", String.format(java.util.Locale.US, "%.2f", clamped)))
     }
 }

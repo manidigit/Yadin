@@ -32,5 +32,13 @@ data class LearningStateEntity(
     val nextReviewDay: String? = null, // YYYY-MM-DD
     val lastReviewedDay: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val sm2Repetitions: Int = 0,
+    val sm2EasinessFactor: Double = 2.5,
+    val sm2IntervalDays: Int = 0,
+    val fsrsStability: Double = 0.0,
+    val fsrsDifficulty: Double = 5.0,
+    val fsrsReps: Int = 0,
+    val fsrsLapses: Int = 0,
+    val fsrsState: Int = 0
 )

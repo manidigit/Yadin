@@ -45,6 +45,7 @@ import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
+import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.toStringRes
@@ -84,6 +85,7 @@ fun ReviewSetupScreen(
     initialMode: ReviewMode = ReviewMode.QUIZ,
     initialQuizLevel: QuizLevel = QuizLevel.NORMAL,
     initialMaxCards: Int = 20,
+    defaultAlgorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,
@@ -96,7 +98,13 @@ fun ReviewSetupScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
-    var selectedType by remember(initialType) { mutableStateOf(initialType) }
+    val effectiveInitialType = when {
+        initialType == ReviewType.RANDOM && initialDifficulties.isEmpty() && defaultAlgorithm == SpacedRepetitionAlgorithm.SM2 -> ReviewType.SM2
+        initialType == ReviewType.RANDOM && initialDifficulties.isEmpty() && defaultAlgorithm == SpacedRepetitionAlgorithm.FSRS -> ReviewType.FSRS
+        else -> initialType
+    }
+
+    var selectedType by remember(effectiveInitialType) { mutableStateOf(effectiveInitialType) }
     var selectedMode by remember(initialMode) { mutableStateOf(initialMode) }
     var selectedQuizLevel by remember(initialQuizLevel) { mutableStateOf(initialQuizLevel) }
     var selectedDifficulties by remember(initialDifficulties) {
@@ -112,7 +120,12 @@ fun ReviewSetupScreen(
         quizLevel = if (selectedMode == ReviewMode.QUIZ) selectedQuizLevel else null,
         difficulties = selectedDifficulties,
         categoryIds = if (selectedCategoryId != null) setOf(selectedCategoryId!!) else emptySet(),
-        maxCards = selectedMaxCards
+        maxCards = selectedMaxCards,
+        algorithm = when (selectedType) {
+            ReviewType.SM2 -> SpacedRepetitionAlgorithm.SM2
+            ReviewType.FSRS -> SpacedRepetitionAlgorithm.FSRS
+            else -> defaultAlgorithm
+        }
     )
 
     LaunchedEffect(
@@ -122,7 +135,8 @@ fun ReviewSetupScreen(
         selectedQuizLevel,
         selectedDifficulties,
         selectedCategoryId,
-        selectedMaxCards
+        selectedMaxCards,
+        defaultAlgorithm
     ) {
         onFilterChanged(buildFilters())
     }
@@ -285,6 +299,34 @@ fun ReviewSetupScreen(
                                 isSelected = (selectedType == ReviewType.LEARNED),
                                 modifier = Modifier.weight(1f),
                                 onClick = { selectedType = ReviewType.LEARNED }
+                            )
+                        }
+
+                        // Dedicated SM-2 & FSRS Smart Review Cards side-by-side
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            CompactHorizontalSourceBox(
+                                title = stringResource(R.string.review_setup_sm2_title),
+                                dueCount = dueRandom,
+                                totalCount = totalRandom,
+                                accentColor = getReviewTypeColor(ReviewType.SM2, colors),
+                                icon = getReviewTypeIcon(ReviewType.SM2),
+                                isSelected = (selectedType == ReviewType.SM2),
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedType = ReviewType.SM2 }
+                            )
+
+                            CompactHorizontalSourceBox(
+                                title = stringResource(R.string.review_setup_fsrs_title),
+                                dueCount = dueRandom,
+                                totalCount = totalRandom,
+                                accentColor = getReviewTypeColor(ReviewType.FSRS, colors),
+                                icon = getReviewTypeIcon(ReviewType.FSRS),
+                                isSelected = (selectedType == ReviewType.FSRS),
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedType = ReviewType.FSRS }
                             )
                         }
 

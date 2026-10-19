@@ -10,8 +10,14 @@ import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
 import com.manidigit.yadin.domain.algorithm.DifficultyCalculator
+import com.manidigit.yadin.domain.algorithm.FsrsAlgorithm
+import com.manidigit.yadin.domain.algorithm.FsrsRating
+import com.manidigit.yadin.domain.algorithm.FsrsState
 import com.manidigit.yadin.domain.algorithm.LearningTransition
 import com.manidigit.yadin.domain.algorithm.QuizDistractorScorer
+import com.manidigit.yadin.domain.algorithm.Sm2Algorithm
+import com.manidigit.yadin.domain.algorithm.Sm2Quality
+import com.manidigit.yadin.domain.algorithm.Sm2State
 import com.manidigit.yadin.domain.model.AchievementId
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.EntryType
@@ -25,6 +31,7 @@ import com.manidigit.yadin.domain.model.ReviewSession
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.SessionItemState
 import com.manidigit.yadin.domain.model.SessionStatus
+import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.time.ClockAndDayMath
@@ -46,7 +53,9 @@ data class ReviewFilters(
     val quizLevel: QuizLevel? = null,
     val difficulties: Set<VocabularyDifficulty> = emptySet(),
     val categoryIds: Set<String> = emptySet(),
-    val maxCards: Int = 20
+    val maxCards: Int = 20,
+    val algorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
+    val fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION
 )
 
 class ReviewRepository(
@@ -227,7 +236,16 @@ class ReviewRepository(
                     stage = stage,
                     difficulty = diff,
                     consecutiveCorrect = diffState?.consecutiveCorrect ?: 0,
-                    consecutiveWrong = diffState?.consecutiveWrong ?: 0
+                    consecutiveWrong = diffState?.consecutiveWrong ?: 0,
+                    sm2Repetitions = learning?.sm2Repetitions ?: 0,
+                    sm2EasinessFactor = learning?.sm2EasinessFactor ?: Sm2Algorithm.DEFAULT_EASINESS_FACTOR,
+                    sm2IntervalDays = learning?.sm2IntervalDays ?: 0,
+                    fsrsStability = learning?.fsrsStability ?: 0.0,
+                    fsrsDifficulty = learning?.fsrsDifficulty ?: FsrsAlgorithm.DEFAULT_INITIAL_DIFFICULTY,
+                    fsrsReps = learning?.fsrsReps ?: 0,
+                    fsrsLapses = learning?.fsrsLapses ?: 0,
+                    fsrsState = learning?.fsrsState ?: 0,
+                    lastReviewedDay = learning?.lastReviewedDay
                 )
             )
         }
@@ -458,7 +476,10 @@ class ReviewRepository(
         correctIndex: Int? = null,
         optionsJson: String? = null,
         difficultyThreshold: Int = 3,
-        reviewAttemptId: String = UUID.randomUUID().toString()
+        reviewAttemptId: String = UUID.randomUUID().toString(),
+        sm2Quality: Sm2Quality? = null,
+        algorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
+        fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION
     ): SubmitResult {
         // Idempotency guard: If this exact attempt was already recorded, return latest state directly
         val existingAttempt = reviewSessionDao.getHistoryByAttemptId(reviewAttemptId)
@@ -488,26 +509,101 @@ class ReviewRepository(
 
         val today = ClockAndDayMath.todayDayString()
         val now = System.currentTimeMillis()
+        val useFsrs = algorithm == SpacedRepetitionAlgorithm.FSRS ||
+            sessionCheck?.reviewType == ReviewType.FSRS
+        val useSm2 = !useFsrs && (
+            algorithm == SpacedRepetitionAlgorithm.SM2 ||
+                sessionCheck?.reviewType == ReviewType.SM2 ||
+                sm2Quality != null
+            )
 
         val submitResult = runInTransaction {
             val currentLearning = learningDao.getLearningState(conceptId, direction)
             val currentStage = currentLearning?.stage ?: Stage.DAILY
 
-            val transition = LearningTransition.calculateNextStage(
-                currentStage = currentStage,
-                isCorrect = isCorrect,
-                todayDayString = today
-            )
+            val finalStage: Stage
+            val finalNextReviewDay: String?
+            val finalLastReviewedDay: String
+            var finalSm2Reps: Int = currentLearning?.sm2Repetitions ?: 0
+            var finalSm2Ef: Double = currentLearning?.sm2EasinessFactor ?: Sm2Algorithm.DEFAULT_EASINESS_FACTOR
+            var finalSm2Interval: Int = currentLearning?.sm2IntervalDays ?: 0
+            var finalFsrsStability: Double = currentLearning?.fsrsStability ?: 0.0
+            var finalFsrsDifficulty: Double = currentLearning?.fsrsDifficulty ?: FsrsAlgorithm.DEFAULT_INITIAL_DIFFICULTY
+            var finalFsrsReps: Int = currentLearning?.fsrsReps ?: 0
+            var finalFsrsLapses: Int = currentLearning?.fsrsLapses ?: 0
+            var finalFsrsState: Int = currentLearning?.fsrsState ?: 0
+
+            if (useFsrs) {
+                val curFsrs = FsrsState(
+                    stability = finalFsrsStability,
+                    difficulty = finalFsrsDifficulty,
+                    reps = finalFsrsReps,
+                    lapses = finalFsrsLapses,
+                    state = finalFsrsState
+                )
+                val effectiveRating = sm2Quality?.let { FsrsRating.fromSm2Quality(it) }
+                    ?: FsrsRating.fromBoolean(isCorrect)
+                val fsrsRes = FsrsAlgorithm.calculateNextReview(
+                    currentState = curFsrs,
+                    rating = effectiveRating,
+                    lastReviewedDay = currentLearning?.lastReviewedDay,
+                    todayDayString = today,
+                    desiredRetention = fsrsDesiredRetention
+                )
+                finalStage = fsrsRes.mappedStage
+                finalNextReviewDay = fsrsRes.nextReviewDay
+                finalLastReviewedDay = fsrsRes.lastReviewedDay
+                finalFsrsStability = fsrsRes.nextState.stability
+                finalFsrsDifficulty = fsrsRes.nextState.difficulty
+                finalFsrsReps = fsrsRes.nextState.reps
+                finalFsrsLapses = fsrsRes.nextState.lapses
+                finalFsrsState = fsrsRes.nextState.state
+            } else if (useSm2) {
+                val curSm2 = Sm2State(
+                    repetitions = finalSm2Reps,
+                    easinessFactor = finalSm2Ef,
+                    intervalDays = finalSm2Interval
+                )
+                val effectiveQuality = sm2Quality ?: Sm2Quality.fromBoolean(isCorrect)
+                val sm2Res = Sm2Algorithm.calculateNextReview(
+                    currentState = curSm2,
+                    quality = effectiveQuality,
+                    todayDayString = today
+                )
+                finalStage = sm2Res.mappedStage
+                finalNextReviewDay = sm2Res.nextReviewDay
+                finalLastReviewedDay = sm2Res.lastReviewedDay
+                finalSm2Reps = sm2Res.nextState.repetitions
+                finalSm2Ef = sm2Res.nextState.easinessFactor
+                finalSm2Interval = sm2Res.nextState.intervalDays
+            } else {
+                val transition = LearningTransition.calculateNextStage(
+                    currentStage = currentStage,
+                    isCorrect = isCorrect,
+                    todayDayString = today
+                )
+                finalStage = transition.newStage
+                finalNextReviewDay = transition.nextReviewDay
+                finalLastReviewedDay = today
+            }
 
             val updatedLearning = (currentLearning ?: com.manidigit.yadin.data.local.entity.LearningStateEntity(
                 id = UUID.randomUUID().toString(),
                 conceptId = conceptId,
                 direction = direction
             )).copy(
-                stage = transition.newStage,
-                nextReviewDay = transition.nextReviewDay,
-                lastReviewedDay = today,
-                updatedAt = now
+                stage = finalStage,
+                nextReviewDay = finalNextReviewDay,
+                lastReviewedDay = finalLastReviewedDay,
+                updatedAt = now,
+                sm2Repetitions = finalSm2Reps,
+                sm2EasinessFactor = finalSm2Ef,
+                sm2IntervalDays = finalSm2Interval,
+                fsrsStability = finalFsrsStability,
+                fsrsDifficulty = finalFsrsDifficulty,
+                fsrsReps = finalFsrsReps,
+                fsrsLapses = finalFsrsLapses,
+                fsrsState = finalFsrsState
             )
             learningDao.insertLearningState(updatedLearning)
 
@@ -579,8 +675,8 @@ class ReviewRepository(
             }
 
             SubmitResult(
-                newStage = transition.newStage,
-                nextReviewDay = transition.nextReviewDay,
+                newStage = finalStage,
+                nextReviewDay = finalNextReviewDay,
                 newDifficulty = diffResult.newDifficulty,
                 isCorrect = isCorrect
             )

@@ -85,12 +85,42 @@ fun VocabularyDifficulty.toStringRes(): Int = when (this) {
     VocabularyDifficulty.VERY_HARD -> R.string.difficulty_very_hard
 }
 
+enum class SpacedRepetitionAlgorithm {
+    YADIN,
+    SM2,
+    FSRS;
+
+    companion object {
+        fun fromString(value: String?): SpacedRepetitionAlgorithm = when (value?.uppercase()) {
+            "SM2", "SM-2", "SUPERMEMO2" -> SM2
+            "FSRS", "FSRS-4.5", "FSRS-5" -> FSRS
+            else -> YADIN
+        }
+    }
+}
+
+@StringRes
+fun SpacedRepetitionAlgorithm.toTitleRes(): Int = when (this) {
+    SpacedRepetitionAlgorithm.YADIN -> R.string.settings_algo_yadin_title
+    SpacedRepetitionAlgorithm.SM2 -> R.string.settings_algo_sm2_title
+    SpacedRepetitionAlgorithm.FSRS -> R.string.settings_algo_fsrs_title
+}
+
+@StringRes
+fun SpacedRepetitionAlgorithm.toSubtitleRes(): Int = when (this) {
+    SpacedRepetitionAlgorithm.YADIN -> R.string.settings_algo_yadin_desc
+    SpacedRepetitionAlgorithm.SM2 -> R.string.settings_algo_sm2_desc
+    SpacedRepetitionAlgorithm.FSRS -> R.string.settings_algo_fsrs_desc
+}
+
 enum class ReviewType {
     DAILY,
     WEEKLY,
     MONTHLY,
     LEARNED,
-    RANDOM
+    RANDOM,
+    SM2,
+    FSRS
 }
 
 enum class ReviewMode {

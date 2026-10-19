@@ -112,7 +112,10 @@ class MainActivity : ComponentActivity() {
                 config.setLayoutDirection(targetLocale)
                 @Suppress("DEPRECATION")
                 currentContext.resources.updateConfiguration(config, currentContext.resources.displayMetrics)
-                currentContext.createConfigurationContext(config)
+                val configContext = currentContext.createConfigurationContext(config)
+                object : android.content.ContextWrapper(this@MainActivity) {
+                    override fun getResources(): android.content.res.Resources = configContext.resources
+                }
             }
 
             YadinTheme(themeId = themeId, isDark = isDark) {
@@ -277,12 +280,14 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
             val defaultReviewMode by viewModel.defaultReviewMode.collectAsStateWithLifecycle()
             val defaultQuizLevel by viewModel.defaultQuizLevel.collectAsStateWithLifecycle()
+            val reviewAlgorithm by viewModel.reviewAlgorithm.collectAsStateWithLifecycle()
 
             ReviewSetupScreen(
                 initialType = screen.initialType,
                 initialDifficulties = screen.initialDifficulties,
                 initialMode = defaultReviewMode,
                 initialQuizLevel = defaultQuizLevel,
+                defaultAlgorithm = reviewAlgorithm,
                 categories = categories,
                 difficultyCounts = difficultyCounts,
                 candidateCount = candidateCount,
@@ -305,14 +310,27 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val currentIndex by viewModel.currentCardIndex.collectAsStateWithLifecycle()
             val isFlipped by viewModel.isCardFlipped.collectAsStateWithLifecycle()
             val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
+            val activeAlgorithm by viewModel.activeAlgorithm.collectAsStateWithLifecycle()
+            val activeSession by viewModel.activeSession.collectAsStateWithLifecycle()
+            val fsrsDesiredRetention by viewModel.fsrsDesiredRetention.collectAsStateWithLifecycle()
+            val isFsrsMode = activeAlgorithm == com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm.FSRS ||
+                activeSession?.reviewType == ReviewType.FSRS
+            val isSm2Mode = !isFsrsMode && (
+                activeAlgorithm == com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm.SM2 ||
+                    activeSession?.reviewType == ReviewType.SM2
+                )
 
             FlashcardScreen(
                 cards = cards,
                 currentIndex = currentIndex,
                 isFlipped = isFlipped,
                 showCategory = showCategory,
+                isSm2Mode = isSm2Mode,
+                isFsrsMode = isFsrsMode,
+                fsrsDesiredRetention = fsrsDesiredRetention,
                 onFlip = { viewModel.flipCard() },
                 onAnswer = { isCorrect -> viewModel.submitFlashcardAnswer(isCorrect) },
+                onSm2Answer = { quality -> viewModel.submitFlashcardSm2Answer(quality) },
                 onExit = { viewModel.exitSession() }
             )
         }
@@ -568,17 +586,23 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val diffThreshold by viewModel.difficultyThreshold.collectAsStateWithLifecycle()
             val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()
             val uiLanguage by viewModel.uiLanguage.collectAsStateWithLifecycle()
+            val reviewAlgorithm by viewModel.reviewAlgorithm.collectAsStateWithLifecycle()
+            val fsrsDesiredRetention by viewModel.fsrsDesiredRetention.collectAsStateWithLifecycle()
             SettingsScreen(
                 currentThemeId = themeId,
                 isDark = isDark,
                 difficultyThreshold = diffThreshold,
                 languageDirection = appLanguageDirection,
                 uiLanguage = uiLanguage,
+                reviewAlgorithm = reviewAlgorithm,
+                fsrsDesiredRetention = fsrsDesiredRetention,
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                 onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
                 onSetLanguageDirection = { viewModel.setAppLanguageDirection(it) },
                 onSetUiLanguage = { viewModel.setUiLanguage(it) },
+                onSetReviewAlgorithm = { viewModel.setReviewAlgorithm(it) },
+                onSetFsrsDesiredRetention = { viewModel.setFsrsDesiredRetention(it) },
                 onPurgeInactiveWords = { onComplete -> viewModel.purgeInactiveWords(onComplete) },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },

@@ -333,27 +333,61 @@
     <string name="about_feature3_desc">Over 6,000 comprehensive Spanish words with accurate Persian translations, audio pronunciation, and notes stored 100% offline via Room database.</string>
     <string name="about_footer_prefix">Yadin • Crafted with </string>
     <string name="about_footer_suffix"> for language lovers</string>
-    <string name="help_title">Yadin User Guide</string>
-    <string name="help_leitner_intro_title">What is the Leitner Box?</string>
-    <string name="help_leitner_intro_desc">The Leitner method is a scientifically proven spaced repetition technique. Words move from daily to weekly, monthly, and ultimately long-term memory based on your recall accuracy.</string>
+    <string name="help_title">Yadin Complete Guide</string>
+    <string name="help_subtitle">Step-by-step onboarding, review algorithms (Yadin, SM-2, FSRS), and app features</string>
+    <string name="help_leitner_intro_title">How Does Yadin Work? (Quick Start)</string>
+    <string name="help_leitner_intro_desc">Yadin is a scientific, 100% offline vocabulary system designed to transfer Spanish words into your long-term memory. If you just installed the app, follow these 3 simple steps:</string>
+    <string name="help_quick_step1_title">1. Choose Algorithm &amp; Direction (in Settings)</string>
+    <string name="help_quick_step1_desc">In Settings, choose your study direction (Spanish to Persian or reverse) and your preferred scheduling engine (Yadin Classic, SM-2, or modern FSRS).</string>
+    <string name="help_quick_step2_title">2. Configure Your Session (in Review)</string>
+    <string name="help_quick_step2_desc">Go to the Review tab, select your practice mode (Flashcard or 4-Option Quiz) and session size (e.g., 20, 50, or 100 words).</string>
+    <string name="help_quick_step3_title">3. Tap &quot;Start Practice&quot; Daily</string>
+    <string name="help_quick_step3_desc">Simply tap Start! The app automatically prioritizes overdue words first, fills remaining slots with new words, and schedules each word\'s next review date.</string>
+
+    <string name="help_algos_header_title">Comparing the 3 Spaced Repetition Algorithms</string>
+    <string name="help_algos_header_subtitle">You can switch between these three scientific scheduling engines anytime in Settings:</string>
+
+    <string name="help_algo_yadin_badge">Default • 4 Fixed Stages</string>
+    <string name="help_algo_yadin_title">1. Yadin Algorithm (4-Stage Leitner Box)</string>
+    <string name="help_algo_yadin_desc">In this classic structured method, words move across 4 boxes:\n• Daily: Initial learning, reviewed the next day (1 day)\n• Weekly: After a correct Daily review, due in 7 days\n• Monthly: After a correct Weekly review, due in 30 days\n• Learned: After a correct Monthly review, moved to long-term memory\n⚠️ Golden Rule: Any wrong answer (even in Monthly or Learned) immediately resets the word back to the Daily box.</string>
+
+    <string name="help_algo_sm2_badge">Smart Queue • Dynamic EF</string>
+    <string name="help_algo_sm2_title">2. SM-2 Algorithm (SuperMemo 2)</string>
+    <string name="help_algo_sm2_desc">With SM-2, you no longer need to manually pick Daily, Weekly, or Monthly! Just select &quot;SM-2 Smart Review&quot; and tap Start:\n• Dynamic Easiness Factor (EF): Each word has its own EF (starting at 2.5) that adapts to your recall quality.\n• Exponential Intervals: 1st review = 1 day, 2nd = 6 days, and subsequent reviews multiply the previous interval by EF (e.g., 6 → 15 → 38 days).\n• 4 Rating Buttons on Flashcards: Rate your recall as Again, Hard, Good, or Easy with live day previews above each button.</string>
+
+    <string name="help_algo_fsrs_badge">State-of-the-Art • DSR Model</string>
+    <string name="help_algo_fsrs_title">3. FSRS Algorithm (Free Spaced Repetition Scheduler)</string>
+    <string name="help_algo_fsrs_desc">The world\'s most advanced modern spaced repetition scheduler, operating in a unified smart queue (&quot;FSRS Smart Review&quot;):\n• 3-Component Memory Model (DSR): Tracks Memory Stability (S), inherent Difficulty (D from 1 to 10), and Retrievability (R) for every single word.\n• Desired Retention Rate: Configurable in Settings between 85% (fewer reviews), 90% (balanced default), and 95% (maximum retention). At 90%, a word becomes due right when your recall probability drops to 90%.\n• Delay-Aware Adaptation: If you review a word late after several days off and still remember it, FSRS rewards you with a larger stability boost.</string>
+
+    <string name="help_smart_queue_header_title">How New Words, Due Words &amp; Mastery Work</string>
+    <string name="help_smart_queue_header_subtitle">What happens behind the scenes when you start a 50- or 100-word session?</string>
+    <string name="help_queue_item1_title">Priority 1: Previously Practiced Due Words</string>
+    <string name="help_queue_item1_desc">The engine first selects words you have practiced before whose due date (nextReviewDay) is today or earlier, prioritizing the most overdue words first.</string>
+    <string name="help_queue_item2_title">Priority 2: Automatic New Words</string>
+    <string name="help_queue_item2_desc">If you request 50 words and only 20 due words are waiting today, the remaining 30 slots are automatically filled with new unpracticed words.</string>
+    <string name="help_queue_item3_title">Same-Day Review Lock</string>
+    <string name="help_queue_item3_desc">Any word you review today is locked until tomorrow, so running multiple sessions in the same day will never repeat words you already practiced today.</string>
+    <string name="help_queue_item4_title">When Is a Word Marked as &quot;Learned&quot;?</string>
+    <string name="help_queue_item4_desc">In Yadin mode after passing Monthly, and in SM-2 or FSRS as soon as a word\'s next interval exceeds 30 days, it automatically becomes &quot;Learned&quot; and leaves the daily queue so you can focus on new words.</string>
+
     <string name="help_step1_number">1</string>
-    <string name="help_step1_title">Welcome to Yadin</string>
-    <string name="help_step1_desc">Yadin is an intelligent spaced repetition system (modern Leitner box) designed to commit foreign vocabulary to long-term memory. Words become due according to a scientific review schedule.</string>
+    <string name="help_step1_title">Practice Modes: Interactive Flashcards &amp; 4-Option Quiz</string>
+    <string name="help_step1_desc">Switch seamlessly between two study modes:\n• Interactive Flashcards: View the prompt word, listen to audio pronunciation, tap to flip in 3D for translations/notes, and grade your recall.\n• Adaptive 4-Option Quiz: Distractors are generated using spelling similarity, category overlap, and difficulty across 3 challenge levels (Beginner, Normal, Professional) with full question navigation.</string>
     <string name="help_step2_number">2</string>
-    <string name="help_step2_title">Learning Stages</string>
-    <string name="help_step2_desc">Each word moves through 4 stages:\n• Daily: Start learning, reviewed every day\n• Weekly: With one correct answer, reviewed after 7 days\n• Monthly: With the next correct answer, reviewed after 30 days\n• Mastered (Learned): Firmly stored in permanent memory\n* Whenever you answer incorrectly, the card immediately returns to the Daily stage.</string>
+    <string name="help_step2_title">Dynamic Word Difficulty (Independent of Stage)</string>
+    <string name="help_step2_desc">Every word has 4 difficulty tiers (Easy, Medium, Hard, Very Hard):\n• Automatic Adjustment: By default, 3 consecutive correct answers make a word one tier easier, while 3 consecutive mistakes make it harder (configurable from 2 to 5 in Settings).\n• Targeted Practice: Filter your review sessions to practice only Hard or Very Hard words.</string>
     <string name="help_step3_number">3</string>
-    <string name="help_step3_title">Daily Reviews &amp; Due Dates</string>
-    <string name="help_step3_desc">Every day, the system enqueues cards whose due date has arrived. Consistent daily reviews keep your study streak active.</string>
+    <string name="help_step3_title">Bidirectional Learning (Spanish ↔ Persian)</string>
+    <string name="help_step3_desc">Recognizing a Spanish word and recalling a Spanish word from Persian are distinct cognitive skills. Yadin tracks stages, SM-2/FSRS parameters, and difficulty completely independently for Normal and Reverse directions.</string>
     <string name="help_step4_number">4</string>
-    <string name="help_step4_title">Dynamic Difficulty Calculation</string>
-    <string name="help_step4_desc">Words have 4 difficulty levels (Easy, Medium, Hard, Very Hard). Three consecutive correct answers decrease the difficulty by one step, while three consecutive mistakes increase it.</string>
+    <string name="help_step4_title">Advanced Library, Batch Import &amp; Smart Audit</string>
+    <string name="help_step4_desc">Access over 7,295 curated words across 12 topic categories:\n• Accent-Insensitive Search &amp; 4 Filters: Search without typing Spanish accents and filter by status, stage, difficulty, or category.\n• Single &amp; Batch Import: Add words manually or import from Excel (.xlsx), CSV, TXT, or clipboard.\n• Smart Audit: Automatically detect and merge duplicates while keeping your highest learning progress.</string>
     <string name="help_step5_number">5</string>
-    <string name="help_step5_title">4-Option Quiz</string>
-    <string name="help_step5_desc">In addition to flashcards, you can challenge yourself with smart 4-option quizzes. Distractor options are intelligently selected to create authentic learning challenges.</string>
+    <string name="help_step5_title">Analytical Progress Dashboard, Streaks &amp; Badges</string>
+    <string name="help_step5_desc">Monitor your memory health in the Progress tab:\n• 360° Memory Retention Gauge &amp; Category Mastery.\n• Proportional Capsule Activity Chart across 7, 30, and 90 days.\n• Upcoming Due Forecast (tomorrow, 3 days, 7 days), Golden Study Hours, and 20 tiered achievements.</string>
     <string name="help_step6_number">6</string>
-    <string name="help_step6_title">Library &amp; Batch Import</string>
-    <string name="help_step6_desc">Browse all vocabulary in the library with filters by stage, category, and difficulty. You can add new words manually or batch-import them from text files.</string>
+    <string name="help_step6_title">Safe JSON Backups &amp; Excel (CSV) Exports</string>
+    <string name="help_step6_desc">From Settings → Backup &amp; Restore, export all your vocabulary, Leitner stages, SM-2 &amp; FSRS states, review history, and settings to JSON or Excel (CSV), and restore anytime with Smart Merge or Clean Replace.</string>
     <string name="import_title">Batch Word Import</string>
     <string name="import_subtitle">Quickly add words from text, files or clipboard</string>
     <string name="import_sample_btn">Sample Text</string>
@@ -690,4 +724,27 @@ libro: book</string>
     <string name="chart_accuracy_curve_label">Correct Answers</string>
     <string name="chart_volume_bars_label">Total Reviews</string>
     <string name="chart_tooltip_fmt">%1$s: %2$s reviews | %3$s correct (Accuracy: %4$s%%)</string>
+    <!-- Spaced Repetition Algorithms & SM-2 -->
+    <string name="settings_algo_section_title">Spaced Repetition Algorithm</string>
+    <string name="settings_algo_section_desc">Select the scheduling engine for next review intervals</string>
+    <string name="settings_algo_yadin_title">Yadin (Default)</string>
+    <string name="settings_algo_yadin_desc">Daily / Weekly / Monthly</string>
+    <string name="settings_algo_sm2_title">SM-2 (SuperMemo 2)</string>
+    <string name="settings_algo_sm2_desc">Dynamic Easiness Factor</string>
+    <string name="settings_algo_fsrs_title">FSRS (Modern DSR)</string>
+    <string name="settings_algo_fsrs_desc">Stability &amp; Forgetting Curve</string>
+    <string name="settings_fsrs_retention_title">Desired Memory Retention Rate:</string>
+    <string name="settings_fsrs_retention_desc">Target probability of recalling a card when it becomes due (Default: 90%)</string>
+    <string name="settings_fsrs_retention_85">85% (Relaxed)</string>
+    <string name="settings_fsrs_retention_90">90% (Standard)</string>
+    <string name="settings_fsrs_retention_95">95% (Intensive)</string>
+    <string name="review_setup_sm2_title">SM-2 Smart Review (SuperMemo 2)</string>
+    <string name="review_setup_sm2_badge">Dynamic EF</string>
+    <string name="review_setup_fsrs_title">FSRS Smart Review</string>
+    <string name="review_setup_fsrs_badge">DSR Curve</string>
+    <string name="flashcard_sm2_again">Again</string>
+    <string name="flashcard_sm2_hard">Hard</string>
+    <string name="flashcard_sm2_good">Good</string>
+    <string name="flashcard_sm2_easy">Easy</string>
+    <string name="flashcard_sm2_days_format">%1$sd</string>
 </resources>

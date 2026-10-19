@@ -160,6 +160,8 @@ object YadinIcons {
         ReviewType.MONTHLY -> stageMonthly
         ReviewType.LEARNED -> stageLearned
         ReviewType.RANDOM -> reviewRandom
+        ReviewType.SM2 -> retentionBrain
+        ReviewType.FSRS -> brandSparkle
     }
 
     // =========================================================================

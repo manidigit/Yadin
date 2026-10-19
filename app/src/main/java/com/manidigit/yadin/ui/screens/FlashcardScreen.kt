@@ -57,6 +57,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.manidigit.yadin.R
+import com.manidigit.yadin.domain.algorithm.FsrsAlgorithm
+import com.manidigit.yadin.domain.algorithm.FsrsState
+import com.manidigit.yadin.domain.algorithm.Sm2Algorithm
+import com.manidigit.yadin.domain.algorithm.Sm2Quality
+import com.manidigit.yadin.domain.algorithm.Sm2State
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.ReviewCard
 import com.manidigit.yadin.domain.text.TextUtilities
@@ -67,6 +72,8 @@ import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun FlashcardScreen(
@@ -74,8 +81,12 @@ fun FlashcardScreen(
     currentIndex: Int,
     isFlipped: Boolean,
     showCategory: Boolean = false,
+    isSm2Mode: Boolean = false,
+    isFsrsMode: Boolean = false,
+    fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION,
     onFlip: () -> Unit,
     onAnswer: (Boolean) -> Unit,
+    onSm2Answer: (Sm2Quality) -> Unit = { onAnswer(it.isCorrect) },
     onExit: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -245,10 +256,10 @@ fun FlashcardScreen(
                             onDragEnd = {
                                 if (dragOffset > 150f) {
                                     dragOffset = 0f
-                                    onAnswer(true)
+                                    if (isSm2Mode || isFsrsMode) onSm2Answer(Sm2Quality.GOOD) else onAnswer(true)
                                 } else if (dragOffset < -150f) {
                                     dragOffset = 0f
-                                    onAnswer(false)
+                                    if (isSm2Mode || isFsrsMode) onSm2Answer(Sm2Quality.AGAIN) else onAnswer(false)
                                 } else {
                                     dragOffset = 0f
                                 }
@@ -284,56 +295,147 @@ fun FlashcardScreen(
 
         // Bottom Action Buttons
         if (isFlipped) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = { onAnswer(false) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.error.copy(alpha = 0.15f),
-                        contentColor = colors.error
-                    )
+            if (isSm2Mode || isFsrsMode) {
+                val intervalPreview = remember(
+                    card.conceptId,
+                    isFsrsMode,
+                    fsrsDesiredRetention,
+                    card.sm2Repetitions,
+                    card.sm2EasinessFactor,
+                    card.sm2IntervalDays,
+                    card.fsrsStability,
+                    card.fsrsDifficulty,
+                    card.fsrsReps,
+                    card.fsrsLapses,
+                    card.fsrsState,
+                    card.lastReviewedDay
                 ) {
-                    Icon(YadinIcons.close, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.flashcard_forgot), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    if (isFsrsMode) {
+                        FsrsAlgorithm.previewIntervals(
+                            currentState = FsrsState(
+                                stability = card.fsrsStability,
+                                difficulty = card.fsrsDifficulty,
+                                reps = card.fsrsReps,
+                                lapses = card.fsrsLapses,
+                                state = card.fsrsState
+                            ),
+                            lastReviewedDay = card.lastReviewedDay,
+                            desiredRetention = fsrsDesiredRetention
+                        )
+                    } else {
+                        Sm2Algorithm.previewIntervals(
+                            Sm2State(
+                                repetitions = card.sm2Repetitions,
+                                easinessFactor = card.sm2EasinessFactor,
+                                intervalDays = card.sm2IntervalDays
+                            )
+                        )
+                    }
                 }
-
-                IconButton(
-                    onClick = onFlip,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.surfaceVariant)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = YadinIcons.flipCard,
-                        contentDescription = stringResource(R.string.flashcard_flip_back),
-                        tint = colors.onSurface,
-                        modifier = Modifier.size(20.dp)
+                    Sm2QualityButton(
+                        title = stringResource(R.string.flashcard_sm2_again),
+                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.againDays.formatDigits()),
+                        containerColor = colors.error.copy(alpha = 0.16f),
+                        contentColor = colors.error,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSm2Answer(Sm2Quality.AGAIN) }
                     )
+                    Sm2QualityButton(
+                        title = stringResource(R.string.flashcard_sm2_hard),
+                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.hardDays.formatDigits()),
+                        containerColor = colors.warning.copy(alpha = 0.16f),
+                        contentColor = colors.warning,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSm2Answer(Sm2Quality.HARD) }
+                    )
+                    Sm2QualityButton(
+                        title = stringResource(R.string.flashcard_sm2_good),
+                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.goodDays.formatDigits()),
+                        containerColor = colors.primary.copy(alpha = 0.18f),
+                        contentColor = colors.primary,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSm2Answer(Sm2Quality.GOOD) }
+                    )
+                    Sm2QualityButton(
+                        title = stringResource(R.string.flashcard_sm2_easy),
+                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.easyDays.formatDigits()),
+                        containerColor = colors.success.copy(alpha = 0.18f),
+                        contentColor = colors.success,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSm2Answer(Sm2Quality.EASY) }
+                    )
+                    IconButton(
+                        onClick = onFlip,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.flipCard,
+                            contentDescription = stringResource(R.string.flashcard_flip_back),
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
-
-                Button(
-                    onClick = { onAnswer(true) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.success,
-                        contentColor = colors.onSuccess
-                    )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.flashcard_remembered), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Button(
+                        onClick = { onAnswer(false) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.error.copy(alpha = 0.15f),
+                            contentColor = colors.error
+                        )
+                    ) {
+                        Icon(YadinIcons.close, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.flashcard_forgot), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    IconButton(
+                        onClick = onFlip,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.flipCard,
+                            contentDescription = stringResource(R.string.flashcard_flip_back),
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Button(
+                        onClick = { onAnswer(true) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.success,
+                            contentColor = colors.onSuccess
+                        )
+                    ) {
+                        Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.flashcard_remembered), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
                 }
             }
         } else {
@@ -394,6 +496,46 @@ fun FlashcardScreen(
             containerColor = colors.surface,
             shape = RoundedCornerShape(16.dp)
         )
+    }
+}
+
+@Composable
+private fun Sm2QualityButton(
+    title: String,
+    intervalLabel: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(52.dp),
+        shape = RoundedCornerShape(10.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.5.sp,
+                maxLines = 1
+            )
+            Text(
+                text = intervalLabel,
+                fontWeight = FontWeight.Medium,
+                fontSize = 9.5.sp,
+                color = contentColor.copy(alpha = 0.85f),
+                maxLines = 1
+            )
+        }
     }
 }
 

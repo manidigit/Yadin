@@ -91,6 +91,8 @@ fun getReviewTypeColor(type: ReviewType, colors: YadinColors): Color = when (typ
     ReviewType.MONTHLY -> getStageColor(Stage.MONTHLY, colors)
     ReviewType.LEARNED -> getStageColor(Stage.LEARNED, colors)
     ReviewType.RANDOM -> colors.secondary
+    ReviewType.SM2 -> colors.info
+    ReviewType.FSRS -> colors.primary
 }
 
 /**

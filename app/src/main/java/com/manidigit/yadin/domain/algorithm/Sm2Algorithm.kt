@@ -1,0 +1,166 @@
+package com.manidigit.yadin.domain.algorithm
+
+import com.manidigit.yadin.domain.model.Stage
+import com.manidigit.yadin.domain.time.ClockAndDayMath
+import kotlin.math.max
+import kotlin.math.roundToInt
+
+/**
+ * پیاده‌سازی مستقل و استاندارد الگوریتم تکرار با فاصله SuperMemo 2 (SM-2)
+ *
+ * مرجع علمی: P.A. Wozniak (1990) - Optimization of repetition spacing in the practice of learning.
+ *
+ * متغیرهای حالت هر کارت در SM-2:
+ * - [Sm2State.repetitions] (n): تعداد پاسخ‌های صحیح متوالی (با کیفیت q >= 3).
+ * - [Sm2State.easinessFactor] (EF): ضریب آسانی واژه (مقدار اولیه 2.5، حداقل 1.3).
+ * - [Sm2State.intervalDays] (I): فاصله تا مرور بعدی بر حسب روز.
+ */
+enum class Sm2Quality(val score: Int) {
+    /** فراموش کردم (پاسخ کاملاً نادرست - بازنشانی فاصله به ۱ روز) */
+    AGAIN(1),
+
+    /** سخت (یادآوری با دشواری زیاد - کاهش ضریب آسانی و رشد محافظه‌کارانه فاصله) */
+    HARD(3),
+
+    /** خوب (یادآوری استاندارد پس از کمی فکر - حفظ تعادل ضریب آسانی) */
+    GOOD(4),
+
+    /** عالی / آسان (یادآوری فوری و بدون مکث - افزایش ضریب آسانی و رشد سریع‌تر فاصله) */
+    EASY(5);
+
+    val isCorrect: Boolean
+        get() = score >= 3
+
+    companion object {
+        fun fromBoolean(isCorrect: Boolean): Sm2Quality =
+            if (isCorrect) GOOD else AGAIN
+    }
+}
+
+data class Sm2State(
+    val repetitions: Int = 0,
+    val easinessFactor: Double = Sm2Algorithm.DEFAULT_EASINESS_FACTOR,
+    val intervalDays: Int = 0
+)
+
+data class Sm2TransitionResult(
+    val nextState: Sm2State,
+    val mappedStage: Stage,
+    val nextReviewDay: String,
+    val lastReviewedDay: String
+)
+
+data class Sm2IntervalPreview(
+    val againDays: Int,
+    val hardDays: Int,
+    val goodDays: Int,
+    val easyDays: Int
+)
+
+object Sm2Algorithm {
+
+    const val DEFAULT_EASINESS_FACTOR = 2.5
+    const val MIN_EASINESS_FACTOR = 1.3
+
+    /**
+     * محاسبه وضعیت بعدی کارت بر اساس فرمول استاندارد SM-2 و نمره کیفیت پاسخ کاربر.
+     *
+     * @param currentState وضعیت فعلی SM-2 کارت (تکرار، ضریب آسانی، فاصله قبلی)
+     * @param quality کیفیت پاسخ کاربر (AGAIN=1, HARD=3, GOOD=4, EASY=5)
+     * @param todayDayString تاریخ امروز به فرمت YYYY-MM-DD
+     */
+    fun calculateNextReview(
+        currentState: Sm2State,
+        quality: Sm2Quality,
+        todayDayString: String = ClockAndDayMath.todayDayString()
+    ): Sm2TransitionResult {
+        val q = quality.score
+        val currentEf = currentState.easinessFactor.coerceAtLeast(MIN_EASINESS_FACTOR)
+        val currentReps = currentState.repetitions.coerceAtLeast(0)
+        val currentInterval = currentState.intervalDays.coerceAtLeast(0)
+
+        // ۱. محاسبه ضریب آسانی جدید: EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+        val qDiff = (5 - q).toDouble()
+        val efDelta = 0.1 - qDiff * (0.08 + qDiff * 0.02)
+        val newEf = max(MIN_EASINESS_FACTOR, currentEf + efDelta)
+
+        // ۲. محاسبه تعداد تکرار و فاصله روزانه جدید (Interval)
+        val newReps: Int
+        val newInterval: Int
+
+        if (q < 3) {
+            // پاسخ نادرست: بازنشانی زنجیره تکرار و مرور در روز بعد
+            newReps = 0
+            newInterval = 1
+        } else {
+            newReps = currentReps + 1
+            newInterval = when (currentReps) {
+                0 -> when (quality) {
+                    Sm2Quality.HARD -> 1
+                    Sm2Quality.GOOD -> 1
+                    Sm2Quality.EASY -> 4
+                    else -> 1
+                }
+                1 -> when (quality) {
+                    Sm2Quality.HARD -> max(2, (currentInterval * 1.2).roundToInt())
+                    Sm2Quality.GOOD -> 6
+                    Sm2Quality.EASY -> 8
+                    else -> 6
+                }
+                else -> {
+                    val baseInterval = max(1, currentInterval)
+                    val factor = when (quality) {
+                        Sm2Quality.HARD -> max(1.2, currentEf * 0.85)
+                        Sm2Quality.GOOD -> newEf
+                        Sm2Quality.EASY -> newEf * 1.3
+                        else -> newEf
+                    }
+                    max(baseInterval + 1, (baseInterval * factor).roundToInt())
+                }
+            }
+        }
+
+        val nextReviewDay = ClockAndDayMath.addDays(todayDayString, newInterval)
+        val mappedStage = mapIntervalToStage(newInterval, newReps)
+
+        return Sm2TransitionResult(
+            nextState = Sm2State(
+                repetitions = newReps,
+                easinessFactor = (newEf * 100.0).roundToInt() / 100.0,
+                intervalDays = newInterval
+            ),
+            mappedStage = mappedStage,
+            nextReviewDay = nextReviewDay,
+            lastReviewedDay = todayDayString
+        )
+    }
+
+    /**
+     * پیش‌نمایش فاصله مرور بعدی (بر حسب روز) برای هر ۴ دکمه کیفیت پاسخ در پشت فلش‌کارت.
+     */
+    fun previewIntervals(currentState: Sm2State): Sm2IntervalPreview {
+        val today = "2026-01-01"
+        val again = calculateNextReview(currentState, Sm2Quality.AGAIN, today).nextState.intervalDays
+        val hard = calculateNextReview(currentState, Sm2Quality.HARD, today).nextState.intervalDays
+        val good = calculateNextReview(currentState, Sm2Quality.GOOD, today).nextState.intervalDays
+        val easy = calculateNextReview(currentState, Sm2Quality.EASY, today).nextState.intervalDays
+        return Sm2IntervalPreview(
+            againDays = again,
+            hardDays = hard,
+            goodDays = good,
+            easyDays = easy
+        )
+    }
+
+    /**
+     * نگاشت فاصله زمانی SM-2 به مراحل ۴گانه یادین جهت یکپارچگی آمار، فیلترهای کتابخانه و نمودارها.
+     */
+    fun mapIntervalToStage(intervalDays: Int, repetitions: Int): Stage {
+        return when {
+            repetitions == 0 || intervalDays <= 3 -> Stage.DAILY
+            intervalDays <= 14 -> Stage.WEEKLY
+            intervalDays < 60 -> Stage.MONTHLY
+            else -> Stage.LEARNED
+        }
+    }
+}

@@ -38,7 +38,7 @@ import com.manidigit.yadin.data.local.entity.SettingEntity
         SettingEntity::class,
         AchievementEntity::class
     ],
-    version = 8,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -115,6 +115,25 @@ abstract class YadinDatabase : RoomDatabase() {
         }
 
         private fun migrateLearningStatesTableWithForeignKey(db: SupportSQLiteDatabase) {
+            val existingColumns = mutableSetOf<String>()
+            try {
+                db.query("PRAGMA table_info(`learning_states`)").use { cursor ->
+                    val nameIdx = cursor.getColumnIndex("name")
+                    while (cursor.moveToNext()) {
+                        if (nameIdx >= 0) {
+                            existingColumns.add(cursor.getString(nameIdx))
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+            val hasSm2Columns = existingColumns.containsAll(
+                listOf("sm2Repetitions", "sm2EasinessFactor", "sm2IntervalDays")
+            )
+            val hasFsrsColumns = existingColumns.containsAll(
+                listOf("fsrsStability", "fsrsDifficulty", "fsrsReps", "fsrsLapses", "fsrsState")
+            )
+
             db.execSQL("DROP TABLE IF EXISTS `learning_states_new` ")
             db.execSQL(
                 """
@@ -127,15 +146,33 @@ abstract class YadinDatabase : RoomDatabase() {
                     `lastReviewedDay` TEXT,
                     `createdAt` INTEGER NOT NULL,
                     `updatedAt` INTEGER NOT NULL,
+                    `sm2Repetitions` INTEGER NOT NULL,
+                    `sm2EasinessFactor` REAL NOT NULL,
+                    `sm2IntervalDays` INTEGER NOT NULL,
+                    `fsrsStability` REAL NOT NULL,
+                    `fsrsDifficulty` REAL NOT NULL,
+                    `fsrsReps` INTEGER NOT NULL,
+                    `fsrsLapses` INTEGER NOT NULL,
+                    `fsrsState` INTEGER NOT NULL,
                     PRIMARY KEY(`id`),
                     FOREIGN KEY(`conceptId`) REFERENCES `concepts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                 )
                 """.trimIndent()
             )
+            val sm2Select = if (hasSm2Columns) {
+                "COALESCE(`sm2Repetitions`, 0), COALESCE(`sm2EasinessFactor`, 2.5), COALESCE(`sm2IntervalDays`, 0)"
+            } else {
+                "0, 2.5, 0"
+            }
+            val fsrsSelect = if (hasFsrsColumns) {
+                "COALESCE(`fsrsStability`, 0.0), COALESCE(`fsrsDifficulty`, 5.0), COALESCE(`fsrsReps`, 0), COALESCE(`fsrsLapses`, 0), COALESCE(`fsrsState`, 0)"
+            } else {
+                "0.0, 5.0, 0, 0, 0"
+            }
             db.execSQL(
                 """
-                INSERT INTO `learning_states_new` (`id`, `conceptId`, `direction`, `stage`, `nextReviewDay`, `lastReviewedDay`, `createdAt`, `updatedAt`)
-                SELECT `id`, `conceptId`, `direction`, `stage`, `nextReviewDay`, `lastReviewedDay`, `createdAt`, `updatedAt`
+                INSERT INTO `learning_states_new` (`id`, `conceptId`, `direction`, `stage`, `nextReviewDay`, `lastReviewedDay`, `createdAt`, `updatedAt`, `sm2Repetitions`, `sm2EasinessFactor`, `sm2IntervalDays`, `fsrsStability`, `fsrsDifficulty`, `fsrsReps`, `fsrsLapses`, `fsrsState`)
+                SELECT `id`, `conceptId`, `direction`, `stage`, `nextReviewDay`, `lastReviewedDay`, `createdAt`, `updatedAt`, $sm2Select, $fsrsSelect
                 FROM `learning_states`
                 WHERE `conceptId` IN (SELECT `id` FROM `concepts`)
                 """.trimIndent()
@@ -321,6 +358,42 @@ abstract class YadinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                reconcileAllTablesFully(db)
+            }
+        }
+
+        val MIGRATION_8_10 = object : Migration(8, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                reconcileAllTablesFully(db)
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                reconcileAllTablesFully(db)
+            }
+        }
+
+        val MIGRATION_8_11 = object : Migration(8, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                reconcileAllTablesFully(db)
+            }
+        }
+
+        val MIGRATION_9_11 = object : Migration(9, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                reconcileAllTablesFully(db)
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                reconcileAllTablesFully(db)
+            }
+        }
+
         fun getInstance(context: Context): YadinDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -337,7 +410,13 @@ abstract class YadinDatabase : RoomDatabase() {
                         MIGRATION_5_6,
                         MIGRATION_6_7,
                         MIGRATION_6_8,
-                        MIGRATION_7_8
+                        MIGRATION_7_8,
+                        MIGRATION_8_9,
+                        MIGRATION_8_10,
+                        MIGRATION_9_10,
+                        MIGRATION_8_11,
+                        MIGRATION_9_11,
+                        MIGRATION_10_11
                     )
                     .fallbackToDestructiveMigration()
                     .fallbackToDestructiveMigrationOnDowngrade()

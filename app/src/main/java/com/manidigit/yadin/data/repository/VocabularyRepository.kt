@@ -106,7 +106,15 @@ class VocabularyRepository(
                 nextReviewDay = it.nextReviewDay,
                 lastReviewedDay = it.lastReviewedDay,
                 createdAt = it.createdAt,
-                updatedAt = it.updatedAt
+                updatedAt = it.updatedAt,
+                sm2Repetitions = it.sm2Repetitions,
+                sm2EasinessFactor = it.sm2EasinessFactor,
+                sm2IntervalDays = it.sm2IntervalDays,
+                fsrsStability = it.fsrsStability,
+                fsrsDifficulty = it.fsrsDifficulty,
+                fsrsReps = it.fsrsReps,
+                fsrsLapses = it.fsrsLapses,
+                fsrsState = it.fsrsState
             )
         }
         val reverseLearning = learningDao.getLearningState(conceptId, CardDirection.REVERSE)?.let {
@@ -118,7 +126,15 @@ class VocabularyRepository(
                 nextReviewDay = it.nextReviewDay,
                 lastReviewedDay = it.lastReviewedDay,
                 createdAt = it.createdAt,
-                updatedAt = it.updatedAt
+                updatedAt = it.updatedAt,
+                sm2Repetitions = it.sm2Repetitions,
+                sm2EasinessFactor = it.sm2EasinessFactor,
+                sm2IntervalDays = it.sm2IntervalDays,
+                fsrsStability = it.fsrsStability,
+                fsrsDifficulty = it.fsrsDifficulty,
+                fsrsReps = it.fsrsReps,
+                fsrsLapses = it.fsrsLapses,
+                fsrsState = it.fsrsState
             )
         }
         val normalDiff = learningDao.getDifficultyState(conceptId, CardDirection.NORMAL)?.let {
@@ -246,7 +262,15 @@ class VocabularyRepository(
                     nextReviewDay = it.nextReviewDay,
                     lastReviewedDay = it.lastReviewedDay,
                     createdAt = it.createdAt,
-                    updatedAt = it.updatedAt
+                    updatedAt = it.updatedAt,
+                    sm2Repetitions = it.sm2Repetitions,
+                    sm2EasinessFactor = it.sm2EasinessFactor,
+                    sm2IntervalDays = it.sm2IntervalDays,
+                    fsrsStability = it.fsrsStability,
+                    fsrsDifficulty = it.fsrsDifficulty,
+                    fsrsReps = it.fsrsReps,
+                    fsrsLapses = it.fsrsLapses,
+                    fsrsState = it.fsrsState
                 )
             }
             val reverseLearning = lStates.firstOrNull { it.direction == CardDirection.REVERSE }?.let {
@@ -258,7 +282,15 @@ class VocabularyRepository(
                     nextReviewDay = it.nextReviewDay,
                     lastReviewedDay = it.lastReviewedDay,
                     createdAt = it.createdAt,
-                    updatedAt = it.updatedAt
+                    updatedAt = it.updatedAt,
+                    sm2Repetitions = it.sm2Repetitions,
+                    sm2EasinessFactor = it.sm2EasinessFactor,
+                    sm2IntervalDays = it.sm2IntervalDays,
+                    fsrsStability = it.fsrsStability,
+                    fsrsDifficulty = it.fsrsDifficulty,
+                    fsrsReps = it.fsrsReps,
+                    fsrsLapses = it.fsrsLapses,
+                    fsrsState = it.fsrsState
                 )
             }
 
