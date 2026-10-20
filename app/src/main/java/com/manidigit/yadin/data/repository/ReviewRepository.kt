@@ -699,15 +699,20 @@ class ReviewRepository(
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
         val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
 
-        // ۱. رگبار و مداومت (STREAK: 3, 7, 30, 100 days)
+        // ۱. رگبار و مداومت (STREAK: 7, 30, 100, 365 days)
         val streakTiers = listOf(
-            AchievementId.STREAK_3_DAYS to 3,
-            AchievementId.STREAK_7_DAYS to 7,
-            AchievementId.STREAK_30_DAYS to 30,
-            AchievementId.STREAK_100_DAYS to 100
+            AchievementId.STREAK_3_DAYS,
+            AchievementId.STREAK_7_DAYS,
+            AchievementId.STREAK_30_DAYS,
+            AchievementId.STREAK_100_DAYS
         )
-        for ((ach, target) in streakTiers) {
-            if (streak >= target) achievementDao.unlock(ach.name)
+        for (ach in streakTiers) {
+            val target = ach.threshold
+            if (streak >= target) {
+                achievementDao.unlock(ach.name)
+            } else {
+                achievementDao.relock(ach.name)
+            }
             achievementDao.updateProgress(ach.name, streak.coerceAtMost(target))
         }
 
@@ -715,75 +720,88 @@ class ReviewRepository(
         val session = if (sessionId.isNotBlank()) reviewSessionDao.getSessionById(sessionId) else null
         val sessionDirection = session?.direction
 
-        // ۲. دایره واژگان (VOCABULARY: 10, 50, 200, 1000 words practiced)
+        // ۲. دایره واژگان (VOCABULARY: 100, 500, 2000, 5000 words practiced)
         val practicedCount = if (sessionDirection != null) {
             maxOf(learningDao.getTotalPracticedWordsCount(sessionDirection), learningDao.getTotalPracticedWordsCount())
         } else {
             learningDao.getTotalPracticedWordsCount()
         }
         val vocabTiers = listOf(
-            AchievementId.FIRST_TEN_WORDS to 10,
-            AchievementId.VOCABULARY_BUILDER to 50,
-            AchievementId.VOCABULARY_MASTER to 200,
-            AchievementId.VOCABULARY_LEGEND to 1000
+            AchievementId.FIRST_TEN_WORDS,
+            AchievementId.VOCABULARY_BUILDER,
+            AchievementId.VOCABULARY_MASTER,
+            AchievementId.VOCABULARY_LEGEND
         )
-        for ((ach, target) in vocabTiers) {
-            if (practicedCount >= target) achievementDao.unlock(ach.name)
+        for (ach in vocabTiers) {
+            val target = ach.threshold
+            if (practicedCount >= target) {
+                achievementDao.unlock(ach.name)
+            } else {
+                achievementDao.relock(ach.name)
+            }
             achievementDao.updateProgress(ach.name, practicedCount.coerceAtMost(target))
         }
 
-        // ۳. تثبیت لایتنر و حافظه دائمی (RETENTION: 5, 25, 100, 500 words in LEARNED)
+        // ۳. تثبیت لایتنر و حافظه دائمی (RETENTION: 100, 500, 2000, 5000 words in LEARNED)
         val learnedCount = if (sessionDirection != null) {
             maxOf(learningDao.getTotalLearnedWordsCount(sessionDirection), learningDao.getTotalLearnedWordsCount())
         } else {
             learningDao.getTotalLearnedWordsCount()
         }
         val retentionTiers = listOf(
-            AchievementId.LONG_TERM_MEMORY to 5,
-            AchievementId.RETENTION_SILVER to 25,
-            AchievementId.RETENTION_GOLD to 100,
-            AchievementId.RETENTION_PLATINUM to 500
+            AchievementId.LONG_TERM_MEMORY,
+            AchievementId.RETENTION_SILVER,
+            AchievementId.RETENTION_GOLD,
+            AchievementId.RETENTION_PLATINUM
         )
-        for ((ach, target) in retentionTiers) {
-            if (learnedCount >= target) achievementDao.unlock(ach.name)
+        for (ach in retentionTiers) {
+            val target = ach.threshold
+            if (learnedCount >= target) {
+                achievementDao.unlock(ach.name)
+            } else {
+                achievementDao.relock(ach.name)
+            }
             achievementDao.updateProgress(ach.name, learnedCount.coerceAtMost(target))
         }
 
-        // ۴. واژگان سخت (HARD_WORDS: 3, 10, 30, 100 words mastered)
+        // ۴. واژگان سخت (HARD_WORDS: 10, 50, 150, 500 words mastered)
         val hardMastered = if (sessionDirection != null) {
             maxOf(learningDao.getMasteredHardWordsCount(sessionDirection), learningDao.getMasteredHardWordsCount())
         } else {
             learningDao.getMasteredHardWordsCount()
         }
         val hardTiers = listOf(
-            AchievementId.HARD_MASTER to 3,
-            AchievementId.HARD_SILVER to 10,
-            AchievementId.HARD_GOLD to 30,
-            AchievementId.HARD_PLATINUM to 100
+            AchievementId.HARD_MASTER,
+            AchievementId.HARD_SILVER,
+            AchievementId.HARD_GOLD,
+            AchievementId.HARD_PLATINUM
         )
-        for ((ach, target) in hardTiers) {
-            if (hardMastered >= target) achievementDao.unlock(ach.name)
+        for (ach in hardTiers) {
+            val target = ach.threshold
+            if (hardMastered >= target) {
+                achievementDao.unlock(ach.name)
+            } else {
+                achievementDao.relock(ach.name)
+            }
             achievementDao.updateProgress(ach.name, hardMastered.coerceAtMost(target))
         }
 
-        // ۵. مهارت کوییز (QUIZ: 5, 10, 20, 30 questions 100% correct)
-        if (session != null && session.mode == ReviewMode.QUIZ) {
-            val history = reviewSessionDao.getHistoryForSession(sessionId)
-            val isPerfect = history.isNotEmpty() && history.all { it.isCorrect }
-            val count = history.size
-
-            val quizTiers = listOf(
-                AchievementId.QUIZ_ACE to 5,
-                AchievementId.QUIZ_SILVER to 10,
-                AchievementId.QUIZ_GOLD to 20,
-                AchievementId.QUIZ_PLATINUM to 30
-            )
-            for ((ach, target) in quizTiers) {
-                if (isPerfect && count >= target) {
-                    achievementDao.unlock(ach.name)
-                    achievementDao.updateProgress(ach.name, target)
-                }
+        // ۵. مهارت کوییز (QUIZ: 5, 20, 50, 100 perfect quiz sessions with >= 5 questions)
+        val perfectQuizCount = reviewSessionDao.getPerfectQuizSessionsCount(minQuestions = 5)
+        val quizTiers = listOf(
+            AchievementId.QUIZ_ACE,
+            AchievementId.QUIZ_SILVER,
+            AchievementId.QUIZ_GOLD,
+            AchievementId.QUIZ_PLATINUM
+        )
+        for (ach in quizTiers) {
+            val target = ach.threshold
+            if (perfectQuizCount >= target) {
+                achievementDao.unlock(ach.name)
+            } else {
+                achievementDao.relock(ach.name)
             }
+            achievementDao.updateProgress(ach.name, perfectQuizCount.coerceAtMost(target))
         }
     }
 
@@ -808,25 +826,8 @@ class ReviewRepository(
             updated
         } ?: return
 
-        // Re-check quiz achievements on session completion
-        if (session.mode == ReviewMode.QUIZ) {
-            val history = reviewSessionDao.getHistoryForSession(sessionId)
-            val isPerfect = history.isNotEmpty() && history.all { it.isCorrect }
-            val count = history.size
-
-            val quizTiers = listOf(
-                AchievementId.QUIZ_ACE to 5,
-                AchievementId.QUIZ_SILVER to 10,
-                AchievementId.QUIZ_GOLD to 20,
-                AchievementId.QUIZ_PLATINUM to 30
-            )
-            for ((ach, target) in quizTiers) {
-                if (isPerfect && count >= target) {
-                    achievementDao.unlock(ach.name)
-                    achievementDao.updateProgress(ach.name, target)
-                }
-            }
-        }
+        // Re-check all achievements on session completion
+        checkAchievements(session.id)
     }
 
     suspend fun abandonSession(sessionId: String) {

@@ -229,33 +229,33 @@ enum class AchievementId(
     val tier: AchievementTier,
     val threshold: Int
 ) {
-    // ۱. دایره واژگان (Vocabulary Footprint)
-    FIRST_TEN_WORDS(R.string.ach_title_first_ten, R.string.ach_desc_first_ten, "school", AchievementCategory.VOCABULARY, AchievementTier.BRONZE, 10),
-    VOCABULARY_BUILDER(R.string.ach_title_builder, R.string.ach_desc_builder, "auto_stories", AchievementCategory.VOCABULARY, AchievementTier.SILVER, 50),
-    VOCABULARY_MASTER(R.string.ach_title_master, R.string.ach_desc_master, "library_books", AchievementCategory.VOCABULARY, AchievementTier.GOLD, 200),
-    VOCABULARY_LEGEND(R.string.ach_title_legend, R.string.ach_desc_legend, "menu_book", AchievementCategory.VOCABULARY, AchievementTier.PLATINUM, 1000),
+    // ۱. دایره واژگان (Vocabulary Footprint: 100, 500, 2000, 5000)
+    FIRST_TEN_WORDS(R.string.ach_title_first_ten, R.string.ach_desc_first_ten, "school", AchievementCategory.VOCABULARY, AchievementTier.BRONZE, 100),
+    VOCABULARY_BUILDER(R.string.ach_title_builder, R.string.ach_desc_builder, "auto_stories", AchievementCategory.VOCABULARY, AchievementTier.SILVER, 500),
+    VOCABULARY_MASTER(R.string.ach_title_master, R.string.ach_desc_master, "library_books", AchievementCategory.VOCABULARY, AchievementTier.GOLD, 2000),
+    VOCABULARY_LEGEND(R.string.ach_title_legend, R.string.ach_desc_legend, "menu_book", AchievementCategory.VOCABULARY, AchievementTier.PLATINUM, 5000),
 
-    // ۲. رگبار و مداومت (Streak Fire)
-    STREAK_3_DAYS(R.string.ach_title_streak_3, R.string.ach_desc_streak_3, "local_fire_department", AchievementCategory.STREAK, AchievementTier.BRONZE, 3),
-    STREAK_7_DAYS(R.string.ach_title_streak_7, R.string.ach_desc_streak_7, "whatshot", AchievementCategory.STREAK, AchievementTier.SILVER, 7),
-    STREAK_30_DAYS(R.string.ach_title_streak_30, R.string.ach_desc_streak_30, "military_tech", AchievementCategory.STREAK, AchievementTier.GOLD, 30),
-    STREAK_100_DAYS(R.string.ach_title_streak_100, R.string.ach_desc_streak_100, "diamond", AchievementCategory.STREAK, AchievementTier.PLATINUM, 100),
+    // ۲. رگبار و مداومت (Streak Fire: 7, 30, 100, 365 days)
+    STREAK_3_DAYS(R.string.ach_title_streak_3, R.string.ach_desc_streak_3, "local_fire_department", AchievementCategory.STREAK, AchievementTier.BRONZE, 7),
+    STREAK_7_DAYS(R.string.ach_title_streak_7, R.string.ach_desc_streak_7, "whatshot", AchievementCategory.STREAK, AchievementTier.SILVER, 30),
+    STREAK_30_DAYS(R.string.ach_title_streak_30, R.string.ach_desc_streak_30, "military_tech", AchievementCategory.STREAK, AchievementTier.GOLD, 100),
+    STREAK_100_DAYS(R.string.ach_title_streak_100, R.string.ach_desc_streak_100, "diamond", AchievementCategory.STREAK, AchievementTier.PLATINUM, 365),
 
-    // ۳. تثبیت لایتنر و حافظه دائمی (Deep Retention)
-    LONG_TERM_MEMORY(R.string.ach_title_retention_bronze, R.string.ach_desc_retention_bronze, "neurology", AchievementCategory.RETENTION, AchievementTier.BRONZE, 5),
-    RETENTION_SILVER(R.string.ach_title_retention_silver, R.string.ach_desc_retention_silver, "psychology", AchievementCategory.RETENTION, AchievementTier.SILVER, 25),
-    RETENTION_GOLD(R.string.ach_title_retention_gold, R.string.ach_desc_retention_gold, "archive", AchievementCategory.RETENTION, AchievementTier.GOLD, 100),
-    RETENTION_PLATINUM(R.string.ach_title_retention_platinum, R.string.ach_desc_retention_platinum, "workspace_premium", AchievementCategory.RETENTION, AchievementTier.PLATINUM, 500),
+    // ۳. تثبیت لایتنر و حافظه دائمی (Deep Retention: 100, 500, 2000, 5000)
+    LONG_TERM_MEMORY(R.string.ach_title_retention_bronze, R.string.ach_desc_retention_bronze, "neurology", AchievementCategory.RETENTION, AchievementTier.BRONZE, 100),
+    RETENTION_SILVER(R.string.ach_title_retention_silver, R.string.ach_desc_retention_silver, "psychology", AchievementCategory.RETENTION, AchievementTier.SILVER, 500),
+    RETENTION_GOLD(R.string.ach_title_retention_gold, R.string.ach_desc_retention_gold, "archive", AchievementCategory.RETENTION, AchievementTier.GOLD, 2000),
+    RETENTION_PLATINUM(R.string.ach_title_retention_platinum, R.string.ach_desc_retention_platinum, "workspace_premium", AchievementCategory.RETENTION, AchievementTier.PLATINUM, 5000),
 
-    // ۴. واژگان سخت و چالش‌برانگیز (Hard Words Conqueror)
-    HARD_MASTER(R.string.ach_title_hard_bronze, R.string.ach_desc_hard_bronze, "fitness_center", AchievementCategory.HARD_WORDS, AchievementTier.BRONZE, 3),
-    HARD_SILVER(R.string.ach_title_hard_silver, R.string.ach_desc_hard_silver, "construction", AchievementCategory.HARD_WORDS, AchievementTier.SILVER, 10),
-    HARD_GOLD(R.string.ach_title_hard_gold, R.string.ach_desc_hard_gold, "psychology", AchievementCategory.HARD_WORDS, AchievementTier.GOLD, 30),
-    HARD_PLATINUM(R.string.ach_title_hard_platinum, R.string.ach_desc_hard_platinum, "shield", AchievementCategory.HARD_WORDS, AchievementTier.PLATINUM, 100),
+    // ۴. واژگان سخت و چالش‌برانگیز (Hard Words Conqueror: 10, 50, 150, 500)
+    HARD_MASTER(R.string.ach_title_hard_bronze, R.string.ach_desc_hard_bronze, "fitness_center", AchievementCategory.HARD_WORDS, AchievementTier.BRONZE, 10),
+    HARD_SILVER(R.string.ach_title_hard_silver, R.string.ach_desc_hard_silver, "construction", AchievementCategory.HARD_WORDS, AchievementTier.SILVER, 50),
+    HARD_GOLD(R.string.ach_title_hard_gold, R.string.ach_desc_hard_gold, "psychology", AchievementCategory.HARD_WORDS, AchievementTier.GOLD, 150),
+    HARD_PLATINUM(R.string.ach_title_hard_platinum, R.string.ach_desc_hard_platinum, "shield", AchievementCategory.HARD_WORDS, AchievementTier.PLATINUM, 500),
 
-    // ۵. مهارت و تسلط بر کوییز (Quiz Mastery)
+    // ۵. مهارت و تسلط بر کوییز (Quiz Mastery: 5, 20, 50, 100 perfect quizzes)
     QUIZ_ACE(R.string.ach_title_quiz_bronze, R.string.ach_desc_quiz_bronze, "grade", AchievementCategory.QUIZ, AchievementTier.BRONZE, 5),
-    QUIZ_SILVER(R.string.ach_title_quiz_silver, R.string.ach_desc_quiz_silver, "emoji_events", AchievementCategory.QUIZ, AchievementTier.SILVER, 10),
-    QUIZ_GOLD(R.string.ach_title_quiz_gold, R.string.ach_desc_quiz_gold, "stars", AchievementCategory.QUIZ, AchievementTier.GOLD, 20),
-    QUIZ_PLATINUM(R.string.ach_title_quiz_platinum, R.string.ach_desc_quiz_platinum, "diamond", AchievementCategory.QUIZ, AchievementTier.PLATINUM, 30)
+    QUIZ_SILVER(R.string.ach_title_quiz_silver, R.string.ach_desc_quiz_silver, "emoji_events", AchievementCategory.QUIZ, AchievementTier.SILVER, 20),
+    QUIZ_GOLD(R.string.ach_title_quiz_gold, R.string.ach_desc_quiz_gold, "stars", AchievementCategory.QUIZ, AchievementTier.GOLD, 50),
+    QUIZ_PLATINUM(R.string.ach_title_quiz_platinum, R.string.ach_desc_quiz_platinum, "diamond", AchievementCategory.QUIZ, AchievementTier.PLATINUM, 100)
 }

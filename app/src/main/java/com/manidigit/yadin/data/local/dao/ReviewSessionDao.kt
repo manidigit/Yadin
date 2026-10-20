@@ -159,4 +159,15 @@ interface ReviewSessionDao {
 
     @Query("SELECT reviewedAt, isCorrect FROM review_history ORDER BY reviewedAt DESC LIMIT :limit")
     suspend fun getRecentReviewTimestamps(limit: Int = 2000): List<ReviewTimestampRaw>
+
+    @Query("""
+        SELECT COUNT(*) FROM (
+            SELECT sessionId
+            FROM review_history
+            WHERE mode = 'QUIZ' AND sessionId IS NOT NULL AND sessionId != ''
+            GROUP BY sessionId
+            HAVING COUNT(*) >= :minQuestions AND SUM(CASE WHEN isCorrect = 1 THEN 1 ELSE 0 END) = COUNT(*)
+        )
+    """)
+    suspend fun getPerfectQuizSessionsCount(minQuestions: Int = 5): Int
 }
