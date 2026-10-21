@@ -53,6 +53,7 @@ data class ReviewFilters(
     val quizLevel: QuizLevel? = null,
     val difficulties: Set<VocabularyDifficulty> = emptySet(),
     val categoryIds: Set<String> = emptySet(),
+    val entryTypes: Set<EntryType> = emptySet(),
     val maxCards: Int = 20,
     val algorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
     val fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION
@@ -75,8 +76,24 @@ class ReviewRepository(
         }
     }
 
+    private fun expandEntryTypes(types: Set<EntryType>): List<String> {
+        if (types.isEmpty()) return emptyList()
+        val expanded = mutableSetOf<String>()
+        for (t in types) {
+            expanded.add(t.name)
+            if (t == EntryType.PHRASE || t == EntryType.IDIOM) {
+                expanded.add(EntryType.PHRASE.name)
+                expanded.add(EntryType.IDIOM.name)
+                expanded.add(EntryType.COLLOCATION.name)
+                expanded.add(EntryType.STRUCTURE.name)
+            }
+        }
+        return expanded.toList()
+    }
+
     suspend fun countCandidates(filters: ReviewFilters): Int {
         val today = ClockAndDayMath.todayDayString()
+        val expandedTypes = expandEntryTypes(filters.entryTypes)
         return learningDao.countFilteredCandidates(
             direction = filters.direction,
             reviewType = filters.reviewType.name,
@@ -84,7 +101,9 @@ class ReviewRepository(
             hasDifficultyFilter = if (filters.difficulties.isNotEmpty()) 1 else 0,
             difficulties = filters.difficulties.map { it.name },
             hasCategoryFilter = if (filters.categoryIds.isNotEmpty()) 1 else 0,
-            categoryIds = filters.categoryIds.toList()
+            categoryIds = filters.categoryIds.toList(),
+            hasEntryTypeFilter = if (expandedTypes.isNotEmpty()) 1 else 0,
+            entryTypes = expandedTypes
         )
     }
 
@@ -93,6 +112,7 @@ class ReviewRepository(
         abandonOrphanActiveSessions()
 
         val today = ClockAndDayMath.todayDayString()
+        val expandedTypes = expandEntryTypes(filters.entryTypes)
         val conceptIds = learningDao.getFilteredCandidateConceptIds(
             direction = filters.direction,
             reviewType = filters.reviewType.name,
@@ -101,7 +121,9 @@ class ReviewRepository(
             difficulties = filters.difficulties.map { it.name },
             hasCategoryFilter = if (filters.categoryIds.isNotEmpty()) 1 else 0,
             categoryIds = filters.categoryIds.toList(),
-            limit = filters.maxCards
+            limit = filters.maxCards,
+            hasEntryTypeFilter = if (expandedTypes.isNotEmpty()) 1 else 0,
+            entryTypes = expandedTypes
         )
 
         val sessionId = UUID.randomUUID().toString()
@@ -340,9 +362,12 @@ class ReviewRepository(
             // If pool is large, take a balanced sample to keep Levenshtein scoring instant (< 0.1ms per card)
             val candidatesToScore = if (nonCollidingPool.size > 40) {
                 val cardCat = categoryMap[card.conceptId]
+                val cardEntryType = entryTypeMap[card.conceptId] ?: EntryType.WORD
+                val sameTypeAndCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId == cardCat && it.entryType == cardEntryType } else emptyList()
+                val sameType = nonCollidingPool.filter { it.entryType == cardEntryType }
                 val sameCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId == cardCat } else emptyList()
                 val otherCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId != cardCat } else nonCollidingPool
-                (sameCat.shuffled().take(15) + otherCat.shuffled().take(35)).distinctBy { it.conceptId }.take(40)
+                (sameTypeAndCat.shuffled().take(15) + sameType.shuffled().take(20) + sameCat.shuffled().take(10) + otherCat.shuffled().take(15)).distinctBy { it.conceptId }.take(40)
             } else {
                 nonCollidingPool
             }

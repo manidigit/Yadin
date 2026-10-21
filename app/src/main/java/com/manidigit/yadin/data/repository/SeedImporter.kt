@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7295_v1.50.0"
+        const val CURRENT_SEED_VERSION = "7896_v1.60.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -60,7 +60,7 @@ class SeedImporter(
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
         val totalCount = conceptDao.getTotalConceptCount()
-        if (totalCount < 7000) {
+        if (totalCount < 7800) {
             return@withContext true
         }
         val seedVersion = settingsDao.getSetting("seedVersion")
@@ -336,8 +336,16 @@ class SeedImporter(
             val newConcepts = concepts.filter { it.id !in existingConceptIds }
             val conceptsToUpdateCat = concepts.mapNotNull { seedConcept ->
                 val existing = existingConceptsMap[seedConcept.id]
-                if (existing != null && existing.categoryId == null && seedConcept.categoryId != null) {
-                    existing.copy(categoryId = seedConcept.categoryId)
+                if (existing != null) {
+                    val newCatId = existing.categoryId ?: seedConcept.categoryId
+                    if (newCatId != existing.categoryId || existing.entryType != seedConcept.entryType) {
+                        existing.copy(
+                            categoryId = newCatId,
+                            entryType = seedConcept.entryType
+                        )
+                    } else {
+                        null
+                    }
                 } else {
                     null
                 }

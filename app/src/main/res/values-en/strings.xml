@@ -747,4 +747,9 @@ libro: book</string>
     <string name="flashcard_sm2_good">Good</string>
     <string name="flashcard_sm2_easy">Easy</string>
     <string name="flashcard_sm2_days_format">%1$sd</string>
+    <string name="review_setup_entry_type_label">Type (Word, Sentence, Idiom)</string>
+    <string name="entry_type_all">All Types</string>
+    <string name="entry_type_word">Word</string>
+    <string name="entry_type_phrase">Idiom &amp; Phrase</string>
+    <string name="entry_type_sentence">Sentence</string>
 </resources>

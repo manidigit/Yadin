@@ -674,12 +674,43 @@ object VocabularyParser {
         }
     }
 
+    private val REGEX_PAREN_STRIP = Regex("""\([^)]*\)""")
+    private val REGEX_SPANISH_ARTICLES = Regex(
+        """^(el\s*/\s*la|la\s*/\s*el|un\s*/\s*una|los\s*/\s*las|el|la|los|las|un|una|unos|unas)\s+""",
+        RegexOption.IGNORE_CASE
+    )
+    private val REGEX_SINGLE_ARTICLE = Regex(
+        """^(el|la|los|las|un|una|unos|unas)\s+""",
+        RegexOption.IGNORE_CASE
+    )
+
     fun classifyEntry(source: String): EntryType {
-        val words = source.trim().split(REGEX_SPACES).filter { it.isNotBlank() }
+        val t = source.trim()
+        if (t.isEmpty()) return EntryType.WORD
+
+        // ۱. جمله (خبری، سؤالی یا تعجبی)
+        if (t.contains('¿') || t.contains('?') || t.contains('¡') || t.contains('!') || t.contains('.')) {
+            return EntryType.SENTENCE
+        }
+
+        // حذف توضیحات داخل پرانتز و حروف تعریف اول کلمه (مانند el / la)
+        val noParen = REGEX_PAREN_STRIP.replace(t, " ").trim()
+        val cleaned = REGEX_SPANISH_ARTICLES.replace(noParen, "").trim()
+
+        // بررسی جفت‌های مذکر و مؤنث با اسلش (مانند El monitor / La monitora یا abogado/a)
+        if (cleaned.contains('/')) {
+            val slashParts = cleaned.split('/').map { it.trim() }.filter { it.isNotEmpty() }
+            val strippedParts = slashParts.map { REGEX_SINGLE_ARTICLE.replace(it, "").trim() }
+            if (strippedParts.isNotEmpty() && strippedParts.all { it.split(REGEX_SPACES).filter { w -> w.isNotBlank() }.size == 1 }) {
+                return EntryType.WORD
+            }
+        }
+
+        val words = cleaned.split(REGEX_SPACES).filter { it.isNotBlank() }
         return when {
             words.size <= 1 -> EntryType.WORD
-            words.size in 2..5 -> EntryType.PHRASE
-            else -> EntryType.SENTENCE
+            words.size >= 5 -> EntryType.SENTENCE
+            else -> EntryType.PHRASE
         }
     }
 }

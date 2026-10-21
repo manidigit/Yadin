@@ -86,6 +86,7 @@ import androidx.compose.material.icons.filled.Work
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType

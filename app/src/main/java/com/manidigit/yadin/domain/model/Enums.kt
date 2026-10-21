@@ -12,6 +12,13 @@ enum class EntryType {
     STRUCTURE
 }
 
+@StringRes
+fun EntryType.toStringRes(): Int = when (this) {
+    EntryType.WORD -> R.string.entry_type_word
+    EntryType.PHRASE, EntryType.IDIOM, EntryType.COLLOCATION, EntryType.STRUCTURE -> R.string.entry_type_phrase
+    EntryType.SENTENCE -> R.string.entry_type_sentence
+}
+
 object LanguageConstants {
     const val DEFAULT_SOURCE_LANGUAGE = "es"
     const val DEFAULT_TARGET_LANGUAGE = "fa"

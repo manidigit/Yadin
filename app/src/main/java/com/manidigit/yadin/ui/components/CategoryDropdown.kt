@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -202,6 +203,7 @@ fun ExposedCategoryDropdown(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = 48.dp)
                 .clip(shape)
                 .background(bgColor)
                 .border(if (isFilterActive) 1.2.dp else 1.dp, borderColor, shape)
@@ -413,3 +415,195 @@ fun ExposedCategoryDropdown(
         }
     }
 }
+
+@Composable
+fun ExposedEntryTypeDropdown(
+    selectedEntryType: com.manidigit.yadin.domain.model.EntryType?,
+    onSelectEntryType: (com.manidigit.yadin.domain.model.EntryType?) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null
+) {
+    val colors = LocalYadinColors.current
+    var expanded by remember { mutableStateOf(false) }
+
+    val resolvedLabel = label ?: stringResource(R.string.review_setup_entry_type_label)
+    val defaultAllText = stringResource(R.string.entry_type_all)
+
+    val entryOptions = listOf(
+        Triple(
+            com.manidigit.yadin.domain.model.EntryType.WORD,
+            stringResource(R.string.entry_type_word),
+            YadinIcons.categoryBook
+        ),
+        Triple(
+            com.manidigit.yadin.domain.model.EntryType.PHRASE,
+            stringResource(R.string.entry_type_phrase),
+            YadinIcons.hintLightbulb
+        ),
+        Triple(
+            com.manidigit.yadin.domain.model.EntryType.SENTENCE,
+            stringResource(R.string.entry_type_sentence),
+            YadinIcons.contactSupport
+        )
+    )
+
+    val selectedOption = entryOptions.firstOrNull { it.first == selectedEntryType }
+    val displayText = selectedOption?.second ?: defaultAllText
+    val icon = selectedOption?.third ?: YadinIcons.vocabTotal
+    val isFilterActive = selectedEntryType != null
+
+    val shape = RoundedCornerShape(12.dp)
+    val bgColor = if (isFilterActive) colors.primary.copy(alpha = 0.10f) else colors.surface
+    val borderColor = if (isFilterActive) colors.primary.copy(alpha = 0.55f) else colors.outline.copy(alpha = 0.25f)
+    val accentColor = if (isFilterActive) colors.primary else colors.onSurfaceVariant
+
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(shape)
+                .background(bgColor)
+                .border(if (isFilterActive) 1.2.dp else 1.dp, borderColor, shape)
+                .clickable { expanded = true }
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = resolvedLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 9.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = displayText,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isFilterActive) colors.primary else colors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 11.5.sp
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (isFilterActive) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { onSelectEntryType(null) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.clear,
+                            contentDescription = stringResource(R.string.category_clear_selection),
+                            tint = colors.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = YadinIcons.dropdown,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(colors.surface)
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.vocabTotal,
+                            contentDescription = null,
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = defaultAllText,
+                            fontWeight = if (selectedEntryType == null) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selectedEntryType == null) colors.primary else colors.onSurface
+                        )
+                    }
+                },
+                onClick = {
+                    onSelectEntryType(null)
+                    expanded = false
+                }
+            )
+
+            entryOptions.forEach { (type, typeLabel, typeIcon) ->
+                val isSelected = type == selectedEntryType
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = typeIcon,
+                                    contentDescription = null,
+                                    tint = if (isSelected) colors.primary else colors.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = typeLabel,
+                                    color = if (isSelected) colors.primary else colors.onSurface,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = YadinIcons.check,
+                                    contentDescription = null,
+                                    tint = colors.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    onClick = {
+                        onSelectEntryType(type)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+

@@ -193,6 +193,7 @@ interface LearningDao {
         )
         AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
+        AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
         ORDER BY 
             CASE 
                 WHEN :reviewType = 'RANDOM' THEN RANDOM() 
@@ -211,7 +212,9 @@ interface LearningDao {
         difficulties: List<String>,
         hasCategoryFilter: Int,
         categoryIds: List<String>,
-        limit: Int
+        limit: Int,
+        hasEntryTypeFilter: Int = 0,
+        entryTypes: List<String> = emptyList()
     ): List<String>
 
     @Query("""
@@ -230,6 +233,7 @@ interface LearningDao {
         )
         AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
+        AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
     """)
     suspend fun countFilteredCandidates(
         direction: CardDirection,
@@ -238,7 +242,9 @@ interface LearningDao {
         hasDifficultyFilter: Int,
         difficulties: List<String>,
         hasCategoryFilter: Int,
-        categoryIds: List<String>
+        categoryIds: List<String>,
+        hasEntryTypeFilter: Int = 0,
+        entryTypes: List<String> = emptyList()
     ): Int
 
     @Query("""

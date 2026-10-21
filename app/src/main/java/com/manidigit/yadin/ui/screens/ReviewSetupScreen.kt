@@ -42,6 +42,7 @@ import com.manidigit.yadin.R
 import com.manidigit.yadin.data.repository.ReviewFilters
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.Category
+import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
@@ -50,6 +51,7 @@ import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.toStringRes
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
+import com.manidigit.yadin.ui.components.ExposedEntryTypeDropdown
 import com.manidigit.yadin.ui.components.VocabStatType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
@@ -111,6 +113,7 @@ fun ReviewSetupScreen(
         mutableStateOf(if (initialDifficulties.isNotEmpty()) initialDifficulties else VocabularyDifficulty.entries.toSet())
     }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    var selectedEntryType by remember { mutableStateOf<EntryType?>(null) }
     var selectedMaxCards by remember(initialMaxCards) { mutableStateOf(initialMaxCards) }
 
     fun buildFilters() = ReviewFilters(
@@ -120,6 +123,7 @@ fun ReviewSetupScreen(
         quizLevel = if (selectedMode == ReviewMode.QUIZ) selectedQuizLevel else null,
         difficulties = selectedDifficulties,
         categoryIds = if (selectedCategoryId != null) setOf(selectedCategoryId!!) else emptySet(),
+        entryTypes = if (selectedEntryType != null) setOf(selectedEntryType!!) else emptySet(),
         maxCards = selectedMaxCards,
         algorithm = when (selectedType) {
             ReviewType.SM2 -> SpacedRepetitionAlgorithm.SM2
@@ -135,6 +139,7 @@ fun ReviewSetupScreen(
         selectedQuizLevel,
         selectedDifficulties,
         selectedCategoryId,
+        selectedEntryType,
         selectedMaxCards,
         defaultAlgorithm
     ) {
@@ -330,12 +335,23 @@ fun ReviewSetupScreen(
                             )
                         }
 
-                        if (categories.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             ExposedCategoryDropdown(
                                 categories = categories,
                                 selectedCategoryId = selectedCategoryId,
                                 onSelectCategory = { selectedCategoryId = it },
-                                label = stringResource(R.string.review_setup_category_label)
+                                label = stringResource(R.string.review_setup_category_label),
+                                modifier = Modifier.weight(1f)
+                            )
+                            ExposedEntryTypeDropdown(
+                                selectedEntryType = selectedEntryType,
+                                onSelectEntryType = { selectedEntryType = it },
+                                label = stringResource(R.string.review_setup_entry_type_label),
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }

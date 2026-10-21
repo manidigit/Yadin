@@ -76,7 +76,7 @@
     <string name="review_setup_leitner_cycle">چرخه تکرار فاصله‌دار (لایتنر):</string>
     <string name="review_setup_additional_modes">حالات تکمیلی و مرور تصادفی (رندوم):</string>
     <string name="review_setup_mode_random">تصادفی (رندوم)</string>
-    <string name="review_setup_category_label">دسته‌بندی موضوعی کلمات</string>
+    <string name="review_setup_category_label">دسته‌بندی موضوعی</string>
     <string name="review_setup_diff_filter">فیلتر سطح دشواری کلمات</string>
     <string name="review_setup_quiz_level">سطح سختی گزینه‌های آزمون</string>
     <string name="quiz_level_beginner">مبتدی</string>
@@ -778,4 +778,9 @@ libro: کتاب</string>
     <string name="flashcard_sm2_good">خوب</string>
     <string name="flashcard_sm2_easy">عالی</string>
     <string name="flashcard_sm2_days_format">%1$s روز</string>
+    <string name="review_setup_entry_type_label">کلمه، اصطلاح و جمله</string>
+    <string name="entry_type_all">همه موارد</string>
+    <string name="entry_type_word">کلمه</string>
+    <string name="entry_type_phrase">اصطلاح و عبارت</string>
+    <string name="entry_type_sentence">جمله</string>
 </resources>
