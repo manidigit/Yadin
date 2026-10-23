@@ -2,6 +2,7 @@ package com.manidigit.yadin.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,11 +25,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +51,8 @@ import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
+    BackHandler { onBack() }
+
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     val context = LocalContext.current
@@ -70,14 +73,14 @@ fun AboutScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Standardized Header
+            // Header
             YadinScreenHeader(
                 title = stringResource(R.string.about_title),
                 subtitle = stringResource(R.string.about_subtitle),
                 onBack = onBack
             )
 
-            // Hero Brand Banner
+            // Hero Brand Banner Card
             YadinCard(
                 modifier = Modifier.fillMaxWidth(),
                 backgroundColor = colors.surface
@@ -89,19 +92,48 @@ fun AboutScreen(onBack: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // Logo Box with Monogram and Sparkle Badge
                     Box(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .clip(RoundedCornerShape(dimensions.cornerMedium))
-                            .background(colors.heroGradient),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.TopEnd
                     ) {
-                        Text(
-                            text = stringResource(R.string.app_monogram),
-                            color = colors.onHero,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 32.sp
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(dimensions.cornerMedium))
+                                .background(colors.heroGradient),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.app_monogram),
+                                color = colors.onHero,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 36.sp
+                            )
+                        }
+
+                        // Sparkle badge overlay
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(colors.surface)
+                                .padding(2.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .background(colors.primary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = YadinIcons.brandSparkle,
+                                    contentDescription = null,
+                                    tint = colors.onPrimary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
+                        }
                     }
 
                     Text(
@@ -111,12 +143,38 @@ fun AboutScreen(onBack: () -> Unit) {
                         color = colors.onSurface
                     )
 
-                    Text(
-                        text = stringResource(R.string.about_version_build, currentVersionName, currentVersionCode.formatDigits()),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    // Version Status Chip
+                    Surface(
+                        shape = CircleShape,
+                        color = colors.primary.copy(alpha = 0.1f),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            colors.primary.copy(alpha = 0.25f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.success)
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.about_version_build,
+                                    currentVersionName,
+                                    currentVersionCode.formatDigits()
+                                ) + " • " + stringResource(R.string.about_stable_build),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = colors.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
 
                     Text(
                         text = stringResource(R.string.about_summary_text),
@@ -143,95 +201,118 @@ fun AboutScreen(onBack: () -> Unit) {
                         iconTint = colors.primary
                     )
 
-                    TechRow(stringResource(R.string.about_developer_label), stringResource(R.string.about_developer_name))
-                    HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow(stringResource(R.string.about_version_label), "$currentVersionName ($currentVersionCode)")
-                    HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow(stringResource(R.string.about_leitner_engine_label), "Daily → Weekly → Monthly → Learned")
-                    HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow(stringResource(R.string.about_difficulty_algo_label), "EASY / MEDIUM / HARD / VERY_HARD")
-                    HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow(stringResource(R.string.about_progress_formula_label), "Weights (35%, 60%, 80%, 100%)")
-                    HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow(stringResource(R.string.about_local_db_label), "Android Room SQLite (Schema v2)")
-                    HorizontalDivider(color = colors.outline.copy(alpha = 0.25f))
-                    TechRow(stringResource(R.string.about_theme_system_label), stringResource(R.string.about_theme_system_value))
+                    TechRow(
+                        label = stringResource(R.string.about_developer_label),
+                        value = stringResource(R.string.about_developer_name)
+                    )
+                    HorizontalDivider(color = colors.outline.copy(alpha = 0.2f))
+
+                    TechRow(
+                        label = stringResource(R.string.about_version_label),
+                        value = "$currentVersionName (${currentVersionCode.formatDigits()})"
+                    )
+                    HorizontalDivider(color = colors.outline.copy(alpha = 0.2f))
+
+                    TechRow(
+                        label = stringResource(R.string.about_leitner_engine_label),
+                        value = stringResource(R.string.about_tech_engine_val)
+                    )
+                    HorizontalDivider(color = colors.outline.copy(alpha = 0.2f))
+
+                    TechRow(
+                        label = stringResource(R.string.about_difficulty_algo_label),
+                        value = stringResource(R.string.about_tech_diff_val)
+                    )
+                    HorizontalDivider(color = colors.outline.copy(alpha = 0.2f))
+
+                    TechRow(
+                        label = stringResource(R.string.about_tech_direction_label),
+                        value = stringResource(R.string.about_tech_direction_val)
+                    )
+                    HorizontalDivider(color = colors.outline.copy(alpha = 0.2f))
+
+                    TechRow(
+                        label = stringResource(R.string.about_local_db_label),
+                        value = stringResource(R.string.about_tech_db_val)
+                    )
+                    HorizontalDivider(color = colors.outline.copy(alpha = 0.2f))
+
+                    TechRow(
+                        label = stringResource(R.string.about_theme_system_label),
+                        value = stringResource(R.string.about_theme_system_value)
+                    )
                 }
             }
 
-            // External Links: GitHub & WhatsApp
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            // External Links & Actions (GitHub, WhatsApp, Share)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // GitHub Button
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(dimensions.cornerSmall))
-                        .background(colors.surface)
-                        .border(1.dp, colors.outline.copy(alpha = 0.4f), RoundedCornerShape(dimensions.cornerSmall))
-                        .clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/manidigit/Yadin"))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // GitHub Button
+                    ActionLinkCard(
+                        modifier = Modifier.weight(1f),
+                        icon = YadinIcons.developerCode,
+                        title = stringResource(R.string.about_github_btn),
+                        subtitle = stringResource(R.string.about_github_sub),
+                        accentColor = colors.primary,
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/manidigit/Yadin")
+                            )
                             context.startActivity(intent)
                         }
-                        .padding(14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = YadinIcons.developerCode,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.about_github_btn),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = colors.onSurface
-                        )
-                    }
+                    )
+
+                    // WhatsApp Support Button
+                    ActionLinkCard(
+                        modifier = Modifier.weight(1f),
+                        icon = YadinIcons.contactSupport,
+                        title = stringResource(R.string.about_whatsapp_btn),
+                        subtitle = stringResource(R.string.about_whatsapp_sub),
+                        accentColor = colors.success,
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://wa.me/34685644444")
+                            )
+                            context.startActivity(intent)
+                        }
+                    )
                 }
 
-                // WhatsApp Support Button
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(dimensions.cornerSmall))
-                        .background(colors.surface)
-                        .border(1.dp, colors.success.copy(alpha = 0.4f), RoundedCornerShape(dimensions.cornerSmall))
-                        .clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/34685644444"))
-                            context.startActivity(intent)
+                // Share Button
+                val shareSubject = stringResource(R.string.about_share_subject)
+                val shareText = stringResource(R.string.about_share_text)
+                ActionLinkCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    icon = YadinIcons.share,
+                    title = stringResource(R.string.about_share_btn),
+                    subtitle = stringResource(R.string.about_share_sub),
+                    accentColor = colors.info,
+                    onClick = {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, shareSubject)
+                            putExtra(Intent.EXTRA_TEXT, shareText)
                         }
-                        .padding(14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = YadinIcons.contactSupport,
-                            contentDescription = null,
-                            tint = colors.success,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.about_whatsapp_btn),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = colors.success
-                        )
+                        context.startActivity(Intent.createChooser(shareIntent, shareSubject))
                     }
-                }
+                )
             }
 
-            // Scientific Principles
+            // Core Pillars & Features
+            YadinSectionHeader(
+                title = stringResource(R.string.about_features_header_title),
+                icon = YadinIcons.brandSparkle,
+                iconTint = colors.primary
+            )
+
+            // Scientific Repetition
             AboutFeatureCard(
                 icon = YadinIcons.retentionBrain,
                 title = stringResource(R.string.about_feature1_title),
@@ -239,7 +320,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 color = colors.info
             )
 
-            // Difficulty & State Engine
+            // Scheduling Engines
             AboutFeatureCard(
                 icon = YadinIcons.leitnerBox,
                 title = stringResource(R.string.about_feature2_title),
@@ -247,37 +328,42 @@ fun AboutScreen(onBack: () -> Unit) {
                 color = colors.warning
             )
 
-            // Database & Offline First
+            // Dynamic Difficulty & Smart Quiz
             AboutFeatureCard(
-                icon = YadinIcons.databaseStorage,
+                icon = YadinIcons.difficultySpectrum,
                 title = stringResource(R.string.about_feature3_title),
                 description = stringResource(R.string.about_feature3_desc),
+                color = colors.primary
+            )
+
+            // Offline Word Bank & Backup
+            AboutFeatureCard(
+                icon = YadinIcons.databaseStorage,
+                title = stringResource(R.string.about_feature4_title),
+                description = stringResource(R.string.about_feature4_desc),
                 color = colors.success
             )
 
-            // Footer
-            Row(
+            // Footer & Copyright
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = stringResource(R.string.about_footer_prefix),
                     fontSize = 12.sp,
-                    color = colors.onSurfaceVariant
+                    color = colors.onSurfaceVariant,
+                    textAlign = TextAlign.Center
                 )
-                Icon(
-                    imageVector = YadinIcons.brandSparkle,
-                    contentDescription = null,
-                    tint = colors.primary,
-                    modifier = Modifier.size(14.dp)
-                )
+
                 Text(
-                    text = stringResource(R.string.about_footer_suffix),
+                    text = stringResource(R.string.about_copyright),
                     fontSize = 12.sp,
-                    color = colors.onSurfaceVariant
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onSurfaceVariant.copy(alpha = 0.8f)
                 )
             }
 
@@ -311,15 +397,77 @@ private fun TechRow(label: String, value: String) {
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             color = colors.onSurfaceVariant
         )
         Text(
             text = value,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface
         )
+    }
+}
+
+@Composable
+private fun ActionLinkCard(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    accentColor: Color,
+    onClick: () -> Unit
+) {
+    val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
+
+    Box(
+        modifier = modifier
+            .defaultMinSize(minHeight = 52.dp)
+            .clip(RoundedCornerShape(dimensions.cornerMedium))
+            .background(colors.surface)
+            .border(
+                1.dp,
+                accentColor.copy(alpha = 0.35f),
+                RoundedCornerShape(dimensions.cornerMedium)
+            )
+            .clickable(onClick = onClick)
+            .padding(14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(accentColor.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Column {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 10.sp,
+                    color = colors.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 

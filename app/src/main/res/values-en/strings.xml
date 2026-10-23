@@ -315,7 +315,7 @@
     <string name="about_tech_specs_title">Technical Specifications &amp; Design Standards</string>
     <string name="about_developer_title">Developer / Project Owner</string>
     <string name="about_developer_label">Developer / Project Owner</string>
-    <string name="about_developer_name">Mobin Manizheh (ManiDigit)</string>
+    <string name="about_developer_name">manidigit</string>
     <string name="about_version_label">Application Version</string>
     <string name="about_leitner_engine_label">Spaced Repetition Engine</string>
     <string name="about_difficulty_algo_label">Word Difficulty Algorithm</string>
