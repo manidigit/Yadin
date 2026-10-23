@@ -33,3 +33,7 @@ local.properties
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# AI Studio temporary media and artifacts
+.aistudio/
+public/

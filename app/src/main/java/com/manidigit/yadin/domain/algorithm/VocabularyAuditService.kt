@@ -10,9 +10,11 @@ import com.manidigit.yadin.data.local.entity.ConceptEntity
 import com.manidigit.yadin.data.local.entity.ContentEntity
 import com.manidigit.yadin.data.local.entity.DifficultyStateEntity
 import com.manidigit.yadin.data.local.entity.LearningStateEntity
+import com.manidigit.yadin.data.local.entity.SettingEntity
 import com.manidigit.yadin.domain.model.AuditActionDetail
 import com.manidigit.yadin.domain.model.AuditActionType
 import com.manidigit.yadin.domain.model.AuditReviewItem
+import com.manidigit.yadin.domain.model.AuditUserDecision
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.LibraryAuditReport
 import com.manidigit.yadin.domain.model.ReviewAction
@@ -51,7 +53,38 @@ class VocabularyAuditService(
     fun cleanAndExtractWord(originalSource: String): CleanedWordResult =
         Companion.cleanAndExtractWord(originalSource)
 
+    private suspend fun loadDismissedSignatures(): Set<String> {
+        return try {
+            val raw = database.settingsDao().getSetting(AUDIT_DISMISSED_SETTING_KEY)
+            if (raw.isNullOrBlank()) emptySet()
+            else raw.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        } catch (_: Exception) {
+            emptySet()
+        }
+    }
+
+    private suspend fun saveDismissedSignatures(signatures: Set<String>) {
+        try {
+            database.settingsDao().setSetting(
+                SettingEntity(
+                    key = AUDIT_DISMISSED_SETTING_KEY,
+                    value = signatures.joinToString(",")
+                )
+            )
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun conceptSignature(conceptId: String, rawSourceText: String): String {
+        return "$conceptId:${TextUtilities.cleanText(rawSourceText).hashCode()}"
+    }
+
+    private fun isConceptDismissed(conceptId: String, rawSourceText: String, dismissedSet: Set<String>): Boolean {
+        return conceptId in dismissedSet || conceptSignature(conceptId, rawSourceText) in dismissedSet
+    }
+
     companion object {
+        const val AUDIT_DISMISSED_SETTING_KEY = "audit_dismissed_concept_ids"
         val REGEX_PAREN_BRACKET = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""")
         val REGEX_NUM_PREFIX = Regex("""^\s*[0-9۰-۹٠-٩]+\s*(?:[.)-]|:|[-—])\s*""")
         val REGEX_BULLET_PREFIX = Regex("""^[-—*•#»«➜→\s]+""")
@@ -322,7 +355,8 @@ class VocabularyAuditService(
             val hasGenderConflict = hasMasc && hasFem && combinedItems.none { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
             val toneConflict = hasToneConflict(combinedItems)
 
-            if (!hasGenderConflict && !toneConflict && hasGroupTranslationOverlap(combinedItems)) {
+            val isMultiWordPhrase = accentKey.split(Regex("\\s+")).filter { it.isNotBlank() }.size >= 3
+            if (!hasGenderConflict && !toneConflict && (hasGroupTranslationOverlap(combinedItems) || isMultiWordPhrase)) {
                 definiteMergeGroups.add(combinedItems)
                 combinedItems.forEach { mergedConceptIds.add(it.concept.id) }
                 bucketEntries.forEach { processedDedupeKeys.add(it.key) }
@@ -463,6 +497,7 @@ class VocabularyAuditService(
         val allLearningByConcept = withContext(Dispatchers.IO) { learningDao.getAllLearningStates().groupBy { it.conceptId } }
         val allDifficultyByConcept = withContext(Dispatchers.IO) { learningDao.getAllDifficultyStates().groupBy { it.conceptId } }
         val conceptCategoriesByConcept = withContext(Dispatchers.IO) { conceptDao.getAllConceptCategories().groupBy { it.conceptId } }
+        val dismissedSet = withContext(Dispatchers.IO) { loadDismissedSignatures() }
 
         val reviewItems = mutableListOf<AuditReviewItem>()
         val actions = mutableListOf<AuditActionDetail>()
@@ -503,18 +538,20 @@ class VocabularyAuditService(
             }
             val persianOrthographyChanged = normalizedTargetsPreview != rawTransTexts
             if (validation.action == ReviewAction.MANUAL_REVIEW || validation.confidence < 0.98) {
-                reviewItems.add(
-                    AuditReviewItem(
-                        conceptId = concept.id,
-                        originalWord = rawSourceText,
-                        originalTranslation = rawTransTexts.joinToString("، "),
-                        suggestedWord = validation.suggestedWord ?: rawSourceText,
-                        suggestedTranslation = validation.suggestedTranslation ?: normalizedTargetsPreview.joinToString("، "),
-                        suggestedNote = validation.suggestedNote,
-                        reason = validation.reason,
-                        confidence = validation.confidence
+                if (!isConceptDismissed(concept.id, rawSourceText, dismissedSet)) {
+                    reviewItems.add(
+                        AuditReviewItem(
+                            conceptId = concept.id,
+                            originalWord = rawSourceText,
+                            originalTranslation = rawTransTexts.joinToString("، "),
+                            suggestedWord = validation.suggestedWord ?: rawSourceText,
+                            suggestedTranslation = validation.suggestedTranslation ?: normalizedTargetsPreview.joinToString("، "),
+                            suggestedNote = validation.suggestedNote,
+                            reason = validation.reason,
+                            confidence = validation.confidence
+                        )
                     )
-                )
+                }
             } else if (validation.action == ReviewAction.MOVE_TO_NOTE || validation.action == ReviewAction.SUGGEST_CORRECTION || persianOrthographyChanged) {
                 autoCleanCount++
             }
@@ -558,9 +595,9 @@ class VocabularyAuditService(
             val primaryWord = primary.cleanedResult.cleanSourceText
             val primaryTransPreview = primary.allPersianTranslations().take(2).joinToString("، ")
             items.filter { it.concept.id != primary.concept.id }.forEach { secondary ->
-                if (secondary.concept.id !in existingReviewIds) {
+                val secWord = secondary.sourceContent?.text ?: secondary.cleanedResult.cleanSourceText
+                if (secondary.concept.id !in existingReviewIds && !isConceptDismissed(secondary.concept.id, secWord, dismissedSet)) {
                     existingReviewIds.add(secondary.concept.id)
-                    val secWord = secondary.sourceContent?.text ?: secondary.cleanedResult.cleanSourceText
                     val secTrans = secondary.targetContents.joinToString("، ") { it.text }
                     reviewItems.add(
                         AuditReviewItem(
@@ -570,8 +607,11 @@ class VocabularyAuditService(
                             suggestedWord = secondary.cleanedResult.cleanSourceText,
                             suggestedTranslation = secTrans,
                             suggestedNote = secondary.sourceContent?.note,
-                            reason = "تشابه مشکوک با «$primaryWord» ($primaryTransPreview) — در صورت یکسان بودن، واژه را به «$primaryWord» تغییر دهید تا ادغام شوند",
-                            confidence = 0.65
+                            reason = "تشابه مشکوک با «$primaryWord» ($primaryTransPreview) — می‌توانید با آن ادغام کنید، متن را به یادداشت بفرستید یا بدون تغییر رد کنید",
+                            confidence = 0.65,
+                            mergeTargetConceptId = primary.concept.id,
+                            mergeTargetWord = primaryWord,
+                            mergeTargetTranslation = primaryTransPreview
                         )
                     )
                 }
@@ -604,11 +644,41 @@ class VocabularyAuditService(
         var cleanedCount = 0
         val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
 
-        // ۱. اعمال ویرایش‌های تأییدشده در صف بازبینی دستی توسط کاربر (فقط مواردی که واقعاً تغییر کرده‌اند)
+        val dismissedSet = withContext(Dispatchers.IO) { loadDismissedSignatures().toMutableSet() }
+        val explicitMergeTargets = mutableMapOf<String, String>() // secondaryConceptId -> primaryConceptId
+
+        for (item in approvedReviewItems) {
+            val isExplicitMerge = item.userDecision == AuditUserDecision.MERGE_WITH_TARGET ||
+                (!item.mergeTargetConceptId.isNullOrBlank() &&
+                    !item.mergeTargetWord.isNullOrBlank() &&
+                    TextUtilities.cleanText(item.suggestedWord).equals(TextUtilities.cleanText(item.mergeTargetWord), ignoreCase = true))
+
+            if (isExplicitMerge && !item.mergeTargetConceptId.isNullOrBlank()) {
+                explicitMergeTargets[item.conceptId] = item.mergeTargetConceptId
+            }
+
+            // ثبت در لیست بررسی‌شده‌ها تا در اسکن‌های بعدی مجدداً به عنوان مشکوک نمایش داده نشود
+            dismissedSet.add(item.conceptId)
+            dismissedSet.add(conceptSignature(item.conceptId, item.originalWord))
+            dismissedSet.add(conceptSignature(item.conceptId, item.suggestedWord))
+        }
+
+        if (approvedReviewItems.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
+                saveDismissedSignatures(dismissedSet)
+            }
+        }
+
+        // ۱. اعمال ویرایش‌های تأییدشده در صف بازبینی دستی توسط کاربر
         val modifiedReviewItems = approvedReviewItems.filter { item ->
-            TextUtilities.cleanText(item.suggestedWord) != TextUtilities.cleanText(item.originalWord) ||
-                TextUtilities.cleanText(item.suggestedTranslation) != TextUtilities.cleanText(item.originalTranslation) ||
-                !item.suggestedNote.isNullOrBlank()
+            item.userDecision != AuditUserDecision.KEEP_ORIGINAL_DISMISS && (
+                item.userDecision == AuditUserDecision.EDITED ||
+                    item.userDecision == AuditUserDecision.MOVE_TO_NOTE ||
+                    item.userDecision == AuditUserDecision.MERGE_WITH_TARGET ||
+                    TextUtilities.cleanText(item.suggestedWord) != TextUtilities.cleanText(item.originalWord) ||
+                    TextUtilities.cleanText(item.suggestedTranslation) != TextUtilities.cleanText(item.originalTranslation) ||
+                    !item.suggestedNote.isNullOrBlank()
+                )
         }
         val reviewMap = modifiedReviewItems.associateBy { it.conceptId }
         if (modifiedReviewItems.isNotEmpty()) {
@@ -616,6 +686,7 @@ class VocabularyAuditService(
             val approvedContentsToInsert = mutableListOf<ContentEntity>()
             for (item in modifiedReviewItems) {
                 val targetList = TextUtilities.splitTranslations(item.suggestedTranslation)
+                    .ifEmpty { listOf(item.suggestedTranslation).filter { it.isNotBlank() } }
                 val newSourceContent = ContentEntity(
                     id = UUID.randomUUID().toString(),
                     conceptId = item.conceptId,
@@ -638,15 +709,21 @@ class VocabularyAuditService(
                 }
                 approvedContentsToInsert.add(newSourceContent)
                 approvedContentsToInsert.addAll(newTargets)
-                cleanedCount++
-                actions.add(
-                    AuditActionDetail(
-                        originalText = item.originalWord,
-                        cleanedText = item.suggestedWord,
-                        actionType = if (!item.suggestedNote.isNullOrBlank()) AuditActionType.NOTE_EXTRACTED else AuditActionType.CLEANED,
-                        description = "اصلاح دستی کاربر: ${item.reason}"
+                if (item.conceptId !in explicitMergeTargets) {
+                    cleanedCount++
+                    actions.add(
+                        AuditActionDetail(
+                            originalText = item.originalWord,
+                            cleanedText = item.suggestedWord,
+                            actionType = if (!item.suggestedNote.isNullOrBlank() || item.userDecision == AuditUserDecision.MOVE_TO_NOTE) {
+                                AuditActionType.NOTE_EXTRACTED
+                            } else {
+                                AuditActionType.CLEANED
+                            },
+                            description = "اصلاح دستی کاربر: ${item.reason}"
+                        )
                     )
-                )
+                }
             }
             withContext(Dispatchers.IO) {
                 database.withTransaction {
@@ -728,6 +805,23 @@ class VocabularyAuditService(
 
         // ۳. گروه‌بندی و ادغام هوشمند واژگان تکراری در حافظه
         val partition = partitionDuplicateGroups(workingList)
+        val workingById = workingList.associateBy { it.concept.id }
+        val alreadyInDefinite = partition.definiteMergeGroups.flatten().map { it.concept.id }.toMutableSet()
+        val extraMergeGroups = mutableListOf<List<ConceptWorkingData>>()
+
+        for ((secId, primId) in explicitMergeTargets) {
+            if (secId !in alreadyInDefinite && primId !in alreadyInDefinite) {
+                val secData = workingById[secId]
+                val primData = workingById[primId]
+                if (secData != null && primData != null) {
+                    extraMergeGroups.add(listOf(primData, secData))
+                    alreadyInDefinite.add(secId)
+                    alreadyInDefinite.add(primId)
+                }
+            }
+        }
+
+        val allMergeGroups = partition.definiteMergeGroups + extraMergeGroups
 
         val conceptsToUpdate = mutableListOf<ConceptEntity>()
         val conceptsToDeletePerm = mutableListOf<String>()
@@ -739,7 +833,7 @@ class VocabularyAuditService(
         val difficultyStatesToUpdate = mutableListOf<DifficultyStateEntity>()
         val duplicateIdsToRepoint = mutableListOf<Pair<List<String>, String>>()
 
-        partition.definiteMergeGroups.forEach { items ->
+        allMergeGroups.forEach { items ->
             if (items.size <= 1) return@forEach
 
             val primary = selectPrimaryConcept(items)
@@ -879,7 +973,7 @@ class VocabularyAuditService(
 
         // بررسی اصلاحات خودکار برای واژگان غیرتکراری
         partition.singleItems.forEach { single ->
-            if (!reviewMap.containsKey(single.concept.id)) {
+            if (!reviewMap.containsKey(single.concept.id) && single.concept.id !in alreadyInDefinite) {
                 val updatedSourceText = single.cleanedResult.cleanSourceText
                 val canonicalKey = TextUtilities.toCanonicalKey(updatedSourceText)
                 val sourceTextChanged = updatedSourceText != single.sourceContent?.text

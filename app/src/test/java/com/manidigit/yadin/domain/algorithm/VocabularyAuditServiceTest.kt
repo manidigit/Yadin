@@ -170,32 +170,12 @@ class VocabularyAuditServiceTest {
     fun testSeedJsonSpanishPunctuationIsNormalized() {
         val candidateFiles = listOf(
             java.io.File("src/main/assets/seed/vocabulary_seed.json"),
-            java.io.File("app/src/main/assets/seed/vocabulary_seed.json"),
-            java.io.File("../docs/yadin-custom-backup.json"),
-            java.io.File("docs/yadin-custom-backup.json")
+            java.io.File("app/src/main/assets/seed/vocabulary_seed.json")
         ).filter { it.exists() && it.isFile }
 
         val esEntryRegex = Regex(""""languageCode":\s*"es",\s*"text":\s*"([^"\\]*)",\s*"canonicalKey":\s*"([^"\\]*)"""")
 
         for (file in candidateFiles) {
-            val raw = file.readText(Charsets.UTF_8)
-            var changedCount = 0
-            val updated = esEntryRegex.replace(raw) { matchResult ->
-                val originalText = matchResult.groupValues[1]
-                val originalKey = matchResult.groupValues[2]
-                val normalizedText = com.manidigit.yadin.domain.text.TextUtilities.normalizeSpanishPunctuation(originalText).first
-                if (normalizedText != originalText) {
-                    changedCount++
-                    val newKey = com.manidigit.yadin.domain.text.TextUtilities.toCanonicalKey(normalizedText)
-                    """"languageCode": "es", "text": "$normalizedText", "canonicalKey": "$newKey""""
-                } else {
-                    matchResult.value
-                }
-            }
-            if (changedCount > 0 && updated != raw) {
-                file.writeText(updated, Charsets.UTF_8)
-            }
-
             val verifyRaw = file.readText(Charsets.UTF_8)
             val remainingUnnormalized = esEntryRegex.findAll(verifyRaw).count { m ->
                 val txt = m.groupValues[1]

@@ -993,6 +993,12 @@ object TextUtilities {
         return dist in 1..maxAllowed
     }
 
+    private val PERSIAN_STOPWORDS = setOf(
+        "در", "به", "از", "با", "تا", "را", "که", "این", "آن", "ان", "یک", "هم", "بر",
+        "بی", "هر", "یا", "اما", "اگر", "برای", "چون", "است", "بود", "شد", "شود", "کند",
+        "کنم", "کنی", "کنند", "دارد", "دارم", "داری", "خود", "من", "تو", "او", "ما", "شما", "آنها", "انها"
+    )
+
     /**
      * Checks whether two lists of Persian translations share at least one normalized meaning or core token.
      */
@@ -1011,6 +1017,26 @@ object TextUtilities {
             for (b in keysB) {
                 if (b.length < 3) continue
                 if (a.contains(b) || b.contains(a)) return true
+            }
+        }
+
+        // Token-level overlap for multi-word phrase/sentence translations
+        val tokensA = atomicA
+            .flatMap { PARENTHETICAL_BLOCK_REGEX.replace(it, "").split(PERSIAN_NON_ALNUM_REGEX) }
+            .map { persianDedupeKey(it) }
+            .filter { it.length >= 3 && it !in PERSIAN_STOPWORDS }
+            .toSet()
+        val tokensB = atomicB
+            .flatMap { PARENTHETICAL_BLOCK_REGEX.replace(it, "").split(PERSIAN_NON_ALNUM_REGEX) }
+            .map { persianDedupeKey(it) }
+            .filter { it.length >= 3 && it !in PERSIAN_STOPWORDS }
+            .toSet()
+
+        if (tokensA.size >= 2 && tokensB.size >= 2) {
+            val sharedCount = tokensA.intersect(tokensB).size
+            val minTokens = minOf(tokensA.size, tokensB.size)
+            if (sharedCount >= 2 || (minTokens >= 2 && sharedCount.toDouble() / minTokens >= 0.5)) {
+                return true
             }
         }
         return false

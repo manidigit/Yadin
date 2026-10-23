@@ -275,6 +275,14 @@ data class FieldValidationResult(
     val reason: String
 )
 
+enum class AuditUserDecision {
+    PENDING,
+    EDITED,
+    MERGE_WITH_TARGET,
+    MOVE_TO_NOTE,
+    KEEP_ORIGINAL_DISMISS
+}
+
 data class AuditReviewItem(
     val conceptId: String,
     val originalWord: String,
@@ -283,7 +291,11 @@ data class AuditReviewItem(
     val suggestedTranslation: String,
     val suggestedNote: String?,
     val reason: String,
-    val confidence: Double
+    val confidence: Double,
+    val mergeTargetConceptId: String? = null,
+    val mergeTargetWord: String? = null,
+    val mergeTargetTranslation: String? = null,
+    val userDecision: AuditUserDecision = AuditUserDecision.PENDING
 )
 
 data class LibraryAuditReport(

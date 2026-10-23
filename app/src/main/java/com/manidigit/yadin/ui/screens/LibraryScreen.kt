@@ -26,8 +26,11 @@ import com.manidigit.yadin.ui.theme.YadinIcons
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import com.manidigit.yadin.domain.algorithm.VocabularyParser
 import com.manidigit.yadin.domain.model.AuditReviewItem
+import com.manidigit.yadin.domain.model.AuditUserDecision
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -740,6 +743,9 @@ fun LibraryAuditDialog(
             }
         }
     }
+    val resolvedItemsState = remember(auditReport) {
+        mutableStateListOf<AuditReviewItem>()
+    }
 
     if (showManualReviewDialog) {
         AuditManualReviewDialog(
@@ -750,6 +756,44 @@ fun LibraryAuditDialog(
                 if (idx != -1) {
                     reviewItemsState[idx] = updatedItem
                 }
+            },
+            onResolveItem = { resolvedItem ->
+                reviewItemsState.removeAll { it.conceptId == resolvedItem.conceptId }
+                val existingIdx = resolvedItemsState.indexOfFirst { it.conceptId == resolvedItem.conceptId }
+                if (existingIdx != -1) {
+                    resolvedItemsState[existingIdx] = resolvedItem
+                } else {
+                    resolvedItemsState.add(resolvedItem)
+                }
+                if (reviewItemsState.isEmpty()) {
+                    showManualReviewDialog = false
+                    fixesApplied = true
+                    onApplyAuditFixes(resolvedItemsState.toList())
+                }
+            },
+            onConfirmAndClose = {
+                val allToApply = mutableListOf<AuditReviewItem>()
+                allToApply.addAll(resolvedItemsState)
+                reviewItemsState.forEach { remaining ->
+                    val hasChanges = TextUtilities.cleanText(remaining.suggestedWord) != TextUtilities.cleanText(remaining.originalWord) ||
+                        TextUtilities.cleanText(remaining.suggestedTranslation) != TextUtilities.cleanText(remaining.originalTranslation) ||
+                        !remaining.suggestedNote.isNullOrBlank() ||
+                        remaining.userDecision != AuditUserDecision.PENDING
+                    val finalized = if (hasChanges) {
+                        if (remaining.userDecision == AuditUserDecision.PENDING) {
+                            remaining.copy(userDecision = AuditUserDecision.EDITED)
+                        } else {
+                            remaining
+                        }
+                    } else {
+                        remaining.copy(userDecision = AuditUserDecision.KEEP_ORIGINAL_DISMISS)
+                    }
+                    allToApply.add(finalized)
+                }
+                reviewItemsState.clear()
+                showManualReviewDialog = false
+                fixesApplied = true
+                onApplyAuditFixes(allToApply)
             }
         )
     }
@@ -1031,7 +1075,9 @@ fun LibraryAuditDialog(
                     Button(
                         onClick = {
                             fixesApplied = true
-                            onApplyAuditFixes(reviewItemsState)
+                            val allToApply = (resolvedItemsState + reviewItemsState).distinctBy { it.conceptId }
+                            reviewItemsState.clear()
+                            onApplyAuditFixes(allToApply)
                         },
                         shape = RoundedCornerShape(dimensions.cornerMedium)
                     ) {
@@ -1067,7 +1113,9 @@ fun LibraryAuditDialog(
 fun AuditManualReviewDialog(
     items: List<AuditReviewItem>,
     onDismiss: () -> Unit,
-    onSaveItem: (AuditReviewItem) -> Unit
+    onSaveItem: (AuditReviewItem) -> Unit,
+    onResolveItem: (AuditReviewItem) -> Unit = {},
+    onConfirmAndClose: () -> Unit = onDismiss
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
@@ -1086,7 +1134,7 @@ fun AuditManualReviewDialog(
                 )
                 Column {
                     Text(
-                        text = stringResource(R.string.audit_review_title),
+                        text = "${stringResource(R.string.audit_review_title)} (${items.size.formatDigits()})",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -1109,26 +1157,193 @@ fun AuditManualReviewDialog(
                 items(items, key = { it.conceptId }) { item ->
                     AuditReviewItemCard(
                         item = item,
-                        onUpdate = { onSaveItem(it) }
+                        onUpdate = { onSaveItem(it) },
+                        onResolve = { onResolveItem(it) }
                     )
                 }
             }
         },
         confirmButton = {
             Button(
-                onClick = onDismiss,
+                onClick = onConfirmAndClose,
                 shape = RoundedCornerShape(dimensions.cornerMedium)
             ) {
                 Text(stringResource(R.string.action_confirm_close))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
 }
 
+private data class NoteExtractionOutcome(
+    val newWord: String,
+    val newTranslation: String,
+    val newNote: String
+)
+
+private fun extractSecondTextToNote(
+    item: AuditReviewItem,
+    currentWord: String,
+    currentTranslation: String,
+    currentNote: String
+): NoteExtractionOutcome {
+    fun appendToNote(existing: String, extra: String): String {
+        val cleanExtra = extra.trim()
+        if (cleanExtra.isEmpty()) return existing
+        if (existing.contains(cleanExtra)) return existing
+        return if (existing.isBlank()) cleanExtra else "$existing\n$cleanExtra"
+    }
+
+    val w = currentWord.trim()
+    val tr = currentTranslation.trim()
+
+    // ۱. بررسی چندخطی بودن فیلد واژه
+    val wLines = w.replace("\r\n", "\n").replace("\r", "\n")
+        .split("\n").map { it.trim() }.filter { it.isNotBlank() }
+    if (wLines.size >= 2) {
+        val first = wLines.first()
+        val rest = wLines.drop(1).joinToString("\n")
+        return NoteExtractionOutcome(
+            newWord = first,
+            newTranslation = tr,
+            newNote = appendToNote(currentNote, rest)
+        )
+    }
+
+    // ۲. بررسی جفت با جداکننده (: یا - یا —) در فیلد واژه
+    val wPair = VocabularyParser.splitPair(w)
+    if (wPair != null && wPair.first.isNotBlank() && wPair.second.isNotBlank()) {
+        val left = wPair.first.trim()
+        val right = wPair.second.trim()
+        return NoteExtractionOutcome(
+            newWord = left,
+            newTranslation = tr,
+            newNote = appendToNote(currentNote, right)
+        )
+    }
+
+    // ۳. بررسی پرانتز، کروشه یا گیومه در فیلد واژه
+    val parenRegex = Regex("""^(.*?)\s*[\(\[（«]([^\)\]）»]+)[\)\]）»]\s*$""")
+    val wParen = parenRegex.find(w)
+    if (wParen != null) {
+        val main = wParen.groupValues[1].trim()
+        val inside = wParen.groupValues[2].trim()
+        if (main.isNotBlank() && inside.isNotBlank()) {
+            return NoteExtractionOutcome(
+                newWord = main,
+                newTranslation = tr,
+                newNote = appendToNote(currentNote, inside)
+            )
+        }
+    }
+
+    // ۴. بررسی فرم دوگانه اسلش‌دار در فیلد واژه (مانند Claro / clara)
+    if (w.contains("/")) {
+        val slashParts = w.split("/").map { it.trim() }.filter { it.isNotBlank() }
+        if (slashParts.size >= 2) {
+            return NoteExtractionOutcome(
+                newWord = slashParts.first(),
+                newTranslation = tr,
+                newNote = appendToNote(currentNote, slashParts.drop(1).joinToString(" / "))
+            )
+        }
+    }
+
+    // ۵. بررسی اختلاط فارسی و اسپانیایی در فیلد واژه
+    if (VocabularyParser.hasLatin(w) && VocabularyParser.hasPersian(w)) {
+        val persianMatch = Regex("""[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u200C\s،,؛;()0-9۰-۹-]+""").findAll(w)
+            .map { it.value.trim() }
+            .firstOrNull { VocabularyParser.hasPersian(it) }
+        if (!persianMatch.isNullOrBlank()) {
+            val cleanedLatin = w.replace(persianMatch, "").trim()
+            if (cleanedLatin.isNotBlank()) {
+                return NoteExtractionOutcome(
+                    newWord = cleanedLatin,
+                    newTranslation = tr,
+                    newNote = appendToNote(currentNote, persianMatch)
+                )
+            }
+        }
+    }
+
+    // ۶. اگر واژه اصلی (originalWord) بخشی داشته که قبلاً از واژه پیشنهادی حذف شده است
+    val origW = item.originalWord.trim()
+    if (origW != w && origW.startsWith(w, ignoreCase = true)) {
+        val diff = origW.substring(w.length).trim().trim(':', '-', '—', '(', ')', '[', ']', '،', ',')
+        if (diff.isNotBlank()) {
+            return NoteExtractionOutcome(
+                newWord = w,
+                newTranslation = tr,
+                newNote = appendToNote(currentNote, diff)
+            )
+        }
+    }
+
+    // ۷. بررسی پرانتز یا بخش دوم در فیلد ترجمه (فارسی)
+    val trParen = parenRegex.find(tr)
+    if (trParen != null) {
+        val mainTr = trParen.groupValues[1].trim()
+        val insideTr = trParen.groupValues[2].trim()
+        if (mainTr.isNotBlank() && insideTr.isNotBlank()) {
+            return NoteExtractionOutcome(
+                newWord = w,
+                newTranslation = mainTr,
+                newNote = appendToNote(currentNote, insideTr)
+            )
+        }
+    }
+
+    val trPair = VocabularyParser.splitPair(tr)
+    if (trPair != null && trPair.first.isNotBlank() && trPair.second.isNotBlank()) {
+        return NoteExtractionOutcome(
+            newWord = w,
+            newTranslation = trPair.first.trim(),
+            newNote = appendToNote(currentNote, trPair.second.trim())
+        )
+    }
+
+    val trParts = tr.split(Regex("""[،,;/؛\n]+""")).map { it.trim() }.filter { it.isNotBlank() }
+    if (trParts.size >= 2) {
+        return NoteExtractionOutcome(
+            newWord = w,
+            newTranslation = trParts.first(),
+            newNote = appendToNote(currentNote, trParts.drop(1).joinToString("، "))
+        )
+    }
+
+    // ۸. در صورتی که کارت از نوع تشابه مشکوک با واژه دیگر است (mergeTargetWord)
+    if (!item.mergeTargetWord.isNullOrBlank()) {
+        val extraNote = if (tr.isNotBlank() && tr != item.mergeTargetTranslation) {
+            "فرم/معنی دیگر: $w ($tr)"
+        } else {
+            "فرم جایگزین: $w"
+        }
+        return NoteExtractionOutcome(
+            newWord = item.mergeTargetWord,
+            newTranslation = tr.ifBlank { item.mergeTargetTranslation ?: "" },
+            newNote = appendToNote(currentNote, extraNote)
+        )
+    }
+
+    // ۹. حالت پیش‌فرض: انتقال متن ترجمه یا واژه اصلی به یادداشت
+    val fallbackExtra = tr.ifBlank { origW }
+    return NoteExtractionOutcome(
+        newWord = w,
+        newTranslation = tr,
+        newNote = appendToNote(currentNote, fallbackExtra)
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AuditReviewItemCard(
     item: AuditReviewItem,
-    onUpdate: (AuditReviewItem) -> Unit
+    onUpdate: (AuditReviewItem) -> Unit,
+    onResolve: (AuditReviewItem) -> Unit = {}
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
@@ -1202,7 +1417,14 @@ private fun AuditReviewItemCard(
                 value = word,
                 onValueChange = {
                     word = it
-                    onUpdate(item.copy(suggestedWord = it, suggestedTranslation = translation, suggestedNote = note.ifBlank { null }))
+                    onUpdate(
+                        item.copy(
+                            suggestedWord = it,
+                            suggestedTranslation = translation,
+                            suggestedNote = note.ifBlank { null },
+                            userDecision = AuditUserDecision.EDITED
+                        )
+                    )
                 },
                 label = { Text(stringResource(R.string.audit_field_word), fontSize = 11.sp) },
                 modifier = Modifier.fillMaxWidth(),
@@ -1214,7 +1436,14 @@ private fun AuditReviewItemCard(
                 value = translation,
                 onValueChange = {
                     translation = it
-                    onUpdate(item.copy(suggestedWord = word, suggestedTranslation = it, suggestedNote = note.ifBlank { null }))
+                    onUpdate(
+                        item.copy(
+                            suggestedWord = word,
+                            suggestedTranslation = it,
+                            suggestedNote = note.ifBlank { null },
+                            userDecision = AuditUserDecision.EDITED
+                        )
+                    )
                 },
                 label = { Text(stringResource(R.string.audit_field_translation), fontSize = 11.sp) },
                 modifier = Modifier.fillMaxWidth(),
@@ -1226,7 +1455,14 @@ private fun AuditReviewItemCard(
                 value = note,
                 onValueChange = {
                     note = it
-                    onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = it.ifBlank { null }))
+                    onUpdate(
+                        item.copy(
+                            suggestedWord = word,
+                            suggestedTranslation = translation,
+                            suggestedNote = it.ifBlank { null },
+                            userDecision = AuditUserDecision.EDITED
+                        )
+                    )
                 },
                 label = { Text(stringResource(R.string.audit_field_note), fontSize = 11.sp) },
                 modifier = Modifier.fillMaxWidth(),
@@ -1234,32 +1470,53 @@ private fun AuditReviewItemCard(
                 maxLines = 3
             )
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                TextButton(
+                if (!item.mergeTargetWord.isNullOrBlank()) {
+                    FilledTonalButton(
+                        onClick = {
+                            val mergedWord = item.mergeTargetWord
+                            val updated = item.copy(
+                                suggestedWord = mergedWord,
+                                suggestedTranslation = translation,
+                                suggestedNote = note.ifBlank { null },
+                                userDecision = AuditUserDecision.MERGE_WITH_TARGET
+                            )
+                            onResolve(updated)
+                        },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = colors.primary.copy(alpha = 0.14f),
+                            contentColor = colors.primary
+                        )
+                    ) {
+                        Icon(YadinIcons.smartAudit, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = stringResource(R.string.audit_btn_merge_similar, item.mergeTargetWord),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                FilledTonalButton(
                     onClick = {
-                        val pair = VocabularyParser.splitPair(word)
-                        if (pair != null) {
-                            word = pair.first.trim()
-                            val extra = pair.second.trim()
-                            if (VocabularyParser.hasPersian(extra)) {
-                                translation = if (translation.isBlank()) extra else "$translation، $extra"
-                            } else {
-                                note = if (note.isBlank()) extra else "$note\n$extra"
-                            }
-                            onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = note.ifBlank { null }))
-                        } else {
-                            val paren = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""").find(word)
-                            if (paren != null) {
-                                val main = paren.groupValues[1].trim()
-                                val inside = paren.groupValues[2].trim()
-                                word = main
-                                note = if (note.isBlank()) inside else "$note\n$inside"
-                                onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = note.ifBlank { null }))
-                            }
-                        }
+                        val outcome = extractSecondTextToNote(item, word, translation, note)
+                        word = outcome.newWord
+                        translation = outcome.newTranslation
+                        note = outcome.newNote
+                        val updated = item.copy(
+                            suggestedWord = word,
+                            suggestedTranslation = translation,
+                            suggestedNote = note.ifBlank { null },
+                            userDecision = AuditUserDecision.MOVE_TO_NOTE
+                        )
+                        onUpdate(updated)
                     }
                 ) {
                     Icon(YadinIcons.noteText, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -1267,12 +1524,35 @@ private fun AuditReviewItemCard(
                     Text(stringResource(R.string.audit_btn_move_to_note), fontSize = 11.sp)
                 }
 
+                FilledTonalButton(
+                    onClick = {
+                        val updated = item.copy(
+                            suggestedWord = word,
+                            suggestedTranslation = translation,
+                            suggestedNote = note.ifBlank { null },
+                            userDecision = if (note.isNotBlank()) AuditUserDecision.MOVE_TO_NOTE else AuditUserDecision.EDITED
+                        )
+                        onResolve(updated)
+                    },
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = colors.success.copy(alpha = 0.15f),
+                        contentColor = colors.success
+                    )
+                ) {
+                    Icon(YadinIcons.statusSuccess, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.audit_btn_confirm_item), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                }
+
                 TextButton(
                     onClick = {
-                        word = item.originalWord
-                        translation = item.originalTranslation
-                        note = ""
-                        onUpdate(item.copy(suggestedWord = word, suggestedTranslation = translation, suggestedNote = null))
+                        val unchanged = item.copy(
+                            suggestedWord = item.originalWord,
+                            suggestedTranslation = item.originalTranslation,
+                            suggestedNote = null,
+                            userDecision = AuditUserDecision.KEEP_ORIGINAL_DISMISS
+                        )
+                        onResolve(unchanged)
                     }
                 ) {
                     Text(stringResource(R.string.audit_btn_keep_original), fontSize = 11.sp)
