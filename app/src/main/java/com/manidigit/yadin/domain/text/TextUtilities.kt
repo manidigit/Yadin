@@ -689,8 +689,16 @@ object TextUtilities {
                     "$trimmedBase؟"
                 }
                 modifications.add("هماهنگ‌سازی علامت سؤال فارسی (؟) با جمله پرسشی اسپانیایی")
-            } else if (isEsExclamation && text.endsWith(".") && !text.endsWith("..")) {
-                text = text.removeSuffix(".").trimEnd() + "!"
+            } else if (isEsExclamation && !text.contains("!")) {
+                val parenMatch = TRAILING_PAREN_IN_PERSIAN_REGEX.find(text)
+                text = if (parenMatch != null) {
+                    val mainPart = parenMatch.groupValues[1].trimEnd('.', '!', '?', '؟', ' ')
+                    val parenPart = parenMatch.groupValues[2]
+                    "$mainPart! $parenPart"
+                } else {
+                    val trimmedBase = text.trimEnd('.', '!', '?', ' ')
+                    "$trimmedBase!"
+                }
                 modifications.add("هماهنگ‌سازی علامت تعجب (!) با عبارت تعجبی اسپانیایی")
             }
         }
@@ -975,8 +983,13 @@ object TextUtilities {
         // Must share the same starting character (avoids unrelated short rhymes like "casa" vs "masa" or "pato" vs "gato")
         if (a.first() != b.first()) return false
 
+        val minLen = minOf(a.length, b.length)
+        val commonPrefix = a.commonPrefixWith(b).length
+        val minPrefix = if (minLen <= 5) minLen - 1 else minLen - 2
+        if (commonPrefix < minPrefix) return false
+
         val dist = levenshteinDistance(a, b)
-        val maxAllowed = if (minOf(a.length, b.length) <= 5) 1 else 2
+        val maxAllowed = if (minLen <= 5) 1 else 2
         return dist in 1..maxAllowed
     }
 
