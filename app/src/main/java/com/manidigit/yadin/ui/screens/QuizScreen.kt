@@ -509,12 +509,15 @@ fun QuizScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = q.promptText,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.primary
-                    )
+                    val isHintPromptLtr = (q.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(q.promptText)
+                    CompositionLocalProvider(LocalLayoutDirection provides (if (isHintPromptLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                        Text(
+                            text = q.promptText,
+                            style = MaterialTheme.typography.headlineSmall.copy(textDirection = if (isHintPromptLtr) TextDirection.Ltr else TextDirection.Rtl),
+                            fontWeight = FontWeight.Bold,
+                            color = colors.primary
+                        )
+                    }
 
                     if (!q.note.isNullOrBlank()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

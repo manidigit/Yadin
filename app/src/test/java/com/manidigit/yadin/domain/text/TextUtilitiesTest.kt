@@ -73,5 +73,41 @@ class TextUtilitiesTest {
         val redundantParen = listOf("حق تقدم", "حق تقدم (در رانندگی)")
         assertEquals(listOf("حق تقدم"), TextUtilities.deduplicatePersianTranslations(redundantParen))
     }
+
+    @Test
+    fun spanishDedupeKey_ignoresArticlesAndPunctuationWithoutStrippingFromOriginalWord() {
+        val withArticle = TextUtilities.analyzeSpanishHeadword("El trampolín")
+        val withoutArticle = TextUtilities.analyzeSpanishHeadword("Trampolín")
+
+        assertEquals("El trampolín", withArticle.originalText)
+        assertEquals("El", withArticle.articlePrefix)
+        assertEquals(TextUtilities.SpanishArticleGender.MASCULINE, withArticle.gender)
+        assertEquals("trampolín", withArticle.dedupeKey)
+        assertEquals("trampolín", withoutArticle.dedupeKey)
+        assertEquals(withArticle.dedupeKey, withoutArticle.dedupeKey)
+
+        // Fixed expressions with un/una or relative pronouns should not strip their first word
+        assertEquals("una vez", TextUtilities.spanishDedupeKey("Una vez"))
+        assertEquals("un poco", TextUtilities.spanishDedupeKey("Un poco"))
+        assertEquals("el que", TextUtilities.spanishDedupeKey("El que"))
+    }
+
+    @Test
+    fun selectPreferredSpanishHeadword_retainsArticleFormForGenderLearning() {
+        assertEquals(
+            "El trampolín",
+            TextUtilities.selectPreferredSpanishHeadword(listOf("Trampolín", "El trampolín"))
+        )
+        assertEquals(
+            "La biblioteca",
+            TextUtilities.selectPreferredSpanishHeadword(listOf("biblioteca", "La biblioteca"))
+        )
+        // Combines article from one entry with proper accent from the other entry
+        assertEquals(
+            "El trampolín",
+            TextUtilities.selectPreferredSpanishHeadword(listOf("El trampolin", "Trampolín"))
+        )
+    }
 }
+
 

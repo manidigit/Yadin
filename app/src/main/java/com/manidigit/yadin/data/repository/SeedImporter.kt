@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7896_v1.60.0"
+        const val CURRENT_SEED_VERSION = "7896_v1.60.1"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -258,6 +258,13 @@ class SeedImporter(
                                             }
                                             reader.endObject()
                                             if (id.isNotEmpty() && conceptId.isNotEmpty()) {
+                                                if (lang != "fa") {
+                                                    val normalizedText = TextUtilities.normalizeSpanishPunctuation(text).first
+                                                    if (normalizedText != text) {
+                                                        text = normalizedText
+                                                        canonical = TextUtilities.toCanonicalKey(text)
+                                                    }
+                                                }
                                                 if (canonical.isEmpty()) {
                                                     canonical = TextUtilities.toCanonicalKey(text)
                                                 }
@@ -386,26 +393,45 @@ class SeedImporter(
                 if (cid in seedConceptIdSet) continue
                 val sourceRows = existingList.filter { it.languageCode != "fa" }
                 val faRows = existingList.filter { it.languageCode == "fa" }.sortedBy { it.translationIndex }
-                if (faRows.size > 1) {
-                    val originalFaTexts = faRows.map { it.text }
-                    val dedupedFaTexts = TextUtilities.deduplicatePersianTranslations(originalFaTexts)
-                    if (dedupedFaTexts.isNotEmpty() && dedupedFaTexts != originalFaTexts) {
-                        userConceptIdsToRefreshContents.add(cid)
-                        cleanedUserContents.addAll(sourceRows)
-                        dedupedFaTexts.forEachIndexed { idx, cleanFa ->
-                            val preservedId = faRows.getOrNull(idx)?.id ?: UUID.randomUUID().toString()
-                            cleanedUserContents.add(
-                                ContentEntity(
-                                    id = preservedId,
-                                    conceptId = cid,
-                                    languageCode = "fa",
-                                    text = cleanFa,
-                                    canonicalKey = TextUtilities.toCanonicalKey(cleanFa),
-                                    note = null,
-                                    translationIndex = idx
-                                )
+
+                var sourceModified = false
+                val normalizedSourceRows = sourceRows.map { row ->
+                    val normalizedEs = TextUtilities.normalizeSpanishPunctuation(row.text).first
+                    if (normalizedEs != row.text) {
+                        sourceModified = true
+                        row.copy(
+                            text = normalizedEs,
+                            canonicalKey = TextUtilities.toCanonicalKey(normalizedEs)
+                        )
+                    } else {
+                        row
+                    }
+                }
+
+                val originalFaTexts = faRows.map { it.text }
+                val dedupedFaTexts = if (faRows.size > 1) {
+                    TextUtilities.deduplicatePersianTranslations(originalFaTexts).ifEmpty { originalFaTexts }
+                } else {
+                    originalFaTexts
+                }
+                val faModified = dedupedFaTexts.isNotEmpty() && dedupedFaTexts != originalFaTexts
+
+                if (sourceModified || faModified) {
+                    userConceptIdsToRefreshContents.add(cid)
+                    cleanedUserContents.addAll(normalizedSourceRows)
+                    dedupedFaTexts.forEachIndexed { idx, cleanFa ->
+                        val preservedId = faRows.getOrNull(idx)?.id ?: UUID.randomUUID().toString()
+                        cleanedUserContents.add(
+                            ContentEntity(
+                                id = preservedId,
+                                conceptId = cid,
+                                languageCode = "fa",
+                                text = cleanFa,
+                                canonicalKey = TextUtilities.toCanonicalKey(cleanFa),
+                                note = null,
+                                translationIndex = idx
                             )
-                        }
+                        )
                     }
                 }
             }

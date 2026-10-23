@@ -323,26 +323,40 @@ object TextUtilities {
         return rtlCount > ltrCount
     }
 
+    private val SPACE_BEFORE_EXCLAMATION_REGEX = Regex("""\s+!$""")
+
     /**
-     * Checks and normalizes Spanish punctuation corruptions (e.g., "¿Cuánto cuesta;¿" -> "¿Cuánto cuesta?"):
-     * 1. Replaces corrupted trailing "¿" or ";¿" with correct closing "?"
-     * 2. Replaces corrupted trailing "¡" or ";¡" with correct closing "!"
-     * 3. Trims space after opening "¿" or "¡" and before closing "?" or "!"
-     * 4. Strips trailing stray delimiters like stray semicolons or colons
-     * 5. If starts with "¿" and missing closing "?", appends "?"
+     * Checks and normalizes Spanish punctuation corruptions:
+     * 1. Replaces leading regular "!" or "?" with Spanish inverted "¡" or "¿" (e.g., "!No respira!" -> "¡No respira!")
+     * 2. Fixes mismatched opening/closing marks (e.g., "¿qué nervios!" -> "¡qué nervios!", "¡Cómo estás?" -> "¿Cómo estás?")
+     * 3. Replaces corrupted trailing "¿" or ";¿" with correct closing "?" and trailing "¡" or ";¡" with "!"
+     * 4. Trims space after opening "¿" or "¡" and before closing "?" or "!"
+     * 5. Ensures Spanish sentences starting with "¿" end with "?" and starting with "¡" end with "!"
+     * 6. Prepends missing opening "¿" or "¡" for Spanish sentences ending with "?" or "!" (e.g., "Hasta mañana!" -> "¡Hasta mañana!")
+     * 7. Strips trailing stray delimiters like stray semicolons or colons
      */
     fun normalizeSpanishPunctuation(input: String): Pair<String, List<String>> {
         var text = input.trim()
         val modifications = mutableListOf<String>()
+        val isLatin = !isRtlText(text) && text.any { it in 'A'..'Z' || it in 'a'..'z' || it in '\u00C0'..'\u00FF' }
 
-        // 1. Remove space after opening inverted punctuation
+        // 1. Convert leading regular "!" or "?" on Spanish/Latin text to inverted "¡" or "¿"
+        if (isLatin && text.startsWith("!") && text.length > 1) {
+            text = "¡" + text.substring(1).trimStart()
+            modifications.add("تبدیل علامت تعجب آغازین (!) به علامت تعجب معکوس اسپانیایی (¡)")
+        } else if (isLatin && text.startsWith("?") && text.length > 1) {
+            text = "¿" + text.substring(1).trimStart()
+            modifications.add("تبدیل علامت سؤال آغازین (?) به علامت سؤال معکوس اسپانیایی (¿)")
+        }
+
+        // 2. Remove space after opening inverted punctuation
         if (text.startsWith("¿ ") || text.startsWith("¡ ")) {
             val mark = text[0]
             text = mark + text.substring(1).trimStart()
             modifications.add("حذف فاصله بعد از علامت آغازین اسپانیایی ($mark)")
         }
 
-        // 2. Fix corrupted trailing inverted question mark: ";¿" or ",¿" or " ¿" or "¿" at end
+        // 3. Fix corrupted trailing inverted question mark: ";¿" or ",¿" or " ¿" or "¿" at end
         if (TRAILING_INVERTED_QUESTION_REGEX.containsMatchIn(text)) {
             text = TRAILING_INVERTED_QUESTION_REGEX.replace(text, "?").trim()
             modifications.add("اصلاح علامت سؤال اسپانیایی و تبدیل ;¿ پایانی به ?")
@@ -351,7 +365,7 @@ object TextUtilities {
             modifications.add("اصلاح علامت سؤال معکوس پایانی به ?")
         }
 
-        // 3. Fix corrupted trailing inverted exclamation mark: ";¡" or ",¡" or " ¡" or "¡" at end
+        // 4. Fix corrupted trailing inverted exclamation mark: ";¡" or ",¡" or " ¡" or "¡" at end
         if (TRAILING_INVERTED_EXCLAMATION_REGEX.containsMatchIn(text)) {
             text = TRAILING_INVERTED_EXCLAMATION_REGEX.replace(text, "!").trim()
             modifications.add("اصلاح علامت تعجب اسپانیایی و تبدیل ;¡ پایانی به !")
@@ -360,13 +374,29 @@ object TextUtilities {
             modifications.add("اصلاح علامت تعجب معکوس پایانی به !")
         }
 
-        // 4. If string starts with "¿", ensure it ends with "?"
+        // 5. Fix mismatched opening and closing marks (e.g., "¿qué nervios!" -> "¡qué nervios!" or "¡Dónde estás?" -> "¿Dónde estás?")
+        if (text.startsWith("¿") && text.endsWith("!") && !text.contains("?")) {
+            text = "¡" + text.substring(1)
+            modifications.add("اصلاح عدم تطابق علامت آغازین و پایانی (تبدیل ¿ به ¡)")
+        } else if (text.startsWith("¡") && text.endsWith("?") && !text.contains("!")) {
+            text = "¿" + text.substring(1)
+            modifications.add("اصلاح عدم تطابق علامت آغازین و پایانی (تبدیل ¡ به ¿)")
+        }
+
+        // 5b. Fix duplicate opening inverted mark before a comma clause (e.g., "¿Por favor, ¿puedes...?" -> "Por favor, ¿puedes...?")
+        if (text.startsWith("¿") && text.indexOf('¿', 1) != -1 && text.count { it == '?' } <= 1) {
+            text = text.substring(1).trimStart()
+            modifications.add("حذف علامت سؤال معکوس تکراری در ابتدای عبارت")
+        } else if (text.startsWith("¡") && text.indexOf('¡', 1) != -1 && text.count { it == '!' } <= 1) {
+            text = text.substring(1).trimStart()
+            modifications.add("حذف علامت تعجب معکوس تکراری در ابتدای عبارت")
+        }
+
+        // 6. Handle Spanish questions ("¿...?")
         if (text.startsWith("¿")) {
-            // Remove space before question mark e.g. "carrera ?" -> "carrera?"
             if (SPACE_BEFORE_QUESTION_REGEX.containsMatchIn(text)) {
                 text = SPACE_BEFORE_QUESTION_REGEX.replace(text, "?")
             }
-            // If ends with semicolon or comma instead of question mark e.g. "¿Cuánto cuesta;"
             if (TRAILING_SEMI_OR_COMMA_REGEX.containsMatchIn(text) && !text.endsWith("?")) {
                 text = TRAILING_SEMI_OR_COMMA_REGEX.replace(text, "?").trim()
                 modifications.add("اصلاح علامت سؤال در انتهای جمله سؤالی اسپانیایی")
@@ -374,22 +404,45 @@ object TextUtilities {
                 text = "$text?"
                 modifications.add("افزودن علامت سؤال پایانی برای پرسش اسپانیایی")
             }
-        } else if (text.endsWith("?") && !isRtlText(text)) {
-            // If it ends with "?" and has Latin/Spanish characters, and is a question clause
-            val firstWord = text.split(SPANISH_QUESTION_STARTER_SPLIT_REGEX).firstOrNull()?.lowercase(Locale.ROOT) ?: ""
-            val spanishQuestionStarters = setOf(
-                "cuánto", "cuanto", "cuántos", "cuantos", "cuánta", "cuanta", "cuántas", "cuantas",
-                "qué", "que", "cómo", "como", "dónde", "donde", "adónde", "adonde",
-                "quién", "quien", "quiénes", "quienes", "cuál", "cual", "cuáles", "cuales",
-                "por", "para", "es", "son", "hay", "tiene", "tienes", "puede", "puedes", "está", "esta", "están", "estan"
-            )
-            if (spanishQuestionStarters.contains(firstWord)) {
-                text = "¿$text"
-                modifications.add("افزودن علامت سؤال معکوس آغازین (¿) برای جمله سؤالی اسپانیایی")
+        } else if (text.endsWith("?") && isLatin && !text.contains("¿")) {
+            if (SPACE_BEFORE_QUESTION_REGEX.containsMatchIn(text)) {
+                text = SPACE_BEFORE_QUESTION_REGEX.replace(text, "?")
             }
+            val dotIdx = text.lastIndexOf(". ")
+            text = if (dotIdx != -1 && dotIdx + 2 < text.length) {
+                text.substring(0, dotIdx + 2) + "¿" + text.substring(dotIdx + 2).trimStart()
+            } else {
+                "¿$text"
+            }
+            modifications.add("افزودن علامت سؤال معکوس آغازین (¿) برای جمله سؤالی اسپانیایی")
         }
 
-        // 5. Strip trailing stray delimiters like ";" or "؛" or ":" or stray comma/hyphen
+        // 7. Handle Spanish exclamations ("¡...!")
+        if (text.startsWith("¡")) {
+            if (SPACE_BEFORE_EXCLAMATION_REGEX.containsMatchIn(text)) {
+                text = SPACE_BEFORE_EXCLAMATION_REGEX.replace(text, "!")
+            }
+            if (TRAILING_SEMI_OR_COMMA_REGEX.containsMatchIn(text) && !text.endsWith("!")) {
+                text = TRAILING_SEMI_OR_COMMA_REGEX.replace(text, "!").trim()
+                modifications.add("اصلاح علامت تعجب در انتهای جمله تعجبی اسپانیایی")
+            } else if (!text.endsWith("!") && !text.endsWith("?") && !text.endsWith(".")) {
+                text = "$text!"
+                modifications.add("افزودن علامت تعجب پایانی (!) برای عبارت تعجبی اسپانیایی")
+            }
+        } else if (text.endsWith("!") && isLatin && !text.contains("¡")) {
+            if (SPACE_BEFORE_EXCLAMATION_REGEX.containsMatchIn(text)) {
+                text = SPACE_BEFORE_EXCLAMATION_REGEX.replace(text, "!")
+            }
+            val dotIdx = text.lastIndexOf(". ")
+            text = if (dotIdx != -1 && dotIdx + 2 < text.length) {
+                text.substring(0, dotIdx + 2) + "¡" + text.substring(dotIdx + 2).trimStart()
+            } else {
+                "¡$text"
+            }
+            modifications.add("افزودن علامت تعجب معکوس آغازین (¡) برای عبارت تعجبی اسپانیایی")
+        }
+
+        // 8. Strip trailing stray delimiters like ";" or "؛" or ":" or stray comma/hyphen
         if (TRAILING_DANGLING_DELIMITERS_REGEX.containsMatchIn(text)) {
             val cleaned = TRAILING_DANGLING_DELIMITERS_REGEX.replace(text, "").trim()
             if (cleaned.isNotBlank()) {
@@ -399,5 +452,287 @@ object TextUtilities {
         }
 
         return Pair(text, modifications)
+    }
+
+    enum class SpanishArticleGender {
+        NONE,
+        MASCULINE,
+        FEMININE,
+        BOTH
+    }
+
+    data class SpanishHeadwordAnalysis(
+        val originalText: String,
+        val articlePrefix: String?,
+        val isDefiniteArticle: Boolean,
+        val gender: SpanishArticleGender,
+        val coreText: String,
+        val dedupeKey: String,
+        val accentInsensitiveKey: String,
+        val trailingParenNote: String?
+    )
+
+    private val SURROUNDING_SPANISH_PUNCT_REGEX = Regex("""^[¿¡"'\s«»]+|[?!."'\s«»]+$""")
+    private val INLINE_PUNCT_FOR_KEY_REGEX = Regex("""[¿?¡!.,;:()"'«»]+""")
+    private val TRAILING_PAREN_EXTRACT_REGEX = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""")
+    private val DUAL_ARTICLE_PREFIX_REGEX = Regex(
+        """^(el\s*/\s*la|la\s*/\s*el|los\s*/\s*las|las\s*/\s*los|un\s*/\s*una|una\s*/\s*un)\s+(.+)$""",
+        RegexOption.IGNORE_CASE
+    )
+    private val MASC_DEF_PREFIX_REGEX = Regex("""^(el|los)\s+(.+)$""", RegexOption.IGNORE_CASE)
+    private val FEM_DEF_PREFIX_REGEX = Regex("""^(la|las)\s+(.+)$""", RegexOption.IGNORE_CASE)
+    private val MASC_INDEF_PREFIX_REGEX = Regex("""^(un|unos)\s+(.+)$""", RegexOption.IGNORE_CASE)
+    private val FEM_INDEF_PREFIX_REGEX = Regex("""^(una|unas)\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+    private val NON_NOUN_FOLLOWERS = setOf(
+        "que", "qué", "cual", "cuál", "cuales", "cuáles", "de", "del", "mismo", "misma", "otro", "otra"
+    )
+    private val INDEFINITE_FIXED_FOLLOWERS = setOf(
+        "poco", "poquito", "vez", "día", "dia", "rato", "momento", "par", "millón", "millon", "ciento", "tanto", "todo", "nada"
+    )
+    private val SPANISH_ACCENT_CHARS = setOf('á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ü', 'Ñ')
+
+    /**
+     * Analyzes a Spanish headword without altering its stored text:
+     * - Identifies leading grammatical articles (El, La, Los, Las, El/La, Un, Una) or trailing parenthetical articles
+     * - Extracts core Spanish word/phrase for duplicate detection (ignoring articles, punctuation, and trailing parentheticals)
+     * - Computes both accent-preserving `dedupeKey` and `accentInsensitiveKey`
+     */
+    fun analyzeSpanishHeadword(rawText: String?): SpanishHeadwordAnalysis {
+        val cleaned = cleanText(rawText)
+        if (cleaned.isEmpty()) {
+            return SpanishHeadwordAnalysis(
+                originalText = "",
+                articlePrefix = null,
+                isDefiniteArticle = false,
+                gender = SpanishArticleGender.NONE,
+                coreText = "",
+                dedupeKey = "",
+                accentInsensitiveKey = "",
+                trailingParenNote = null
+            )
+        }
+
+        val punctStripped = SURROUNDING_SPANISH_PUNCT_REGEX.replace(cleaned, "").trim()
+            .ifEmpty { cleaned }
+
+        var workingText = punctStripped
+        var trailingParenNote: String? = null
+        var parenArticlePrefix: String? = null
+        var parenArticleGender = SpanishArticleGender.NONE
+        var parenArticleDefinite = false
+
+        val parenMatch = TRAILING_PAREN_EXTRACT_REGEX.find(workingText)
+        if (parenMatch != null) {
+            val beforeParen = parenMatch.groupValues[1].trim()
+            val insideParen = parenMatch.groupValues[2].trim()
+            if (beforeParen.isNotBlank() && insideParen.isNotBlank()) {
+                val insideLower = insideParen.lowercase(Locale.ROOT)
+                when {
+                    insideLower == "el" || insideLower == "los" -> {
+                        workingText = beforeParen
+                        parenArticlePrefix = insideLower.replaceFirstChar { it.titlecase(Locale.ROOT) }
+                        parenArticleGender = SpanishArticleGender.MASCULINE
+                        parenArticleDefinite = true
+                    }
+                    insideLower == "la" || insideLower == "las" -> {
+                        workingText = beforeParen
+                        parenArticlePrefix = insideLower.replaceFirstChar { it.titlecase(Locale.ROOT) }
+                        parenArticleGender = SpanishArticleGender.FEMININE
+                        parenArticleDefinite = true
+                    }
+                    insideLower == "el/la" || insideLower == "el / la" || insideLower == "la/el" -> {
+                        workingText = beforeParen
+                        parenArticlePrefix = "El/La"
+                        parenArticleGender = SpanishArticleGender.BOTH
+                        parenArticleDefinite = true
+                    }
+                    else -> {
+                        workingText = beforeParen
+                        trailingParenNote = insideParen
+                    }
+                }
+            }
+        }
+
+        var articlePrefix: String? = parenArticlePrefix
+        var gender: SpanishArticleGender = parenArticleGender
+        var isDefinite = parenArticleDefinite
+        var coreText = workingText
+
+        fun canStripArticle(remainder: String, isIndefinite: Boolean): Boolean {
+            val words = remainder.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+            if (words.isEmpty() || words.size > 4) return false
+            val firstFollower = words.first().lowercase(Locale.ROOT).trim('.', ',', '?', '!', '¿', '¡')
+            if (firstFollower in NON_NOUN_FOLLOWERS) return false
+            if (isIndefinite && firstFollower in INDEFINITE_FIXED_FOLLOWERS) return false
+            return true
+        }
+
+        val dualMatch = DUAL_ARTICLE_PREFIX_REGEX.find(workingText)
+        val mascDefMatch = if (dualMatch == null) MASC_DEF_PREFIX_REGEX.find(workingText) else null
+        val femDefMatch = if (dualMatch == null && mascDefMatch == null) FEM_DEF_PREFIX_REGEX.find(workingText) else null
+        val mascIndefMatch = if (dualMatch == null && mascDefMatch == null && femDefMatch == null) MASC_INDEF_PREFIX_REGEX.find(workingText) else null
+        val femIndefMatch = if (dualMatch == null && mascDefMatch == null && femDefMatch == null && mascIndefMatch == null) FEM_INDEF_PREFIX_REGEX.find(workingText) else null
+
+        when {
+            dualMatch != null && canStripArticle(dualMatch.groupValues[2], dualMatch.groupValues[1].startsWith("un", ignoreCase = true)) -> {
+                val rawArt = dualMatch.groupValues[1].lowercase(Locale.ROOT).replace(" ", "")
+                articlePrefix = when {
+                    rawArt.startsWith("los") || rawArt.startsWith("las") -> "Los/Las"
+                    rawArt.startsWith("un") -> "Un/Una"
+                    else -> "El/La"
+                }
+                gender = SpanishArticleGender.BOTH
+                isDefinite = !rawArt.startsWith("un")
+                coreText = dualMatch.groupValues[2].trim()
+            }
+            mascDefMatch != null && canStripArticle(mascDefMatch.groupValues[2], isIndefinite = false) -> {
+                articlePrefix = mascDefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                gender = SpanishArticleGender.MASCULINE
+                isDefinite = true
+                coreText = mascDefMatch.groupValues[2].trim()
+            }
+            femDefMatch != null && canStripArticle(femDefMatch.groupValues[2], isIndefinite = false) -> {
+                articlePrefix = femDefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                gender = SpanishArticleGender.FEMININE
+                isDefinite = true
+                coreText = femDefMatch.groupValues[2].trim()
+            }
+            mascIndefMatch != null && canStripArticle(mascIndefMatch.groupValues[2], isIndefinite = true) -> {
+                articlePrefix = mascIndefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                gender = SpanishArticleGender.MASCULINE
+                isDefinite = false
+                coreText = mascIndefMatch.groupValues[2].trim()
+            }
+            femIndefMatch != null && canStripArticle(femIndefMatch.groupValues[2], isIndefinite = true) -> {
+                articlePrefix = femIndefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                gender = SpanishArticleGender.FEMININE
+                isDefinite = false
+                coreText = femIndefMatch.groupValues[2].trim()
+            }
+        }
+
+        val rawDedupe = INLINE_PUNCT_FOR_KEY_REGEX.replace(coreText.lowercase(Locale.ROOT), " ")
+        val dedupeKey = WHITESPACE_REGEX.replace(rawDedupe, " ").trim()
+            .ifEmpty { toCanonicalKey(cleaned) }
+
+        val nfd = Normalizer.normalize(dedupeKey, Normalizer.Form.NFD)
+        val accentInsensitiveKey = WHITESPACE_REGEX.replace(DIACRITICS_REGEX.replace(nfd, ""), " ").trim()
+
+        return SpanishHeadwordAnalysis(
+            originalText = cleaned,
+            articlePrefix = articlePrefix,
+            isDefiniteArticle = isDefinite,
+            gender = gender,
+            coreText = coreText,
+            dedupeKey = dedupeKey,
+            accentInsensitiveKey = accentInsensitiveKey,
+            trailingParenNote = trailingParenNote
+        )
+    }
+
+    /**
+     * Produces the Spanish duplicate comparison key (ignoring leading articles El/La/Los/Las/Un/Una,
+     * surrounding punctuation, and trailing parenthetical notes without altering the actual word text).
+     */
+    fun spanishDedupeKey(text: String?): String = analyzeSpanishHeadword(text).dedupeKey
+
+    /**
+     * Checks whether two lists of Persian translations share at least one normalized meaning or core token.
+     */
+    fun hasPersianTranslationOverlap(transA: List<String>, transB: List<String>): Boolean {
+        val atomicA = splitTranslations(transA.joinToString("، "))
+        val atomicB = splitTranslations(transB.joinToString("، "))
+        if (atomicA.isEmpty() || atomicB.isEmpty()) return false
+
+        val keysA = atomicA.map { persianDedupeKey(PARENTHETICAL_BLOCK_REGEX.replace(it, "")) }.filter { it.isNotEmpty() }.toSet()
+        val keysB = atomicB.map { persianDedupeKey(PARENTHETICAL_BLOCK_REGEX.replace(it, "")) }.filter { it.isNotEmpty() }.toSet()
+
+        if (keysA.intersect(keysB).isNotEmpty()) return true
+
+        for (a in keysA) {
+            if (a.length < 3) continue
+            for (b in keysB) {
+                if (b.length < 3) continue
+                if (a.contains(b) || b.contains(a)) return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Selects the preferred Spanish display headword when merging duplicate entries:
+     * - Prioritizes forms that include the Spanish grammatical article (e.g., "El trampolín" over "Trampolín")
+     *   so the learner learns the noun's gender.
+     * - Prioritizes properly accented Spanish forms (e.g., "trampolín" over "trampolin").
+     * - Combines the best article with the best accented core when one entry has the article and the other has the accent.
+     */
+    fun selectPreferredSpanishHeadword(candidates: List<String>): String {
+        val cleanedCandidates = candidates.map { cleanText(it) }.filter { it.isNotBlank() }
+        if (cleanedCandidates.isEmpty()) return ""
+        if (cleanedCandidates.size == 1) return cleanedCandidates.first()
+
+        val analyses = cleanedCandidates.map { analyzeSpanishHeadword(it) }
+
+        val hasBothMascAndFem = analyses.any { it.gender == SpanishArticleGender.MASCULINE } &&
+            analyses.any { it.gender == SpanishArticleGender.FEMININE }
+
+        val bestArticleAnalysis = analyses
+            .filter { it.articlePrefix != null }
+            .maxByOrNull { analysis ->
+                var score = 0
+                if (analysis.isDefiniteArticle) score += 100 else score += 60
+                if (hasBothMascAndFem && analysis.gender == SpanishArticleGender.BOTH) score += 30
+                if (analysis.coreText.any { ch -> ch in SPANISH_ACCENT_CHARS }) score += 25
+                if (analysis.trailingParenNote == null) score += 10
+                if (analysis.originalText.firstOrNull()?.isUpperCase() == true) score += 5
+                score
+            }
+
+        val bestCoreAnalysis = analyses.maxByOrNull { analysis ->
+            var score = 0
+            score += analysis.coreText.count { ch -> ch in SPANISH_ACCENT_CHARS } * 30
+            if (analysis.trailingParenNote == null) score += 10
+            if ((analysis.originalText.startsWith("¡") && analysis.originalText.endsWith("!")) ||
+                (analysis.originalText.startsWith("¿") && analysis.originalText.endsWith("?"))
+            ) {
+                score += 8
+            }
+            val firstLetter = analysis.originalText.firstOrNull { it.isLetter() }
+            if (firstLetter?.isUpperCase() == true) score += 5
+            if (analysis.articlePrefix != null && analysis.isDefiniteArticle) score += 5
+            score
+        } ?: analyses.first()
+
+        if (bestArticleAnalysis != null) {
+            val chosenPrefix = if (hasBothMascAndFem && bestArticleAnalysis.gender != SpanishArticleGender.BOTH) {
+                "El/La"
+            } else {
+                bestArticleAnalysis.articlePrefix!!
+            }
+
+            val bestCore = bestCoreAnalysis.coreText
+            val loweredCoreFirst = if (bestCore.isNotEmpty() && bestCore.first().isUpperCase()) {
+                bestCore.first().lowercase(Locale.ROOT) + bestCore.substring(1)
+            } else {
+                bestCore
+            }
+            return "$chosenPrefix $loweredCoreFirst".trim()
+        }
+
+        val winningText = bestCoreAnalysis.originalText
+        if (winningText.startsWith("¡") || winningText.startsWith("¿")) {
+            return if (winningText.length >= 2 && winningText[1].isLowerCase()) {
+                winningText[0] + winningText[1].titlecase(Locale.ROOT) + winningText.substring(2)
+            } else {
+                winningText
+            }
+        }
+        return if (winningText.isNotEmpty() && winningText.first().isLowerCase()) {
+            winningText.first().titlecase(Locale.ROOT) + winningText.substring(1)
+        } else {
+            winningText
+        }
     }
 }

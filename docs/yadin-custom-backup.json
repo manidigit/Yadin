@@ -67752,9 +67752,7 @@
       {
         "id": "dfd3539e-53bc-40f2-bd95-8e9045319a61",
         "conceptId": "4c181d03-2dc7-4b39-870f-550e91c27423",
-        "languageCode": "es",
-        "text": "!No respira!",
-        "canonicalKey": "!no respira!",
+        "languageCode": "es", "text": "¡No respira!", "canonicalKey": "¡no respira!",
         "note": null,
         "translationIndex": 0
       },
@@ -131598,9 +131596,7 @@
       {
         "id": "48442988-43ad-4b33-b996-da3fd6372e6b",
         "conceptId": "f61dd243-1bc9-4495-9ccd-f0e5fbccd446",
-        "languageCode": "es",
-        "text": "!deja de quejarte!",
-        "canonicalKey": "!deja de quejarte!",
+        "languageCode": "es", "text": "¡deja de quejarte!", "canonicalKey": "¡deja de quejarte!",
         "note": null,
         "translationIndex": 0
       },
@@ -131616,9 +131612,7 @@
       {
         "id": "46f4af81-87f3-4709-b39c-23e10c289cab",
         "conceptId": "07340a45-8af2-4aef-95b2-4e1c42eab5fe",
-        "languageCode": "es",
-        "text": "!se está colando!",
-        "canonicalKey": "!se está colando!",
+        "languageCode": "es", "text": "¡se está colando!", "canonicalKey": "¡se está colando!",
         "note": null,
         "translationIndex": 0
       },
@@ -138681,9 +138675,7 @@
       {
         "id": "710b756f-0109-43f6-9dd0-99ff5d13f907",
         "conceptId": "728f4435-f6a7-4655-810e-bf798f3eb229",
-        "languageCode": "es",
-        "text": "!deja de comer hamburguesas!",
-        "canonicalKey": "!deja de comer hamburguesas!",
+        "languageCode": "es", "text": "¡deja de comer hamburguesas!", "canonicalKey": "¡deja de comer hamburguesas!",
         "note": null,
         "translationIndex": 0
       },
@@ -138708,9 +138700,7 @@
       {
         "id": "dce8c460-ebe6-4c20-9ea9-acbfdba84b29",
         "conceptId": "ce004b8c-3be5-444b-91e9-3d9cea711416",
-        "languageCode": "es",
-        "text": "!disfruta!",
-        "canonicalKey": "!disfruta!",
+        "languageCode": "es", "text": "¡disfruta!", "canonicalKey": "¡disfruta!",
         "note": null,
         "translationIndex": 0
       },
@@ -143343,9 +143333,7 @@
       {
         "id": "7f2b7adc-3538-4cf4-a887-e294dce969d3",
         "conceptId": "b13c2347-d035-4b90-9e52-1f5c4165af5f",
-        "languageCode": "es",
-        "text": "¿Es urgente, ¿tiene cita para hoy?",
-        "canonicalKey": "¿es urgente, ¿tiene cita para hoy?",
+        "languageCode": "es", "text": "Es urgente, ¿tiene cita para hoy?", "canonicalKey": "es urgente, ¿tiene cita para hoy?",
         "note": null,
         "translationIndex": 0
       },
@@ -157005,9 +156993,7 @@
       {
         "id": "2e7aafb1-5e49-4e1a-8018-45006c7defa6",
         "conceptId": "edff58fe-462e-45ac-831b-c1e0176a8a81",
-        "languageCode": "es",
-        "text": "a qué deberíamos darle prioridad?",
-        "canonicalKey": "a qué deberíamos darle prioridad?",
+        "languageCode": "es", "text": "¿a qué deberíamos darle prioridad?", "canonicalKey": "¿a qué deberíamos darle prioridad?",
         "note": null,
         "translationIndex": 0
       },
@@ -159507,9 +159493,7 @@
       {
         "id": "0bb7be46-d848-4bf3-84a0-dc73cf756a8a",
         "conceptId": "fad17fe0-73f3-42b0-8843-38a6c8bb206f",
-        "languageCode": "es",
-        "text": "Llame a los bomberos!",
-        "canonicalKey": "llame a los bomberos!",
+        "languageCode": "es", "text": "¡Llame a los bomberos!", "canonicalKey": "¡llame a los bomberos!",
         "note": null,
         "translationIndex": 0
       },
@@ -161028,9 +161012,7 @@
       {
         "id": "444aaa60-622c-49ae-999b-a7b324c8f7b0",
         "conceptId": "65c71aaa-aeda-4f07-83f8-586154530f9e",
-        "languageCode": "es",
-        "text": "Hazme caso!",
-        "canonicalKey": "hazme caso!",
+        "languageCode": "es", "text": "¡Hazme caso!", "canonicalKey": "¡hazme caso!",
         "note": null,
         "translationIndex": 0
       },
@@ -163557,9 +163539,7 @@
       {
         "id": "44f941aa-0e8e-492e-ba58-9c75aef14bb4",
         "conceptId": "ab46a8b4-cc58-42c0-b40c-ab6272fcc228",
-        "languageCode": "es",
-        "text": "qué guay!",
-        "canonicalKey": "qué guay!",
+        "languageCode": "es", "text": "¡qué guay!", "canonicalKey": "¡qué guay!",
         "note": null,
         "translationIndex": 0
       },
@@ -163746,9 +163726,7 @@
       {
         "id": "48b00f48-7ac0-472b-bba4-d3babd9b529d",
         "conceptId": "69049b4a-09a9-48ae-bc18-00979a013f0c",
-        "languageCode": "es",
-        "text": "!qué buena pinta!",
-        "canonicalKey": "!qué buena pinta!",
+        "languageCode": "es", "text": "¡qué buena pinta!", "canonicalKey": "¡qué buena pinta!",
         "note": null,
         "translationIndex": 0
       },
@@ -163773,9 +163751,7 @@
       {
         "id": "f2f643bd-212d-45e4-b8b7-faa72997604a",
         "conceptId": "6f30e540-00d6-4cb5-9d37-8cbf3fbf947f",
-        "languageCode": "es",
-        "text": "!qué desastre!",
-        "canonicalKey": "!qué desastre!",
+        "languageCode": "es", "text": "¡qué desastre!", "canonicalKey": "¡qué desastre!",
         "note": null,
         "translationIndex": 0
       },
@@ -164070,9 +164046,7 @@
       {
         "id": "40484262-869c-4e41-8dfc-bd0335941f09",
         "conceptId": "f463dc47-ad54-43ec-b436-c6806e49f7f1",
-        "languageCode": "es",
-        "text": "!Por Dios!",
-        "canonicalKey": "!por dios!",
+        "languageCode": "es", "text": "¡Por Dios!", "canonicalKey": "¡por dios!",
         "note": null,
         "translationIndex": 0
       },
@@ -164097,9 +164071,7 @@
       {
         "id": "866fdb3d-d507-4d5c-b853-2976685163f7",
         "conceptId": "7810bd99-3f41-4a26-bb68-e6ef8eb8782c",
-        "languageCode": "es",
-        "text": "!Dios mío!",
-        "canonicalKey": "!dios mío!",
+        "languageCode": "es", "text": "¡Dios mío!", "canonicalKey": "¡dios mío!",
         "note": null,
         "translationIndex": 0
       },
@@ -164115,9 +164087,7 @@
       {
         "id": "b394c663-311b-4a82-a0b2-e6063d2e0414",
         "conceptId": "ff5d6059-0c3e-4bef-9d46-4ad20fbd9700",
-        "languageCode": "es",
-        "text": "!gracias a Dios!",
-        "canonicalKey": "!gracias a dios!",
+        "languageCode": "es", "text": "¡gracias a Dios!", "canonicalKey": "¡gracias a dios!",
         "note": null,
         "translationIndex": 0
       },
@@ -164133,9 +164103,7 @@
       {
         "id": "0046fea5-eed8-4861-ada2-a371368031fa",
         "conceptId": "82a461ec-37c4-4dd9-a9d5-28b4184e76d5",
-        "languageCode": "es",
-        "text": "!Menos mal!",
-        "canonicalKey": "!menos mal!",
+        "languageCode": "es", "text": "¡Menos mal!", "canonicalKey": "¡menos mal!",
         "note": null,
         "translationIndex": 0
       },
@@ -164223,9 +164191,7 @@
       {
         "id": "4c6c6bf1-92a6-446e-a328-fa5d7e6584f7",
         "conceptId": "fc248ced-3587-4467-a426-3bbb63418a73",
-        "languageCode": "es",
-        "text": "!Eso es!",
-        "canonicalKey": "!eso es!",
+        "languageCode": "es", "text": "¡Eso es!", "canonicalKey": "¡eso es!",
         "note": null,
         "translationIndex": 0
       },
@@ -164259,9 +164225,7 @@
       {
         "id": "a8fd2fb1-4296-43cb-bb06-a144e788d8fa",
         "conceptId": "5c4bbc4d-6d4e-4b9b-b3e3-719d4ca0262b",
-        "languageCode": "es",
-        "text": "!Así se hace!",
-        "canonicalKey": "!así se hace!",
+        "languageCode": "es", "text": "¡Así se hace!", "canonicalKey": "¡así se hace!",
         "note": null,
         "translationIndex": 0
       },
@@ -164286,9 +164250,7 @@
       {
         "id": "b5b0a645-fa93-422c-9075-6509fd3f3d35",
         "conceptId": "159a5c43-d33d-4faa-9d6d-5df6c9bdffc6",
-        "languageCode": "es",
-        "text": "!lo has clavado!",
-        "canonicalKey": "!lo has clavado!",
+        "languageCode": "es", "text": "¡lo has clavado!", "canonicalKey": "¡lo has clavado!",
         "note": null,
         "translationIndex": 0
       },
@@ -164313,9 +164275,7 @@
       {
         "id": "d1b80046-33fe-43ab-a2b5-402ff8742709",
         "conceptId": "14914fe1-528f-4d13-b999-069ffa52f539",
-        "languageCode": "es",
-        "text": "!lo has hecho de maravilla!",
-        "canonicalKey": "!lo has hecho de maravilla!",
+        "languageCode": "es", "text": "¡lo has hecho de maravilla!", "canonicalKey": "¡lo has hecho de maravilla!",
         "note": null,
         "translationIndex": 0
       },
@@ -164385,9 +164345,7 @@
       {
         "id": "7f7e96b6-c802-4d73-aaae-9a7f1e23c514",
         "conceptId": "36bd0fa7-630e-4fbc-92c9-85e91b6f5c10",
-        "languageCode": "es",
-        "text": "y si no?",
-        "canonicalKey": "y si no?",
+        "languageCode": "es", "text": "¿y si no?", "canonicalKey": "¿y si no?",
         "note": null,
         "translationIndex": 0
       },
@@ -164403,9 +164361,7 @@
       {
         "id": "a36ef8ba-f7a8-44c9-a5c4-cf49bc3a893b",
         "conceptId": "952356da-a615-4e32-8526-271a096b6b17",
-        "languageCode": "es",
-        "text": "o qué?",
-        "canonicalKey": "o qué?",
+        "languageCode": "es", "text": "¿o qué?", "canonicalKey": "¿o qué?",
         "note": null,
         "translationIndex": 0
       },
@@ -170055,9 +170011,7 @@
       {
         "id": "62d45413-619b-4507-924b-154a41a93c33",
         "conceptId": "dd5a22a7-6f8e-4e8b-9d2c-2ba9850b3077",
-        "languageCode": "es",
-        "text": "¿qué nervios!",
-        "canonicalKey": "¿qué nervios!",
+        "languageCode": "es", "text": "¡qué nervios!", "canonicalKey": "¡qué nervios!",
         "note": null,
         "translationIndex": 0
       },
@@ -173502,9 +173456,7 @@
       {
         "id": "362161aa-b5e9-4414-8127-62c6f2dc81ea",
         "conceptId": "216dbece-fa47-475b-aa7b-a5a97f8aff6b",
-        "languageCode": "es",
-        "text": "Hasta mañana!",
-        "canonicalKey": "hasta mañana!",
+        "languageCode": "es", "text": "¡Hasta mañana!", "canonicalKey": "¡hasta mañana!",
         "note": null,
         "translationIndex": 0
       },
@@ -179838,9 +179790,7 @@
       {
         "id": "dc053ac8-e1e4-4423-b8d5-96515f56bf65",
         "conceptId": "73a5acc5-52d8-4e9d-8dc2-f725ec293bee",
-        "languageCode": "es",
-        "text": "volverás antes o después de la cena?",
-        "canonicalKey": "volverás antes o después de la cena?",
+        "languageCode": "es", "text": "¿volverás antes o después de la cena?", "canonicalKey": "¿volverás antes o después de la cena?",
         "note": null,
         "translationIndex": 0
       },
@@ -183771,9 +183721,7 @@
       {
         "id": "455b5328-5b12-44c6-b03e-7c72dfa2ed06",
         "conceptId": "8cf578e9-579d-4a37-941f-83a244638c9e",
-        "languageCode": "es",
-        "text": "recuerdas cómo era?",
-        "canonicalKey": "recuerdas cómo era?",
+        "languageCode": "es", "text": "¿recuerdas cómo era?", "canonicalKey": "¿recuerdas cómo era?",
         "note": null,
         "translationIndex": 0
       },
@@ -186462,9 +186410,7 @@
       {
         "id": "95fce526-7e19-4ce2-a9a9-64fa4ebea91e",
         "conceptId": "a50b441a-ce96-449b-93ed-f16220f18adb",
-        "languageCode": "es",
-        "text": "De dónde eres?",
-        "canonicalKey": "de dónde eres?",
+        "languageCode": "es", "text": "¿De dónde eres?", "canonicalKey": "¿de dónde eres?",
         "note": null,
         "translationIndex": 0
       },
@@ -190458,9 +190404,7 @@
       {
         "id": "120de073-ec95-42c4-b4da-ae058b8bab86",
         "conceptId": "4869b054-55e3-43b0-bc88-40c18d7f3840",
-        "languageCode": "es",
-        "text": "vamos a celebrar!",
-        "canonicalKey": "vamos a celebrar!",
+        "languageCode": "es", "text": "¡vamos a celebrar!", "canonicalKey": "¡vamos a celebrar!",
         "note": null,
         "translationIndex": 0
       },
@@ -191655,9 +191599,7 @@
       {
         "id": "cb67156d-0eb7-4897-a0d2-b2e19558ca6b",
         "conceptId": "ab378bf9-ae12-4ef6-a99e-137d5aa67ca6",
-        "languageCode": "es",
-        "text": "!no grites!",
-        "canonicalKey": "!no grites!",
+        "languageCode": "es", "text": "¡no grites!", "canonicalKey": "¡no grites!",
         "note": null,
         "translationIndex": 0
       },
@@ -191745,9 +191687,7 @@
       {
         "id": "53de4394-270a-4b6d-9b01-ffe212433510",
         "conceptId": "c0211c2f-ba1a-4122-8032-af618a565cbe",
-        "languageCode": "es",
-        "text": "!Déjalo!",
-        "canonicalKey": "!déjalo!",
+        "languageCode": "es", "text": "¡Déjalo!", "canonicalKey": "¡déjalo!",
         "note": null,
         "translationIndex": 0
       },
@@ -191790,9 +191730,7 @@
       {
         "id": "9b2c66c3-df3e-4416-be7f-86fd42a918f4",
         "conceptId": "a06ca3d1-4586-4dc9-b020-2703bd481b6c",
-        "languageCode": "es",
-        "text": "!Olvídalo!",
-        "canonicalKey": "!olvídalo!",
+        "languageCode": "es", "text": "¡Olvídalo!", "canonicalKey": "¡olvídalo!",
         "note": null,
         "translationIndex": 0
       },
@@ -191808,9 +191746,7 @@
       {
         "id": "425613f7-299b-45a1-8728-eb47a0227586",
         "conceptId": "62e121b2-5baa-4a2e-a8a2-b3e5e206adb7",
-        "languageCode": "es",
-        "text": "!supéralo ya!",
-        "canonicalKey": "!supéralo ya!",
+        "languageCode": "es", "text": "¡supéralo ya!", "canonicalKey": "¡supéralo ya!",
         "note": null,
         "translationIndex": 0
       },
@@ -191862,9 +191798,7 @@
       {
         "id": "ff3bd875-d70d-46e4-9055-768f0425ca12",
         "conceptId": "bfcced0a-23a2-4252-b831-20e00201ead1",
-        "languageCode": "es",
-        "text": "!No pasa nada!",
-        "canonicalKey": "!no pasa nada!",
+        "languageCode": "es", "text": "¡No pasa nada!", "canonicalKey": "¡no pasa nada!",
         "note": null,
         "translationIndex": 0
       },
@@ -191916,9 +191850,7 @@
       {
         "id": "6ac6adbb-8173-47f5-9ffb-35768fc4e7a3",
         "conceptId": "3943e0f6-6ee4-4687-9db6-10c124914e50",
-        "languageCode": "es",
-        "text": "!No importa!",
-        "canonicalKey": "!no importa!",
+        "languageCode": "es", "text": "¡No importa!", "canonicalKey": "¡no importa!",
         "note": null,
         "translationIndex": 0
       },
@@ -192204,9 +192136,7 @@
       {
         "id": "41741168-24e4-4114-a627-baaa5944a23e",
         "conceptId": "482d8473-2e22-4a32-8835-bb0ff9271aa1",
-        "languageCode": "es",
-        "text": "!No te rindas!",
-        "canonicalKey": "!no te rindas!",
+        "languageCode": "es", "text": "¡No te rindas!", "canonicalKey": "¡no te rindas!",
         "note": null,
         "translationIndex": 0
       },
@@ -192222,9 +192152,7 @@
       {
         "id": "785f31d5-6eea-4472-a4df-4de1fb1af329",
         "conceptId": "70e6bb7e-e39f-4192-b415-98311ec48393",
-        "languageCode": "es",
-        "text": "!lo vas a conseguir!",
-        "canonicalKey": "!lo vas a conseguir!",
+        "languageCode": "es", "text": "¡lo vas a conseguir!", "canonicalKey": "¡lo vas a conseguir!",
         "note": null,
         "translationIndex": 0
       },
@@ -192249,9 +192177,7 @@
       {
         "id": "412b384c-6e67-4595-94ed-b2f2aeaf03e8",
         "conceptId": "9b38bfcd-0c8a-41b7-b3ec-abfac171b56d",
-        "languageCode": "es",
-        "text": "!ánimo!",
-        "canonicalKey": "!ánimo!",
+        "languageCode": "es", "text": "¡ánimo!", "canonicalKey": "¡ánimo!",
         "note": null,
         "translationIndex": 0
       },
@@ -192276,9 +192202,7 @@
       {
         "id": "8827e068-d688-460e-bfc0-32c1dd7b75ff",
         "conceptId": "395c7cb1-6a7b-4115-ab53-1945c3fb1b20",
-        "languageCode": "es",
-        "text": "!Sigue así!",
-        "canonicalKey": "!sigue así!",
+        "languageCode": "es", "text": "¡Sigue así!", "canonicalKey": "¡sigue así!",
         "note": null,
         "translationIndex": 0
       },
@@ -192294,9 +192218,7 @@
       {
         "id": "00a75a85-246a-4606-a963-e0bf44a5a9a2",
         "conceptId": "357cf239-5746-433d-b07d-92ec62e45c2a",
-        "languageCode": "es",
-        "text": "!mucha mierda!",
-        "canonicalKey": "!mucha mierda!",
+        "languageCode": "es", "text": "¡mucha mierda!", "canonicalKey": "¡mucha mierda!",
         "note": null,
         "translationIndex": 0
       },
@@ -192312,9 +192234,7 @@
       {
         "id": "f3956c18-cb7d-4361-bbae-3038b0515ddd",
         "conceptId": "e1ae0e0f-714a-442b-bece-038fe2ca0c87",
-        "languageCode": "es",
-        "text": "!ponte los cascos!",
-        "canonicalKey": "!ponte los cascos!",
+        "languageCode": "es", "text": "¡ponte los cascos!", "canonicalKey": "¡ponte los cascos!",
         "note": null,
         "translationIndex": 0
       },
@@ -192357,9 +192277,7 @@
       {
         "id": "acfe3141-b92b-4d79-8e50-a96aaf286627",
         "conceptId": "fa6dfad6-d6b6-4ef4-b6ac-0c1e6fc98260",
-        "languageCode": "es",
-        "text": "!quedo a la espera!",
-        "canonicalKey": "!quedo a la espera!",
+        "languageCode": "es", "text": "¡quedo a la espera!", "canonicalKey": "¡quedo a la espera!",
         "note": null,
         "translationIndex": 0
       },
@@ -237105,9 +237023,7 @@
       {
         "id": "b9e07e65-e13f-4a32-962d-7d540a977721",
         "conceptId": "23a3fc34-6ce5-4630-9428-a30318ca07b7",
-        "languageCode": "es",
-        "text": "¿Por favor, ¿puedes recoger las mancuernas al terminar?",
-        "canonicalKey": "¿por favor, ¿puedes recoger las mancuernas al terminar?",
+        "languageCode": "es", "text": "Por favor, ¿puedes recoger las mancuernas al terminar?", "canonicalKey": "por favor, ¿puedes recoger las mancuernas al terminar?",
         "note": null,
         "translationIndex": 0
       },
@@ -237132,9 +237048,7 @@
       {
         "id": "83d3a888-fcc0-4c09-a413-296c19fd6b86",
         "conceptId": "01b34d70-9af3-40cd-a925-ff2176a503bf",
-        "languageCode": "es",
-        "text": "¿Por favor, ¿puedes descargar los discos de la prensa?",
-        "canonicalKey": "¿por favor, ¿puedes descargar los discos de la prensa?",
+        "languageCode": "es", "text": "Por favor, ¿puedes descargar los discos de la prensa?", "canonicalKey": "por favor, ¿puedes descargar los discos de la prensa?",
         "note": null,
         "translationIndex": 0
       },

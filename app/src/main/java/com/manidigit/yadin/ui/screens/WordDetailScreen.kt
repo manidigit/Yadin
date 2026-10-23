@@ -276,12 +276,15 @@ fun WordDetailScreen(
                                         .clip(CircleShape)
                                         .background(colors.primary)
                                 )
-                                Text(
-                                    text = content.text,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.onSurface
-                                )
+                                val isTargetLtr = (content.languageCode != "fa") && !TextUtilities.isRtlText(content.text)
+                                CompositionLocalProvider(LocalLayoutDirection provides (if (isTargetLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                                    Text(
+                                        text = content.text,
+                                        style = MaterialTheme.typography.bodyLarge.copy(textDirection = if (isTargetLtr) TextDirection.Ltr else TextDirection.Rtl),
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.onSurface
+                                    )
+                                }
                             }
                             SpeakButton(
                                 text = content.text,

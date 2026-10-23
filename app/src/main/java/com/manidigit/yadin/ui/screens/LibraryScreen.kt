@@ -1179,13 +1179,23 @@ private fun AuditReviewItemCard(
             }
 
             // Original Word
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
-                    text = "${stringResource(R.string.audit_original_word)} ${item.originalWord}",
+                    text = stringResource(R.string.audit_original_word),
                     fontSize = 11.sp,
-                    color = colors.onSurfaceVariant,
-                    style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Ltr)
+                    color = colors.onSurfaceVariant
                 )
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        text = item.originalWord,
+                        fontSize = 11.sp,
+                        color = colors.onSurfaceVariant,
+                        style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Ltr)
+                    )
+                }
             }
 
             OutlinedTextField(

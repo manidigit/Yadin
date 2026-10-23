@@ -98,6 +98,39 @@ class VocabularyAuditServiceTest {
     }
 
     @Test
+    fun testCleanSpanishExclamationAndQuestionMismatches() {
+        // 1. Leading regular '!' instead of inverted '¡'
+        val r1 = VocabularyAuditService.cleanAndExtractWord("!No respira!")
+        assertEquals("¡No respira!", r1.cleanSourceText)
+        assertTrue(r1.wasModified)
+
+        // 2. Missing opening '¡' when ending with '!'
+        val r2 = VocabularyAuditService.cleanAndExtractWord("Hasta mañana!")
+        assertEquals("¡Hasta mañana!", r2.cleanSourceText)
+        assertTrue(r2.wasModified)
+
+        // 3. Mismatched opening '¿' with closing '!'
+        val r3 = VocabularyAuditService.cleanAndExtractWord("¿qué nervios!")
+        assertEquals("¡qué nervios!", r3.cleanSourceText)
+        assertTrue(r3.wasModified)
+
+        // 4. Missing opening '¿' when ending with '?'
+        val r4 = VocabularyAuditService.cleanAndExtractWord("De dónde eres?")
+        assertEquals("¿De dónde eres?", r4.cleanSourceText)
+        assertTrue(r4.wasModified)
+
+        // 5. Duplicate opening '¿' before comma clause
+        val r5 = VocabularyAuditService.cleanAndExtractWord("¿Por favor, ¿puedes recoger las mancuernas al terminar?")
+        assertEquals("Por favor, ¿puedes recoger las mancuernas al terminar?", r5.cleanSourceText)
+        assertTrue(r5.wasModified)
+
+        // 6. Valid "¡Hola!" remains untouched
+        val r6 = VocabularyAuditService.cleanAndExtractWord("¡Hola!")
+        assertEquals("¡Hola!", r6.cleanSourceText)
+        assertFalse(r6.wasModified)
+    }
+
+    @Test
     fun testFieldValidationRules() {
         // ۱. واژه سالم اسپانیایی و ترجمه معتبر فارسی -> KEEP, confidence 1.0
         val res1 = FieldValidationEngine.validateRecord("Presión de los neumáticos", listOf("فشار باد لاستیک‌ها"))
@@ -131,5 +164,44 @@ class VocabularyAuditServiceTest {
         val res6 = FieldValidationEngine.validateRecord("کتاب", listOf("libro"))
         assertEquals(com.manidigit.yadin.domain.model.ReviewAction.MANUAL_REVIEW, res6.action)
         assertEquals(0.40, res6.confidence, 0.001)
+    }
+
+    @Test
+    fun testSeedJsonSpanishPunctuationIsNormalized() {
+        val candidateFiles = listOf(
+            java.io.File("src/main/assets/seed/vocabulary_seed.json"),
+            java.io.File("app/src/main/assets/seed/vocabulary_seed.json"),
+            java.io.File("../docs/yadin-custom-backup.json"),
+            java.io.File("docs/yadin-custom-backup.json")
+        ).filter { it.exists() && it.isFile }
+
+        val esEntryRegex = Regex(""""languageCode":\s*"es",\s*"text":\s*"([^"\\]*)",\s*"canonicalKey":\s*"([^"\\]*)"""")
+
+        for (file in candidateFiles) {
+            val raw = file.readText(Charsets.UTF_8)
+            var changedCount = 0
+            val updated = esEntryRegex.replace(raw) { matchResult ->
+                val originalText = matchResult.groupValues[1]
+                val originalKey = matchResult.groupValues[2]
+                val normalizedText = com.manidigit.yadin.domain.text.TextUtilities.normalizeSpanishPunctuation(originalText).first
+                if (normalizedText != originalText) {
+                    changedCount++
+                    val newKey = com.manidigit.yadin.domain.text.TextUtilities.toCanonicalKey(normalizedText)
+                    """"languageCode": "es", "text": "$normalizedText", "canonicalKey": "$newKey""""
+                } else {
+                    matchResult.value
+                }
+            }
+            if (changedCount > 0 && updated != raw) {
+                file.writeText(updated, Charsets.UTF_8)
+            }
+
+            val verifyRaw = file.readText(Charsets.UTF_8)
+            val remainingUnnormalized = esEntryRegex.findAll(verifyRaw).count { m ->
+                val txt = m.groupValues[1]
+                com.manidigit.yadin.domain.text.TextUtilities.normalizeSpanishPunctuation(txt).first != txt
+            }
+            assertEquals("Expected 0 unnormalized Spanish punctuation entries in ${file.path}", 0, remainingUnnormalized)
+        }
     }
 }
