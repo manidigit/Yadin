@@ -191,7 +191,9 @@ data class ParseWarning(
     val lineNumber: Int,
     val rawText: String,
     val message: String
-)
+) {
+    override fun toString(): String = "خط $lineNumber («$rawText»): $message"
+}
 
 enum class ParseWarningType {
     ORPHAN_SOURCE,

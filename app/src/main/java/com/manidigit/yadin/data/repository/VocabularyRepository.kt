@@ -445,7 +445,7 @@ class VocabularyRepository(
         // حفظ نقش اصیل زبان‌ها در پایگاه داده (اسپانیایی: مبدأ، فارسی: مقصد)
         val canonicalSourceLang = LanguageConstants.DEFAULT_SOURCE_LANGUAGE
         val canonicalTargetLang = LanguageConstants.DEFAULT_TARGET_LANGUAGE
-        val (rawSourceText, finalTranslations) = if (direction == CardDirection.REVERSE) {
+        val (rawSourceText, rawFinalTranslations) = if (direction == CardDirection.REVERSE) {
             val spanishWord = cleanTranslations.firstOrNull { it.isNotBlank() } ?: cleanSource
             val sourcePersianList = cleanSource.split("،", ",", "\n").map { it.trim() }.filter { it.isNotEmpty() }
             val extraPersianList = cleanTranslations.drop(1).filter { it.isNotBlank() }
@@ -456,6 +456,9 @@ class VocabularyRepository(
             Pair(cleanSource, deduped.ifEmpty { cleanTranslations.distinct() })
         }
         val finalSourceText = TextUtilities.normalizeSpanishPunctuation(rawSourceText).first
+        val finalTranslations = rawFinalTranslations.map {
+            TextUtilities.normalizePersianTranslation(it, finalSourceText).first
+        }.distinct()
 
         val sourceCanonicalKey = TextUtilities.toCanonicalKey(finalSourceText)
         val now = System.currentTimeMillis()
@@ -618,7 +621,7 @@ class VocabularyRepository(
             val cleanTranslations = translations.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
 
             // اصلاح جابه‌جایی ناصحیح زبان مبدأ و مقصد در ویرایش از جهت برعکس (REVERSE)
-            val (rawSourceText, finalTranslations) = if (direction == CardDirection.REVERSE) {
+            val (rawSourceText, rawFinalTranslations) = if (direction == CardDirection.REVERSE) {
                 val spanishWord = cleanTranslations.firstOrNull { it.isNotBlank() } ?: cleanSource
                 val sourcePersianList = cleanSource.split("،", ",", "\n").map { it.trim() }.filter { it.isNotEmpty() }
                 val extraPersianList = cleanTranslations.drop(1).filter { it.isNotBlank() }
@@ -629,6 +632,9 @@ class VocabularyRepository(
                 Pair(cleanSource, deduped.ifEmpty { cleanTranslations })
             }
             val finalSourceText = TextUtilities.normalizeSpanishPunctuation(rawSourceText).first
+            val finalTranslations = rawFinalTranslations.map {
+                TextUtilities.normalizePersianTranslation(it, finalSourceText).first
+            }.distinct()
 
             // بررسی عدم تداخل کلید قانونی با واژه‌های فعال دیگر (Issue 1.1)
             val newCanonicalKey = TextUtilities.toCanonicalKey(finalSourceText)

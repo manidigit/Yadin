@@ -253,11 +253,13 @@ object FieldValidationEngine {
         // بررسی حضور اسپانیایی در فیلد ترجمه:
         // "وجود هم‌زمان فارسی و اسپانیایی به‌تنهایی دلیل خرابی نیست. مثلاً ممکن است ترجمه شامل یک نام اسپانیایی، کد فنی یا مثال معتبر باشد."
         // اگر متن ترجمه عمدتاً فارسی است و واژه لاتین داخل پرانتز یا یک کد فنی/تایمر کوتاه (مثل HIIT، TRX، BMI، V-16، RPE) است، کاملاً سالم است.
-        val translationWithoutParens = translationCombined.replace(Regex("""[\(\[（][^\)\]）]*[\)\]）]"""), "").trim()
+        val translationWithoutParens = translationCombined.replace(Regex("""[\(\[（«][^\)\]）»]*[\)\]）»]"""), "").trim()
         if (VocabularyParser.hasLatin(translationWithoutParens)) {
-            val latinWords = translationWithoutParens.split(Regex("""\s+""")).filter { VocabularyParser.hasLatin(it) }
+            val latinWords = translationWithoutParens.split(Regex("""\s+"""))
+                .map { it.trim('،', ',', '.', ';', '؛', ':', '!', '؟', '?', '"', '\'', '«', '»', '(', ')') }
+                .filter { VocabularyParser.hasLatin(it) }
             val allAreShortCodes = latinWords.all { wordToken ->
-                wordToken.length <= 6 || REGEX_TECHNICAL_CODE.matches(wordToken)
+                wordToken.length <= 8 || REGEX_TECHNICAL_CODE.matches(wordToken)
             }
             if (!allAreShortCodes) {
                 // آیا جداکننده صریح در ترجمه است مثل "اتومبیل - coche"؟

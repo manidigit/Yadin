@@ -86,7 +86,8 @@ object VocabularyParser {
                     emptyList()
                 }
 
-                if (transList.isEmpty()) {
+                val isOrphanEmptyTrans = transList.isEmpty()
+                if (isOrphanEmptyTrans) {
                     warnings.add(
                         ParseWarning(
                             type = ParseWarningType.ORPHAN_SOURCE,
@@ -103,31 +104,31 @@ object VocabularyParser {
 
                 // اعتبارسنجی محافظه‌کارانه فیلدها با استفاده از FieldValidationEngine
                 val validation = FieldValidationEngine.validateRecord(src, transList, noteCombined)
-                val finalSource: String
-                val finalTranslations: List<String>
+                val rawFinalSource: String
+                val rawFinalTranslations: List<String>
                 val finalNote: String?
                 val finalConfidence: Double
                 var possibleCorrection: String? = null
 
                 when (validation.action) {
                     ReviewAction.KEEP -> {
-                        finalSource = src
-                        finalTranslations = transList
+                        rawFinalSource = src
+                        rawFinalTranslations = transList
                         finalNote = noteCombined
                         finalConfidence = currentConfidence.coerceIn(0.0, 1.0)
                     }
                     ReviewAction.MOVE_TO_NOTE -> {
                         if (validation.confidence >= 0.98) {
-                            finalSource = validation.suggestedWord ?: src
-                            finalTranslations = if (validation.suggestedTranslation != null) {
+                            rawFinalSource = validation.suggestedWord ?: src
+                            rawFinalTranslations = if (validation.suggestedTranslation != null) {
                                 TextUtilities.splitTranslations(validation.suggestedTranslation)
                             } else transList
                             finalNote = validation.suggestedNote ?: noteCombined
                             finalConfidence = validation.confidence
                             currentEvidence.add(validation.reason)
                         } else {
-                            finalSource = src
-                            finalTranslations = transList
+                            rawFinalSource = src
+                            rawFinalTranslations = transList
                             finalNote = noteCombined
                             finalConfidence = validation.confidence
                             possibleCorrection = validation.suggestedWord
@@ -143,16 +144,16 @@ object VocabularyParser {
                     }
                     ReviewAction.SUGGEST_CORRECTION -> {
                         if (validation.confidence >= 0.98) {
-                            finalSource = validation.suggestedWord ?: src
-                            finalTranslations = if (validation.suggestedTranslation != null) {
+                            rawFinalSource = validation.suggestedWord ?: src
+                            rawFinalTranslations = if (validation.suggestedTranslation != null) {
                                 TextUtilities.splitTranslations(validation.suggestedTranslation)
                             } else transList
                             finalNote = validation.suggestedNote ?: noteCombined
                             finalConfidence = validation.confidence
                             currentEvidence.add(validation.reason)
                         } else {
-                            finalSource = src
-                            finalTranslations = transList
+                            rawFinalSource = src
+                            rawFinalTranslations = transList
                             finalNote = noteCombined
                             finalConfidence = validation.confidence
                             possibleCorrection = validation.suggestedWord
@@ -168,21 +169,28 @@ object VocabularyParser {
                     }
                     ReviewAction.MANUAL_REVIEW -> {
                         // در صورت ابهام یا اختلاط بدون جداکننده، داده اصلی بدون دستکاری ذخیره شده و به صف بازبینی دستی می‌رود
-                        finalSource = src
-                        finalTranslations = transList
+                        rawFinalSource = src
+                        rawFinalTranslations = transList
                         finalNote = validation.suggestedNote ?: noteCombined
                         finalConfidence = validation.confidence
                         possibleCorrection = validation.suggestedWord
-                        warnings.add(
-                            ParseWarning(
-                                type = ParseWarningType.MIXED_SCRIPT_CONFUSION,
-                                lineNumber = currentLineNumber,
-                                rawText = src,
-                                message = "${validation.reason} (نیازمند بازبینی دستی قبل از ذخیره)"
+                        if (!isOrphanEmptyTrans) {
+                            warnings.add(
+                                ParseWarning(
+                                    type = ParseWarningType.MIXED_SCRIPT_CONFUSION,
+                                    lineNumber = currentLineNumber,
+                                    rawText = src,
+                                    message = "${validation.reason} (نیازمند بازبینی دستی قبل از ذخیره)"
+                                )
                             )
-                        )
+                        }
                     }
                 }
+
+                val finalSource = TextUtilities.normalizeSpanishPunctuation(rawFinalSource).first
+                val finalTranslations = rawFinalTranslations.map {
+                    TextUtilities.normalizePersianTranslation(it, finalSource).first
+                }.filter { it.isNotBlank() }.distinct()
 
                 entries.add(
                     ParsedEntry(
@@ -421,8 +429,10 @@ object VocabularyParser {
             return LineType.ENTRY_HEADER
         }
 
-        // If the line is predominantly Persian (e.g. "بخش وزنه‌های آزاد (دمبل و هالتر)" or "چراغ هشدار V-16")
-        if (TextUtilities.isRtlText(stripped)) {
+        // If the line is predominantly Persian or starts with Persian script (e.g.
+        // "مرکز معاینه فنی خودرو در اسپانیا (Inspección Técnica de Vehículos)" or "مجوز B96 (...)"),
+        // it is a Persian translation line.
+        if (TextUtilities.isRtlText(stripped) || TextUtilities.startsWithPersianScript(stripped)) {
             return LineType.TRANSLATION
         }
 

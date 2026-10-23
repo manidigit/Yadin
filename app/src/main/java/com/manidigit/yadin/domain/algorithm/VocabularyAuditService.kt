@@ -281,16 +281,26 @@ class VocabularyAuditService(
         return false
     }
 
+    private fun hasToneConflict(items: List<ConceptWorkingData>): Boolean {
+        val hasEllipsisItem = items.any { it.spanishAnalysis.hasEllipsis }
+        val hasExclOrQuestItem = items.any { it.spanishAnalysis.hasExclamation || it.spanishAnalysis.hasQuestion }
+        if (hasEllipsisItem && hasExclOrQuestItem) return true
+        val hasNonEllipsisItem = items.any { !it.spanishAnalysis.hasEllipsis }
+        if (hasEllipsisItem && hasNonEllipsisItem && !hasGroupTranslationOverlap(items)) return true
+        return false
+    }
+
     /**
      * تفکیک هوشمند واژگان به سه گروه:
-     * ۱. تکراری‌های قطعی قابل ادغام خودکار (مثلاً El trampolín و Trampolín، یا تفاوت علائم نگارشی/بزرگی حروف)
-     * ۲. تکراری‌های مشکوک نیازمند بررسی دستی (مثلاً تضاد جنسیت El در برابر La یا تفاوت آکسان بدون اشتراک معنی فارسی)
+     * ۱. تکراری‌های قطعی قابل ادغام خودکار (مثلاً El trampolín و Trampolín، فرم‌های اسلش‌دار هم‌معنی مثل Claro / clara و claro، یا تفاوت نقطه پایانی)
+     * ۲. تکراری‌های مشکوک نیازمند بررسی دستی (مثلاً تضاد جنسیت El در برابر La، تفاوت سه‌نقطه ... در برابر علامت تعجب !، یا ترجمه فارسی کاملاً یکسان با املای نزدیک اسپانیایی)
      * ۳. واژگان غیرتکراری
      */
     private fun partitionDuplicateGroups(workingList: List<ConceptWorkingData>): DuplicatePartitionResult {
         val definiteMergeGroups = mutableListOf<List<ConceptWorkingData>>()
         val suspiciousGroups = mutableListOf<List<ConceptWorkingData>>()
         val mergedConceptIds = mutableSetOf<String>()
+        val suspiciousConceptIds = mutableSetOf<String>()
 
         // ۱. گروه‌بندی بر اساس کلید اسپانیایی بدون حرف تعریف (با حفظ حساسیت به آکسان)
         val byDedupeKey = workingList
@@ -310,20 +320,19 @@ class VocabularyAuditService(
             val hasMasc = combinedItems.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.MASCULINE }
             val hasFem = combinedItems.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.FEMININE }
             val hasGenderConflict = hasMasc && hasFem && combinedItems.none { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
+            val toneConflict = hasToneConflict(combinedItems)
 
-            if (!hasGenderConflict && hasGroupTranslationOverlap(combinedItems)) {
-                // تفاوت آکسان همراه با ترجمه فارسی مشترک -> ادغام خودکار قطعی
+            if (!hasGenderConflict && !toneConflict && hasGroupTranslationOverlap(combinedItems)) {
                 definiteMergeGroups.add(combinedItems)
                 combinedItems.forEach { mergedConceptIds.add(it.concept.id) }
                 bucketEntries.forEach { processedDedupeKeys.add(it.key) }
             } else {
-                // تفاوت آکسان بدون اشتراک معنی فارسی -> ارسال به صف بازبینی دستی
                 suspiciousGroups.add(combinedItems)
-                // هر باکت داخلی که خودش بیش از ۱ عضو هم‌کلید دارد همچنان بررسی می‌شود
+                combinedItems.forEach { suspiciousConceptIds.add(it.concept.id) }
             }
         }
 
-        // ۳. بررسی گروه‌های هم‌کلید (dedupeKey یکسان، مانند El trampolín و Trampolín)
+        // ۳. بررسی گروه‌های هم‌کلید (dedupeKey یکسان، مانند El trampolín و Trampolín یا Vale. و Vale...)
         for ((dedupeKey, items) in byDedupeKey) {
             if (dedupeKey in processedDedupeKeys || items.size <= 1) continue
 
@@ -331,12 +340,14 @@ class VocabularyAuditService(
             val hasFem = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.FEMININE }
             val hasBothTag = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
             val hasGenderConflict = hasMasc && hasFem && !hasBothTag
+            val toneConflict = hasToneConflict(items)
 
             val hasOnlyIndefiniteVsBare = items.none { it.spanishAnalysis.isDefiniteArticle } &&
                 items.any { it.spanishAnalysis.articlePrefix != null && !it.spanishAnalysis.isDefiniteArticle } &&
                 items.any { it.spanishAnalysis.articlePrefix == null }
 
             val isDefiniteDuplicate = when {
+                toneConflict -> false
                 hasGenderConflict -> hasGroupTranslationOverlap(items)
                 hasOnlyIndefiniteVsBare -> hasGroupTranslationOverlap(items)
                 else -> true
@@ -347,6 +358,71 @@ class VocabularyAuditService(
                 items.forEach { mergedConceptIds.add(it.concept.id) }
             } else {
                 suspiciousGroups.add(items)
+                items.forEach { suspiciousConceptIds.add(it.concept.id) }
+            }
+        }
+
+        // ۴. بررسی فرم‌های اسلش‌دار (مانند Claro / clara یا el sobrino / la sobrina) در برابر فرم‌های تکی هم‌ریشه
+        val slashItems = workingList.filter {
+            it.spanishAnalysis.isSlashDualForm &&
+                it.spanishAnalysis.slashVariantKeys.size >= 2 &&
+                it.concept.id !in mergedConceptIds
+        }
+        for (slashItem in slashItems) {
+            if (slashItem.concept.id in mergedConceptIds) continue
+            val matchedVariants = slashItem.spanishAnalysis.slashVariantKeys
+                .flatMap { variantKey -> byDedupeKey[variantKey].orEmpty() }
+                .filter { it.concept.id != slashItem.concept.id && it.concept.id !in mergedConceptIds }
+                .distinctBy { it.concept.id }
+
+            if (matchedVariants.isNotEmpty()) {
+                val combined = listOf(slashItem) + matchedVariants
+                if (!hasToneConflict(combined) && hasGroupTranslationOverlap(combined)) {
+                    definiteMergeGroups.add(combined)
+                    combined.forEach { mergedConceptIds.add(it.concept.id) }
+                } else {
+                    suspiciousGroups.add(combined)
+                    combined.forEach { suspiciousConceptIds.add(it.concept.id) }
+                }
+            }
+        }
+
+        // ۵. یافتن کارت‌های مشکوک با ترجمه فارسی کاملاً یکسان و املای نزدیک اسپانیایی (مانند claro/claros یا tranquilo/tranquila)
+        val unmergedItems = workingList.filter { it.concept.id !in mergedConceptIds }
+        val byPersianKey = mutableMapOf<String, MutableList<ConceptWorkingData>>()
+        for (item in unmergedItems) {
+            val faKeys = item.allPersianTranslations()
+                .map { TextUtilities.persianDedupeKey(it) }
+                .filter { it.length >= 2 }
+                .distinct()
+            for (fk in faKeys) {
+                byPersianKey.getOrPut(fk) { mutableListOf() }.add(item)
+            }
+        }
+
+        val pairedNearKeys = mutableSetOf<String>()
+        for ((_, bucket) in byPersianKey) {
+            if (bucket.size !in 2..10) continue
+            for (i in bucket.indices) {
+                for (j in i + 1 until bucket.size) {
+                    val a = bucket[i]
+                    val b = bucket[j]
+                    if (a.concept.id == b.concept.id) continue
+                    val pairId = if (a.concept.id < b.concept.id) "${a.concept.id}_${b.concept.id}" else "${b.concept.id}_${a.concept.id}"
+                    if (pairId in pairedNearKeys) continue
+                    if (TextUtilities.areSpanishNearSpellingVariants(
+                            a.spanishAnalysis.accentInsensitiveKey,
+                            b.spanishAnalysis.accentInsensitiveKey
+                        )
+                    ) {
+                        pairedNearKeys.add(pairId)
+                        if (a.concept.id !in suspiciousConceptIds || b.concept.id !in suspiciousConceptIds) {
+                            suspiciousGroups.add(listOf(a, b))
+                            suspiciousConceptIds.add(a.concept.id)
+                            suspiciousConceptIds.add(b.concept.id)
+                        }
+                    }
+                }
             }
         }
 
@@ -421,6 +497,11 @@ class VocabularyAuditService(
             // ارزیابی با موتور اعتبارسنجی فیلدها
             val validation = FieldValidationEngine.validateRecord(rawSourceText, rawTransTexts, existingNote)
 
+            val cleaned = cleanAndExtractWord(rawSourceText)
+            val normalizedTargetsPreview = rawTransTexts.map { tr ->
+                TextUtilities.normalizePersianTranslation(tr, cleaned.cleanSourceText).first
+            }
+            val persianOrthographyChanged = normalizedTargetsPreview != rawTransTexts
             if (validation.action == ReviewAction.MANUAL_REVIEW || validation.confidence < 0.98) {
                 reviewItems.add(
                     AuditReviewItem(
@@ -428,17 +509,16 @@ class VocabularyAuditService(
                         originalWord = rawSourceText,
                         originalTranslation = rawTransTexts.joinToString("، "),
                         suggestedWord = validation.suggestedWord ?: rawSourceText,
-                        suggestedTranslation = validation.suggestedTranslation ?: rawTransTexts.joinToString("، "),
+                        suggestedTranslation = validation.suggestedTranslation ?: normalizedTargetsPreview.joinToString("، "),
                         suggestedNote = validation.suggestedNote,
                         reason = validation.reason,
                         confidence = validation.confidence
                     )
                 )
-            } else if (validation.action == ReviewAction.MOVE_TO_NOTE || validation.action == ReviewAction.SUGGEST_CORRECTION) {
+            } else if (validation.action == ReviewAction.MOVE_TO_NOTE || validation.action == ReviewAction.SUGGEST_CORRECTION || persianOrthographyChanged) {
                 autoCleanCount++
             }
 
-            val cleaned = cleanAndExtractWord(rawSourceText)
             val spanishAnalysis = TextUtilities.analyzeSpanishHeadword(cleaned.cleanSourceText)
             workingList.add(
                 ConceptWorkingData(
@@ -672,15 +752,18 @@ class VocabularyAuditService(
             ).ifBlank { primary.cleanedResult.cleanSourceText }
             val preferredCanonicalKey = TextUtilities.toCanonicalKey(preferredSourceText)
 
-            // ترکیب ترجمه‌ها بدون تکرار
+            // ترکیب ترجمه‌ها و اعمال نرمال‌سازی نگارش فارسی و هماهنگی علائم
             val existingTrans = (primary.targetContents.map { it.text } + primary.cleanedResult.extractedTranslations).toMutableList()
             duplicates.forEach { dup ->
                 existingTrans.addAll(dup.targetContents.map { it.text })
                 existingTrans.addAll(dup.cleanedResult.extractedTranslations)
             }
-            val mergedTranslations = TextUtilities.deduplicatePersianTranslations(existingTrans)
+            val normalizedTrans = existingTrans
+                .map { TextUtilities.normalizePersianTranslation(it, preferredSourceText).first }
+                .filter { it.isNotBlank() }
+            val mergedTranslations = TextUtilities.deduplicatePersianTranslations(normalizedTrans)
                 .ifEmpty {
-                    existingTrans.map { TextUtilities.cleanText(it) }.filter { it.isNotBlank() }.distinct()
+                    normalizedTrans.distinct()
                 }
 
             // ترکیب یادداشت‌ها (به همراه توضیحات پرانتزی که در عنوان نهایی نیستند)
@@ -797,16 +880,16 @@ class VocabularyAuditService(
         // بررسی اصلاحات خودکار برای واژگان غیرتکراری
         partition.singleItems.forEach { single ->
             if (!reviewMap.containsKey(single.concept.id)) {
-                val targetMods = mutableListOf<String>()
-                val cleanedTargets = single.targetContents.map { target ->
-                    val (norm, mods) = TextUtilities.normalizeSpanishPunctuation(target.text)
-                    if (mods.isNotEmpty()) targetMods.addAll(mods)
-                    TextUtilities.cleanText(norm)
-                }.filter { it.isNotBlank() }.distinct()
-
                 val updatedSourceText = single.cleanedResult.cleanSourceText
                 val canonicalKey = TextUtilities.toCanonicalKey(updatedSourceText)
                 val sourceTextChanged = updatedSourceText != single.sourceContent?.text
+
+                val targetMods = mutableListOf<String>()
+                val cleanedTargets = single.targetContents.map { target ->
+                    val (norm, mods) = TextUtilities.normalizePersianTranslation(target.text, updatedSourceText)
+                    if (mods.isNotEmpty()) targetMods.addAll(mods)
+                    TextUtilities.cleanText(norm)
+                }.filter { it.isNotBlank() }.distinct()
 
                 val allNotes = mutableListOf<String>()
                 single.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
@@ -815,7 +898,10 @@ class VocabularyAuditService(
                 val noteChanged = mergedNote != single.sourceContent?.note
 
                 val existingTargetTexts = single.targetContents.map { it.text }
-                val rawCombinedTargets = (cleanedTargets + single.cleanedResult.extractedTranslations).distinct()
+                val extractedNormalized = single.cleanedResult.extractedTranslations.map {
+                    TextUtilities.normalizePersianTranslation(it, updatedSourceText).first
+                }.filter { it.isNotBlank() }
+                val rawCombinedTargets = (cleanedTargets + extractedNormalized).distinct()
                 val newCombinedTargets = TextUtilities.deduplicatePersianTranslations(rawCombinedTargets)
                     .ifEmpty { rawCombinedTargets }
                 val targetsChanged = newCombinedTargets != existingTargetTexts

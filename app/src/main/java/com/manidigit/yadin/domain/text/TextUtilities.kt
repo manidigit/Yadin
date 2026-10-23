@@ -305,18 +305,65 @@ object TextUtilities {
         return deduplicatePersianTranslations(translations.filter { it.isNotBlank() }).joinToString(" / ")
     }
 
+    private val ALL_BRACKETED_BLOCKS_REGEX = Regex("""[\(\[（«][^\)\]）»]*[\)\]）»]""")
+
+    private fun isPersianOrArabicChar(code: Int): Boolean {
+        return (code in 0x0600..0x06FF) ||
+            (code in 0x0750..0x077F) ||
+            (code in 0x08A0..0x08FF) ||
+            (code in 0xFB50..0xFDFF) ||
+            (code in 0xFE70..0xFEFF)
+    }
+
+    private fun isLatinAlphaChar(code: Int): Boolean {
+        return (code in 0x0041..0x005A) ||
+            (code in 0x0061..0x007A) ||
+            (code in 0x00C0..0x024F)
+    }
+
+    /**
+     * Checks whether the first alphabetic character in [text] is Persian/Arabic script.
+     */
+    fun startsWithPersianScript(text: String?): Boolean {
+        if (text.isNullOrBlank()) return false
+        for (ch in text) {
+            val code = ch.code
+            if (isPersianOrArabicChar(code)) return true
+            if (isLatinAlphaChar(code)) return false
+        }
+        return false
+    }
+
     /**
      * Determines whether text is predominantly RTL (Persian/Arabic).
+     * Evaluates the primary text outside parentheses/brackets first so that long Latin
+     * parenthetical clarifications like "مرکز معاینه فنی خودرو در اسپانیا (Inspección Técnica de Vehículos)"
+     * are accurately recognized as RTL Persian text.
      */
     fun isRtlText(text: String?): Boolean {
         if (text.isNullOrBlank()) return false
+        val outsideParens = ALL_BRACKETED_BLOCKS_REGEX.replace(text, " ").trim()
+        var primaryRtl = 0
+        var primaryLtr = 0
+        for (ch in outsideParens) {
+            val code = ch.code
+            if (isPersianOrArabicChar(code)) {
+                primaryRtl++
+            } else if (isLatinAlphaChar(code)) {
+                primaryLtr++
+            }
+        }
+        if (primaryRtl + primaryLtr > 0) {
+            if (primaryRtl != primaryLtr) return primaryRtl > primaryLtr
+        }
+
         var rtlCount = 0
         var ltrCount = 0
         for (ch in text) {
             val code = ch.code
-            if ((code in 0x0600..0x06FF) || (code in 0x0750..0x077F) || (code in 0x08A0..0x08FF) || (code in 0xFB50..0xFDFF) || (code in 0xFE70..0xFEFF)) {
+            if (isPersianOrArabicChar(code)) {
                 rtlCount++
-            } else if ((code in 0x0041..0x005A) || (code in 0x0061..0x007A) || (code in 0x00C0..0x00FF)) {
+            } else if (isLatinAlphaChar(code)) {
                 ltrCount++
             }
         }
@@ -454,6 +501,203 @@ object TextUtilities {
         return Pair(text, modifications)
     }
 
+    private val LATIN_COMMA_IN_PERSIAN_REGEX = Regex("""([\u0600-\u06FF])\s*,\s*""")
+    private val PERSIAN_MI_SPACE_REGEX = Regex("""(^|[\s(«،])(ن?می)\s+(?=[\u0621-\u06CC]{2,})""")
+    private val PERSIAN_MI_ATTACHED_VERB_REGEX = Regex(
+        """(^|[\s(«،])(ن?می)(شود|شوند|شوم|شوی|شویم|شوید|کنم|کنی|کند|کنیم|کنید|کنند|دهم|دهی|دهد|دهیم|دهید|دهند|روم|روی|رود|رویم|روید|روند|آیم|آیی|آید|آییم|آیید|آیند|گویم|گویی|گوید|گوییم|گویید|گویند|گیرم|گیری|گیرد|گیریم|گیرید|گیرند|توانم|توانی|تواند|توانیم|توانید|توانند|خواهم|خواهی|خواهد|خواهیم|خواهید|خواهند|خواد|خوان|دانم|دانی|داند|دانیم|دانید|دانند|بینم|بینی|بیند|بینیم|بینید|بینند|گذارم|گذاری|گذارد|گذاریم|گذارید|گذارند|رسد|رسند|زند|زنند|خورم|خوری|خورد|خوریم|خورید|خورند|برم|بری|برد|بریم|برید|برند|دارم|داری|دارد|داریم|دارید|دارند)(?=$|[\s)»!؟.،؛])"""
+    )
+    private val PERSIAN_HA_SPACE_REGEX = Regex("""(^|[\s(«،])([\u0621-\u06CC]{2,})\s+(ها(?:ی(?:ی|م|ت|ش|مان|تان|شان)?)?)(?=$|[\s)»!؟.،؛])""")
+    private val PERSIAN_TAR_SPACE_REGEX = Regex("""(^|[\s(«،])([\u0621-\u06CC]{2,})\s+(تر(?:ین)?)(?=$|[\s)»!؟.،؛])""")
+    private val PERSIAN_STOPWORDS_BEFORE_SUFFIX = setOf(
+        "از", "به", "در", "با", "تا", "که", "بر", "بی", "هر", "چه", "نه", "آن", "این", "هم", "یا"
+    )
+    private val TRAILING_PAREN_IN_PERSIAN_REGEX = Regex("""^(.*?)\s*(\([^\(\)]+\))\s*$""")
+
+    // Stems ending in silent 'ه' where stripped ZWNJ turns 'ه‌ای' into 'های' (e.g. 'رایانهای' -> 'رایانه‌ای', 'حرفهای' -> 'حرفه‌ای')
+    private val PERSIAN_SILENT_HEH_EI_REGEX = Regex(
+        """(^|[\s(«،])(رایانه|جاده|حرفه|بیمه|سابقه|ویژه|روزمره|فاصله|مجموعه|منطقه|ثانیه|دقیقه|وسیله|جریمه|نقره|قهوه|شیشه|هفته|حاشیه|زاویه|لایه|پایه|سازه|رشته|صفحه|صحنه|نقطه|حلقه|قطعه|طبقه|درجه|رتبه|مرحله|مسابقه|مقایسه|معامله|محاسبه|مصاحبه|مشاهده|مطالعه|مراجعه|ملاحظه|معاینه|مشاوره|مذاکره|مکاتبه|مبادله|مداخله|مقابله|مواجهه|محاکمه|پروانه|کارخانه|زباله|مجله|مقاله|رساله|حواله|اداره|ستاره|شماره|اجاره|اشاره|قاره|چاره|سواره|پیاده|شبکه|برنامه|سامانه|کارنامه|بودجه|نتیجه|وظیفه|هزینه|زمینه|نمونه|گزینه|کمیته|حادثه|فاجعه|ضایعه|واسطه|رابطه|ضابطه|قاعده|فایده|پدیده|عقیده|نماینده|راننده|خواننده|نویسنده|فروشنده|گیرنده|فرستنده|سازنده|تازه|ساده|آماده|اراده|ماده|[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی]{2,}نده|[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی]{2,}انه)ای(?=$|[\s)»!؟.،؛])"""
+    )
+
+    // Attached plural suffix 'ها' / 'های' without ZWNJ after a dual-joining Persian letter on stems >= 3 chars (e.g. 'فرکانسها' -> 'فرکانس‌ها')
+    private val PERSIAN_ATTACHED_PLURAL_HA_REGEX = Regex(
+        """(^|[\s(«،])([آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی\u200C]{2,}[بپتثجچحخسشصضطظعغفقکگلمنهی])(ها(?:یی|یم|یت|یش|یمان|یتان|یشان)?)(?=$|[\s)»!؟.،؛])"""
+    )
+    private val PERSIAN_NON_PLURAL_HA_WORDS = setOf(
+        "تنها", "آنها", "اینها", "منتها", "انتها", "اشتها", "بی\u200Cانتها", "بیانتها", "ناانتها"
+    )
+
+    // Attached passive participle suffix 'شده' / 'نشده' without ZWNJ after a joining letter (e.g. 'سیستمیشده' -> 'سیستمی‌شده', 'تاییدشده' -> 'تاییدشده')
+    private val PERSIAN_ATTACHED_SHODEH_REGEX = Regex(
+        """(^|[\s(«،])([آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی\u200C]*[بپتثجچحخسشصضطظعغفقکگلمنهی])(ن?شده)(?=$|[\s)»!؟.،؛])"""
+    )
+
+    // Attached compound second elements after a dual-joining letter where ZWNJ was stripped during copy-paste
+    private val PERSIAN_ATTACHED_COMPOUND_SUFFIX_REGEX = Regex(
+        """(^|[\s(«،])([آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی\u200C]*[بپتثجچحخسشصضطظعغفقکگلمنهی])(گذاری|گذار|شناختی|شناسی|کشی)(?=$|[\s)»!؟.،؛])"""
+    )
+
+    // Exact common compound words whose ZWNJ is frequently stripped in PDF/web copy-paste
+    private val PERSIAN_ZWNJ_COMPOUND_REPLACEMENTS: List<Pair<Regex, String>> = listOf(
+        Regex("""(^|[\s(«،])روان(گردان|تنی|پزشک|پزشکی|درمانی)(?=$|[\s)»!؟.،؛])""") to "$1روان\u200C$2",
+        Regex("""(^|[\s(«،])(اتومبیل|موتور|کشتی|دوچرخه)(رانی)(?=$|[\s)»!؟.،؛])""") to "$1$2\u200C$3",
+        Regex("""(^|[\s(«،])کم(توان|درآمد|خطر|مصرف|نور|فشار|عمق|عرض|سرعت|حجم|ارزش|اهمیت|سابقه|تجربه)(?=$|[\s)»!؟.،؛])""") to "$1کم\u200C$2",
+        Regex("""(^|[\s(«،])تمام(خطر|وقت|عیار|قد|صفحه|اتوماتیک)(?=$|[\s)»!؟.،؛])""") to "$1تمام\u200C$2",
+        Regex("""(^|[\s(«،])(نیمه|پاره)(وقت)(?=$|[\s)»!؟.،؛])""") to "$1$2\u200C$3",
+        Regex("""(^|[\s(«،])صورت(جلسه|حساب|مجلس|وضعیت)(?=$|[\s)»!؟.،؛])""") to "$1صورت\u200C$2",
+        Regex("""(^|[\s(«،])(بیمه|آیین|توافق|پرسش|پایان|وصیت|رضایت|شکایت|شهادت|وکالت|ضمانت|امانت|اساس|دعوت|تقدیر|صلح|عهد)(نامه)(?=$|[\s)»!؟.،؛])""") to "$1$2\u200C$3",
+        Regex("""(^|[\s(«،])(زمین|آتش|چشم|سخت|گوشه|بهانه|نتیجه|تصمیم|اندازه|فاصله|نفس|موضع)(گیر|گیری)(?=$|[\s)»!؟.،؛])""") to "$1$2\u200C$3",
+        Regex("""(^|[\s(«،])(یدک|لوله|سیم|دست|نفس|بار)(کش)(?=$|[\s)»!؟.،؛])""") to "$1$2\u200C$3",
+        Regex("""(^|[\s(«،])(سواره|پیاده)(رو)(?=$|[\s)»!؟.،؛])""") to "$1$2\u200C$3",
+        Regex("""(^|[\s(«،])زیست(محیطی|بوم|فناوری|کره)(?=$|[\s)»!؟.،؛])""") to "$1زیست\u200C$2",
+        Regex("""(^|[\s(«،])پایه(یک|دو|سه)(?=$|[\s)»!؟.،؛])""") to "$1پایه\u200C$2",
+        Regex("""(^|[\s(«،])حملونقل(?=$|[\s)»!؟.،؛])""") to "$1حمل\u200Cونقل",
+        Regex("""(^|[\s(«،])ضمانتاجرا(?=$|[\s)»!؟.،؛])""") to "$1ضمانت\u200Cاجرا",
+        Regex("""(^|[\s(«،])سیسی(?=$|[\s)»!؟.،؛])""") to "$1سی\u200Cسی"
+    )
+
+    /**
+     * Normalizes Persian translation orthography and aligns punctuation with its Spanish counterpart:
+     * 1. Converts Arabic Yeh/Kaf and Latin '?' or ',' in Persian text to standard Persian 'ی', 'ک', '؟', '،'
+     * 2. Applies half-space (ZWNJ) to verbal prefixes ('می‌', 'نمی‌'), plural/comparative suffixes ('‌ها', '‌تر', '‌ترین'),
+     *    and restores stripped ZWNJ in compound/suffixed words (e.g. 'رایانهای' -> 'رایانه‌ای', 'فرکانسها' -> 'فرکانس‌ها', 'سیستمیشده' -> 'سیستمی‌شده')
+     * 3. Strips redundant trailing period '.' from single-word or short non-sentence translations (e.g., "قبوله." -> "قبوله")
+     * 4. Aligns question ('؟') and exclamation ('!') marks with the Spanish source sentence
+     */
+    fun normalizePersianTranslation(
+        rawPersian: String,
+        spanishSourceText: String? = null
+    ): Pair<String, List<String>> {
+        var text = cleanText(rawPersian)
+        if (text.isBlank()) return Pair("", emptyList())
+        val modifications = mutableListOf<String>()
+
+        if (isRtlText(text) || startsWithPersianScript(text)) {
+            if (text.contains('?')) {
+                text = text.replace('?', '؟')
+                modifications.add("تبدیل علامت سؤال لاتین (?) به علامت سؤال فارسی (؟)")
+            }
+            if (LATIN_COMMA_IN_PERSIAN_REGEX.containsMatchIn(text)) {
+                text = LATIN_COMMA_IN_PERSIAN_REGEX.replace(text, "$1، ")
+                modifications.add("تبدیل ویرگول لاتین به ویرگول فارسی (،)")
+            }
+
+            // 1. Half-space (ZWNJ) for verbal prefix می / نمی
+            val afterMiSpace = PERSIAN_MI_SPACE_REGEX.replace(text, "$1$2\u200C")
+            val afterMiAttached = PERSIAN_MI_ATTACHED_VERB_REGEX.replace(afterMiSpace, "$1$2\u200C$3")
+            if (afterMiAttached != text) {
+                text = afterMiAttached
+                modifications.add("اصلاح نیم‌فاصله پیشوند فعل (می‌ / نمی‌)")
+            }
+
+            // 2. Restore stripped ZWNJ in silent-Heh + 'ای' adjectives/nouns (e.g. 'رایانهای' -> 'رایانه‌ای', 'حرفهای' -> 'حرفه‌ای')
+            val afterSilentHehEi = PERSIAN_SILENT_HEH_EI_REGEX.replace(text, "$1$2\u200Cای")
+            if (afterSilentHehEi != text) {
+                text = afterSilentHehEi
+                modifications.add("اصلاح نیم‌فاصله پسوند یای نسبت/نکره (ه‌ای)")
+            }
+
+            // 3. Half-space (ZWNJ) for spaced or attached plural suffix ها / های
+            val afterHaSpace = PERSIAN_HA_SPACE_REGEX.replace(text) { m ->
+                val leading = m.groupValues[1]
+                val stem = m.groupValues[2]
+                val suffix = m.groupValues[3]
+                if (stem in PERSIAN_STOPWORDS_BEFORE_SUFFIX) {
+                    m.value
+                } else {
+                    "$leading$stem\u200C$suffix"
+                }
+            }
+            val afterHaAttached = PERSIAN_ATTACHED_PLURAL_HA_REGEX.replace(afterHaSpace) { m ->
+                val leading = m.groupValues[1]
+                val stem = m.groupValues[2]
+                val suffix = m.groupValues[3]
+                val fullWord = stem + suffix
+                if (fullWord in PERSIAN_NON_PLURAL_HA_WORDS || stem in PERSIAN_STOPWORDS_BEFORE_SUFFIX) {
+                    m.value
+                } else {
+                    "$leading$stem\u200C$suffix"
+                }
+            }
+            if (afterHaAttached != text) {
+                text = afterHaAttached
+                modifications.add("اصلاح نیم‌فاصله پسوند جمع (‌ها)")
+            }
+
+            // 4. Half-space (ZWNJ) for comparative suffix تر / ترین
+            val afterTar = PERSIAN_TAR_SPACE_REGEX.replace(text) { m ->
+                val leading = m.groupValues[1]
+                val stem = m.groupValues[2]
+                val suffix = m.groupValues[3]
+                if (stem in PERSIAN_STOPWORDS_BEFORE_SUFFIX) {
+                    m.value
+                } else {
+                    "$leading$stem\u200C$suffix"
+                }
+            }
+            if (afterTar != text) {
+                text = afterTar
+                modifications.add("اصلاح نیم‌فاصله پسوند صفت برتری (‌تر / ‌ترین)")
+            }
+
+            // 5. Restore stripped ZWNJ in attached passive participles ('سیستمیشده' -> 'سیستمی‌شده') and compound suffixes ('پلاکگذاری' -> 'پلاک‌گذاری')
+            val afterShodeh = PERSIAN_ATTACHED_SHODEH_REGEX.replace(text) { m ->
+                val leading = m.groupValues[1]
+                val stem = m.groupValues[2]
+                val suffix = m.groupValues[3]
+                if (stem.length < 2 || stem == "نا") m.value else "$leading$stem\u200C$suffix"
+            }
+            val afterCompoundSuffix = PERSIAN_ATTACHED_COMPOUND_SUFFIX_REGEX.replace(afterShodeh) { m ->
+                val leading = m.groupValues[1]
+                val stem = m.groupValues[2]
+                val suffix = m.groupValues[3]
+                if (stem.length < 2) m.value else "$leading$stem\u200C$suffix"
+            }
+            var afterCompounds = afterCompoundSuffix
+            for ((regex, replacement) in PERSIAN_ZWNJ_COMPOUND_REPLACEMENTS) {
+                afterCompounds = regex.replace(afterCompounds, replacement)
+            }
+            if (afterCompounds != text) {
+                text = afterCompounds
+                modifications.add("اصلاح نیم‌فاصله ترکیبات و پسوندهای فارسی")
+            }
+
+            // 6. Strip redundant trailing period '.' from single-word or short non-sentence translations
+            val esClean = spanishSourceText?.trim() ?: ""
+            val isEsQuestion = esClean.startsWith("¿") && esClean.endsWith("?")
+            val isEsExclamation = esClean.startsWith("¡") && esClean.endsWith("!")
+            val isEsDeclarativeWithDot = esClean.endsWith(".") && !esClean.endsWith("..") &&
+                esClean.split(WHITESPACE_REGEX).count { it.isNotBlank() } >= 3
+
+            if (text.endsWith(".") && !text.endsWith("..")) {
+                val coreWithoutParens = PARENTHETICAL_BLOCK_REGEX.replace(text.removeSuffix("."), "").trim()
+                val wordCount = coreWithoutParens.split(WHITESPACE_REGEX).count { it.isNotBlank() }
+                if (wordCount <= 2 || (!isEsDeclarativeWithDot && wordCount <= 3 && !isEsQuestion && !isEsExclamation)) {
+                    text = text.removeSuffix(".").trimEnd()
+                    modifications.add("حذف نقطه زائد پایانی از ترجمه کوتاه فارسی")
+                }
+            }
+
+            // 7. Align question ('؟') and exclamation ('!') marks between Spanish and Persian
+            if (isEsQuestion && !text.contains("؟")) {
+                val parenMatch = TRAILING_PAREN_IN_PERSIAN_REGEX.find(text)
+                text = if (parenMatch != null) {
+                    val mainPart = parenMatch.groupValues[1].trimEnd('.', '!', '?', '؟', ' ')
+                    val parenPart = parenMatch.groupValues[2]
+                    "$mainPart؟ $parenPart"
+                } else {
+                    val trimmedBase = text.trimEnd('.', '!', '?', ' ')
+                    "$trimmedBase؟"
+                }
+                modifications.add("هماهنگ‌سازی علامت سؤال فارسی (؟) با جمله پرسشی اسپانیایی")
+            } else if (isEsExclamation && text.endsWith(".") && !text.endsWith("..")) {
+                text = text.removeSuffix(".").trimEnd() + "!"
+                modifications.add("هماهنگ‌سازی علامت تعجب (!) با عبارت تعجبی اسپانیایی")
+            }
+        }
+
+        return Pair(cleanText(text), modifications.distinct())
+    }
+
     enum class SpanishArticleGender {
         NONE,
         MASCULINE,
@@ -469,11 +713,16 @@ object TextUtilities {
         val coreText: String,
         val dedupeKey: String,
         val accentInsensitiveKey: String,
-        val trailingParenNote: String?
+        val trailingParenNote: String?,
+        val slashVariantKeys: List<String> = emptyList(),
+        val isSlashDualForm: Boolean = false,
+        val hasEllipsis: Boolean = false,
+        val hasExclamation: Boolean = false,
+        val hasQuestion: Boolean = false
     )
 
-    private val SURROUNDING_SPANISH_PUNCT_REGEX = Regex("""^[¿¡"'\s«»]+|[?!."'\s«»]+$""")
-    private val INLINE_PUNCT_FOR_KEY_REGEX = Regex("""[¿?¡!.,;:()"'«»]+""")
+    private val SURROUNDING_SPANISH_PUNCT_REGEX = Regex("""^[¿¡"'\s«»]+|[?!."'\s«»…]+$""")
+    private val INLINE_PUNCT_FOR_KEY_REGEX = Regex("""[¿?¡!.,;:()"'«»…]+""")
     private val TRAILING_PAREN_EXTRACT_REGEX = Regex("""^(.*?)\s*[\(\[（]([^\)\]）]+)[\)\]）]\s*$""")
     private val DUAL_ARTICLE_PREFIX_REGEX = Regex(
         """^(el\s*/\s*la|la\s*/\s*el|los\s*/\s*las|las\s*/\s*los|un\s*/\s*una|una\s*/\s*un)\s+(.+)$""",
@@ -492,9 +741,56 @@ object TextUtilities {
     )
     private val SPANISH_ACCENT_CHARS = setOf('á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ü', 'Ñ')
 
+    private fun extractArticleAndCore(workingText: String): Triple<String?, SpanishArticleGender, Pair<Boolean, String>> {
+        fun canStripArticle(remainder: String, isIndefinite: Boolean): Boolean {
+            val words = remainder.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+            if (words.isEmpty() || words.size > 4) return false
+            val firstFollower = words.first().lowercase(Locale.ROOT).trim('.', ',', '?', '!', '¿', '¡')
+            if (firstFollower in NON_NOUN_FOLLOWERS) return false
+            if (isIndefinite && firstFollower in INDEFINITE_FIXED_FOLLOWERS) return false
+            return true
+        }
+
+        val dualMatch = DUAL_ARTICLE_PREFIX_REGEX.find(workingText)
+        val mascDefMatch = if (dualMatch == null) MASC_DEF_PREFIX_REGEX.find(workingText) else null
+        val femDefMatch = if (dualMatch == null && mascDefMatch == null) FEM_DEF_PREFIX_REGEX.find(workingText) else null
+        val mascIndefMatch = if (dualMatch == null && mascDefMatch == null && femDefMatch == null) MASC_INDEF_PREFIX_REGEX.find(workingText) else null
+        val femIndefMatch = if (dualMatch == null && mascDefMatch == null && femDefMatch == null && mascIndefMatch == null) FEM_INDEF_PREFIX_REGEX.find(workingText) else null
+
+        return when {
+            dualMatch != null && canStripArticle(dualMatch.groupValues[2], dualMatch.groupValues[1].startsWith("un", ignoreCase = true)) -> {
+                val rawArt = dualMatch.groupValues[1].lowercase(Locale.ROOT).replace(" ", "")
+                val prefix = when {
+                    rawArt.startsWith("los") || rawArt.startsWith("las") -> "Los/Las"
+                    rawArt.startsWith("un") -> "Un/Una"
+                    else -> "El/La"
+                }
+                Triple(prefix, SpanishArticleGender.BOTH, Pair(!rawArt.startsWith("un"), dualMatch.groupValues[2].trim()))
+            }
+            mascDefMatch != null && canStripArticle(mascDefMatch.groupValues[2], isIndefinite = false) -> {
+                val prefix = mascDefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                Triple(prefix, SpanishArticleGender.MASCULINE, Pair(true, mascDefMatch.groupValues[2].trim()))
+            }
+            femDefMatch != null && canStripArticle(femDefMatch.groupValues[2], isIndefinite = false) -> {
+                val prefix = femDefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                Triple(prefix, SpanishArticleGender.FEMININE, Pair(true, femDefMatch.groupValues[2].trim()))
+            }
+            mascIndefMatch != null && canStripArticle(mascIndefMatch.groupValues[2], isIndefinite = true) -> {
+                val prefix = mascIndefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                Triple(prefix, SpanishArticleGender.MASCULINE, Pair(false, mascIndefMatch.groupValues[2].trim()))
+            }
+            femIndefMatch != null && canStripArticle(femIndefMatch.groupValues[2], isIndefinite = true) -> {
+                val prefix = femIndefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
+                Triple(prefix, SpanishArticleGender.FEMININE, Pair(false, femIndefMatch.groupValues[2].trim()))
+            }
+            else -> Triple(null, SpanishArticleGender.NONE, Pair(false, workingText))
+        }
+    }
+
     /**
      * Analyzes a Spanish headword without altering its stored text:
      * - Identifies leading grammatical articles (El, La, Los, Las, El/La, Un, Una) or trailing parenthetical articles
+     * - Identifies slash-separated dual forms (e.g., "Claro / clara", "el sobrino / la sobrina", "el paciente / la paciente")
      * - Extracts core Spanish word/phrase for duplicate detection (ignoring articles, punctuation, and trailing parentheticals)
      * - Computes both accent-preserving `dedupeKey` and `accentInsensitiveKey`
      */
@@ -512,6 +808,10 @@ object TextUtilities {
                 trailingParenNote = null
             )
         }
+
+        val hasEllipsis = cleaned.contains("...") || cleaned.contains("…")
+        val hasExclamation = cleaned.startsWith("¡") || cleaned.endsWith("!")
+        val hasQuestion = cleaned.startsWith("¿") || cleaned.endsWith("?")
 
         val punctStripped = SURROUNDING_SPANISH_PUNCT_REGEX.replace(cleaned, "").trim()
             .ifEmpty { cleaned }
@@ -559,57 +859,46 @@ object TextUtilities {
         var gender: SpanishArticleGender = parenArticleGender
         var isDefinite = parenArticleDefinite
         var coreText = workingText
+        var slashVariantKeys = emptyList<String>()
+        var isSlashDualForm = false
 
-        fun canStripArticle(remainder: String, isIndefinite: Boolean): Boolean {
-            val words = remainder.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
-            if (words.isEmpty() || words.size > 4) return false
-            val firstFollower = words.first().lowercase(Locale.ROOT).trim('.', ',', '?', '!', '¿', '¡')
-            if (firstFollower in NON_NOUN_FOLLOWERS) return false
-            if (isIndefinite && firstFollower in INDEFINITE_FIXED_FOLLOWERS) return false
-            return true
+        val extracted = extractArticleAndCore(workingText)
+        if (extracted.first != null) {
+            articlePrefix = extracted.first
+            gender = extracted.second
+            isDefinite = extracted.third.first
+            coreText = extracted.third.second
         }
 
-        val dualMatch = DUAL_ARTICLE_PREFIX_REGEX.find(workingText)
-        val mascDefMatch = if (dualMatch == null) MASC_DEF_PREFIX_REGEX.find(workingText) else null
-        val femDefMatch = if (dualMatch == null && mascDefMatch == null) FEM_DEF_PREFIX_REGEX.find(workingText) else null
-        val mascIndefMatch = if (dualMatch == null && mascDefMatch == null && femDefMatch == null) MASC_INDEF_PREFIX_REGEX.find(workingText) else null
-        val femIndefMatch = if (dualMatch == null && mascDefMatch == null && femDefMatch == null && mascIndefMatch == null) FEM_INDEF_PREFIX_REGEX.find(workingText) else null
+        // Check for slash-separated dual forms such as "Claro / clara", "el sobrino / la sobrina", "el paciente / la paciente"
+        if (workingText.contains('/')) {
+            val slashParts = workingText.split('/')
+                .map { SURROUNDING_SPANISH_PUNCT_REGEX.replace(it.trim(), "").trim() }
+                .filter { it.isNotBlank() }
+            if (slashParts.size == 2) {
+                val partAnalyses = slashParts.map { extractArticleAndCore(it) }
+                val variantCores = partAnalyses.map { it.third.second }
+                val variantKeys = variantCores.map { c ->
+                    val raw = INLINE_PUNCT_FOR_KEY_REGEX.replace(c.lowercase(Locale.ROOT), " ")
+                    WHITESPACE_REGEX.replace(raw, " ").trim()
+                }.filter { it.isNotBlank() }.distinct()
 
-        when {
-            dualMatch != null && canStripArticle(dualMatch.groupValues[2], dualMatch.groupValues[1].startsWith("un", ignoreCase = true)) -> {
-                val rawArt = dualMatch.groupValues[1].lowercase(Locale.ROOT).replace(" ", "")
-                articlePrefix = when {
-                    rawArt.startsWith("los") || rawArt.startsWith("las") -> "Los/Las"
-                    rawArt.startsWith("un") -> "Un/Una"
-                    else -> "El/La"
+                if (variantKeys.size == 1 && partAnalyses.any { it.first != null }) {
+                    // Same core noun with both masculine and feminine articles: e.g. "el paciente / la paciente"
+                    coreText = variantCores.first()
+                    articlePrefix = "El/La"
+                    gender = SpanishArticleGender.BOTH
+                    isDefinite = true
+                    isSlashDualForm = true
+                    slashVariantKeys = variantKeys
+                } else if (variantKeys.size == 2) {
+                    isSlashDualForm = true
+                    slashVariantKeys = variantKeys
+                    if (partAnalyses.all { it.first != null }) {
+                        gender = SpanishArticleGender.BOTH
+                        isDefinite = partAnalyses.any { it.third.first }
+                    }
                 }
-                gender = SpanishArticleGender.BOTH
-                isDefinite = !rawArt.startsWith("un")
-                coreText = dualMatch.groupValues[2].trim()
-            }
-            mascDefMatch != null && canStripArticle(mascDefMatch.groupValues[2], isIndefinite = false) -> {
-                articlePrefix = mascDefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
-                gender = SpanishArticleGender.MASCULINE
-                isDefinite = true
-                coreText = mascDefMatch.groupValues[2].trim()
-            }
-            femDefMatch != null && canStripArticle(femDefMatch.groupValues[2], isIndefinite = false) -> {
-                articlePrefix = femDefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
-                gender = SpanishArticleGender.FEMININE
-                isDefinite = true
-                coreText = femDefMatch.groupValues[2].trim()
-            }
-            mascIndefMatch != null && canStripArticle(mascIndefMatch.groupValues[2], isIndefinite = true) -> {
-                articlePrefix = mascIndefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
-                gender = SpanishArticleGender.MASCULINE
-                isDefinite = false
-                coreText = mascIndefMatch.groupValues[2].trim()
-            }
-            femIndefMatch != null && canStripArticle(femIndefMatch.groupValues[2], isIndefinite = true) -> {
-                articlePrefix = femIndefMatch.groupValues[1].lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
-                gender = SpanishArticleGender.FEMININE
-                isDefinite = false
-                coreText = femIndefMatch.groupValues[2].trim()
             }
         }
 
@@ -628,7 +917,12 @@ object TextUtilities {
             coreText = coreText,
             dedupeKey = dedupeKey,
             accentInsensitiveKey = accentInsensitiveKey,
-            trailingParenNote = trailingParenNote
+            trailingParenNote = trailingParenNote,
+            slashVariantKeys = slashVariantKeys,
+            isSlashDualForm = isSlashDualForm,
+            hasEllipsis = hasEllipsis,
+            hasExclamation = hasExclamation,
+            hasQuestion = hasQuestion
         )
     }
 
@@ -637,6 +931,54 @@ object TextUtilities {
      * surrounding punctuation, and trailing parenthetical notes without altering the actual word text).
      */
     fun spanishDedupeKey(text: String?): String = analyzeSpanishHeadword(text).dedupeKey
+
+    /**
+     * Computes Levenshtein edit distance between two strings.
+     */
+    fun levenshteinDistance(a: String, b: String): Int {
+        if (a == b) return 0
+        if (a.isEmpty()) return b.length
+        if (b.isEmpty()) return a.length
+        val prev = IntArray(b.length + 1) { it }
+        val curr = IntArray(b.length + 1)
+        for (i in a.indices) {
+            curr[0] = i + 1
+            for (j in b.indices) {
+                val cost = if (a[i] == b[j]) 0 else 1
+                curr[j + 1] = minOf(
+                    curr[j] + 1,
+                    prev[j + 1] + 1,
+                    prev[j] + cost
+                )
+            }
+            System.arraycopy(curr, 0, prev, 0, prev.size)
+        }
+        return prev[b.length]
+    }
+
+    /**
+     * Checks whether two Spanish normalized keys (already stripped of articles/accents) are near-spelling
+     * variants (e.g., singular/plural "claro" vs "claros", masculine/feminine "tranquilo" vs "tranquila",
+     * or 1-2 character typos/conjugation differences like "tienes" vs "tienen").
+     */
+    fun areSpanishNearSpellingVariants(keyA: String, keyB: String): Boolean {
+        val a = keyA.trim().lowercase(Locale.ROOT)
+        val b = keyB.trim().lowercase(Locale.ROOT)
+        if (a.isEmpty() || b.isEmpty() || a == b) return false
+        if (a.length < 4 || b.length < 4) return false
+        if (kotlin.math.abs(a.length - b.length) > 2) return false
+
+        val wordsA = a.split(WHITESPACE_REGEX)
+        val wordsB = b.split(WHITESPACE_REGEX)
+        if (wordsA.size != wordsB.size) return false
+
+        // Must share the same starting character (avoids unrelated short rhymes like "casa" vs "masa" or "pato" vs "gato")
+        if (a.first() != b.first()) return false
+
+        val dist = levenshteinDistance(a, b)
+        val maxAllowed = if (minOf(a.length, b.length) <= 5) 1 else 2
+        return dist in 1..maxAllowed
+    }
 
     /**
      * Checks whether two lists of Persian translations share at least one normalized meaning or core token.
@@ -663,6 +1005,7 @@ object TextUtilities {
 
     /**
      * Selects the preferred Spanish display headword when merging duplicate entries:
+     * - Prioritizes dual slash forms (e.g., "Claro / clara" or "el sobrino / la sobrina") when merging with a single variant.
      * - Prioritizes forms that include the Spanish grammatical article (e.g., "El trampolín" over "Trampolín")
      *   so the learner learns the noun's gender.
      * - Prioritizes properly accented Spanish forms (e.g., "trampolín" over "trampolin").
@@ -675,8 +1018,28 @@ object TextUtilities {
 
         val analyses = cleanedCandidates.map { analyzeSpanishHeadword(it) }
 
-        val hasBothMascAndFem = analyses.any { it.gender == SpanishArticleGender.MASCULINE } &&
-            analyses.any { it.gender == SpanishArticleGender.FEMININE }
+        // If one of the candidates is a dual slash form with 2 distinct variants (e.g., "Claro / clara" or "el sobrino / la sobrina"),
+        // prefer the dual slash form so both grammatical forms are preserved.
+        val bestSlashDual = analyses
+            .filter { it.isSlashDualForm && it.slashVariantKeys.size >= 2 }
+            .maxByOrNull { analysis ->
+                var score = 100
+                if (analysis.originalText.contains("el ", ignoreCase = true) || analysis.originalText.contains("la ", ignoreCase = true)) score += 40
+                score += analysis.originalText.count { ch -> ch in SPANISH_ACCENT_CHARS } * 15
+                score
+            }
+        if (bestSlashDual != null) {
+            val rawSlash = bestSlashDual.originalText
+            return if (rawSlash.isNotEmpty() && rawSlash.first().isLowerCase()) {
+                rawSlash.first().titlecase(Locale.ROOT) + rawSlash.substring(1)
+            } else {
+                rawSlash
+            }
+        }
+
+        val hasBothMascAndFem = (analyses.any { it.gender == SpanishArticleGender.MASCULINE } &&
+            analyses.any { it.gender == SpanishArticleGender.FEMININE }) ||
+            analyses.any { it.gender == SpanishArticleGender.BOTH }
 
         val bestArticleAnalysis = analyses
             .filter { it.articlePrefix != null }
@@ -699,6 +1062,7 @@ object TextUtilities {
             ) {
                 score += 8
             }
+            if (!analysis.hasEllipsis) score += 4
             val firstLetter = analysis.originalText.firstOrNull { it.isLetter() }
             if (firstLetter?.isUpperCase() == true) score += 5
             if (analysis.articlePrefix != null && analysis.isDefiniteArticle) score += 5

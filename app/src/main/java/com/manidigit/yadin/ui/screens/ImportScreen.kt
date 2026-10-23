@@ -309,13 +309,13 @@ fun ImportScreen(
                 }
             }
         } else if (parseResult == null) {
-            // Input Form Area with Scroll
+            // Input Form Area with Scroll + Pinned Bottom Parse Button
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     text = stringResource(R.string.import_instructions),
@@ -451,7 +451,7 @@ fun ImportScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 160.dp, max = 280.dp),
+                        .heightIn(min = 180.dp, max = 320.dp),
                     placeholder = {
                         Text(stringResource(R.string.import_text_placeholder))
                     },
@@ -467,26 +467,27 @@ fun ImportScreen(
                     },
                     shape = RoundedCornerShape(dimensions.cornerMedium)
                 )
+            }
 
-                Button(
-                    onClick = { onParseText(inputText) },
-                    enabled = inputText.trim().isNotEmpty(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(dimensions.cornerMedium),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.primary,
-                        contentColor = colors.onPrimary
-                    )
-                ) {
-                    Icon(YadinIcons.smartAudit, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.import_btn_parse), fontWeight = FontWeight.Bold)
-                }
+            // Pinned Bottom Parse Button
+            Button(
+                onClick = { onParseText(inputText) },
+                enabled = inputText.trim().isNotEmpty(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(dimensions.cornerMedium),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primary,
+                    contentColor = colors.onPrimary
+                )
+            ) {
+                Icon(YadinIcons.smartAudit, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.import_btn_parse), fontWeight = FontWeight.Bold)
             }
         } else {
-            // Preview parsed entries
+            // Preview header bar (Compact)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -501,170 +502,179 @@ fun ImportScreen(
                 if (onResetParse != null) {
                     OutlinedButton(
                         onClick = onResetParse,
+                        modifier = Modifier.height(36.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         shape = RoundedCornerShape(dimensions.cornerSmall)
                     ) {
-                        Text(stringResource(R.string.import_btn_edit_text), fontSize = 11.sp)
+                        Text(stringResource(R.string.import_btn_edit_text), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
 
-            // Category selection for imported words
-            ExposedCategoryDropdown(
-                categories = categories,
-                selectedCategoryId = selectedCategoryId,
-                onSelectCategory = { selectedCategoryId = it },
-                onAddNewCategory = { newName ->
-                    onAddNewCategory?.invoke(newName) { newId ->
-                        selectedCategoryId = newId
-                    }
-                },
-                label = stringResource(R.string.import_default_category_label)
-            )
-
-            // Duplicate policy selection
-            Text(
-                text = stringResource(R.string.import_duplicate_policy_label),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.onSurface
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PolicyChip(
-                        label = stringResource(R.string.import_policy_merge),
-                        isSelected = selectedPolicy == DuplicatePolicy.MERGE,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedPolicy = DuplicatePolicy.MERGE }
-                    )
-                    PolicyChip(
-                        label = stringResource(R.string.import_policy_separate),
-                        isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PolicyChip(
-                        label = stringResource(R.string.import_policy_skip),
-                        isSelected = selectedPolicy == DuplicatePolicy.SKIP,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedPolicy = DuplicatePolicy.SKIP }
-                    )
-                    PolicyChip(
-                        label = stringResource(R.string.import_policy_replace),
-                        isSelected = selectedPolicy == DuplicatePolicy.REPLACE,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedPolicy = DuplicatePolicy.REPLACE }
-                    )
-                }
-            }
-
-            // Warning Card
-            if (parseResult.warnings.isNotEmpty()) {
-                YadinCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = colors.warning.copy(alpha = 0.12f)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = YadinIcons.statusWarning,
-                                contentDescription = null,
-                                tint = colors.warning,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.import_warnings_title, parseResult.warnings.size.formatDigits()),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.warning
-                            )
-                        }
-                        for (warn in parseResult.warnings.take(5)) {
-                            Text(
-                                text = "• $warn",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.onSurface
-                            )
-                        }
-                        if (parseResult.warnings.size > 5) {
-                            Text(
-                                text = stringResource(R.string.import_more_warnings, (parseResult.warnings.size - 5).formatDigits()),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Warning Banner for Items Needing Manual Review
+            // Unified scrollable LazyColumn containing settings, warnings, and all parsed entry cards
             val itemsNeedingReview = parseResult.entries.count { it.confidence < 0.98 || it.possibleCorrection != null }
-            if (itemsNeedingReview > 0 && onNavigateToReview != null) {
-                YadinCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = colors.warning.copy(alpha = 0.15f)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(YadinIcons.statusWarning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp))
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.import_screen_review_warning_title, itemsNeedingReview.formatDigits()),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    color = colors.warning
-                                )
-                                Text(
-                                    text = stringResource(R.string.import_screen_review_warning_desc),
-                                    fontSize = 11.sp,
-                                    color = colors.onSurface
-                                )
-                            }
-                        }
-                        Button(
-                            onClick = onNavigateToReview,
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.warning, contentColor = colors.surface),
-                            shape = RoundedCornerShape(dimensions.cornerSmall)
-                        ) {
-                            Text(stringResource(R.string.import_screen_btn_manual_review), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-
-            // Parsed entries LazyColumn
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item(key = "import_preview_controls") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Category selection for imported words
+                        ExposedCategoryDropdown(
+                            categories = categories,
+                            selectedCategoryId = selectedCategoryId,
+                            onSelectCategory = { selectedCategoryId = it },
+                            onAddNewCategory = { newName ->
+                                onAddNewCategory?.invoke(newName) { newId ->
+                                    selectedCategoryId = newId
+                                }
+                            },
+                            label = stringResource(R.string.import_default_category_label)
+                        )
+
+                        // Duplicate policy selection
+                        Text(
+                            text = stringResource(R.string.import_duplicate_policy_label),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.onSurface
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PolicyChip(
+                                label = stringResource(R.string.import_policy_merge),
+                                isSelected = selectedPolicy == DuplicatePolicy.MERGE,
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedPolicy = DuplicatePolicy.MERGE }
+                            )
+                            PolicyChip(
+                                label = stringResource(R.string.import_policy_separate),
+                                isSelected = selectedPolicy == DuplicatePolicy.KEEP_SEPARATE,
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedPolicy = DuplicatePolicy.KEEP_SEPARATE }
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PolicyChip(
+                                label = stringResource(R.string.import_policy_skip),
+                                isSelected = selectedPolicy == DuplicatePolicy.SKIP,
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedPolicy = DuplicatePolicy.SKIP }
+                            )
+                            PolicyChip(
+                                label = stringResource(R.string.import_policy_replace),
+                                isSelected = selectedPolicy == DuplicatePolicy.REPLACE,
+                                modifier = Modifier.weight(1f),
+                                onClick = { selectedPolicy = DuplicatePolicy.REPLACE }
+                            )
+                        }
+                    }
+                }
+
+                // Warning Card (Formatted cleanly in Persian)
+                if (parseResult.warnings.isNotEmpty()) {
+                    item(key = "import_preview_warnings") {
+                        YadinCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            backgroundColor = colors.warning.copy(alpha = 0.12f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = YadinIcons.statusWarning,
+                                        contentDescription = null,
+                                        tint = colors.warning,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.import_warnings_title, parseResult.warnings.size.formatDigits()),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.warning
+                                    )
+                                }
+                                for (warn in parseResult.warnings.take(5)) {
+                                    Text(
+                                        text = "• خط ${warn.lineNumber.formatDigits()} («${warn.rawText}»): ${warn.message}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.onSurface
+                                    )
+                                }
+                                if (parseResult.warnings.size > 5) {
+                                    Text(
+                                        text = stringResource(R.string.import_more_warnings, (parseResult.warnings.size - 5).formatDigits()),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = colors.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Warning Banner for Items Needing Manual Review
+                if (itemsNeedingReview > 0 && onNavigateToReview != null) {
+                    item(key = "import_preview_manual_review_banner") {
+                        YadinCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            backgroundColor = colors.warning.copy(alpha = 0.15f)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(YadinIcons.statusWarning, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp))
+                                    Column {
+                                        Text(
+                                            text = stringResource(R.string.import_screen_review_warning_title, itemsNeedingReview.formatDigits()),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = colors.warning
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.import_screen_review_warning_desc),
+                                            fontSize = 11.sp,
+                                            color = colors.onSurface
+                                        )
+                                    }
+                                }
+                                Button(
+                                    onClick = onNavigateToReview,
+                                    colors = ButtonDefaults.buttonColors(containerColor = colors.warning, contentColor = colors.surface),
+                                    shape = RoundedCornerShape(dimensions.cornerSmall)
+                                ) {
+                                    Text(stringResource(R.string.import_screen_btn_manual_review), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Parsed entries list
                 itemsIndexed(
                     items = parseResult.entries,
                     key = { index, entry -> "${index}_${entry.lineNumber}_${entry.sourceText.hashCode()}" }
@@ -676,6 +686,7 @@ fun ImportScreen(
                 }
             }
 
+            // Pinned Bottom Action Bar (Always visible, never overflows off screen)
             if (isImporting) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     LinearProgressIndicator(
@@ -694,38 +705,43 @@ fun ImportScreen(
                     )
                 }
             } else {
-                if (onNavigateToReview != null && parseResult.entries.isNotEmpty()) {
-                    OutlinedButton(
-                        onClick = onNavigateToReview,
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (onNavigateToReview != null && parseResult.entries.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = onNavigateToReview,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp),
+                            shape = RoundedCornerShape(dimensions.cornerMedium)
+                        ) {
+                            Icon(YadinIcons.manualReview, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.import_review_before_save, parseResult.entries.size.formatDigits()),
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = { onConfirmImport(selectedPolicy, selectedCategoryId) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(dimensions.cornerMedium)
-                    ) {
-                        Icon(YadinIcons.manualReview, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.import_review_before_save, parseResult.entries.size.formatDigits()),
-                            fontWeight = FontWeight.SemiBold
+                            .height(50.dp),
+                        shape = RoundedCornerShape(dimensions.cornerMedium),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.success,
+                            contentColor = colors.onSuccess
                         )
+                    ) {
+                        Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.import_btn_confirm_save), fontWeight = FontWeight.Bold)
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                Button(
-                    onClick = { onConfirmImport(selectedPolicy, selectedCategoryId) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(dimensions.cornerMedium),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.success,
-                        contentColor = colors.onSuccess
-                    )
-                ) {
-                    Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.import_btn_confirm_save), fontWeight = FontWeight.Bold)
                 }
             }
         }

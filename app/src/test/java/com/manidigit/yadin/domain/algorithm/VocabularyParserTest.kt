@@ -228,5 +228,63 @@ class VocabularyParserTest {
         assertEquals(listOf("تمرین تناوبی با شدت بالا (HIIT)"), e7.translations)
         assertEquals(1.0, e7.confidence, 0.001)
     }
+
+    @Test
+    fun parseDrivingLicenseBatchWithLongLatinParentheticalsAndStrippedZwnj() {
+        val raw = """
+            Informatizado
+            رایانهای
+            کامپیوتری
+            سیستمیشده
+            Ficha técnica
+            برگه مشخصات فنی خودرو (کارت معاینه فنی ITV)
+            ITV
+            مرکز معاینه فنی خودرو در اسپانیا (Inspección Técnica de Vehículos)
+            Matriculación
+            پلاکگذاری و شمارهگذاری خودرو
+            Distintivo medioambiental
+            برچسب زیستمحیطی خودرو
+            Favorable
+            نتیجه قبولی و مثبت (معاینه فنی تاییدشده)
+            Fichero de Vehículos Asegurados
+            سامانه و بانک اطلاعاتی خودروهای دارای بیمهنامه (FIVA)
+            Atestado
+            کروکی پلیس
+            صورتجلسه رسمی تصادف
+            Seguro a todo riesgo
+            بیمه بدنه جامع (بیمه تمامخطر)
+            Franquicia
+            فرانشیز بیمه (سهم پرداخت خسارت بر عهده بیمهگذار)
+            Calzada
+            کفی سوارهرو (بخشی از جاده ویژه حرکت وسایل نقلیه)
+        """.trimIndent()
+
+        val result = VocabularyParser.parse(raw)
+        assertEquals("Expected zero warnings for ITV and parenthetical translations", 0, result.warnings.size)
+        assertEquals(11, result.entries.size)
+
+        // Verify Informatizado ZWNJ restoration on dual-joining letters
+        assertEquals(listOf("رایانه‌ای", "کامپیوتری", "سیستمی‌شده"), result.entries[0].translations)
+
+        // Verify ITV entry is recognized with its Persian translation containing long Spanish parenthetical
+        val itvEntry = result.entries[2]
+        assertEquals("ITV", itvEntry.sourceText)
+        assertEquals(
+            listOf("مرکز معاینه فنی خودرو در اسپانیا (Inspección Técnica de Vehículos)"),
+            itvEntry.translations
+        )
+        assertEquals(1.0, itvEntry.confidence, 0.001)
+
+        // Verify ZWNJ restoration on copy-pasted Persian translations
+        assertEquals(listOf("پلاک‌گذاری و شماره‌گذاری خودرو"), result.entries[3].translations)
+        assertEquals(listOf("برچسب زیست‌محیطی خودرو"), result.entries[4].translations)
+        assertEquals(listOf("نتیجه قبولی و مثبت (معاینه فنی تاییدشده)"), result.entries[5].translations)
+        assertEquals(listOf("سامانه و بانک اطلاعاتی خودروهای دارای بیمه‌نامه (FIVA)"), result.entries[6].translations)
+        assertEquals(listOf("کروکی پلیس", "صورت‌جلسه رسمی تصادف"), result.entries[7].translations)
+        assertEquals(listOf("بیمه بدنه جامع (بیمه تمام‌خطر)"), result.entries[8].translations)
+        assertEquals(listOf("فرانشیز بیمه (سهم پرداخت خسارت بر عهده بیمه‌گذار)"), result.entries[9].translations)
+        assertEquals(listOf("کفی سواره‌رو (بخشی از جاده ویژه حرکت وسایل نقلیه)"), result.entries[10].translations)
+    }
 }
+
 

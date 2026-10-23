@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7896_v1.60.1"
+        const val CURRENT_SEED_VERSION = "7896_v1.63.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -365,6 +365,8 @@ class SeedImporter(
                 emptyMap()
             }
 
+            val seedSpanishByConcept = contents.filter { it.languageCode != "fa" }
+                .associate { it.conceptId to it.text }
             val legacyNoteRegex = Regex("""^[\d۰-۹\s.،؛مترادفابعادزیادماشینحجمموتور]+$""")
             val mergedSeedContents = contents.map { seedContent ->
                 if (seedContent.languageCode != "fa") {
@@ -380,7 +382,16 @@ class SeedImporter(
                         seedContent
                     }
                 } else {
-                    seedContent
+                    val esText = seedSpanishByConcept[seedContent.conceptId]
+                    val normFa = TextUtilities.normalizePersianTranslation(seedContent.text, esText).first
+                    if (normFa != seedContent.text && normFa.isNotBlank()) {
+                        seedContent.copy(
+                            text = normFa,
+                            canonicalKey = TextUtilities.toCanonicalKey(normFa)
+                        )
+                    } else {
+                        seedContent
+                    }
                 }
             }.toMutableList()
 
@@ -408,11 +419,15 @@ class SeedImporter(
                     }
                 }
 
+                val esTextForConcept = normalizedSourceRows.firstOrNull()?.text
                 val originalFaTexts = faRows.map { it.text }
-                val dedupedFaTexts = if (faRows.size > 1) {
-                    TextUtilities.deduplicatePersianTranslations(originalFaTexts).ifEmpty { originalFaTexts }
+                val normalizedFaTexts = originalFaTexts.map { fa ->
+                    TextUtilities.normalizePersianTranslation(fa, esTextForConcept).first.ifBlank { fa }
+                }
+                val dedupedFaTexts = if (normalizedFaTexts.size > 1) {
+                    TextUtilities.deduplicatePersianTranslations(normalizedFaTexts).ifEmpty { normalizedFaTexts }
                 } else {
-                    originalFaTexts
+                    normalizedFaTexts
                 }
                 val faModified = dedupedFaTexts.isNotEmpty() && dedupedFaTexts != originalFaTexts
 

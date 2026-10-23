@@ -1,6 +1,8 @@
 package com.manidigit.yadin.domain.text
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TextUtilitiesTest {
@@ -107,6 +109,55 @@ class TextUtilitiesTest {
             "El trampolín",
             TextUtilities.selectPreferredSpanishHeadword(listOf("El trampolin", "Trampolín"))
         )
+    }
+
+    @Test
+    fun analyzeSpanishHeadword_detectsSlashDualFormsAndRetainsThemOnMerge() {
+        val dualAdj = TextUtilities.analyzeSpanishHeadword("Claro / clara")
+        assertTrue(dualAdj.isSlashDualForm)
+        assertEquals(listOf("claro", "clara"), dualAdj.slashVariantKeys)
+
+        val dualNoun = TextUtilities.analyzeSpanishHeadword("el sobrino / la sobrina")
+        assertTrue(dualNoun.isSlashDualForm)
+        assertEquals(listOf("sobrino", "sobrina"), dualNoun.slashVariantKeys)
+
+        assertEquals(
+            "Claro / clara",
+            TextUtilities.selectPreferredSpanishHeadword(listOf("claro", "Claro / clara"))
+        )
+    }
+
+    @Test
+    fun normalizePersianTranslation_fixesHalfSpacesTrailingPeriodsAndBilingualPunctuation() {
+        assertEquals(
+            "می\u200Cشود",
+            TextUtilities.normalizePersianTranslation("میشود").first
+        )
+        assertEquals(
+            "کتاب\u200Cها",
+            TextUtilities.normalizePersianTranslation("کتاب ها").first
+        )
+        assertEquals(
+            "قبوله",
+            TextUtilities.normalizePersianTranslation("قبوله.", "Vale.").first
+        )
+        assertEquals(
+            "حالت چطوره؟",
+            TextUtilities.normalizePersianTranslation("حالت چطوره", "¿Cómo estás?").first
+        )
+        assertEquals(
+            "آفرین!",
+            TextUtilities.normalizePersianTranslation("آفرین.", "¡Muy bien!").first
+        )
+    }
+
+    @Test
+    fun areSpanishNearSpellingVariants_detectsCloseInflectionsAndRejectsShortOrDifferentWords() {
+        assertTrue(TextUtilities.areSpanishNearSpellingVariants("claro", "claros"))
+        assertTrue(TextUtilities.areSpanishNearSpellingVariants("tranquilo", "tranquila"))
+        assertTrue(TextUtilities.areSpanishNearSpellingVariants("tienes", "tienen"))
+        assertFalse(TextUtilities.areSpanishNearSpellingVariants("casa", "cama"))
+        assertFalse(TextUtilities.areSpanishNearSpellingVariants("sol", "sal")) // Too short (< 4 chars)
     }
 }
 
