@@ -50,49 +50,49 @@ class SettingsViewModel(
 
     // --- تنظیمات رابط کاربری و یادگیری ---
     val themeId: StateFlow<String> = settingsRepo.themeIdFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), "gemini")
+        .stateIn(scope, SharingStarted.Eagerly, "gemini")
 
     val isDark: StateFlow<Boolean> = settingsRepo.isDarkFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), true)
+        .stateIn(scope, SharingStarted.Eagerly, true)
 
     val activePair: StateFlow<String> = settingsRepo.activePairFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), "es-fa")
+        .stateIn(scope, SharingStarted.Eagerly, "es-fa")
 
     val uiLanguage: StateFlow<String> = settingsRepo.uiLanguageFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), "fa")
+        .stateIn(scope, SharingStarted.Eagerly, "fa")
 
     val difficultyThreshold: StateFlow<Int> = settingsRepo.difficultyThresholdFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), 3)
+        .stateIn(scope, SharingStarted.Eagerly, 3)
 
     val showCategoryInReview: StateFlow<Boolean> = settingsRepo.showCategoryInReviewFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     val ttsEnabled: StateFlow<Boolean> = settingsRepo.ttsEnabledFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), true)
+        .stateIn(scope, SharingStarted.Eagerly, true)
 
     val ttsAutoPlay: StateFlow<Boolean> = settingsRepo.ttsAutoPlayFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     val ttsSpeechRate: StateFlow<Float> = settingsRepo.ttsSpeechRateFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), 1.0f)
+        .stateIn(scope, SharingStarted.Eagerly, 1.0f)
 
     val quizAutoAdvanceSeconds: StateFlow<Int> = settingsRepo.quizAutoAdvanceSecondsFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), 2)
+        .stateIn(scope, SharingStarted.Eagerly, 2)
 
     val defaultQuizLevel: StateFlow<com.manidigit.yadin.domain.model.QuizLevel> = settingsRepo.defaultQuizLevelFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), com.manidigit.yadin.domain.model.QuizLevel.NORMAL)
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.QuizLevel.NORMAL)
 
     val defaultReviewMode: StateFlow<com.manidigit.yadin.domain.model.ReviewMode> = settingsRepo.defaultReviewModeFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), com.manidigit.yadin.domain.model.ReviewMode.QUIZ)
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.ReviewMode.QUIZ)
 
     val appLanguageDirection: StateFlow<CardDirection> = settingsRepo.appLanguageDirectionFlow
         .stateIn(scope, SharingStarted.Eagerly, CardDirection.NORMAL)
 
     val reviewAlgorithm: StateFlow<com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm> = settingsRepo.reviewAlgorithmFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm.YADIN)
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm.YADIN)
 
     val fsrsDesiredRetention: StateFlow<Double> = settingsRepo.fsrsDesiredRetentionFlow
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0.90)
+        .stateIn(scope, SharingStarted.Eagerly, 0.90)
 
     // --- وضعیت پشتیبان‌گیری و بازیابی ---
     private val _backupOptions = MutableStateFlow(BackupOptions())

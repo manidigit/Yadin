@@ -141,7 +141,9 @@ fun ReviewSetupScreen(
         selectedCategoryId,
         selectedEntryType,
         selectedMaxCards,
-        defaultAlgorithm
+        defaultAlgorithm,
+        difficultyCounts,
+        statistics?.reviewedTodayCount
     ) {
         onFilterChanged(buildFilters())
     }

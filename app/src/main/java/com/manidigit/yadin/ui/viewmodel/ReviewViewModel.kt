@@ -99,6 +99,7 @@ class ReviewViewModel(
     val reviewErrorMessage: StateFlow<String?> = _reviewErrorMessage.asStateFlow()
 
     private var isSubmittingFlashcard = false
+    private var lastSubmitFlashcardJob: Job? = null
     private var lastSubmitQuizJob: Job? = null
 
     private var countJob: Job? = null
@@ -212,6 +213,7 @@ class ReviewViewModel(
         isCorrect: Boolean,
         difficultyThreshold: Int = 3,
         sm2Quality: Sm2Quality? = null,
+        onAnswerRecorded: (() -> Unit)? = null,
         onSessionCompleted: (() -> Unit)? = null
     ) {
         if (isSubmittingFlashcard) return
@@ -224,10 +226,10 @@ class ReviewViewModel(
         val currentCard = cards[idx]
         val effectiveIsCorrect = sm2Quality?.isCorrect ?: isCorrect
         val attemptId = "${session.id}_${currentCard.conceptId}_${currentCard.direction}_$idx"
-        scope.launch {
+        lastSubmitFlashcardJob = scope.launch {
             try {
                 _reviewErrorMessage.value = null
-                reviewRepo.submitAnswer(
+                val submitRes = reviewRepo.submitAnswer(
                     sessionId = session.id,
                     conceptId = currentCard.conceptId,
                     direction = currentCard.direction,
@@ -240,11 +242,25 @@ class ReviewViewModel(
                     fsrsDesiredRetention = _activeFsrsRetention.value
                 )
 
+                val currentCardsList = _sessionCards.value
+                if (idx in currentCardsList.indices) {
+                    val updatedList = currentCardsList.toMutableList()
+                    updatedList[idx] = updatedList[idx].copy(
+                        stage = submitRes.newStage,
+                        difficulty = submitRes.newDifficulty,
+                        consecutiveCorrect = submitRes.consecutiveCorrect,
+                        consecutiveWrong = submitRes.consecutiveWrong
+                    )
+                    _sessionCards.value = updatedList
+                }
+
                 if (effectiveIsCorrect) {
                     _sessionCorrectCount.value += 1
                 } else {
                     _sessionWrongCount.value += 1
                 }
+
+                onAnswerRecorded?.invoke()
 
                 if (idx + 1 < cards.size) {
                     _currentCardIndex.value = idx + 1
@@ -275,7 +291,8 @@ class ReviewViewModel(
      */
     fun submitQuizAnswer(
         optionIndex: Int,
-        difficultyThreshold: Int = 3
+        difficultyThreshold: Int = 3,
+        onAnswerRecorded: (() -> Unit)? = null
     ) {
         val idx = _currentCardIndex.value
         if (_quizUserAnswers.value.containsKey(idx)) return // پاسخ قبلاً ثبت شده است
@@ -296,7 +313,7 @@ class ReviewViewModel(
         lastSubmitQuizJob = scope.launch {
             try {
                 _reviewErrorMessage.value = null
-                reviewRepo.submitAnswer(
+                val submitRes = reviewRepo.submitAnswer(
                     sessionId = session.id,
                     conceptId = q.conceptId,
                     direction = q.direction,
@@ -309,12 +326,24 @@ class ReviewViewModel(
                     algorithm = _activeAlgorithm.value,
                     fsrsDesiredRetention = _activeFsrsRetention.value
                 )
+                val currentQuestionsList = _quizQuestions.value
+                if (idx in currentQuestionsList.indices) {
+                    val updatedList = currentQuestionsList.toMutableList()
+                    updatedList[idx] = updatedList[idx].copy(
+                        stage = submitRes.newStage,
+                        difficulty = submitRes.newDifficulty,
+                        consecutiveCorrect = submitRes.consecutiveCorrect,
+                        consecutiveWrong = submitRes.consecutiveWrong
+                    )
+                    _quizQuestions.value = updatedList
+                }
                 // حل نقص ISS-90: هماهنگ‌سازی زمان‌بندی افزایش شمارنده‌ها دقیقاً پس از ثبت موفق در هر دو حالت
                 if (isCorrect) {
                     _sessionCorrectCount.value += 1
                 } else {
                     _sessionWrongCount.value += 1
                 }
+                onAnswerRecorded?.invoke()
             } catch (e: Exception) {
                 _reviewErrorMessage.value = "خطا در ثبت پاسخ آزمون: ${e.message}"
             }
@@ -391,6 +420,8 @@ class ReviewViewModel(
         if (session != null && session.status == SessionStatus.ACTIVE) {
             scope.launch {
                 try {
+                    lastSubmitQuizJob?.join()
+                    lastSubmitFlashcardJob?.join()
                     reviewRepo.abandonSession(session.id)
                 } catch (e: Exception) {
                     _reviewErrorMessage.value = "خطا در لغو نشست: ${e.message}"

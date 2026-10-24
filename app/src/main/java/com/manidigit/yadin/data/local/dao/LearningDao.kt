@@ -140,10 +140,10 @@ interface LearningDao {
     fun getUnstartedCountFlow(direction: CardDirection): Flow<Int>
 
     @Query("""
-        SELECT COUNT(*) 
-        FROM difficulty_states ds
-        INNER JOIN concepts c ON ds.conceptId = c.id
-        WHERE c.active = 1 AND ds.direction = :direction AND ds.current = :difficulty
+        SELECT COUNT(DISTINCT c.id) 
+        FROM concepts c
+        LEFT JOIN difficulty_states ds ON (ds.conceptId = c.id AND ds.direction = :direction)
+        WHERE c.active = 1 AND COALESCE(ds.current, 'EASY') = :difficulty
     """)
     fun getCountByDifficultyFlow(direction: CardDirection, difficulty: VocabularyDifficulty): Flow<Int>
 
@@ -191,7 +191,7 @@ interface LearningDao {
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
             ((:reviewType = 'RANDOM' OR :reviewType = 'SM2' OR :reviewType = 'FSRS') AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
         )
-        AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
+        AND (:hasDifficultyFilter = 0 OR COALESCE(ds.current, 'EASY') IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
         AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
         ORDER BY 
@@ -231,7 +231,7 @@ interface LearningDao {
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
             ((:reviewType = 'RANDOM' OR :reviewType = 'SM2' OR :reviewType = 'FSRS') AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
         )
-        AND (:hasDifficultyFilter = 0 OR ds.current IN (:difficulties))
+        AND (:hasDifficultyFilter = 0 OR COALESCE(ds.current, 'EASY') IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
         AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
     """)
@@ -248,20 +248,20 @@ interface LearningDao {
     ): Int
 
     @Query("""
-        SELECT ds.current AS current, COUNT(*) AS count
-        FROM difficulty_states ds
-        INNER JOIN concepts c ON ds.conceptId = c.id
-        WHERE c.active = 1 AND ds.direction = :direction
-        GROUP BY ds.current
+        SELECT COALESCE(ds.current, 'EASY') AS current, COUNT(DISTINCT c.id) AS count
+        FROM concepts c
+        LEFT JOIN difficulty_states ds ON (ds.conceptId = c.id AND ds.direction = :direction)
+        WHERE c.active = 1
+        GROUP BY COALESCE(ds.current, 'EASY')
     """)
     fun getDifficultyBreakdownFlow(direction: CardDirection): Flow<List<DifficultyCount>>
 
     @Query("""
-        SELECT ds.current AS current, COUNT(*) AS count
-        FROM difficulty_states ds
-        INNER JOIN concepts c ON ds.conceptId = c.id
-        WHERE c.active = 1 AND ds.direction = :direction
-        GROUP BY ds.current
+        SELECT COALESCE(ds.current, 'EASY') AS current, COUNT(DISTINCT c.id) AS count
+        FROM concepts c
+        LEFT JOIN difficulty_states ds ON (ds.conceptId = c.id AND ds.direction = :direction)
+        WHERE c.active = 1
+        GROUP BY COALESCE(ds.current, 'EASY')
     """)
     suspend fun getDifficultyBreakdown(direction: CardDirection): List<DifficultyCount>
 

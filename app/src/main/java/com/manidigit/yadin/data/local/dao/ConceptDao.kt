@@ -201,7 +201,7 @@ interface ConceptDao {
         )
         AND (:categoryId IS NULL OR c.categoryId = :categoryId)
         AND (:stage IS NULL OR ls.stage = :stage)
-        AND (:difficulty IS NULL OR ds.current = :difficulty)
+        AND (:difficulty IS NULL OR COALESCE(ds.current, 'EASY') = :difficulty)
         ORDER BY c.updatedAt DESC
         LIMIT :limit OFFSET :offset
     """)

@@ -170,4 +170,45 @@ class DifficultyCalculatorTest {
         assertEquals(VocabularyDifficulty.EASY, converters.toDifficulty(null))
         assertEquals(VocabularyDifficulty.EASY, converters.toDifficulty("INVALID_NAME"))
     }
+
+    @Test
+    fun thresholdOne_everySingleWrongAnswer_stepsUpDifficultyImmediately() {
+        var state = DifficultyUpdateResult(VocabularyDifficulty.EASY, 0, 0, false)
+
+        // 1st wrong with threshold = 1: EASY -> MEDIUM
+        state = DifficultyCalculator.updateDifficulty(
+            current = state.newDifficulty,
+            consecutiveCorrect = state.consecutiveCorrect,
+            consecutiveWrong = state.consecutiveWrong,
+            hasReachedVeryHard = state.hasReachedVeryHard,
+            isCorrect = false,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.MEDIUM, state.newDifficulty)
+        assertEquals(0, state.consecutiveWrong)
+
+        // 2nd wrong with threshold = 1: MEDIUM -> HARD
+        state = DifficultyCalculator.updateDifficulty(
+            current = state.newDifficulty,
+            consecutiveCorrect = state.consecutiveCorrect,
+            consecutiveWrong = state.consecutiveWrong,
+            hasReachedVeryHard = state.hasReachedVeryHard,
+            isCorrect = false,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.HARD, state.newDifficulty)
+        assertEquals(0, state.consecutiveWrong)
+
+        // 3rd wrong with threshold = 1: HARD -> VERY_HARD
+        state = DifficultyCalculator.updateDifficulty(
+            current = state.newDifficulty,
+            consecutiveCorrect = state.consecutiveCorrect,
+            consecutiveWrong = state.consecutiveWrong,
+            hasReachedVeryHard = state.hasReachedVeryHard,
+            isCorrect = false,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.VERY_HARD, state.newDifficulty)
+        assertTrue(state.hasReachedVeryHard)
+    }
 }

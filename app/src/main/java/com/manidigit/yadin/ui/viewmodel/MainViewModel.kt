@@ -360,7 +360,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         reviewVm.submitFlashcardAnswer(
             isCorrect = isCorrect,
             difficultyThreshold = difficultyThreshold.value,
+            onAnswerRecorded = {
+                statisticsVm.refreshStatistics()
+            },
             onSessionCompleted = {
+                statisticsVm.refreshStatistics()
                 // حل نقص ISS-56: انتقال استاندارد به خلاصه نشست و هماهنگ‌سازی پشته ناوبری
                 navigateTo(Screen.SessionSummary)
             }
@@ -372,7 +376,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isCorrect = quality.isCorrect,
             difficultyThreshold = difficultyThreshold.value,
             sm2Quality = quality,
+            onAnswerRecorded = {
+                statisticsVm.refreshStatistics()
+            },
             onSessionCompleted = {
+                statisticsVm.refreshStatistics()
                 navigateTo(Screen.SessionSummary)
             }
         )
@@ -380,6 +388,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun exitSession() {
         reviewVm.exitSession {
+            statisticsVm.refreshStatistics()
             if (!navigateBack()) {
                 _currentScreen.value = Screen.Home
             }
@@ -390,11 +399,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * ثبت پاسخ آزمون ۴گزینه‌ای (حل نقص ISS-16 با ارزیابی دقیق شاخص انتخابی).
      */
     fun submitQuizAnswer(optionIndex: Int) {
-        reviewVm.submitQuizAnswer(optionIndex, difficultyThreshold.value)
+        reviewVm.submitQuizAnswer(
+            optionIndex = optionIndex,
+            difficultyThreshold = difficultyThreshold.value,
+            onAnswerRecorded = {
+                statisticsVm.refreshStatistics()
+            }
+        )
     }
 
     fun nextQuizQuestion() {
         reviewVm.nextQuizQuestion {
+            statisticsVm.refreshStatistics()
             // حل نقص ISS-56: انتقال استاندارد به خلاصه نشست و هماهنگ‌سازی پشته ناوبری
             navigateTo(Screen.SessionSummary)
         }

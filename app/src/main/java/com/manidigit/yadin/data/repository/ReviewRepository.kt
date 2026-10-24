@@ -43,7 +43,9 @@ data class SubmitResult(
     val newStage: Stage,
     val nextReviewDay: String?,
     val newDifficulty: VocabularyDifficulty,
-    val isCorrect: Boolean
+    val isCorrect: Boolean,
+    val consecutiveCorrect: Int = 0,
+    val consecutiveWrong: Int = 0
 )
 
 data class ReviewFilters(
@@ -64,7 +66,8 @@ class ReviewRepository(
     private val learningDao: LearningDao,
     private val reviewSessionDao: ReviewSessionDao,
     private val achievementDao: AchievementDao,
-    private val database: YadinDatabase? = null
+    private val database: YadinDatabase? = null,
+    private val settingsDao: com.manidigit.yadin.data.local.dao.SettingsDao? = database?.settingsDao()
 ) {
 
     private suspend fun <T> runInTransaction(block: suspend () -> T): T {
@@ -519,18 +522,9 @@ class ReviewRepository(
             )
         }
 
-        // ISS-42: Session status guard - do not submit answers to ended/abandoned sessions
         val sessionCheck = reviewSessionDao.getSessionById(sessionId)
-        if (sessionCheck != null && sessionCheck.status != SessionStatus.ACTIVE) {
-            val curLearning = learningDao.getLearningState(conceptId, direction)
-            val curDiff = learningDao.getDifficultyState(conceptId, direction)
-            return SubmitResult(
-                newStage = curLearning?.stage ?: Stage.DAILY,
-                nextReviewDay = curLearning?.nextReviewDay,
-                newDifficulty = curDiff?.current ?: VocabularyDifficulty.EASY,
-                isCorrect = isCorrect
-            )
-        }
+        val persistedThreshold = settingsDao?.getSetting("difficultyThreshold")?.toIntOrNull()
+        val effectiveThreshold = (persistedThreshold ?: difficultyThreshold).coerceIn(1, 5)
 
         val today = ClockAndDayMath.todayDayString()
         val now = System.currentTimeMillis()
@@ -541,6 +535,12 @@ class ReviewRepository(
                 sessionCheck?.reviewType == ReviewType.SM2 ||
                 sm2Quality != null
             )
+
+        val isCorrectForDifficulty = when (sm2Quality) {
+            Sm2Quality.AGAIN, Sm2Quality.HARD -> false
+            Sm2Quality.GOOD, Sm2Quality.EASY -> true
+            null -> isCorrect
+        }
 
         val submitResult = runInTransaction {
             val currentLearning = learningDao.getLearningState(conceptId, direction)
@@ -643,8 +643,8 @@ class ReviewRepository(
                 consecutiveCorrect = consecutiveCorrect,
                 consecutiveWrong = consecutiveWrong,
                 hasReachedVeryHard = hasReachedVeryHard,
-                isCorrect = isCorrect,
-                threshold = difficultyThreshold
+                isCorrect = isCorrectForDifficulty,
+                threshold = effectiveThreshold
             )
 
             val updatedDiff = (currentDiff ?: com.manidigit.yadin.data.local.entity.DifficultyStateEntity(
@@ -703,7 +703,9 @@ class ReviewRepository(
                 newStage = finalStage,
                 nextReviewDay = finalNextReviewDay,
                 newDifficulty = diffResult.newDifficulty,
-                isCorrect = isCorrect
+                isCorrect = isCorrect,
+                consecutiveCorrect = diffResult.consecutiveCorrect,
+                consecutiveWrong = diffResult.consecutiveWrong
             )
         }
 

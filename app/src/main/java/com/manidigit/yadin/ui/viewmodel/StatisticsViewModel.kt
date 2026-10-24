@@ -54,7 +54,7 @@ class StatisticsViewModel(
     fun getDueCountFlow(directionFlow: StateFlow<CardDirection>): StateFlow<Int> {
         return combine(directionFlow, _refreshTrigger) { dir, _ -> dir }
             .flatMapLatest { dir -> vocabularyRepo.getDueCountFlow(dir) }
-            .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0)
+            .stateIn(scope, SharingStarted.Eagerly, 0)
     }
 
     fun getStatisticsFlow(directionFlow: StateFlow<CardDirection>): StateFlow<StatisticsSummary> {
@@ -62,7 +62,7 @@ class StatisticsViewModel(
             .flatMapLatest { dir -> vocabularyRepo.getStatisticsSummary(dir) }
             .stateIn(
                 scope,
-                SharingStarted.WhileSubscribed(5000),
+                SharingStarted.Eagerly,
                 StatisticsSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
             )
     }
@@ -72,7 +72,7 @@ class StatisticsViewModel(
             .flatMapLatest { dir -> vocabularyRepo.getDifficultyBreakdownFlow(dir) }
             .stateIn(
                 scope,
-                SharingStarted.WhileSubscribed(5000),
+                SharingStarted.Eagerly,
                 mapOf(
                     VocabularyDifficulty.EASY to 0,
                     VocabularyDifficulty.MEDIUM to 0,
