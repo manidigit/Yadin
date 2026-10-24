@@ -111,5 +111,31 @@ class FsrsAlgorithmTest {
         assertEquals(1, previews.againDays)
         assertTrue(previews.hardDays <= previews.goodDays)
         assertTrue(previews.goodDays < previews.easyDays)
+
+        // Verify previewIntervals matches calculateNextReview 100%
+        val actualAgain = FsrsAlgorithm.calculateNextReview(state, FsrsRating.AGAIN, "2026-10-11", "2026-10-19", 0.90).intervalDays
+        val actualHard = FsrsAlgorithm.calculateNextReview(state, FsrsRating.HARD, "2026-10-11", "2026-10-19", 0.90).intervalDays
+        val actualGood = FsrsAlgorithm.calculateNextReview(state, FsrsRating.GOOD, "2026-10-11", "2026-10-19", 0.90).intervalDays
+        val actualEasy = FsrsAlgorithm.calculateNextReview(state, FsrsRating.EASY, "2026-10-11", "2026-10-19", 0.90).intervalDays
+
+        assertEquals(previews.againDays, actualAgain)
+        assertEquals(previews.hardDays, actualHard)
+        assertEquals(previews.goodDays, actualGood)
+        assertEquals(previews.easyDays, actualEasy)
+    }
+
+    @Test
+    fun `resolveEffectiveState seeds FSRS state from existing stage or SM2 interval when switching algorithms`() {
+        val uninitializedFsrs = FsrsState()
+        val seededFromMonthly = FsrsAlgorithm.resolveEffectiveState(
+            state = uninitializedFsrs,
+            stage = Stage.MONTHLY,
+            lastReviewedDay = "2026-10-01",
+            sm2IntervalDays = 0,
+            sm2Repetitions = 0
+        )
+        assertEquals(30.0, seededFromMonthly.stability, 0.01)
+        assertEquals(3, seededFromMonthly.reps)
+        assertEquals(FsrsCardState.REVIEW.code, seededFromMonthly.state)
     }
 }

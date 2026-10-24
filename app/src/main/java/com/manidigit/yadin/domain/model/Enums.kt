@@ -156,18 +156,6 @@ enum class QuizLevel {
     }
 }
 
-fun QuizLevel.toPersianLabel(): String = when (this) {
-    QuizLevel.BEGINNER -> "مبتدی"
-    QuizLevel.NORMAL -> "نرمال"
-    QuizLevel.PROFESSIONAL -> "حرفه‌ای"
-}
-
-fun QuizLevel.toEnglishLabel(): String = when (this) {
-    QuizLevel.BEGINNER -> "Beginner"
-    QuizLevel.NORMAL -> "Normal"
-    QuizLevel.PROFESSIONAL -> "Professional"
-}
-
 @StringRes
 fun QuizLevel.toStringRes(): Int = when (this) {
     QuizLevel.BEGINNER -> R.string.quiz_level_beginner
@@ -202,6 +190,18 @@ enum class RelationType {
     EXAMPLE_OF,
     RELATED_TO,
     DERIVED_FROM
+}
+
+@StringRes
+fun RelationType.toStringRes(): Int = when (this) {
+    RelationType.SYNONYM -> R.string.relation_synonym
+    RelationType.ANTONYM -> R.string.relation_antonym
+    RelationType.USED_IN -> R.string.relation_used_in
+    RelationType.INFLECTED_FORM -> R.string.relation_inflected_form
+    RelationType.CONTRAST -> R.string.relation_contrast
+    RelationType.EXAMPLE_OF -> R.string.relation_example_of
+    RelationType.RELATED_TO -> R.string.relation_related_to
+    RelationType.DERIVED_FROM -> R.string.relation_derived_from
 }
 
 fun RelationType.toPersianLabel(): String = when (this) {

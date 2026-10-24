@@ -164,7 +164,11 @@ fun RetentionGaugeCard(
                     }
 
                     Text(
-                        text = "${metrics.practicedWords.formatDigits()} از ${metrics.totalWords.formatDigits()} کلمه فعال",
+                        text = stringResource(
+                            R.string.retention_active_words_fmt,
+                            metrics.practicedWords.formatDigits(),
+                            metrics.totalWords.formatDigits()
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                         fontWeight = FontWeight.Medium

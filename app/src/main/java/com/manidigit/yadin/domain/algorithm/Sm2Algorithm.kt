@@ -138,18 +138,49 @@ object Sm2Algorithm {
     /**
      * پیش‌نمایش فاصله مرور بعدی (بر حسب روز) برای هر ۴ دکمه کیفیت پاسخ در پشت فلش‌کارت.
      */
-    fun previewIntervals(currentState: Sm2State): Sm2IntervalPreview {
-        val today = "2026-01-01"
-        val again = calculateNextReview(currentState, Sm2Quality.AGAIN, today).nextState.intervalDays
-        val hard = calculateNextReview(currentState, Sm2Quality.HARD, today).nextState.intervalDays
-        val good = calculateNextReview(currentState, Sm2Quality.GOOD, today).nextState.intervalDays
-        val easy = calculateNextReview(currentState, Sm2Quality.EASY, today).nextState.intervalDays
+    fun previewIntervals(
+        currentState: Sm2State,
+        todayDayString: String = ClockAndDayMath.todayDayString()
+    ): Sm2IntervalPreview {
+        val again = calculateNextReview(currentState, Sm2Quality.AGAIN, todayDayString).nextState.intervalDays
+        val hard = calculateNextReview(currentState, Sm2Quality.HARD, todayDayString).nextState.intervalDays
+        val good = calculateNextReview(currentState, Sm2Quality.GOOD, todayDayString).nextState.intervalDays
+        val easy = calculateNextReview(currentState, Sm2Quality.EASY, todayDayString).nextState.intervalDays
         return Sm2IntervalPreview(
             againDays = again,
             hardDays = hard,
             goodDays = good,
             easyDays = easy
         )
+    }
+
+    /**
+     * همگام‌سازی وضعیت اولیه SM-2 هنگام تغییر الگوریتم از یادین یا FSRS به SM-2 برای کارت‌هایی که قبلاً مرور شده‌اند.
+     */
+    fun resolveEffectiveState(
+        state: Sm2State,
+        stage: Stage,
+        lastReviewedDay: String?,
+        fsrsStability: Double = 0.0
+    ): Sm2State {
+        if (state.repetitions > 0 || state.intervalDays > 0 || lastReviewedDay.isNullOrBlank()) {
+            return state
+        }
+        if (fsrsStability > 0.0) {
+            val seededInterval = max(1, fsrsStability.roundToInt())
+            val seededReps = when {
+                seededInterval >= 30 -> 3
+                seededInterval >= 6 -> 2
+                else -> 1
+            }
+            return state.copy(repetitions = seededReps, intervalDays = seededInterval)
+        }
+        return when (stage) {
+            Stage.DAILY -> state.copy(repetitions = 1, intervalDays = 1)
+            Stage.WEEKLY -> state.copy(repetitions = 2, intervalDays = 7)
+            Stage.MONTHLY -> state.copy(repetitions = 3, intervalDays = 30)
+            Stage.LEARNED -> state.copy(repetitions = 4, intervalDays = 60)
+        }
     }
 
     /**

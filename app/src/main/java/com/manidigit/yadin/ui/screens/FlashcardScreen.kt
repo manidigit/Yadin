@@ -298,6 +298,7 @@ fun FlashcardScreen(
             if (isSm2Mode || isFsrsMode) {
                 val intervalPreview = remember(
                     card.conceptId,
+                    card.stage,
                     isFsrsMode,
                     fsrsDesiredRetention,
                     card.sm2Repetitions,
@@ -311,25 +312,36 @@ fun FlashcardScreen(
                     card.lastReviewedDay
                 ) {
                     if (isFsrsMode) {
-                        FsrsAlgorithm.previewIntervals(
-                            currentState = FsrsState(
+                        val effectiveFsrs = FsrsAlgorithm.resolveEffectiveState(
+                            state = FsrsState(
                                 stability = card.fsrsStability,
                                 difficulty = card.fsrsDifficulty,
                                 reps = card.fsrsReps,
                                 lapses = card.fsrsLapses,
                                 state = card.fsrsState
                             ),
+                            stage = card.stage,
+                            lastReviewedDay = card.lastReviewedDay,
+                            sm2IntervalDays = card.sm2IntervalDays,
+                            sm2Repetitions = card.sm2Repetitions
+                        )
+                        FsrsAlgorithm.previewIntervals(
+                            currentState = effectiveFsrs,
                             lastReviewedDay = card.lastReviewedDay,
                             desiredRetention = fsrsDesiredRetention
                         )
                     } else {
-                        Sm2Algorithm.previewIntervals(
-                            Sm2State(
+                        val effectiveSm2 = Sm2Algorithm.resolveEffectiveState(
+                            state = Sm2State(
                                 repetitions = card.sm2Repetitions,
                                 easinessFactor = card.sm2EasinessFactor,
                                 intervalDays = card.sm2IntervalDays
-                            )
+                            ),
+                            stage = card.stage,
+                            lastReviewedDay = card.lastReviewedDay,
+                            fsrsStability = card.fsrsStability
                         )
+                        Sm2Algorithm.previewIntervals(effectiveSm2)
                     }
                 }
                 Row(

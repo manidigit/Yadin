@@ -328,13 +328,29 @@ interface LearningDao {
     suspend fun getTotalLearnedWordsCount(): Int
 
     @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId)
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction AND ls.stage = :stage
+        AND ls.lastReviewedDay IS NOT NULL
+    """)
+    suspend fun getPracticedCountByStage(direction: CardDirection, stage: Stage): Int
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId)
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction
+    """)
+    suspend fun getActiveConceptCountForDirection(direction: CardDirection): Int
+
+    @Query("""
         SELECT COUNT(DISTINCT ds.conceptId)
         FROM difficulty_states ds
         INNER JOIN concepts c ON ds.conceptId = c.id
-        LEFT JOIN learning_states ls ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
         WHERE c.active = 1 AND ds.direction = :direction
-          AND (ds.hasReachedVeryHard = 1 OR ds.current = 'VERY_HARD' OR ds.current = 'HARD')
-          AND (ds.current = 'EASY' OR ds.current = 'MEDIUM' OR ls.stage = 'LEARNED')
+          AND ds.hasReachedVeryHard = 1
+          AND (ds.current = 'EASY' OR ds.current = 'MEDIUM')
     """)
     suspend fun getMasteredHardWordsCount(direction: CardDirection): Int
 
@@ -342,10 +358,9 @@ interface LearningDao {
         SELECT COUNT(DISTINCT ds.conceptId)
         FROM difficulty_states ds
         INNER JOIN concepts c ON ds.conceptId = c.id
-        LEFT JOIN learning_states ls ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
         WHERE c.active = 1
-          AND (ds.hasReachedVeryHard = 1 OR ds.current = 'VERY_HARD' OR ds.current = 'HARD')
-          AND (ds.current = 'EASY' OR ds.current = 'MEDIUM' OR ls.stage = 'LEARNED')
+          AND ds.hasReachedVeryHard = 1
+          AND (ds.current = 'EASY' OR ds.current = 'MEDIUM')
     """)
     suspend fun getMasteredHardWordsCount(): Int
 

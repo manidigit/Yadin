@@ -134,7 +134,7 @@ private fun ForecastColumn(
                     modifier = Modifier.size(13.dp)
                 )
                 Text(
-                    text = if (count > 0) "کلمه سررسید" else "مرتب است",
+                    text = stringResource(if (count > 0) R.string.forecast_due_words else R.string.forecast_all_clear),
                     fontSize = 10.sp,
                     color = colors.onSurfaceVariant,
                     textAlign = TextAlign.Center

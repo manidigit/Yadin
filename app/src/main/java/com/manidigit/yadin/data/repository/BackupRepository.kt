@@ -2,6 +2,7 @@ package com.manidigit.yadin.data.repository
 
 import android.content.Context
 import androidx.room.withTransaction
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.local.dao.AchievementDao
 import com.manidigit.yadin.data.local.dao.ConceptDao
 import com.manidigit.yadin.data.local.dao.LearningDao
@@ -433,34 +434,38 @@ class BackupRepository(
 
         // Dynamic Header based on options
         val headers = mutableListOf<String>()
-        headers.add("ردیف")
-        headers.add("واژه یا عبارت (اسپانیایی)")
-        headers.add("ترجمه‌های فارسی")
-        if (options.includeCategories) headers.add("دسته‌بندی")
+        headers.add(context.getString(R.string.csv_col_row))
+        headers.add(context.getString(R.string.csv_col_source_word))
+        headers.add(context.getString(R.string.csv_col_target_translations))
+        if (options.includeCategories) headers.add(context.getString(R.string.csv_col_category))
         if (options.includeReviewStats) {
-            headers.add("مرحله عادی (اسپانیایی به فارسی)")
-            headers.add("مرحله برعکس (فارسی به اسپانیایی)")
+            headers.add(context.getString(R.string.csv_col_stage_normal))
+            headers.add(context.getString(R.string.csv_col_stage_reverse))
         }
         if (options.includeDifficulty) {
-            headers.add("دشواری (عادی)")
-            headers.add("دشواری (برعکس)")
+            headers.add(context.getString(R.string.csv_col_diff_normal))
+            headers.add(context.getString(R.string.csv_col_diff_reverse))
         }
-        headers.add("توضیحات و یادداشت")
-        headers.add("شناسه واژه")
+        headers.add(context.getString(R.string.csv_col_notes))
+        headers.add(context.getString(R.string.csv_col_concept_id))
 
         writer.write(headers.joinToString(",") { escapeCsv(it) } + "\n")
+
+        val defaultCategoryLabel = context.getString(R.string.csv_default_category)
+        val readyToLearnLabel = context.getString(R.string.csv_stage_ready)
+        val defaultDiffLabel = formatDiffName(VocabularyDifficulty.EASY)
 
         allConcepts.forEachIndexed { index, concept ->
             val contents = allContentsByConcept[concept.id] ?: emptyList()
             val esText = contents.firstOrNull { it.languageCode == "es" }?.text ?: ""
             val faTranslations = contents.filter { it.languageCode == "fa" }.map { it.text }.joinToString(" ، ")
-            val catName = categories[concept.categoryId]?.name ?: "عمومی"
+            val catName = categories[concept.categoryId]?.name ?: defaultCategoryLabel
             
-            val stageNormal = learningMap[concept.id to CardDirection.NORMAL]?.stage?.let { formatStageName(it) } ?: "آماده یادگیری"
-            val stageReverse = learningMap[concept.id to CardDirection.REVERSE]?.stage?.let { formatStageName(it) } ?: "آماده یادگیری"
+            val stageNormal = learningMap[concept.id to CardDirection.NORMAL]?.stage?.let { formatStageName(it) } ?: readyToLearnLabel
+            val stageReverse = learningMap[concept.id to CardDirection.REVERSE]?.stage?.let { formatStageName(it) } ?: readyToLearnLabel
             
-            val diffNormal = diffMap[concept.id to CardDirection.NORMAL]?.current?.let { formatDiffName(it) } ?: "متوسط"
-            val diffReverse = diffMap[concept.id to CardDirection.REVERSE]?.current?.let { formatDiffName(it) } ?: "متوسط"
+            val diffNormal = diffMap[concept.id to CardDirection.NORMAL]?.current?.let { formatDiffName(it) } ?: defaultDiffLabel
+            val diffReverse = diffMap[concept.id to CardDirection.REVERSE]?.current?.let { formatDiffName(it) } ?: defaultDiffLabel
             
             val note = contents.firstOrNull { it.languageCode == "es" }?.note ?: ""
 
@@ -484,7 +489,7 @@ class BackupRepository(
         }
 
         writer.flush()
-        onProgress(1f, "خروجی اکسل کلمات آماده شد.")
+        onProgress(1f, context.getString(R.string.backup_action_success))
     }
 
     suspend fun createVocabularyExcelCsv(
@@ -521,34 +526,34 @@ class BackupRepository(
         writer.write("\uFEFF") // UTF-8 BOM
 
         writer.write(escapeCsv("=========================================") + "\n")
-        writer.write(escapeCsv("   خروجی جامع پایگاه داده و آمار یادین (MASTER EXPORT)   ") + "\n")
-        writer.write(escapeCsv("   تاریخ استخراج: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())}   ") + "\n")
+        writer.write(escapeCsv(context.getString(R.string.csv_master_export_title)) + "\n")
+        writer.write(escapeCsv(context.getString(R.string.csv_export_date_fmt, SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))) + "\n")
         writer.write(escapeCsv("=========================================") + "\n\n")
 
         if (options.includeVocabulary) {
-            onProgress(0.3f, "افزودن بخش کلمات به اکسل...")
-            writer.write(escapeCsv("=== بخش ۱: بانک کلمات و دسته‌بندی‌ها ===") + "\n")
+            onProgress(0.3f, context.getString(R.string.backup_generating_excel))
+            writer.write(escapeCsv(context.getString(R.string.csv_section_vocabulary)) + "\n")
             writeVocabularyExcelCsv(writer, options, writeBom = false) { _, _ -> }
             writer.write("\n\n")
         }
 
         if (options.includeStreakAndProgress || options.includeProcessHistory) {
-            onProgress(0.6f, "افزودن گزارش پیشرفت و رگبار به اکسل...")
+            onProgress(0.6f, context.getString(R.string.backup_generating_excel))
             writeProgressExcelCsv(writer, writeBom = false) { _, _ -> }
             writer.write("\n\n")
         }
 
         if (options.includeSettings) {
-            onProgress(0.85f, "افزودن تنظیمات و دستاوردها به اکسل...")
-            writer.write(escapeCsv("=== بخش تنظیمات و دستاوردها ===") + "\n")
-            writer.write(listOf("کلید تنظیمات", "مقدار ذخیره‌شده").joinToString(",") { escapeCsv(it) } + "\n")
+            onProgress(0.85f, context.getString(R.string.backup_generating_excel))
+            writer.write(escapeCsv(context.getString(R.string.csv_section_settings_achievements)) + "\n")
+            writer.write(listOf(context.getString(R.string.csv_col_setting_key), context.getString(R.string.csv_col_setting_value)).joinToString(",") { escapeCsv(it) } + "\n")
             val settings = settingsDao.getAllSettings()
             settings.forEach { s ->
                 writer.write(listOf(s.key, s.value).joinToString(",") { escapeCsv(it) } + "\n")
             }
             writer.write("\n")
             
-            writer.write(listOf("شناسه نشان/دستاورد", "میزان پیشرفت", "تاریخ آنلاک").joinToString(",") { escapeCsv(it) } + "\n")
+            writer.write(listOf(context.getString(R.string.csv_col_ach_id), context.getString(R.string.csv_col_ach_progress), context.getString(R.string.csv_col_ach_unlocked_at)).joinToString(",") { escapeCsv(it) } + "\n")
             val achs = achievementDao.getAllAchievements()
             achs.forEach { a ->
                 writer.write(listOf(a.id, a.progress.toString(), a.unlockedAt?.toString() ?: "-").joinToString(",") { escapeCsv(it) } + "\n")
@@ -557,7 +562,7 @@ class BackupRepository(
         }
 
         writer.flush()
-        onProgress(1.0f, "خروجی جامع اکسل با موفقیت تولید شد.")
+        onProgress(1.0f, context.getString(R.string.backup_action_success))
     }
 
     suspend fun createCompleteExcelCsv(
@@ -574,7 +579,7 @@ class BackupRepository(
         writeBom: Boolean = true,
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        onProgress(0.1f, "در حال محاسبه رگبار و آمار جلسات...")
+        onProgress(0.1f, context.getString(R.string.backup_generating_excel))
         val today = ClockAndDayMath.todayDayString()
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
         val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
@@ -609,47 +614,46 @@ class BackupRepository(
 
         val contentsMap = conceptDao.getAllContents().groupBy { it.conceptId }
 
-        onProgress(0.5f, "در حال آماده‌سازی بخش‌های اکسل...")
+        onProgress(0.5f, context.getString(R.string.backup_generating_excel))
         if (writeBom) {
             writer.write("\uFEFF") // UTF-8 BOM
         }
 
         // SECTION 1: خلاصه شاخص‌ها و رگبار متوالی
-        writer.write(escapeCsv("=== گزارش پیشرفت و رگبار مطالعه یادین ===") + "\n")
-        writer.write(listOf("شاخص کلیدی", "مقدار", "توضیحات آماری").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("روزهای رگبار متوالی (Streak)", "$streak روز", "تداوم زنجیره مطالعه بدون وقفه روزانه").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کل مرورهای انجام شده", "$totalReviews بار", "مجموع کل کارت‌ها و سؤالات پاسخ داده شده").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("پاسخ‌های صحیح", "$correctReviews بار", "تعداد پاسخ‌های درست در جلسات").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("پاسخ‌های نادرست", "$wrongReviews بار", "تعداد پاسخ‌های اشتباه در جلسات").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("درصد دقت پاسخ‌ها", "$accuracyPct%", "نسبت پاسخ‌های درست به کل مرورها").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("تعداد کل جلسات تمرین", "${allSessions.size} جلسه", "مجموع جلسات فلش‌کارت و کوییز برگزار شده").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات یادگرفته (عادی: اسپانیایی ← فارسی)", "$normalLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات یادگرفته (برعکس: فارسی ← اسپانیایی)", "$reverseLearned واژه", "مرحله چهارم جعبه لایتنر").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات مرحله ماهانه (عادی / برعکس)", "$normalMonthly / $reverseMonthly واژه", "مرور هر ۳۰ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات مرحله هفتگی (عادی / برعکس)", "$normalWeekly / $reverseWeekly واژه", "مرور هر ۷ روز یک‌بار").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات مرحله روزانه (عادی / برعکس)", "$normalDaily / $reverseDaily واژه", "مرورهای جاری و روزانه").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات سطح آسان (عادی / برعکس)", "$normalEasy / $reverseEasy واژه", "EASY").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات سطح متوسط (عادی / برعکس)", "$normalMedium / $reverseMedium واژه", "MEDIUM").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات سطح سخت (عادی / برعکس)", "$normalHard / $reverseHard واژه", "HARD").joinToString(",") { escapeCsv(it) } + "\n")
-        writer.write(listOf("کلمات سطح خیلی سخت (عادی / برعکس)", "$normalVeryHard / $reverseVeryHard واژه", "VERY_HARD").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(escapeCsv(context.getString(R.string.csv_section_progress_title)) + "\n")
+        writer.write(listOf(context.getString(R.string.csv_col_metric), context.getString(R.string.csv_col_value), context.getString(R.string.csv_col_desc)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_streak), context.getString(R.string.csv_val_days_fmt, streak), context.getString(R.string.csv_desc_streak)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_total_reviews), context.getString(R.string.csv_val_times_fmt, totalReviews), context.getString(R.string.csv_desc_total_reviews)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_correct_reviews), context.getString(R.string.csv_val_times_fmt, correctReviews), context.getString(R.string.csv_desc_correct_reviews)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_wrong_reviews), context.getString(R.string.csv_val_times_fmt, wrongReviews), context.getString(R.string.csv_desc_wrong_reviews)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_accuracy), "$accuracyPct%", context.getString(R.string.csv_desc_accuracy)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_sessions), context.getString(R.string.csv_val_sessions_fmt, allSessions.size), context.getString(R.string.csv_desc_sessions)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_learned_normal), context.getString(R.string.csv_val_words_fmt, normalLearned), context.getString(R.string.csv_desc_stage_4)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_learned_reverse), context.getString(R.string.csv_val_words_fmt, reverseLearned), context.getString(R.string.csv_desc_stage_4)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_monthly), context.getString(R.string.csv_val_words_pair_fmt, normalMonthly, reverseMonthly), context.getString(R.string.csv_desc_monthly)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_weekly), context.getString(R.string.csv_val_words_pair_fmt, normalWeekly, reverseWeekly), context.getString(R.string.csv_desc_weekly)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_daily), context.getString(R.string.csv_val_words_pair_fmt, normalDaily, reverseDaily), context.getString(R.string.csv_desc_daily)).joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_diff_easy), context.getString(R.string.csv_val_words_pair_fmt, normalEasy, reverseEasy), "EASY").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_diff_medium), context.getString(R.string.csv_val_words_pair_fmt, normalMedium, reverseMedium), "MEDIUM").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_diff_hard), context.getString(R.string.csv_val_words_pair_fmt, normalHard, reverseHard), "HARD").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(listOf(context.getString(R.string.csv_metric_diff_very_hard), context.getString(R.string.csv_val_words_pair_fmt, normalVeryHard, reverseVeryHard), "VERY_HARD").joinToString(",") { escapeCsv(it) } + "\n")
         writer.write("\n")
 
         // SECTION 2: آمار حجم مرور تمرین‌های روزانه
-        writer.write(escapeCsv("=== آمار حجم مرور تمرین‌های روزانه ===") + "\n")
-        writer.write(listOf("ردیف", "تاریخ", "روز هفته", "حجم مرور (تعداد واژه)", "پاسخ درست", "پاسخ نادرست", "درصد موفقیت روزانه").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(escapeCsv(context.getString(R.string.csv_section_daily_volume)) + "\n")
+        writer.write(listOf(
+            context.getString(R.string.csv_col_row),
+            context.getString(R.string.csv_col_date),
+            context.getString(R.string.csv_col_weekday),
+            context.getString(R.string.csv_col_review_volume),
+            context.getString(R.string.csv_col_correct),
+            context.getString(R.string.csv_col_wrong),
+            context.getString(R.string.csv_col_daily_accuracy)
+        ).joinToString(",") { escapeCsv(it) } + "\n")
         dailyStats.forEachIndexed { idx, dayStat ->
             val dayOfWeek = try {
                 val d = java.time.LocalDate.parse(dayStat.reviewedDay)
-                when (d.dayOfWeek) {
-                    java.time.DayOfWeek.SATURDAY -> "شنبه"
-                    java.time.DayOfWeek.SUNDAY -> "یکشنبه"
-                    java.time.DayOfWeek.MONDAY -> "دوشنبه"
-                    java.time.DayOfWeek.TUESDAY -> "سه‌شنبه"
-                    java.time.DayOfWeek.WEDNESDAY -> "چهارشنبه"
-                    java.time.DayOfWeek.THURSDAY -> "پنج‌شنبه"
-                    java.time.DayOfWeek.FRIDAY -> "جمعه"
-                    else -> ""
-                }
+                d.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
             } catch (_: Exception) { "" }
             val wrongCount = dayStat.totalCount - dayStat.correctCount
             val dayPct = if (dayStat.totalCount > 0) String.format(Locale.US, "%.1f", (dayStat.correctCount.toDouble() / dayStat.totalCount) * 100) else "0.0"
@@ -666,19 +670,22 @@ class BackupRepository(
         writer.write("\n")
 
         // SECTION 3: تاریخچه آخرین تمرین‌ها (Recent Item History - last 200 items)
-        writer.write(escapeCsv("=== آخرین تمرین‌ها و پاسخ‌ها ===") + "\n")
-        writer.write(listOf("ردیف", "تاریخ و زمان", "واژه (اسپانیایی)", "جهت تمرین", "نوع تمرین", "نتیجه", "مرحله قبل").joinToString(",") { escapeCsv(it) } + "\n")
+        writer.write(escapeCsv(context.getString(R.string.csv_section_recent_history)) + "\n")
+        writer.write(listOf(
+            context.getString(R.string.csv_col_row),
+            context.getString(R.string.csv_col_datetime),
+            context.getString(R.string.csv_col_word_es),
+            context.getString(R.string.csv_col_direction),
+            context.getString(R.string.csv_col_mode),
+            context.getString(R.string.csv_col_result),
+            context.getString(R.string.csv_col_stage_before)
+        ).joinToString(",") { escapeCsv(it) } + "\n")
         allHistory.takeLast(200).reversed().forEachIndexed { idx, h ->
             val wordText = contentsMap[h.conceptId]?.firstOrNull { it.languageCode == "es" }?.text ?: ""
-            val dirText = if (h.direction == CardDirection.NORMAL) "اسپانیایی به فارسی" else "فارسی به اسپانیایی"
-            val modeText = if (h.mode == ReviewMode.QUIZ) "آزمون ۴ گزینه‌ای" else "فلش‌کارت"
-            val resultText = if (h.isCorrect) "صحیح" else "غلط"
-            val stageText = when (h.stageBefore) {
-                Stage.DAILY -> "روزانه"
-                Stage.WEEKLY -> "هفتگی"
-                Stage.MONTHLY -> "ماهانه"
-                Stage.LEARNED -> "یادگرفته"
-            }
+            val dirText = if (h.direction == CardDirection.NORMAL) context.getString(R.string.csv_dir_normal) else context.getString(R.string.csv_dir_reverse)
+            val modeText = if (h.mode == ReviewMode.QUIZ) context.getString(R.string.csv_mode_quiz) else context.getString(R.string.csv_mode_flashcard)
+            val resultText = if (h.isCorrect) context.getString(R.string.csv_res_correct) else context.getString(R.string.csv_res_wrong)
+            val stageText = formatStageName(h.stageBefore)
             val formattedDate = try {
                 SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(h.reviewedAt))
             } catch (_: Exception) {
@@ -696,7 +703,7 @@ class BackupRepository(
         }
 
         writer.flush()
-        onProgress(1f, "خروجی اکسل پیشرفت و حجم مرورها آماده شد.")
+        onProgress(1f, context.getString(R.string.backup_action_success))
     }
 
     suspend fun createProgressExcelCsv(
@@ -1517,19 +1524,19 @@ class BackupRepository(
 
     private fun formatStageName(stage: Stage): String {
         return when (stage) {
-            Stage.DAILY -> "روزانه (Daily)"
-            Stage.WEEKLY -> "هفتگی (Weekly)"
-            Stage.MONTHLY -> "ماهانه (Monthly)"
-            Stage.LEARNED -> "یادگرفته (Learned)"
+            Stage.DAILY -> context.getString(R.string.stage_daily)
+            Stage.WEEKLY -> context.getString(R.string.stage_weekly)
+            Stage.MONTHLY -> context.getString(R.string.stage_monthly)
+            Stage.LEARNED -> context.getString(R.string.stage_learned)
         }
     }
 
     private fun formatDiffName(diff: VocabularyDifficulty): String {
         return when (diff) {
-            VocabularyDifficulty.EASY -> "آسان"
-            VocabularyDifficulty.MEDIUM -> "متوسط"
-            VocabularyDifficulty.HARD -> "سخت"
-            VocabularyDifficulty.VERY_HARD -> "خیلی سخت"
+            VocabularyDifficulty.EASY -> context.getString(R.string.difficulty_easy)
+            VocabularyDifficulty.MEDIUM -> context.getString(R.string.difficulty_medium)
+            VocabularyDifficulty.HARD -> context.getString(R.string.difficulty_hard)
+            VocabularyDifficulty.VERY_HARD -> context.getString(R.string.difficulty_very_hard)
         }
     }
 }

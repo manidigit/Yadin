@@ -140,14 +140,14 @@ fun StudyHabitsCard(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${bucket.reviewCount.formatDigits()} مرور",
+                                    text = stringResource(R.string.habits_review_count_fmt, bucket.reviewCount.formatDigits()),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = colors.onSurfaceVariant,
                                     fontSize = 11.sp
                                 )
                                 if (bucket.reviewCount > 0) {
                                     Text(
-                                        text = "${bucket.accuracyPercent.formatDigits()}% دقت",
+                                        text = stringResource(R.string.habits_accuracy_fmt, bucket.accuracyPercent.formatDigits()),
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Bold,
                                         color = if (bucket.accuracyPercent >= 80) colors.success else colors.primary,

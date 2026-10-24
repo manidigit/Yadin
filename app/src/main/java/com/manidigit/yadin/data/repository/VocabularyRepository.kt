@@ -1010,16 +1010,17 @@ class VocabularyRepository(
     }
 
     suspend fun getRetentionMetrics(direction: CardDirection): com.manidigit.yadin.domain.model.RetentionMetrics {
-        val totalActive = conceptDao.getActiveConceptCount()
+        val directionActive = learningDao.getActiveConceptCountForDirection(direction)
+        val totalActive = if (directionActive > 0) directionActive else conceptDao.getActiveConceptCount()
         val learned = learningDao.getCountByStage(direction, Stage.LEARNED)
         val monthly = learningDao.getCountByStage(direction, Stage.MONTHLY)
         val weekly = learningDao.getCountByStage(direction, Stage.WEEKLY)
-        val daily = learningDao.getCountByStage(direction, Stage.DAILY)
-        val practiced = learningDao.getTotalPracticedWordsCount(direction)
+        val practicedDaily = learningDao.getPracticedCountByStage(direction, Stage.DAILY)
+        val practiced = learned + monthly + weekly + practicedDaily
         val unreviewed = (totalActive - practiced).coerceAtLeast(0)
 
         val weightedScore = if (totalActive > 0) {
-            val raw = (learned * 100.0 + monthly * 80.0 + weekly * 60.0 + (practiced - learned - monthly - weekly).coerceAtLeast(0) * 35.0) / totalActive
+            val raw = (learned * 100.0 + monthly * 80.0 + weekly * 60.0 + practicedDaily * 35.0) / totalActive
             raw.toInt().coerceIn(0, 100)
         } else 0
 
@@ -1030,7 +1031,7 @@ class VocabularyRepository(
             learnedWords = learned,
             monthlyWords = monthly,
             weeklyWords = weekly,
-            dailyWords = daily,
+            dailyWords = practicedDaily,
             unreviewedWords = unreviewed
         )
     }

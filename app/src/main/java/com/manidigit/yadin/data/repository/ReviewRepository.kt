@@ -297,10 +297,23 @@ class ReviewRepository(
         val targetLang = (session?.direction ?: CardDirection.NORMAL).targetLanguage()
         val sessionConceptIds = cards.map { it.conceptId }.toSet()
 
-        // Fast random candidate sampling (500 items) to ensure wide pool and instant load time
-        val randomCandidateContents = conceptDao.getRandomContents(targetLang, 500)
-        
-        val candidateConceptIds = (randomCandidateContents.map { it.conceptId } + sessionConceptIds).distinct()
+        // Fetch session concepts' categories first so same-category distractors are guaranteed in the pool (especially for PROFESSIONAL level)
+        val sessionConcepts = sessionConceptIds.chunked(300).flatMap { conceptDao.getConceptsByIds(it) }
+        val sessionCategoryIds = sessionConcepts.mapNotNull { it.categoryId }.distinct()
+        val categoryCandidateContents = if (sessionCategoryIds.isNotEmpty()) {
+            conceptDao.getContentsByCategories(targetLang, sessionCategoryIds, limit = 600)
+        } else {
+            emptyList()
+        }
+
+        // Combine category-targeted candidates with global random sampling (800 items) for wide coverage
+        val randomCandidateContents = conceptDao.getRandomContents(targetLang, 800)
+
+        val candidateConceptIds = (
+            sessionConceptIds +
+            categoryCandidateContents.map { it.conceptId } +
+            randomCandidateContents.map { it.conceptId }
+        ).distinct()
         val allContents = conceptDao.getContentsForConcepts(candidateConceptIds).filter { it.languageCode == targetLang && it.text.isNotBlank() }
         val poolConceptIds = allContents.map { it.conceptId }.distinct()
 
@@ -330,7 +343,10 @@ class ReviewRepository(
             val semantic: QuizDistractorScorer.PrecomputedSemantic
         )
 
-        // Precompute semantics ONCE for all unique concept translation entries in pool
+        val sessionCategorySet = sessionCategoryIds.toSet()
+
+        // Precompute semantics ONCE for all unique concept translation entries in pool,
+        // prioritizing candidates from session categories before deduplicating by compact key
         val pool = allContents.groupBy { it.conceptId }.mapNotNull { (cId, contentsList) ->
             val combinedText = contentsList.map { it.text.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("، ")
             if (combinedText.isBlank()) null else {
@@ -344,7 +360,9 @@ class ReviewRepository(
                     semantic = semantic
                 )
             }
-        }.distinctBy { it.semantic.compact }
+        }
+            .sortedByDescending { it.categoryId != null && it.categoryId in sessionCategorySet }
+            .distinctBy { it.semantic.compact }
 
         val questions = mutableListOf<QuizQuestion>()
 
@@ -362,15 +380,17 @@ class ReviewRepository(
                 !partsSemantics.any { part -> QuizDistractorScorer.arePrecomputedColliding(item.semantic, part) }
             }
 
-            // If pool is large, take a balanced sample to keep Levenshtein scoring instant (< 0.1ms per card)
-            val candidatesToScore = if (nonCollidingPool.size > 40) {
+            // Prioritize all same-category and same-entryType candidates so PROFESSIONAL level finds the most confusable distractors
+            val candidatesToScore = if (nonCollidingPool.size > 240) {
                 val cardCat = categoryMap[card.conceptId]
                 val cardEntryType = entryTypeMap[card.conceptId] ?: EntryType.WORD
                 val sameTypeAndCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId == cardCat && it.entryType == cardEntryType } else emptyList()
-                val sameType = nonCollidingPool.filter { it.entryType == cardEntryType }
                 val sameCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId == cardCat } else emptyList()
+                val sameType = nonCollidingPool.filter { it.entryType == cardEntryType }
                 val otherCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId != cardCat } else nonCollidingPool
-                (sameTypeAndCat.shuffled().take(15) + sameType.shuffled().take(20) + sameCat.shuffled().take(10) + otherCat.shuffled().take(15)).distinctBy { it.conceptId }.take(40)
+                (sameTypeAndCat.shuffled().take(100) + sameCat.shuffled().take(40) + sameType.shuffled().take(60) + otherCat.shuffled().take(40))
+                    .distinctBy { it.conceptId }
+                    .take(240)
             } else {
                 nonCollidingPool
             }
@@ -536,12 +556,6 @@ class ReviewRepository(
                 sm2Quality != null
             )
 
-        val isCorrectForDifficulty = when (sm2Quality) {
-            Sm2Quality.AGAIN, Sm2Quality.HARD -> false
-            Sm2Quality.GOOD, Sm2Quality.EASY -> true
-            null -> isCorrect
-        }
-
         val submitResult = runInTransaction {
             val currentLearning = learningDao.getLearningState(conceptId, direction)
             val currentStage = currentLearning?.stage ?: Stage.DAILY
@@ -559,12 +573,18 @@ class ReviewRepository(
             var finalFsrsState: Int = currentLearning?.fsrsState ?: 0
 
             if (useFsrs) {
-                val curFsrs = FsrsState(
-                    stability = finalFsrsStability,
-                    difficulty = finalFsrsDifficulty,
-                    reps = finalFsrsReps,
-                    lapses = finalFsrsLapses,
-                    state = finalFsrsState
+                val curFsrs = FsrsAlgorithm.resolveEffectiveState(
+                    state = FsrsState(
+                        stability = finalFsrsStability,
+                        difficulty = finalFsrsDifficulty,
+                        reps = finalFsrsReps,
+                        lapses = finalFsrsLapses,
+                        state = finalFsrsState
+                    ),
+                    stage = currentStage,
+                    lastReviewedDay = currentLearning?.lastReviewedDay,
+                    sm2IntervalDays = finalSm2Interval,
+                    sm2Repetitions = finalSm2Reps
                 )
                 val effectiveRating = sm2Quality?.let { FsrsRating.fromSm2Quality(it) }
                     ?: FsrsRating.fromBoolean(isCorrect)
@@ -584,10 +604,15 @@ class ReviewRepository(
                 finalFsrsLapses = fsrsRes.nextState.lapses
                 finalFsrsState = fsrsRes.nextState.state
             } else if (useSm2) {
-                val curSm2 = Sm2State(
-                    repetitions = finalSm2Reps,
-                    easinessFactor = finalSm2Ef,
-                    intervalDays = finalSm2Interval
+                val curSm2 = Sm2Algorithm.resolveEffectiveState(
+                    state = Sm2State(
+                        repetitions = finalSm2Reps,
+                        easinessFactor = finalSm2Ef,
+                        intervalDays = finalSm2Interval
+                    ),
+                    stage = currentStage,
+                    lastReviewedDay = currentLearning?.lastReviewedDay,
+                    fsrsStability = finalFsrsStability
                 )
                 val effectiveQuality = sm2Quality ?: Sm2Quality.fromBoolean(isCorrect)
                 val sm2Res = Sm2Algorithm.calculateNextReview(
@@ -638,14 +663,29 @@ class ReviewRepository(
             val consecutiveWrong = currentDiff?.consecutiveWrong ?: 0
             val hasReachedVeryHard = currentDiff?.hasReachedVeryHard ?: false
 
-            val diffResult = DifficultyCalculator.updateDifficulty(
-                current = curDifficultyEnum,
-                consecutiveCorrect = consecutiveCorrect,
-                consecutiveWrong = consecutiveWrong,
-                hasReachedVeryHard = hasReachedVeryHard,
-                isCorrect = isCorrectForDifficulty,
-                threshold = effectiveThreshold
-            )
+            val diffResult = if (sm2Quality == Sm2Quality.HARD) {
+                DifficultyCalculator.updateDifficultyForHardRating(
+                    current = curDifficultyEnum,
+                    consecutiveCorrect = consecutiveCorrect,
+                    consecutiveWrong = consecutiveWrong,
+                    hasReachedVeryHard = hasReachedVeryHard,
+                    threshold = effectiveThreshold
+                )
+            } else {
+                val isCorrectForDifficulty = when (sm2Quality) {
+                    Sm2Quality.AGAIN -> false
+                    Sm2Quality.GOOD, Sm2Quality.EASY -> true
+                    else -> isCorrect
+                }
+                DifficultyCalculator.updateDifficulty(
+                    current = curDifficultyEnum,
+                    consecutiveCorrect = consecutiveCorrect,
+                    consecutiveWrong = consecutiveWrong,
+                    hasReachedVeryHard = hasReachedVeryHard,
+                    isCorrect = isCorrectForDifficulty,
+                    threshold = effectiveThreshold
+                )
+            }
 
             val updatedDiff = (currentDiff ?: com.manidigit.yadin.data.local.entity.DifficultyStateEntity(
                 id = UUID.randomUUID().toString(),

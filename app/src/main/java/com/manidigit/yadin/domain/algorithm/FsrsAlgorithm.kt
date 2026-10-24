@@ -212,10 +212,31 @@ object FsrsAlgorithm {
             1
         } else {
             val computed = calculateIntervalDays(newStability, desiredRetention)
+            val hardInterval = if (isFirstReview) {
+                max(1, calculateIntervalDays(initialStability(FsrsRating.HARD), desiredRetention))
+            } else {
+                val currentS = max(MIN_STABILITY, currentState.stability)
+                val currentD = currentState.difficulty.coerceIn(MIN_DIFFICULTY, MAX_DIFFICULTY)
+                val dHard = nextDifficulty(currentD, FsrsRating.HARD)
+                val sHard = nextRecallStability(dHard, currentS, retrievabilityBefore, FsrsRating.HARD)
+                max(1, calculateIntervalDays(sHard, desiredRetention))
+            }
+            val goodInterval = if (isFirstReview) {
+                max(hardInterval, max(2, calculateIntervalDays(initialStability(FsrsRating.GOOD), desiredRetention)))
+            } else {
+                val currentS = max(MIN_STABILITY, currentState.stability)
+                val currentD = currentState.difficulty.coerceIn(MIN_DIFFICULTY, MAX_DIFFICULTY)
+                val dGood = nextDifficulty(currentD, FsrsRating.GOOD)
+                val sGood = nextRecallStability(dGood, currentS, retrievabilityBefore, FsrsRating.GOOD)
+                max(hardInterval, max(2, calculateIntervalDays(sGood, desiredRetention)))
+            }
             when (rating) {
-                FsrsRating.HARD -> max(1, computed)
-                FsrsRating.GOOD -> max(if (isFirstReview) 2 else 2, computed)
-                FsrsRating.EASY -> max(if (isFirstReview) 4 else computed + 1, computed)
+                FsrsRating.HARD -> hardInterval
+                FsrsRating.GOOD -> max(hardInterval, max(2, computed))
+                FsrsRating.EASY -> {
+                    val minEasy = if (isFirstReview) max(4, goodInterval + 1) else goodInterval + 1
+                    max(minEasy, computed)
+                }
                 else -> 1
             }
         }
@@ -241,6 +262,8 @@ object FsrsAlgorithm {
 
     /**
      * پیش‌نمایش فاصله مرور بعدی (بر حسب روز) برای هر ۴ دکمه کیفیت پاسخ در پشت فلش‌کارت.
+     * از آنجا که یکنواختی (Monotonicity) مستقیماً در [calculateNextReview] اعمال می‌شود،
+     * اعداد پیش‌نمایش دقیقاً برابر با نتیجه واقعی پس از انتخاب دکمه هستند.
      */
     fun previewIntervals(
         currentState: FsrsState,
@@ -255,8 +278,43 @@ object FsrsAlgorithm {
         return Sm2IntervalPreview(
             againDays = again,
             hardDays = hard,
-            goodDays = max(hard, good),
-            easyDays = max(max(hard, good) + 1, easy)
+            goodDays = good,
+            easyDays = easy
+        )
+    }
+
+    /**
+     * همگام‌سازی وضعیت اولیه FSRS هنگام تغییر الگوریتم از یادین یا SM-2 به FSRS برای کارت‌هایی که قبلاً مرور شده‌اند.
+     */
+    fun resolveEffectiveState(
+        state: FsrsState,
+        stage: Stage,
+        lastReviewedDay: String?,
+        sm2IntervalDays: Int = 0,
+        sm2Repetitions: Int = 0
+    ): FsrsState {
+        if (state.reps > 0 || state.stability > 0.0 || lastReviewedDay.isNullOrBlank()) {
+            return state
+        }
+        val seededStability = when {
+            sm2IntervalDays > 0 -> sm2IntervalDays.toDouble()
+            stage == Stage.LEARNED -> 60.0
+            stage == Stage.MONTHLY -> 30.0
+            stage == Stage.WEEKLY -> 7.0
+            else -> 1.4
+        }
+        val seededReps = when {
+            sm2Repetitions > 0 -> sm2Repetitions
+            stage == Stage.LEARNED -> 4
+            stage == Stage.MONTHLY -> 3
+            stage == Stage.WEEKLY -> 2
+            else -> 1
+        }
+        return state.copy(
+            stability = seededStability,
+            difficulty = state.difficulty.coerceIn(MIN_DIFFICULTY, MAX_DIFFICULTY),
+            reps = seededReps,
+            state = FsrsCardState.REVIEW.code
         )
     }
 

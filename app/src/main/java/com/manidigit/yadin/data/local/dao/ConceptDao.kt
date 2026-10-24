@@ -254,6 +254,21 @@ interface ConceptDao {
     @Query("SELECT * FROM contents WHERE languageCode = :languageCode ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandomContents(languageCode: String, limit: Int): List<ContentEntity>
 
+    @Query("""
+        SELECT cnt.* FROM contents cnt
+        INNER JOIN concepts c ON cnt.conceptId = c.id
+        WHERE cnt.languageCode = :languageCode
+          AND c.active = 1
+          AND c.categoryId IN (:categoryIds)
+        ORDER BY RANDOM()
+        LIMIT :limit
+    """)
+    suspend fun getContentsByCategories(
+        languageCode: String,
+        categoryIds: List<String>,
+        limit: Int = 600
+    ): List<ContentEntity>
+
     @Query("SELECT * FROM contents")
     suspend fun getAllContents(): List<ContentEntity>
 

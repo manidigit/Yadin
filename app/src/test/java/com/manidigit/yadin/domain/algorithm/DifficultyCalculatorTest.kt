@@ -211,4 +211,62 @@ class DifficultyCalculatorTest {
         assertEquals(VocabularyDifficulty.VERY_HARD, state.newDifficulty)
         assertTrue(state.hasReachedVeryHard)
     }
+
+    @Test
+    fun initialVeryHard_whenSteppedDown_preservesHasReachedVeryHardFlag() {
+        val result = DifficultyCalculator.updateDifficulty(
+            current = VocabularyDifficulty.VERY_HARD,
+            consecutiveCorrect = 0,
+            consecutiveWrong = 0,
+            hasReachedVeryHard = false,
+            isCorrect = true,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.HARD, result.newDifficulty)
+        assertTrue(result.hasReachedVeryHard)
+    }
+
+    @Test
+    fun hardRating_convergesToHardFromEasyAndVeryHardWithoutPushingToVeryHard() {
+        // EASY -> MEDIUM -> HARD when rating HARD with threshold = 1
+        val fromEasy = DifficultyCalculator.updateDifficultyForHardRating(
+            current = VocabularyDifficulty.EASY,
+            consecutiveCorrect = 0,
+            consecutiveWrong = 0,
+            hasReachedVeryHard = false,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.MEDIUM, fromEasy.newDifficulty)
+
+        val fromMedium = DifficultyCalculator.updateDifficultyForHardRating(
+            current = fromEasy.newDifficulty,
+            consecutiveCorrect = fromEasy.consecutiveCorrect,
+            consecutiveWrong = fromEasy.consecutiveWrong,
+            hasReachedVeryHard = fromEasy.hasReachedVeryHard,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.HARD, fromMedium.newDifficulty)
+
+        // HARD stays HARD (never pushed to VERY_HARD by HARD rating)
+        val fromHard = DifficultyCalculator.updateDifficultyForHardRating(
+            current = VocabularyDifficulty.HARD,
+            consecutiveCorrect = 0,
+            consecutiveWrong = 0,
+            hasReachedVeryHard = false,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.HARD, fromHard.newDifficulty)
+        assertFalse(fromHard.hasReachedVeryHard)
+
+        // VERY_HARD steps down to HARD on HARD recall rating and retains hasReachedVeryHard = true
+        val fromVeryHard = DifficultyCalculator.updateDifficultyForHardRating(
+            current = VocabularyDifficulty.VERY_HARD,
+            consecutiveCorrect = 0,
+            consecutiveWrong = 0,
+            hasReachedVeryHard = false,
+            threshold = 1
+        )
+        assertEquals(VocabularyDifficulty.HARD, fromVeryHard.newDifficulty)
+        assertTrue(fromVeryHard.hasReachedVeryHard)
+    }
 }

@@ -192,7 +192,7 @@ data class ParseWarning(
     val rawText: String,
     val message: String
 ) {
-    override fun toString(): String = "خط $lineNumber («$rawText»): $message"
+    fun format(lineTemplate: String): String = String.format(lineTemplate, lineNumber, rawText, message)
 }
 
 enum class ParseWarningType {

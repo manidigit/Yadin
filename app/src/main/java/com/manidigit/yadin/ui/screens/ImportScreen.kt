@@ -349,7 +349,7 @@ fun ImportScreen(
                     ) {
                         Icon(YadinIcons.pasteClipboard, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Paste", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.import_btn_paste), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -611,7 +611,12 @@ fun ImportScreen(
                                 }
                                 for (warn in parseResult.warnings.take(5)) {
                                     Text(
-                                        text = "• خط ${warn.lineNumber.formatDigits()} («${warn.rawText}»): ${warn.message}",
+                                        text = stringResource(
+                                            R.string.import_warning_line_fmt,
+                                            warn.lineNumber.formatDigits(),
+                                            warn.rawText,
+                                            warn.message
+                                        ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = colors.onSurface
                                     )
