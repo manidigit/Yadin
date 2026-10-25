@@ -158,7 +158,8 @@ object FsrsAlgorithm {
         desiredRetention: Double = DEFAULT_DESIRED_RETENTION
     ): FsrsTransitionResult {
         val g = rating.grade
-        val isFirstReview = currentState.reps <= 0 || currentState.stability <= 0.0 || currentState.state == FsrsCardState.NEW.code
+        val isFirstReview = currentState.stability <= 0.0 ||
+            (currentState.state == FsrsCardState.NEW.code && currentState.reps <= 0 && currentState.lapses <= 0)
 
         val elapsedDays = if (!lastReviewedDay.isNullOrBlank()) {
             max(0, ClockAndDayMath.daysBetween(lastReviewedDay, todayDayString))
@@ -324,7 +325,7 @@ object FsrsAlgorithm {
     }
 
     private fun initialDifficulty(rating: FsrsRating): Double {
-        val d0 = W[4] - exp(W[5] * (rating.grade - 1)) + 1.0
+        val d0 = W[4] - (rating.grade - 3.0) * W[5]
         return d0.coerceIn(MIN_DIFFICULTY, MAX_DIFFICULTY)
     }
 

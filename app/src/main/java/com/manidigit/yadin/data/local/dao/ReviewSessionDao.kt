@@ -162,11 +162,16 @@ interface ReviewSessionDao {
 
     @Query("""
         SELECT COUNT(*) FROM (
-            SELECT sessionId
-            FROM review_history
-            WHERE mode = 'QUIZ' AND sessionId IS NOT NULL AND sessionId != ''
-            GROUP BY sessionId
-            HAVING COUNT(*) >= :minQuestions AND SUM(CASE WHEN isCorrect = 1 THEN 1 ELSE 0 END) = COUNT(*)
+            SELECT rh.sessionId
+            FROM review_history rh
+            INNER JOIN review_sessions rs ON rh.sessionId = rs.id
+            WHERE rh.mode = 'QUIZ'
+              AND rh.sessionId IS NOT NULL AND rh.sessionId != ''
+              AND rs.status = 'COMPLETED'
+            GROUP BY rh.sessionId
+            HAVING COUNT(*) >= :minQuestions
+               AND COUNT(*) >= rs.totalItems
+               AND SUM(CASE WHEN rh.isCorrect = 1 THEN 1 ELSE 0 END) = COUNT(*)
         )
     """)
     suspend fun getPerfectQuizSessionsCount(minQuestions: Int = 5): Int

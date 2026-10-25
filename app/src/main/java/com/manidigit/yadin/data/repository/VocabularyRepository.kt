@@ -595,7 +595,11 @@ class VocabularyRepository(
     ): Result<Unit> {
         return database.withTransaction {
             val existing = conceptDao.getConceptById(conceptId)
-                ?: return@withTransaction Result.failure(IllegalArgumentException("مفهوم یافت نشد"))
+                ?: return@withTransaction Result.failure(
+                    IllegalArgumentException(
+                        if (java.util.Locale.getDefault().language == "en") "Concept not found" else "مفهوم یافت نشد"
+                    )
+                )
             val now = System.currentTimeMillis()
             val effectivePrimaryCategory = categoryIds.firstOrNull() ?: categoryId
             conceptDao.updateConcept(
@@ -640,8 +644,13 @@ class VocabularyRepository(
             val newCanonicalKey = TextUtilities.toCanonicalKey(finalSourceText)
             val conflict = conceptDao.findActiveContentByCanonicalKey(canonicalSourceLang, newCanonicalKey)
             if (conflict != null && conflict.conceptId != conceptId) {
+                val msg = if (java.util.Locale.getDefault().language == "en") {
+                    "This word («$finalSourceText») is already registered in the dictionary."
+                } else {
+                    "این واژه («$finalSourceText») قبلاً در واژه‌نامه ثبت شده است."
+                }
                 return@withTransaction Result.failure(
-                    IllegalStateException("این واژه («$finalSourceText») قبلاً در واژه‌نامه ثبت شده است.")
+                    IllegalStateException(msg)
                 )
             }
 

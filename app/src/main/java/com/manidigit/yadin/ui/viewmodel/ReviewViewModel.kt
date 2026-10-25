@@ -1,7 +1,9 @@
 package com.manidigit.yadin.ui.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.repository.ReviewFilters
 import com.manidigit.yadin.data.repository.ReviewRepository
 import com.manidigit.yadin.domain.algorithm.FsrsAlgorithm
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 
 /**
  * مدیریت نشست‌های مرور (فلش‌کارت و آزمون ۴گزینه‌ای) - ReviewViewModel
@@ -35,14 +38,21 @@ import kotlinx.coroutines.withContext
  *
  * @property reviewRepo مخزن عملیات مرور و آزمون
  * @property externalScope دامنه کورتین اختیاری در صورت استفاده به عنوان نماینده در ViewModel ارشد
+ * @property application کانتکست اختیاری اپلیکیشن جهت استخراج پیام‌های خطای دوزبانه
  */
 class ReviewViewModel(
     val reviewRepo: ReviewRepository,
-    private val externalScope: CoroutineScope? = null
+    private val externalScope: CoroutineScope? = null,
+    private val application: Application? = null
 ) : ViewModel() {
 
     private val scope: CoroutineScope
         get() = externalScope ?: viewModelScope
+
+    private fun formatError(resId: Int, fallbackPrefix: String, detail: String?): String {
+        val msg = detail ?: ""
+        return application?.getString(resId, msg) ?: "$fallbackPrefix: $msg"
+    }
 
     // --- وضعیت فیلترها و کاندیداها ---
     private val _setupCandidateCount = MutableStateFlow(0)
@@ -116,7 +126,7 @@ class ReviewViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Ignore cancellation
             } catch (e: Exception) {
-                _reviewErrorMessage.value = "خطا در شمارش کارت‌های آماده: ${e.message}"
+                _reviewErrorMessage.value = formatError(R.string.err_count_candidates_fmt, "خطا در شمارش کارت‌های آماده", e.message)
             }
         }
     }
@@ -167,7 +177,7 @@ class ReviewViewModel(
                     }
                 }
             } catch (e: Exception) {
-                _reviewErrorMessage.value = "خطا در شروع نشست مرور: ${e.message}"
+                _reviewErrorMessage.value = formatError(R.string.err_start_session_fmt, "خطا در شروع نشست مرور", e.message)
             }
         }
     }
@@ -272,7 +282,7 @@ class ReviewViewModel(
                     }
                 }
             } catch (e: Exception) {
-                _reviewErrorMessage.value = "خطا در ثبت پاسخ فلش‌کارت: ${e.message}"
+                _reviewErrorMessage.value = formatError(R.string.err_submit_flashcard_fmt, "خطا در ثبت پاسخ فلش‌کارت", e.message)
             } finally {
                 isSubmittingFlashcard = false
             }
@@ -306,8 +316,15 @@ class ReviewViewModel(
         // تصمیم استاندارد معماری D24: صحت فقط با تطابق مستقیم شاخص گزینه ارزیابی می‌شود
         val isCorrect = (optionIndex == q.correctIndex)
 
+        val previousSelectedOption = _quizSelectedOption.value
+        val previousUserAnswers = _quizUserAnswers.value
+
         _quizSelectedOption.value = optionIndex
-        _quizUserAnswers.value = _quizUserAnswers.value + (idx to optionIndex)
+        _quizUserAnswers.value = previousUserAnswers + (idx to optionIndex)
+
+        val serializedOptions = runCatching {
+            JSONArray(q.options.map { it.text }).toString()
+        }.getOrNull()
 
         val attemptId = "${session.id}_${q.conceptId}_${q.direction}_$idx"
         lastSubmitQuizJob = scope.launch {
@@ -321,6 +338,7 @@ class ReviewViewModel(
                     mode = ReviewMode.QUIZ,
                     selectedIndex = optionIndex,
                     correctIndex = q.correctIndex,
+                    optionsJson = serializedOptions,
                     difficultyThreshold = difficultyThreshold,
                     reviewAttemptId = attemptId,
                     algorithm = _activeAlgorithm.value,
@@ -345,7 +363,12 @@ class ReviewViewModel(
                 }
                 onAnswerRecorded?.invoke()
             } catch (e: Exception) {
-                _reviewErrorMessage.value = "خطا در ثبت پاسخ آزمون: ${e.message}"
+                // Rollback optimistic UI selection if database persistence fails
+                if (_currentCardIndex.value == idx) {
+                    _quizSelectedOption.value = previousSelectedOption
+                }
+                _quizUserAnswers.value = previousUserAnswers
+                _reviewErrorMessage.value = formatError(R.string.err_submit_quiz_fmt, "خطا در ثبت پاسخ آزمون", e.message)
             }
         }
     }
@@ -377,7 +400,7 @@ class ReviewViewModel(
                             onSessionCompleted?.invoke()
                         }
                     } catch (e: Exception) {
-                        _reviewErrorMessage.value = "خطا در اتمام نشست آزمون: ${e.message}"
+                        _reviewErrorMessage.value = formatError(R.string.err_complete_session_fmt, "خطا در اتمام نشست آزمون", e.message)
                         withContext(Dispatchers.Main) {
                             onSessionCompleted?.invoke()
                         }
@@ -424,7 +447,7 @@ class ReviewViewModel(
                     lastSubmitFlashcardJob?.join()
                     reviewRepo.abandonSession(session.id)
                 } catch (e: Exception) {
-                    _reviewErrorMessage.value = "خطا در لغو نشست: ${e.message}"
+                    _reviewErrorMessage.value = formatError(R.string.err_abandon_session_fmt, "خطا در لغو نشست", e.message)
                 }
             }
         }

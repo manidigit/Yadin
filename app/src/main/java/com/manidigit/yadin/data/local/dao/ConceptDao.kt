@@ -199,7 +199,7 @@ interface ConceptDao {
                     LIKE '%' || :searchKey || '%'
              ))
         )
-        AND (:categoryId IS NULL OR c.categoryId = :categoryId)
+        AND (:categoryId IS NULL OR c.categoryId = :categoryId OR EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId = :categoryId))
         AND (:stage IS NULL OR ls.stage = :stage)
         AND (:difficulty IS NULL OR COALESCE(ds.current, 'EASY') = :difficulty)
         ORDER BY c.updatedAt DESC
@@ -246,12 +246,19 @@ interface ConceptDao {
 
     @Query("""
         SELECT c.* FROM concepts c
-        WHERE c.active = 1 AND c.categoryId = :categoryId
+        WHERE c.active = 1 AND (c.categoryId = :categoryId OR EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId = :categoryId))
         ORDER BY c.updatedAt DESC
     """)
     fun getConceptsByCategoryFlow(categoryId: String): Flow<List<ConceptEntity>>
 
-    @Query("SELECT * FROM contents WHERE languageCode = :languageCode ORDER BY RANDOM() LIMIT :limit")
+    @Query("""
+        SELECT cnt.* FROM contents cnt
+        INNER JOIN concepts c ON cnt.conceptId = c.id
+        WHERE cnt.languageCode = :languageCode
+          AND c.active = 1
+        ORDER BY RANDOM()
+        LIMIT :limit
+    """)
     suspend fun getRandomContents(languageCode: String, limit: Int): List<ContentEntity>
 
     @Query("""
@@ -259,7 +266,7 @@ interface ConceptDao {
         INNER JOIN concepts c ON cnt.conceptId = c.id
         WHERE cnt.languageCode = :languageCode
           AND c.active = 1
-          AND c.categoryId IN (:categoryIds)
+          AND (c.categoryId IN (:categoryIds) OR EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId IN (:categoryIds)))
         ORDER BY RANDOM()
         LIMIT :limit
     """)

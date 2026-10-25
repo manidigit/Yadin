@@ -105,7 +105,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     // --- زیر-ویومدل‌های تفکیک‌شده طبق اصول SOLID (ISS-27) ---
-    val reviewVm = ReviewViewModel(reviewRepo, viewModelScope)
+    val reviewVm = ReviewViewModel(reviewRepo, viewModelScope, application)
     val libraryVm = LibraryViewModel(vocabularyRepo, viewModelScope)
     val statisticsVm = StatisticsViewModel(vocabularyRepo, reviewRepo, viewModelScope)
     val settingsVm = SettingsViewModel(application, settingsRepo, backupRepo, viewModelScope)
@@ -232,6 +232,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _seedMessage.value = msg
                     }
                 }
+                reviewRepo.abandonOrphanActiveSessions()
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -244,6 +245,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 settingsVm.appLanguageDirection.collect { dir ->
                     statisticsVm.syncDirection(dir)
                     libraryVm.loadRecentWords(dir)
+                }
+            }
+            viewModelScope.launch {
+                settingsVm.ttsSpeechRate.collect { rate ->
+                    com.manidigit.yadin.ui.util.TtsManager.setSpeechRate(rate)
                 }
             }
         }

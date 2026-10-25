@@ -19,10 +19,39 @@ class FsrsAlgorithmTest {
         assertTrue(hard.nextState.stability < good.nextState.stability)
         assertTrue(good.nextState.stability < easy.nextState.stability)
 
-        // Difficulty is higher for AGAIN than EASY
-        assertTrue(again.nextState.difficulty > easy.nextState.difficulty)
+        // Difficulty is strictly decreasing across ratings: AGAIN > HARD > GOOD > EASY (centered at 5.0 for GOOD)
+        assertTrue(again.nextState.difficulty > hard.nextState.difficulty)
+        assertTrue(hard.nextState.difficulty > good.nextState.difficulty)
+        assertTrue(good.nextState.difficulty > easy.nextState.difficulty)
+        assertEquals(5.0, good.nextState.difficulty, 0.01)
         assertEquals(1, again.intervalDays)
         assertTrue(easy.intervalDays >= good.intervalDays)
+    }
+
+    @Test
+    fun `second review after initial AGAIN is treated as learning review rather than brand new card`() {
+        val firstAgain = FsrsAlgorithm.calculateNextReview(
+            currentState = FsrsState(),
+            rating = FsrsRating.AGAIN,
+            lastReviewedDay = null,
+            todayDayString = "2026-10-19",
+            desiredRetention = 0.90
+        )
+        assertEquals(FsrsCardState.LEARNING.code, firstAgain.nextState.state)
+        assertEquals(1, firstAgain.nextState.lapses)
+        assertEquals(0, firstAgain.nextState.reps)
+
+        val secondGood = FsrsAlgorithm.calculateNextReview(
+            currentState = firstAgain.nextState,
+            rating = FsrsRating.GOOD,
+            lastReviewedDay = firstAgain.lastReviewedDay,
+            todayDayString = firstAgain.nextReviewDay,
+            desiredRetention = 0.90
+        )
+        assertEquals(1, secondGood.nextState.reps)
+        assertEquals(1, secondGood.nextState.lapses)
+        // Difficulty should retain memory of the initial AGAIN (remain > 5.0) rather than resetting to D0(GOOD)=5.0
+        assertTrue(secondGood.nextState.difficulty > 5.0)
     }
 
     @Test

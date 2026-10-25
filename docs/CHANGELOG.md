@@ -2,6 +2,27 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۶۷.۰] - ۲۰۲۶-۱۰-۲۵ (۱۴۰۵/۰۸/۰۳)
+### پالایش و رفع کامل ۱۳ باگ تاییدشده در ممیزی فنی هوش مصنوعی کیمی (Kimi Audit)، بهینه‌سازی الگوریتم FSRS، صف سررسید SM-2/FSRS و پایداری اتمیک آزمون (کد نسخه: ۷۹)
+- **اصلاحات الگوریتمی و زمان‌بندی مرور (Algorithm & Scheduling Fixes):**
+  - **حفظ حضور کارت‌های بالغ SM-2 و FSRS (با فاصله $\ge 60$ روز) در صف مرور سررسید و تقویم پیش‌بینی (`LearningDao.kt`):** اصلاح کوئری‌های `getFilteredCandidateConceptIds`، `countFilteredCandidates` و `getScheduledReviewsByDay` تا کارت‌های الگوریتم‌های `SM2` و `FSRS` که فاصله مرور آن‌ها به ۶۰ روز یا بیشتر رسیده (و مرحله نمایشی `LEARNED` گرفته‌اند اما `nextReviewDay` معتبر دارند) در موعد سررسید خود وارد صف مرور و نمودار پیش‌بینی شوند.
+  - **رفع باگ تشخیص `isFirstReview` در الگوریتم FSRS پس از زدن دکمه «فراموش کردم» در مرور اول (`FsrsAlgorithm.kt`):** اصلاح شرط `isFirstReview` تا کارتی که در اولین مرور `AGAIN` خورده و وارد وضعیت `LEARNING` (`lapses = 1, stability = 0.48`) شده است، در مرور بعدی مجدداً کارت کاملاً جدید فرض نشود.
+  - **هماهنگ‌سازی فرمول `initialDifficulty` با وزن‌های FSRS-4.5 (`FsrsAlgorithm.kt`):** اصلاح تابع محاسبه دشواری اولیه به فرمول خطی استاندارد FSRS-4.5 (`W[4] - (grade - 3.0) * W[5]`) تا دشواری اولیه برای گزینه «خوب (`GOOD`)» دقیقاً روی `5.0` قرار گیرد، تفکیک یکنواخت `AGAIN (6.70) > HARD (5.85) > GOOD (5.00) > EASY (4.15)` برقرار شود و بازگشت به میانگین (`Mean Reversion`) به سمت `5.0` عمل کند.
+- **اصلاحات دیتابیس، آزمون و پایداری (Database, Quiz & Stability Fixes):**
+  - **یکتاسازی اتمیک `reviewAttemptId` و حفظ شمارنده‌های متوالی در مسیر Idempotent (`ReviewRepository.kt`):** انتقال بررسی `getHistoryByAttemptId` به درون تراکنش `runInTransaction` و بازگرداندن دقیق مقادیر `consecutiveCorrect` و `consecutiveWrong` از وضعیت فعلی کارت.
+  - **بازگردانی خودکار (Rollback) وضعیت گزینه انتخابی آزمون در صورت بروز خطای دیتابیس (`ReviewViewModel.kt`):** ذخیره وضعیت قبلی `_quizSelectedOption` و `_quizUserAnswers` پیش از ثبت خوش‌بینانه و بازگردانی آن‌ها در بلوک `catch`.
+  - **حذف کلمات غیرفعال (Soft-Deleted) از استخر گزینه‌های انحرافی آزمون (`ConceptDao.getRandomContents`):** افزودن `INNER JOIN concepts c ON cnt.conceptId = c.id WHERE c.active = 1`.
+  - **اعتبارسنجی حضور هر دو زبان مبدأ و مقصد در انتخاب کارت‌های مرور (`LearningDao.kt` و `ReviewRepository.kt`):** بررسی وجود متن غیرخالی برای هر دو زبان مبدأ و مقصد در کوئری کاندیدها و حذف fallback نادرست `.ifEmpty { sourceVariants }` در `fetchCardsForSession`.
+  - **پشتیبانی کامل از جدول واسط `concept_categories` در فیلترهای دسته‌بندی (`LearningDao.kt` و `ConceptDao.kt`):** اعمال شرط `EXISTS (SELECT 1 FROM concept_categories ...)` در کوئری‌های جلسه مرور، جستجوی کتابخانه و استخر گزینه‌های هم‌دسته کوییز.
+  - **تکمیل شرط وضعیت `COMPLETED` در دستاورد «آزمون‌های بی‌نقص» (`ReviewSessionDao.getPerfectQuizSessionsCount`):** شمارش منحصراً جلسات آزمون تکمیل‌شده (`status = 'COMPLETED'`) که به تمامی سؤالات جلسه (`COUNT(*) >= rs.totalItems`) پاسخ صحیح داده‌اند.
+  - **ذخیره `optionsJson` هنگام ثبت پاسخ آزمون (`ReviewViewModel.submitQuizAnswer`):** سریال‌سازی ۴ گزینه سؤال به فرمت JSON و ارسال به `reviewRepo.submitAnswer`.
+  - **اعمال سرعت تلفظ (`ttsSpeechRate`) در موتور `TtsManager` و همگام‌سازی زنده در `MainViewModel`:** افزودن پشتیبانی از `setSpeechRate` در `TtsManager.kt` و اتصال مستقیم آن به جریان `settingsVm.ttsSpeechRate`، به همراه پاک‌سازی جلسات `ACTIVE` قدیمی (`abandonOrphanActiveSessions`) در بدو راه‌اندازی برنامه.
+  - **محلی‌سازی پیام‌های خطای داخلی در `ReviewViewModel` و `VocabularyRepository` (`strings.xml` فارسی و انگلیسی).**
+- **به‌روزرسانی مستندات (Documentation):**
+  - تدوین و تکمیل سند `docs/KIMI_AUDIT_CHECKLIST.md` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.67.0` (کد نسخه: `79`).
+
+---
+
 ### [نسخه ۱.۶۶.۰] - ۲۰۲۶-۱۰-۲۴ (۱۴۰۵/۰۸/۰۲)
 ### بازرسی جامع الگوریتم‌ها (Grok Audit)، اصلاح شاخص ماندگاری حافظه، همگام‌سازی دکمه «سخت» با سطح دشواری، ارتقای موتور کوییز حرفه‌ای و دوزبانه‌سازی کامل خروجی‌ها (کد نسخه: ۷۸)
 - **ویژگی‌های جدید (Features):**

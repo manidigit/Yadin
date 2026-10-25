@@ -710,4 +710,11 @@ libro: کتاب</string>
     <string name="csv_mode_flashcard">فلش‌کارت</string>
     <string name="csv_res_correct">صحیح</string>
     <string name="csv_res_wrong">غلط</string>
+    <string name="err_count_candidates_fmt">خطا در شمارش کارت‌های آماده: %1$s</string>
+    <string name="err_start_session_fmt">خطا در شروع نشست مرور: %1$s</string>
+    <string name="err_submit_flashcard_fmt">خطا در ثبت پاسخ فلش‌کارت: %1$s</string>
+    <string name="err_submit_quiz_fmt">خطا در ثبت پاسخ آزمون: %1$s</string>
+    <string name="err_complete_session_fmt">خطا در اتمام نشست آزمون: %1$s</string>
+    <string name="err_abandon_session_fmt">خطا در لغو نشست: %1$s</string>
+    <string name="err_word_already_exists_fmt">این واژه («%1$s») قبلاً در واژه‌نامه ثبت شده است.</string>
 </resources>

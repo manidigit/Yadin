@@ -214,8 +214,11 @@ class ReviewRepository(
             val sourceContents = contents.filter { it.languageCode != baseTargetLang }
             val targetContents = contents.filter { it.languageCode == baseTargetLang }
 
-            val primarySource = sourceContents.firstOrNull() ?: contents.firstOrNull()
-            if (primarySource == null) {
+            val primarySource = sourceContents.firstOrNull()
+            val targetTranslations = targetContents.map { it.text.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+            if (primarySource == null || targetTranslations.isEmpty()) {
                 reviewSessionDao.deleteSessionItemById(item.id)
                 orphanCount++
                 continue
@@ -225,11 +228,6 @@ class ReviewRepository(
                 .filter { it.isNotEmpty() }
                 .distinct()
                 .ifEmpty { listOf(primarySource.text.trim()) }
-
-            val targetTranslations = targetContents.map { it.text.trim() }
-                .filter { it.isNotEmpty() }
-                .distinct()
-                .ifEmpty { sourceVariants }
 
             val learning = learningDao.getLearningState(item.conceptId, item.direction)
             val stage = learning?.stage ?: Stage.DAILY
@@ -529,19 +527,6 @@ class ReviewRepository(
         algorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
         fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION
     ): SubmitResult {
-        // Idempotency guard: If this exact attempt was already recorded, return latest state directly
-        val existingAttempt = reviewSessionDao.getHistoryByAttemptId(reviewAttemptId)
-        if (existingAttempt != null) {
-            val curLearning = learningDao.getLearningState(conceptId, direction)
-            val curDiff = learningDao.getDifficultyState(conceptId, direction)
-            return SubmitResult(
-                newStage = curLearning?.stage ?: Stage.DAILY,
-                nextReviewDay = curLearning?.nextReviewDay,
-                newDifficulty = curDiff?.current ?: VocabularyDifficulty.EASY,
-                isCorrect = existingAttempt.isCorrect
-            )
-        }
-
         val sessionCheck = reviewSessionDao.getSessionById(sessionId)
         val persistedThreshold = settingsDao?.getSetting("difficultyThreshold")?.toIntOrNull()
         val effectiveThreshold = (persistedThreshold ?: difficultyThreshold).coerceIn(1, 5)
@@ -557,6 +542,21 @@ class ReviewRepository(
             )
 
         val submitResult = runInTransaction {
+            // Atomic idempotency guard inside transaction: If this exact attempt was already recorded, return latest state with counters
+            val existingAttempt = reviewSessionDao.getHistoryByAttemptId(reviewAttemptId)
+            if (existingAttempt != null) {
+                val curLearning = learningDao.getLearningState(conceptId, direction)
+                val curDiff = learningDao.getDifficultyState(conceptId, direction)
+                return@runInTransaction SubmitResult(
+                    newStage = curLearning?.stage ?: Stage.DAILY,
+                    nextReviewDay = curLearning?.nextReviewDay,
+                    newDifficulty = curDiff?.current ?: VocabularyDifficulty.EASY,
+                    isCorrect = existingAttempt.isCorrect,
+                    consecutiveCorrect = curDiff?.consecutiveCorrect ?: 0,
+                    consecutiveWrong = curDiff?.consecutiveWrong ?: 0
+                )
+            }
+
             val currentLearning = learningDao.getLearningState(conceptId, direction)
             val currentStage = currentLearning?.stage ?: Stage.DAILY
 

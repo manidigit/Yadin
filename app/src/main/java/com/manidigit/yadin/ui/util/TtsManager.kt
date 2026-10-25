@@ -24,22 +24,42 @@ object TtsManager {
     @Volatile
     private var isInitializing = false
 
+    @Volatile
+    private var currentSpeechRate: Float = 1.0f
+
     private var pendingSpeech: PendingRequest? = null
 
     private data class PendingRequest(
         val text: String,
         val locale: Locale,
+        val speechRate: Float,
         val onError: ((String) -> Unit)?
     )
+
+    fun setSpeechRate(rate: Float) {
+        val clamped = rate.coerceIn(0.5f, 2.0f)
+        currentSpeechRate = clamped
+        synchronized(this) {
+            try {
+                if (isInitialized) {
+                    tts?.setSpeechRate(clamped)
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
 
     fun speak(
         context: Context,
         text: String,
         languageCode: String? = null,
+        speechRate: Float = currentSpeechRate,
         onError: ((String) -> Unit)? = null
     ) {
         if (text.isBlank()) return
         val appContext = context.applicationContext
+        val effectiveRate = speechRate.coerceIn(0.5f, 2.0f)
+        currentSpeechRate = effectiveRate
 
         // Auto-detect if languageCode not explicitly given: contains Arabic/Persian Unicode chars
         val hasPersianChars = text.any { ch -> ch in '\u0600'..'\u06FF' || ch in '\uFB50'..'\uFDFF' || ch in '\uFE70'..'\uFEFF' }
@@ -54,19 +74,19 @@ object TtsManager {
 
         synchronized(this) {
             if (isInitialized && tts != null) {
-                speakInternal(appContext, text, locale, onError)
+                speakInternal(appContext, text, locale, effectiveRate, onError)
                 return
             }
 
             if (isInitializing) {
                 // If engine is currently initializing, queue latest request instead of destroying and recreating
-                pendingSpeech = PendingRequest(text, locale, onError)
+                pendingSpeech = PendingRequest(text, locale, effectiveRate, onError)
                 return
             }
 
             // Engine not initialized and not initializing -> Start initialization once
             isInitializing = true
-            pendingSpeech = PendingRequest(text, locale, onError)
+            pendingSpeech = PendingRequest(text, locale, effectiveRate, onError)
 
             tts = TextToSpeech(appContext) { status ->
                 synchronized(this@TtsManager) {
@@ -76,7 +96,7 @@ object TtsManager {
                         val request = pendingSpeech
                         pendingSpeech = null
                         if (request != null) {
-                            speakInternal(appContext, request.text, request.locale, request.onError)
+                            speakInternal(appContext, request.text, request.locale, request.speechRate, request.onError)
                         }
                     } else {
                         isInitialized = false
@@ -95,10 +115,12 @@ object TtsManager {
         appContext: Context,
         text: String,
         locale: Locale,
+        speechRate: Float,
         onError: ((String) -> Unit)?
     ) {
         val engine = tts ?: return
         try {
+            engine.setSpeechRate(speechRate.coerceIn(0.5f, 2.0f))
             val result = engine.setLanguage(locale)
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 val fallbackResult = engine.setLanguage(Locale.US)

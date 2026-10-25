@@ -694,4 +694,11 @@ libro: book</string>
     <string name="csv_mode_flashcard">Flashcard</string>
     <string name="csv_res_correct">Correct</string>
     <string name="csv_res_wrong">Wrong</string>
+    <string name="err_count_candidates_fmt">Error counting due cards: %1$s</string>
+    <string name="err_start_session_fmt">Error starting review session: %1$s</string>
+    <string name="err_submit_flashcard_fmt">Error recording flashcard answer: %1$s</string>
+    <string name="err_submit_quiz_fmt">Error recording quiz answer: %1$s</string>
+    <string name="err_complete_session_fmt">Error completing quiz session: %1$s</string>
+    <string name="err_abandon_session_fmt">Error cancelling session: %1$s</string>
+    <string name="err_word_already_exists_fmt">This word («%1$s») is already registered in the dictionary.</string>
 </resources>

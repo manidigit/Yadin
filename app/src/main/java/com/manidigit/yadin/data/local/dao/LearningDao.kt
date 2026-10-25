@@ -182,17 +182,22 @@ interface LearningDao {
         INNER JOIN concepts c ON ls.conceptId = c.id
         LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
         WHERE c.active = 1
-        AND EXISTS (SELECT 1 FROM contents cnt WHERE cnt.conceptId = c.id AND TRIM(cnt.text) != '')
+        AND EXISTS (SELECT 1 FROM contents cntSrc WHERE cntSrc.conceptId = c.id AND cntSrc.languageCode != 'fa' AND TRIM(cntSrc.text) != '')
+        AND EXISTS (SELECT 1 FROM contents cntTgt WHERE cntTgt.conceptId = c.id AND cntTgt.languageCode = 'fa' AND TRIM(cntTgt.text) != '')
         AND ls.direction = :direction
         AND (
             (:reviewType = 'DAILY' AND ls.stage = 'DAILY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'WEEKLY' AND ls.stage = 'WEEKLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'MONTHLY' AND ls.stage = 'MONTHLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
-            ((:reviewType = 'RANDOM' OR :reviewType = 'SM2' OR :reviewType = 'FSRS') AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
+            (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+            ((:reviewType = 'SM2' OR :reviewType = 'FSRS') AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (
+                (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+                (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+            ))
         )
         AND (:hasDifficultyFilter = 0 OR COALESCE(ds.current, 'EASY') IN (:difficulties))
-        AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
+        AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds) OR EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId IN (:categoryIds)))
         AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
         ORDER BY 
             CASE 
@@ -222,17 +227,22 @@ interface LearningDao {
         INNER JOIN concepts c ON ls.conceptId = c.id
         LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
         WHERE c.active = 1
-        AND EXISTS (SELECT 1 FROM contents cnt WHERE cnt.conceptId = c.id AND TRIM(cnt.text) != '')
+        AND EXISTS (SELECT 1 FROM contents cntSrc WHERE cntSrc.conceptId = c.id AND cntSrc.languageCode != 'fa' AND TRIM(cntSrc.text) != '')
+        AND EXISTS (SELECT 1 FROM contents cntTgt WHERE cntTgt.conceptId = c.id AND cntTgt.languageCode = 'fa' AND TRIM(cntTgt.text) != '')
         AND ls.direction = :direction
         AND (
             (:reviewType = 'DAILY' AND ls.stage = 'DAILY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'WEEKLY' AND ls.stage = 'WEEKLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'MONTHLY' AND ls.stage = 'MONTHLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
-            ((:reviewType = 'RANDOM' OR :reviewType = 'SM2' OR :reviewType = 'FSRS') AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
+            (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+            ((:reviewType = 'SM2' OR :reviewType = 'FSRS') AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (
+                (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+                (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+            ))
         )
         AND (:hasDifficultyFilter = 0 OR COALESCE(ds.current, 'EASY') IN (:difficulties))
-        AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds))
+        AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds) OR EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId IN (:categoryIds)))
         AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
     """)
     suspend fun countFilteredCandidates(
@@ -380,7 +390,7 @@ interface LearningDao {
         SELECT ls.nextReviewDay, COUNT(*) AS count
         FROM learning_states ls
         INNER JOIN concepts c ON ls.conceptId = c.id
-        WHERE c.active = 1 AND ls.direction = :direction AND ls.stage != 'LEARNED'
+        WHERE c.active = 1 AND ls.direction = :direction
           AND ls.nextReviewDay IS NOT NULL
           AND ls.nextReviewDay >= :startDay AND ls.nextReviewDay <= :endDay
         GROUP BY ls.nextReviewDay
