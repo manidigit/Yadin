@@ -476,8 +476,10 @@ fun StreakChip(streakDays: Int, modifier: Modifier = Modifier) {
 fun SpeakButton(
     text: String,
     languageCode: String? = null,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    if (!enabled) return
     val context = LocalContext.current
     val colors = LocalYadinColors.current
 
@@ -589,7 +591,7 @@ fun YadinSelectableChip(
 ) {
     val colors = LocalYadinColors.current
     val effectiveAccent = accentColor ?: colors.primary
-    val shape = RoundedCornerShape(10.dp)
+    val shape = com.manidigit.yadin.ui.theme.LocalYadinShapes.current.extraSmall
 
     val bgColor = when {
         isSelected && highContrastSelection -> effectiveAccent.copy(alpha = 0.28f)

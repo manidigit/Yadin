@@ -446,13 +446,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun selectWordDetail(conceptId: String) {
         libraryVm.selectWordDetail(conceptId) {
-            _currentScreen.value = Screen.WordDetailScreen(conceptId)
+            navigateTo(Screen.WordDetailScreen(conceptId))
         }
     }
 
     fun deleteWord(conceptId: String) {
         libraryVm.deleteWord(conceptId, appLanguageDirection.value) {
-            _currentScreen.value = Screen.Library
+            if (!navigateBack()) {
+                navigateTo(Screen.Library)
+            }
         }
     }
 

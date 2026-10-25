@@ -45,7 +45,16 @@ data class SubmitResult(
     val newDifficulty: VocabularyDifficulty,
     val isCorrect: Boolean,
     val consecutiveCorrect: Int = 0,
-    val consecutiveWrong: Int = 0
+    val consecutiveWrong: Int = 0,
+    val lastReviewedDay: String? = null,
+    val sm2Repetitions: Int = 0,
+    val sm2EasinessFactor: Double = Sm2Algorithm.DEFAULT_EASINESS_FACTOR,
+    val sm2IntervalDays: Int = 0,
+    val fsrsStability: Double = 0.0,
+    val fsrsDifficulty: Double = FsrsAlgorithm.DEFAULT_INITIAL_DIFFICULTY,
+    val fsrsReps: Int = 0,
+    val fsrsLapses: Int = 0,
+    val fsrsState: Int = 0
 )
 
 data class ReviewFilters(
@@ -303,7 +312,8 @@ class ReviewRepository(
 
         // Fetch session concepts' categories first so same-category distractors are guaranteed in the pool (especially for PROFESSIONAL level)
         val sessionConcepts = sessionConceptIds.chunked(300).flatMap { conceptDao.getConceptsByIds(it) }
-        val sessionCategoryIds = sessionConcepts.mapNotNull { it.categoryId }.distinct()
+        val sessionJoinedCategories = sessionConceptIds.chunked(300).flatMap { conceptDao.getCategoriesForConcepts(it) }
+        val sessionCategoryIds = (sessionConcepts.mapNotNull { it.categoryId } + sessionJoinedCategories.map { it.id }).distinct()
         val categoryCandidateContents = if (sessionCategoryIds.isNotEmpty()) {
             conceptDao.getContentsByCategories(targetLang, sessionCategoryIds, limit = 600)
         } else {
@@ -322,6 +332,7 @@ class ReviewRepository(
         val poolConceptIds = allContents.map { it.conceptId }.distinct()
 
         val categoryMap = mutableMapOf<String, String?>()
+        val multiCategoryMap = mutableMapOf<String, MutableSet<String>>()
         val entryTypeMap = mutableMapOf<String, EntryType>()
         val diffMap = mutableMapOf<String, VocabularyDifficulty>()
         val targetDirection = session?.direction ?: CardDirection.NORMAL
@@ -331,6 +342,15 @@ class ReviewRepository(
             concepts.forEach {
                 categoryMap[it.id] = it.categoryId
                 entryTypeMap[it.id] = it.entryType
+                val catSet = multiCategoryMap.getOrPut(it.id) { mutableSetOf() }
+                it.categoryId?.let { primaryCat -> catSet.add(primaryCat) }
+            }
+            val joinedCats = conceptDao.getCategoriesForConcepts(cIds)
+            joinedCats.forEach { join ->
+                multiCategoryMap.getOrPut(join.conceptId) { mutableSetOf() }.add(join.id)
+                if (categoryMap[join.conceptId] == null) {
+                    categoryMap[join.conceptId] = join.id
+                }
             }
             val diffStates = learningDao.getDifficultyStatesForConcepts(cIds, targetDirection)
             diffStates.forEach {
@@ -342,6 +362,7 @@ class ReviewRepository(
             val conceptId: String,
             val text: String,
             val categoryId: String?,
+            val categoryIds: Set<String>,
             val entryType: EntryType,
             val difficulty: VocabularyDifficulty,
             val semantic: QuizDistractorScorer.PrecomputedSemantic
@@ -355,20 +376,23 @@ class ReviewRepository(
             val combinedText = contentsList.map { it.text.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("، ")
             if (combinedText.isBlank()) null else {
                 val semantic = QuizDistractorScorer.precomputeSemantic(combinedText)
+                val catSet = multiCategoryMap[cId] ?: emptySet()
                 DistractorPoolItem(
                     conceptId = cId,
                     text = combinedText,
                     categoryId = categoryMap[cId],
+                    categoryIds = catSet,
                     entryType = entryTypeMap[cId] ?: EntryType.WORD,
                     difficulty = diffMap[cId] ?: VocabularyDifficulty.EASY,
                     semantic = semantic
                 )
             }
         }
-            .sortedByDescending { it.categoryId != null && it.categoryId in sessionCategorySet }
+            .sortedByDescending { it.categoryIds.any { cat -> cat in sessionCategorySet } }
             .distinctBy { it.semantic.compact }
 
         val questions = mutableListOf<QuizQuestion>()
+        val usedDistractorCounts = mutableMapOf<String, Int>()
 
         for (card in cards) {
             val correctAnswer = card.targetTranslations.map { it.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("، ")
@@ -376,6 +400,9 @@ class ReviewRepository(
             val partsSemantics = (card.targetTranslations.map { it.trim() }.filter { it.isNotEmpty() } + QuizDistractorScorer.extractSegments(correctAnswer))
                 .distinct()
                 .map { QuizDistractorScorer.precomputeSemantic(it) }
+
+            val cardCategories = multiCategoryMap[card.conceptId] ?: setOfNotNull(categoryMap[card.conceptId])
+            val cardEntryType = entryTypeMap[card.conceptId] ?: EntryType.WORD
 
             // Ultra-fast filter using precomputed semantics (0 regex/stemming calls inside loop)
             val nonCollidingPool = pool.filter { item ->
@@ -386,12 +413,13 @@ class ReviewRepository(
 
             // Prioritize all same-category and same-entryType candidates so PROFESSIONAL level finds the most confusable distractors
             val candidatesToScore = if (nonCollidingPool.size > 240) {
-                val cardCat = categoryMap[card.conceptId]
-                val cardEntryType = entryTypeMap[card.conceptId] ?: EntryType.WORD
-                val sameTypeAndCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId == cardCat && it.entryType == cardEntryType } else emptyList()
-                val sameCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId == cardCat } else emptyList()
+                val sharesCat: (DistractorPoolItem) -> Boolean = { item ->
+                    cardCategories.isNotEmpty() && item.categoryIds.any { it in cardCategories }
+                }
+                val sameTypeAndCat = if (cardCategories.isNotEmpty()) nonCollidingPool.filter { sharesCat(it) && it.entryType == cardEntryType } else emptyList()
+                val sameCat = if (cardCategories.isNotEmpty()) nonCollidingPool.filter { sharesCat(it) } else emptyList()
                 val sameType = nonCollidingPool.filter { it.entryType == cardEntryType }
-                val otherCat = if (cardCat != null) nonCollidingPool.filter { it.categoryId != cardCat } else nonCollidingPool
+                val otherCat = if (cardCategories.isNotEmpty()) nonCollidingPool.filter { !sharesCat(it) } else nonCollidingPool
                 (sameTypeAndCat.shuffled().take(100) + sameCat.shuffled().take(40) + sameType.shuffled().take(60) + otherCat.shuffled().take(40))
                     .distinctBy { it.conceptId }
                     .take(240)
@@ -405,22 +433,27 @@ class ReviewRepository(
             )
 
             val scoredCandidates = candidatesToScore.map { cand ->
+                val sharesCategory = cardCategories.isNotEmpty() && cand.categoryIds.any { it in cardCategories }
                 val confusability = QuizDistractorScorer.calculateConfusability(
                     correctAnswer = correctAnswer,
                     candidateText = cand.text,
                     correctCategory = categoryMap[card.conceptId],
                     candidateCategory = cand.categoryId,
                     correctDifficulty = card.difficulty,
-                    candidateDifficulty = cand.difficulty
+                    candidateDifficulty = cand.difficulty,
+                    correctEntryType = cardEntryType,
+                    candidateEntryType = cand.entryType,
+                    sameCategoryOverride = sharesCategory
                 )
                 ScoredCandidate(cand, confusability)
             }
 
-            val sortedCandidates = when (quizLevel) {
-                QuizLevel.BEGINNER -> scoredCandidates.sortedBy { it.confusabilityScore }
-                QuizLevel.NORMAL -> scoredCandidates.sortedBy { kotlin.math.abs(it.confusabilityScore - 0.5) }
-                QuizLevel.PROFESSIONAL -> scoredCandidates.sortedByDescending { it.confusabilityScore }
-            }
+            val sortedCandidates = QuizDistractorScorer.rankCandidatesByLevel(
+                quizLevel = quizLevel,
+                candidates = scoredCandidates,
+                scoreSelector = { it.confusabilityScore },
+                repeatPenaltySelector = { (usedDistractorCounts[it.poolItem.conceptId] ?: 0) * 0.18 }
+            )
 
             val chosenDistractors = mutableListOf<DistractorPoolItem>()
             for (cand in sortedCandidates) {
@@ -463,6 +496,10 @@ class ReviewRepository(
                     reviewSessionDao.updateItemState(item.id, SessionItemState.SKIPPED)
                 }
                 continue
+            }
+
+            chosenDistractors.forEach { d ->
+                usedDistractorCounts[d.conceptId] = (usedDistractorCounts[d.conceptId] ?: 0) + 1
             }
 
             val chosenOptions = chosenDistractors.map { QuizOption(it.text, it.conceptId) }
@@ -559,7 +596,16 @@ class ReviewRepository(
                     newDifficulty = curDiff?.current ?: VocabularyDifficulty.EASY,
                     isCorrect = existingAttempt.isCorrect,
                     consecutiveCorrect = curDiff?.consecutiveCorrect ?: 0,
-                    consecutiveWrong = curDiff?.consecutiveWrong ?: 0
+                    consecutiveWrong = curDiff?.consecutiveWrong ?: 0,
+                    lastReviewedDay = curLearning?.lastReviewedDay,
+                    sm2Repetitions = curLearning?.sm2Repetitions ?: 0,
+                    sm2EasinessFactor = curLearning?.sm2EasinessFactor ?: Sm2Algorithm.DEFAULT_EASINESS_FACTOR,
+                    sm2IntervalDays = curLearning?.sm2IntervalDays ?: 0,
+                    fsrsStability = curLearning?.fsrsStability ?: 0.0,
+                    fsrsDifficulty = curLearning?.fsrsDifficulty ?: FsrsAlgorithm.DEFAULT_INITIAL_DIFFICULTY,
+                    fsrsReps = curLearning?.fsrsReps ?: 0,
+                    fsrsLapses = curLearning?.fsrsLapses ?: 0,
+                    fsrsState = curLearning?.fsrsState ?: 0
                 )
             }
 
@@ -751,7 +797,16 @@ class ReviewRepository(
                 newDifficulty = diffResult.newDifficulty,
                 isCorrect = isCorrect,
                 consecutiveCorrect = diffResult.consecutiveCorrect,
-                consecutiveWrong = diffResult.consecutiveWrong
+                consecutiveWrong = diffResult.consecutiveWrong,
+                lastReviewedDay = finalLastReviewedDay,
+                sm2Repetitions = finalSm2Reps,
+                sm2EasinessFactor = finalSm2Ef,
+                sm2IntervalDays = finalSm2Interval,
+                fsrsStability = finalFsrsStability,
+                fsrsDifficulty = finalFsrsDifficulty,
+                fsrsReps = finalFsrsReps,
+                fsrsLapses = finalFsrsLapses,
+                fsrsState = finalFsrsState
             )
         }
 
@@ -762,120 +817,94 @@ class ReviewRepository(
     }
 
     suspend fun checkAchievements(sessionId: String = "") {
-        // اطمینان از وجود تمام انوم‌های دستاورد در پایگاه داده جهت جلوگیری از عدم ثبت
         val defaultAchievements = AchievementId.values().map {
             com.manidigit.yadin.data.local.entity.AchievementEntity(id = it.name, unlockedAt = null, progress = 0)
         }
         achievementDao.insertAchievements(defaultAchievements)
+        val existingMap = achievementDao.getAllAchievements().associateBy { it.id }
 
         val today = ClockAndDayMath.todayDayString()
         val distinctDays = reviewSessionDao.getDistinctReviewedDays()
         val streak = ClockAndDayMath.calculateStreakDays(distinctDays, today)
+        val practicedCount = learningDao.getTotalPracticedWordsCount()
+        val learnedCount = learningDao.getTotalLearnedWordsCount()
+        val hardMastered = learningDao.getMasteredHardWordsCount()
+        val perfectQuizCount = reviewSessionDao.getPerfectQuizSessionsCount(minQuestions = 5)
+
+        suspend fun syncTierGroup(tiers: List<AchievementId>, currentValue: Int) {
+            for (ach in tiers) {
+                val target = ach.threshold
+                val clampedProgress = currentValue.coerceAtMost(target)
+                val existing = existingMap[ach.name]
+                if (currentValue >= target) {
+                    if (existing?.unlockedAt == null) {
+                        achievementDao.unlock(ach.name)
+                    }
+                } else {
+                    if (existing == null || existing.unlockedAt != null) {
+                        achievementDao.relock(ach.name)
+                    }
+                }
+                if (existing == null || existing.progress != clampedProgress) {
+                    achievementDao.updateProgress(ach.name, clampedProgress)
+                }
+            }
+        }
 
         // ۱. رگبار و مداومت (STREAK: 7, 30, 100, 365 days)
-        val streakTiers = listOf(
-            AchievementId.STREAK_3_DAYS,
-            AchievementId.STREAK_7_DAYS,
-            AchievementId.STREAK_30_DAYS,
-            AchievementId.STREAK_100_DAYS
+        syncTierGroup(
+            listOf(
+                AchievementId.STREAK_3_DAYS,
+                AchievementId.STREAK_7_DAYS,
+                AchievementId.STREAK_30_DAYS,
+                AchievementId.STREAK_100_DAYS
+            ),
+            streak
         )
-        for (ach in streakTiers) {
-            val target = ach.threshold
-            if (streak >= target) {
-                achievementDao.unlock(ach.name)
-            } else {
-                achievementDao.relock(ach.name)
-            }
-            achievementDao.updateProgress(ach.name, streak.coerceAtMost(target))
-        }
-
-        // استخراج مشخصات نشست و جهت مرور در صورت وجود
-        val session = if (sessionId.isNotBlank()) reviewSessionDao.getSessionById(sessionId) else null
-        val sessionDirection = session?.direction
 
         // ۲. دایره واژگان (VOCABULARY: 100, 500, 2000, 5000 words practiced)
-        val practicedCount = if (sessionDirection != null) {
-            maxOf(learningDao.getTotalPracticedWordsCount(sessionDirection), learningDao.getTotalPracticedWordsCount())
-        } else {
-            learningDao.getTotalPracticedWordsCount()
-        }
-        val vocabTiers = listOf(
-            AchievementId.FIRST_TEN_WORDS,
-            AchievementId.VOCABULARY_BUILDER,
-            AchievementId.VOCABULARY_MASTER,
-            AchievementId.VOCABULARY_LEGEND
+        syncTierGroup(
+            listOf(
+                AchievementId.FIRST_TEN_WORDS,
+                AchievementId.VOCABULARY_BUILDER,
+                AchievementId.VOCABULARY_MASTER,
+                AchievementId.VOCABULARY_LEGEND
+            ),
+            practicedCount
         )
-        for (ach in vocabTiers) {
-            val target = ach.threshold
-            if (practicedCount >= target) {
-                achievementDao.unlock(ach.name)
-            } else {
-                achievementDao.relock(ach.name)
-            }
-            achievementDao.updateProgress(ach.name, practicedCount.coerceAtMost(target))
-        }
 
         // ۳. تثبیت لایتنر و حافظه دائمی (RETENTION: 100, 500, 2000, 5000 words in LEARNED)
-        val learnedCount = if (sessionDirection != null) {
-            maxOf(learningDao.getTotalLearnedWordsCount(sessionDirection), learningDao.getTotalLearnedWordsCount())
-        } else {
-            learningDao.getTotalLearnedWordsCount()
-        }
-        val retentionTiers = listOf(
-            AchievementId.LONG_TERM_MEMORY,
-            AchievementId.RETENTION_SILVER,
-            AchievementId.RETENTION_GOLD,
-            AchievementId.RETENTION_PLATINUM
+        syncTierGroup(
+            listOf(
+                AchievementId.LONG_TERM_MEMORY,
+                AchievementId.RETENTION_SILVER,
+                AchievementId.RETENTION_GOLD,
+                AchievementId.RETENTION_PLATINUM
+            ),
+            learnedCount
         )
-        for (ach in retentionTiers) {
-            val target = ach.threshold
-            if (learnedCount >= target) {
-                achievementDao.unlock(ach.name)
-            } else {
-                achievementDao.relock(ach.name)
-            }
-            achievementDao.updateProgress(ach.name, learnedCount.coerceAtMost(target))
-        }
 
         // ۴. واژگان سخت (HARD_WORDS: 10, 50, 150, 500 words mastered)
-        val hardMastered = if (sessionDirection != null) {
-            maxOf(learningDao.getMasteredHardWordsCount(sessionDirection), learningDao.getMasteredHardWordsCount())
-        } else {
-            learningDao.getMasteredHardWordsCount()
-        }
-        val hardTiers = listOf(
-            AchievementId.HARD_MASTER,
-            AchievementId.HARD_SILVER,
-            AchievementId.HARD_GOLD,
-            AchievementId.HARD_PLATINUM
+        syncTierGroup(
+            listOf(
+                AchievementId.HARD_MASTER,
+                AchievementId.HARD_SILVER,
+                AchievementId.HARD_GOLD,
+                AchievementId.HARD_PLATINUM
+            ),
+            hardMastered
         )
-        for (ach in hardTiers) {
-            val target = ach.threshold
-            if (hardMastered >= target) {
-                achievementDao.unlock(ach.name)
-            } else {
-                achievementDao.relock(ach.name)
-            }
-            achievementDao.updateProgress(ach.name, hardMastered.coerceAtMost(target))
-        }
 
         // ۵. مهارت کوییز (QUIZ: 5, 20, 50, 100 perfect quiz sessions with >= 5 questions)
-        val perfectQuizCount = reviewSessionDao.getPerfectQuizSessionsCount(minQuestions = 5)
-        val quizTiers = listOf(
-            AchievementId.QUIZ_ACE,
-            AchievementId.QUIZ_SILVER,
-            AchievementId.QUIZ_GOLD,
-            AchievementId.QUIZ_PLATINUM
+        syncTierGroup(
+            listOf(
+                AchievementId.QUIZ_ACE,
+                AchievementId.QUIZ_SILVER,
+                AchievementId.QUIZ_GOLD,
+                AchievementId.QUIZ_PLATINUM
+            ),
+            perfectQuizCount
         )
-        for (ach in quizTiers) {
-            val target = ach.threshold
-            if (perfectQuizCount >= target) {
-                achievementDao.unlock(ach.name)
-            } else {
-                achievementDao.relock(ach.name)
-            }
-            achievementDao.updateProgress(ach.name, perfectQuizCount.coerceAtMost(target))
-        }
     }
 
     suspend fun completeSession(sessionId: String) {

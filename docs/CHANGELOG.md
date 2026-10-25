@@ -2,6 +2,44 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۶۹.۰] - ۲۰۲۶-۱۰-۲۵ (۱۴۰۵/۰۸/۰۳)
+### رفع جامع تمامی یافته‌های ممیزی خط‌به‌خط کد (`FULL_CODE_AUDIT_REPORT.md`): اصلاح الگوریتم‌های SM-2/FSRS/سختی، بازطراحی موتور گزینه‌های انحرافی آزمون، تکمیل تنظیمات، یکپارچه‌سازی آمار، دوزبانه‌سازی ۱۰۰٪ و استانداردسازی توکن‌های تم (کد نسخه: ۸۲)
+- **ویژگی‌های جدید و تکمیل قابلیت‌ها (Features):**
+  - **تکمیل و اتصال کامل تنظیمات صوتی و ترجیحات مرور و آزمون (`SettingsScreen.kt`، `FlashcardScreen.kt`، `QuizScreen.kt`، `CommonComponents.kt`):**
+    - افزودن کنترل‌های رابط کاربری در صفحه تنظیمات برای **فعال‌سازی تلفظ صوتی (`ttsEnabled`)**، **پخش خودکار تلفظ (`ttsAutoPlay`)**، **سرعت تلفظ (`ttsSpeechRate`: آهسته، عادی، تند)**، **نمایش دسته‌بندی در مرور (`showCategoryInReview`)**، **حالت پیش‌فرض تمرین (`defaultReviewMode`)**، **سطح پیش‌فرض آزمون (`defaultQuizLevel`)** و **ثانیه رفتن خودکار به سؤال بعدی آزمون (`quizAutoAdvanceSeconds`)**.
+    - اتصال مستقیم `ttsEnabled` به نمایش `SpeakButton`، اجرای خودکار تلفظ سمت سؤال با `ttsAutoPlay` در فلش‌کارت و آزمون، و پیاده‌سازی تایمر انتقال خودکار پس از پاسخ در `QuizScreen.kt`.
+  - **تفکیک دقیق شمارنده سررسید الگوریتمی (`dueAlgorithm`) از سررسید تصادفی (`dueRandom`) (`LearningDao.kt`، `ReviewViewModel.kt`، `ReviewSetupScreen.kt`):**
+    - افزودن `getRandomDueCountFlow` (صرفاً مراحل غیر `LEARNED`) در کنار `getDueCountFlow` (شامل کارت‌های بالغ سررسیدشده الگوریتم‌های `SM-2` و `FSRS`) تا کارت‌های مرور در صفحه خانه و صفحه تنظیمات مرور دقیقاً تعداد واقعی کارت‌های آماده همان حالت را نمایش دهند.
+- **اصلاحات و باگ‌زدایی (Fixes):**
+  - **رابط کاربری، ناوبری، ویرایش واژه و درون‌ریزی (UI, Navigation & Import Fixes):**
+    - **مسدودسازی ژست کشیدن افقی فلش‌کارت پیش از رو شدن پاسخ (`FlashcardScreen.kt`):** مقید کردن `detectHorizontalDragGestures` به `if (isFlipped)` تا کشیدن انگشت پیش از دیدن جواب، کارت را ثبت نکند.
+    - **رفع قفل شدن دکمه ذخیره در صفحه افزودن/ویرایش واژه و اصلاح ویرایش در جهت معکوس (`AddEditWordScreen.kt`، `LibraryViewModel.kt`، `MainActivity.kt`):** افزودن کال‌بک `onError` به `saveWord` جهت بازگردانی `isSaving = false` و نمایش خطا؛ جلوگیری از خرد شدن عبارات اسپانیایی حاوی کاما در جهت `CardDirection.REVERSE`؛ امکان حذف تمامی دسته‌بندی‌های یک واژه (`categoryIds = emptyList()`) و بازخوانی فوری `_selectedWordDetail` پس از ذخیره.
+    - **اصلاح پشته ناوبری در مشاهده و حذف واژه (`MainViewModel.kt`):** استفاده از `navigateTo(Screen.WordDetailScreen(conceptId))` در `selectWordDetail` و `navigateBack()` در `deleteWord` و حذف کلیک صوری کارت تک‌تم در `SettingsScreen.kt`.
+    - **حفظ کامل فراداده و ساختار `ParsedEntry` در صفحه بازبینی ورود (`ImportReviewScreen.kt`):** نگهداری نمونه اصلی `ParsedEntry` در `ReviewItem` تا فیلدهای `entryType`، `categoryNames`، `variants`، `breakdowns` و `relations` هنگام تأیید تکی یا گروهی از بین نروند.
+    - **انتخاب خودکار دسته‌بندی جدید بلافاصله پس از ساخت (`ReviewSetupScreen.kt`، `ImportScreen.kt`، `LibraryScreen.kt`):** بازگردانی شناسه دسته‌بندی ساخته‌شده در کال‌بک `addCategory` و انتخاب خودکار آن.
+    - **نمایش تاریخ واقعی مرور بعدی برای کارت‌های بالغ SM-2 و FSRS در جزئیات واژه (`WordDetailScreen.kt`):** بررسی `sm2Repetitions > 0 || fsrsReps > 0` پیش از نمایش عبارت «حافظه بلندمدت دائمی».
+  - **الگوریتم درجه سختی کلمات (`DifficultyCalculator.kt`):**
+    - حفظ شمارنده پاسخ‌های صحیح متوالی (`consecutiveCorrect = currentCorrect`) هنگام زدن دکمه «سخت» (`HARD`) بر روی واژگان دارای درجه سختی `HARD`.
+  - **موتور تولید کوییز و گزینه‌های انحرافی (`QuizDistractorScorer.kt` و `ReviewRepository.kt`):**
+    - افزودن تابع `entryTypeSimilarity` و اصلاح فرمول `calculateConfusability` بر پایه وزن‌های استاندارد مشخصات (`0.55 * lexicalSim + 0.25 * categoryBonus + 0.20 * typeSim`) بدون وابستگی به درجه سختی واژه.
+    - پشتیبانی کامل از دسته‌بندی‌های چندگانه (`concept_categories`) در تشخیص هم‌دسته بودن گزینه‌ها.
+    - یکپارچه‌سازی انتخاب و رتبه‌بندی گزینه‌های هر ۳ سطح آزمون (`BEGINNER`، `NORMAL`، `ADVANCED`) در متد `rankCandidatesByLevel` و رفع باگ ریاضی `abs(score - 0.5)` در سطح عادی همراه با اعمال جریمه تکرار گزینه‌های غلط بین سؤالات متوالی یک جلسه (`usedDistractorCounts`).
+  - **الگوریتم‌های تکرار با فاصله (`Sm2Algorithm.kt`، `FsrsAlgorithm.kt`، `ReviewViewModel.kt`):**
+    - تفکیک فواصل مرور اول در الگوریتم `SM-2` (`HARD = 1 روز`، `GOOD = 2 روز`، `EASY = 4 روز`) و تضمین یکنواختی اکید (`hardInt < goodInt < easyInt`) در `previewIntervals`.
+    - تضمین فاصله حداقل ۱ روز بیشتر برای دکمه `GOOD` نسبت به `HARD` در الگوریتم `FSRS` (`max(hardInterval + 1, ...)`) و همگام‌سازی `nextState.stability` با فاصله نهایی اعمال‌شده.
+    - بازگرداندن پارامترهای به‌روزشده `SM-2` و `FSRS` در `SubmitResult` و به‌روزرسانی کارت‌های داخل حافظه جلسه (`_sessionCards`) در `ReviewViewModel.kt`.
+  - **آمار، دستاوردها، پیش‌بینی و بهینه‌سازی کوئری‌ها (`ReviewSessionDao.kt`، `LearningDao.kt`، `VocabularyRepository.kt`، `StatisticsViewModel.kt`، `SeedImporter.kt`):**
+    - افزودن `INNER JOIN concepts c ON c.id = rh.conceptId WHERE c.active = 1` و فیلتر `direction` به کوئری‌های تاریخچه و نمودار فعالیت روزانه و اتصال آن به جهت فعال در `StatisticsViewModel.kt`.
+    - حذف ۶ کوئری تکراری در `checkAchievements` و جلوگیری از درج مجدد دستاوردهای از پیش بازشده.
+    - یکسان‌سازی گرد کردن امتیاز ماندگاری با `.roundToInt()`، افزودن کارت‌های سررسید گذشته تمرین‌شده (`getOverduePracticedCount`) به پیش‌بینی مرورهای آینده (`getUpcomingForecast`)، حذف حلقه N+1 در محاسبه تسلط موضوعی (`getCategoryMasteryRaw` با پشتیبانی از `concept_categories`)، حفظ فیلدهای SM-2/FSRS در بازیابی خودکار `SeedImporter.kt` و استفاده از `Locale.US` در تاریخ متادیتای بکاپ.
+  - **دوزبانه‌سازی کامل (`strings.xml`) و استانداردسازی توکن‌های تم (`ThemeTokens`):**
+    - انتقال تمامی رشته‌های هاردکدشده از `MainActivity.kt`، `LibraryScreen.kt`، `VocabularyRepository.kt`، `BackupRepository.kt`، `VocabularyAuditService.kt`، `FieldValidationEngine.kt`، `FileReaders.kt` و `VocabularyParser.kt` به فایل‌های منابع دوزبانه (`values/strings.xml`، `values-fa/strings.xml`، `values-en/strings.xml`).
+    - جایگزینی ارتفاع هاردکد نوار ناوبری (`64.dp` $\to$ `dimensions.navHeight`) و اشکال هاردکد `RoundedCornerShape` با توکن‌های `LocalYadinShapes` و `LocalYadinDimensions` در `MainActivity.kt`، `CommonComponents.kt`، `CategoryDropdown.kt`، `LibraryScreen.kt` و `BackupScreen.kt`.
+- **به‌روزرسانی مستندات (Documentation):**
+  - تکمیل گزارش ممیزی و وضعیت رفع تمامی موارد در `docs/FULL_CODE_AUDIT_REPORT.md` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.69.0` (کد نسخه: `82`).
+
+---
+
 ### [نسخه ۱.۶۸.۱] - ۲۰۲۶-۱۰-۲۵ (۱۴۰۵/۰۸/۰۳)
 ### رفع کندی شدید شمارش کارت‌ها در صفحه تنظیمات مرور و حذف زیرکوئری‌های سنگین همبسته در `LearningDao` (کد نسخه: ۸۱)
 - **اصلاحات کارایی و پایگاه داده (Performance & Database Fixes):**

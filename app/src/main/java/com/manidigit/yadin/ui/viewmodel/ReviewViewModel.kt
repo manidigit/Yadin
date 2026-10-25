@@ -259,7 +259,16 @@ class ReviewViewModel(
                         stage = submitRes.newStage,
                         difficulty = submitRes.newDifficulty,
                         consecutiveCorrect = submitRes.consecutiveCorrect,
-                        consecutiveWrong = submitRes.consecutiveWrong
+                        consecutiveWrong = submitRes.consecutiveWrong,
+                        sm2Repetitions = submitRes.sm2Repetitions,
+                        sm2EasinessFactor = submitRes.sm2EasinessFactor,
+                        sm2IntervalDays = submitRes.sm2IntervalDays,
+                        fsrsStability = submitRes.fsrsStability,
+                        fsrsDifficulty = submitRes.fsrsDifficulty,
+                        fsrsReps = submitRes.fsrsReps,
+                        fsrsLapses = submitRes.fsrsLapses,
+                        fsrsState = submitRes.fsrsState,
+                        lastReviewedDay = submitRes.lastReviewedDay
                     )
                     _sessionCards.value = updatedList
                 }

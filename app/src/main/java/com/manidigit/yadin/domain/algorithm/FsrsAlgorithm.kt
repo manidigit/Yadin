@@ -209,31 +209,32 @@ object FsrsAlgorithm {
             }
         }
 
+        val clampedRetention = desiredRetention.coerceIn(MIN_DESIRED_RETENTION, MAX_DESIRED_RETENTION)
+        val computed = if (rating == FsrsRating.AGAIN) 1 else calculateIntervalDays(newStability, clampedRetention)
         val intervalDays = if (rating == FsrsRating.AGAIN) {
             1
         } else {
-            val computed = calculateIntervalDays(newStability, desiredRetention)
             val hardInterval = if (isFirstReview) {
-                max(1, calculateIntervalDays(initialStability(FsrsRating.HARD), desiredRetention))
+                max(1, calculateIntervalDays(initialStability(FsrsRating.HARD), clampedRetention))
             } else {
                 val currentS = max(MIN_STABILITY, currentState.stability)
                 val currentD = currentState.difficulty.coerceIn(MIN_DIFFICULTY, MAX_DIFFICULTY)
                 val dHard = nextDifficulty(currentD, FsrsRating.HARD)
                 val sHard = nextRecallStability(dHard, currentS, retrievabilityBefore, FsrsRating.HARD)
-                max(1, calculateIntervalDays(sHard, desiredRetention))
+                max(1, calculateIntervalDays(sHard, clampedRetention))
             }
             val goodInterval = if (isFirstReview) {
-                max(hardInterval, max(2, calculateIntervalDays(initialStability(FsrsRating.GOOD), desiredRetention)))
+                max(hardInterval + 1, max(2, calculateIntervalDays(initialStability(FsrsRating.GOOD), clampedRetention)))
             } else {
                 val currentS = max(MIN_STABILITY, currentState.stability)
                 val currentD = currentState.difficulty.coerceIn(MIN_DIFFICULTY, MAX_DIFFICULTY)
                 val dGood = nextDifficulty(currentD, FsrsRating.GOOD)
                 val sGood = nextRecallStability(dGood, currentS, retrievabilityBefore, FsrsRating.GOOD)
-                max(hardInterval, max(2, calculateIntervalDays(sGood, desiredRetention)))
+                max(hardInterval + 1, max(2, calculateIntervalDays(sGood, clampedRetention)))
             }
             when (rating) {
                 FsrsRating.HARD -> hardInterval
-                FsrsRating.GOOD -> max(hardInterval, max(2, computed))
+                FsrsRating.GOOD -> max(hardInterval + 1, max(2, computed))
                 FsrsRating.EASY -> {
                     val minEasy = if (isFirstReview) max(4, goodInterval + 1) else goodInterval + 1
                     max(minEasy, computed)
@@ -242,12 +243,19 @@ object FsrsAlgorithm {
             }
         }
 
+        val effectiveStability = if (rating != FsrsRating.AGAIN && intervalDays > computed) {
+            val intervalMultiplier = ((clampedRetention.pow(1.0 / DECAY) - 1.0) / FACTOR).coerceAtLeast(0.01)
+            max(newStability, intervalDays.toDouble() / intervalMultiplier)
+        } else {
+            newStability
+        }
+
         val nextReviewDay = ClockAndDayMath.addDays(todayDayString, intervalDays)
         val mappedStage = Sm2Algorithm.mapIntervalToStage(intervalDays, if (rating == FsrsRating.AGAIN) 0 else newReps)
 
         return FsrsTransitionResult(
             nextState = FsrsState(
-                stability = round2(newStability),
+                stability = round2(effectiveStability),
                 difficulty = round2(newDifficulty),
                 reps = newReps,
                 lapses = newLapses,

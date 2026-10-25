@@ -93,6 +93,7 @@ fun ReviewSetupScreen(
     candidateCount: Int,
     statistics: com.manidigit.yadin.domain.model.StatisticsSummary? = null,
     appLanguageDirection: CardDirection = CardDirection.NORMAL,
+    onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
     onFilterChanged: (ReviewFilters) -> Unit,
     onStartReview: (ReviewFilters) -> Unit,
     onBack: () -> Unit
@@ -272,7 +273,8 @@ fun ReviewSetupScreen(
                             )
                         }
 
-                        val dueRandom = stats?.dueTodayCount ?: 0
+                        val dueRandom = dueDaily + dueWeekly + dueMonthly
+                        val dueAlgorithm = stats?.dueTodayCount ?: dueRandom
                         val totalRandom = stats?.totalWords ?: 0
 
                         val dueLearned = stats?.availableLearnedCount ?: 0
@@ -312,7 +314,7 @@ fun ReviewSetupScreen(
                         ) {
                             CompactHorizontalSourceBox(
                                 title = stringResource(R.string.review_setup_sm2_title),
-                                dueCount = dueRandom,
+                                dueCount = dueAlgorithm,
                                 totalCount = totalRandom,
                                 accentColor = getReviewTypeColor(ReviewType.SM2, colors),
                                 icon = getReviewTypeIcon(ReviewType.SM2),
@@ -323,7 +325,7 @@ fun ReviewSetupScreen(
 
                             CompactHorizontalSourceBox(
                                 title = stringResource(R.string.review_setup_fsrs_title),
-                                dueCount = dueRandom,
+                                dueCount = dueAlgorithm,
                                 totalCount = totalRandom,
                                 accentColor = getReviewTypeColor(ReviewType.FSRS, colors),
                                 icon = getReviewTypeIcon(ReviewType.FSRS),
@@ -342,6 +344,9 @@ fun ReviewSetupScreen(
                                 categories = categories,
                                 selectedCategoryId = selectedCategoryId,
                                 onSelectCategory = { selectedCategoryId = it },
+                                onAddNewCategory = onAddNewCategory?.let { callback ->
+                                    { newName -> callback(newName) { newId -> selectedCategoryId = newId } }
+                                },
                                 label = stringResource(R.string.review_setup_category_label),
                                 modifier = Modifier.weight(1f)
                             )

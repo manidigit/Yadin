@@ -247,15 +247,16 @@ class DifficultyCalculatorTest {
         )
         assertEquals(VocabularyDifficulty.HARD, fromMedium.newDifficulty)
 
-        // HARD stays HARD (never pushed to VERY_HARD by HARD rating)
+        // HARD stays HARD (never pushed to VERY_HARD by HARD rating) and preserves consecutiveCorrect
         val fromHard = DifficultyCalculator.updateDifficultyForHardRating(
             current = VocabularyDifficulty.HARD,
-            consecutiveCorrect = 0,
+            consecutiveCorrect = 2,
             consecutiveWrong = 0,
             hasReachedVeryHard = false,
-            threshold = 1
+            threshold = 3
         )
         assertEquals(VocabularyDifficulty.HARD, fromHard.newDifficulty)
+        assertEquals(2, fromHard.consecutiveCorrect)
         assertFalse(fromHard.hasReachedVeryHard)
 
         // VERY_HARD steps down to HARD on HARD recall rating and retains hasReachedVeryHard = true

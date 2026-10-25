@@ -15,6 +15,11 @@ import java.util.zip.ZipInputStream
 
 object FileReaders {
 
+    private val isEn: Boolean
+        get() = java.util.Locale.getDefault().language.startsWith("en", ignoreCase = true)
+
+    private fun tr(fa: String, en: String): String = if (isEn) en else fa
+
     fun readText(inputStream: InputStream): ParseResult {
         val text = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         return VocabularyParser.parse(text)
@@ -150,7 +155,7 @@ object FileReaders {
                         type = ParseWarningType.UNKNOWN_FORMAT,
                         lineNumber = lineNum,
                         rawText = tokens.joinToString(","),
-                        message = "ردیف فاقد مبدأ یا ترجمه معتبر است"
+                        message = tr("ردیف فاقد مبدأ یا ترجمه معتبر است", "Row is missing a valid source or translation")
                     )
                 )
             } else {
@@ -294,7 +299,7 @@ object FileReaders {
                             type = ParseWarningType.CONFLICT,
                             lineNumber = 1,
                             rawText = "",
-                            message = "این فایل پشتیبان است. لطفاً از بخش بازیابی استفاده کنید"
+                            message = tr("این فایل پشتیبان است. لطفاً از بخش بازیابی استفاده کنید", "This is a backup file. Please use the Restore section")
                         )
                     )
                     return ParseResult(emptyList(), warnings)
@@ -311,7 +316,7 @@ object FileReaders {
                         type = ParseWarningType.UNKNOWN_FORMAT,
                         lineNumber = 1,
                         rawText = text.take(100),
-                        message = "فرمت فایل نامعتبر است: داده با { یا [ آغاز نمی‌شود"
+                        message = tr("فرمت فایل نامعتبر است: داده با { یا [ آغاز نمی‌شود", "Invalid file format: data does not start with { or [")
                     )
                 )
             }
@@ -321,7 +326,7 @@ object FileReaders {
                     type = ParseWarningType.UNKNOWN_FORMAT,
                     lineNumber = 1,
                     rawText = text.take(100),
-                    message = "خطا در تجزیه JSON: ${e.message}"
+                    message = tr("خطا در تجزیه JSON: ${e.message}", "JSON parse error: ${e.message}")
                 )
             )
         }
@@ -381,7 +386,7 @@ object FileReaders {
                         type = ParseWarningType.UNKNOWN_FORMAT,
                         lineNumber = i + 1,
                         rawText = item.toString().take(100),
-                        message = "آیتم به دلیل نبود واژه مبدا یا ترجمه نادیده گرفته شد"
+                        message = tr("آیتم به دلیل نبود واژه مبدا یا ترجمه نادیده گرفته شد", "Item skipped due to missing source word or translation")
                     )
                 )
             }
@@ -423,7 +428,7 @@ object FileReaders {
         } catch (e: Exception) {
             return ParseResult(
                 emptyList(),
-                listOf(ParseWarning(ParseWarningType.UNKNOWN_FORMAT, 1, "", "خطا در خواندن فایل اکسل: ${e.message}"))
+                listOf(ParseWarning(ParseWarningType.UNKNOWN_FORMAT, 1, "", tr("خطا در خواندن فایل اکسل: ${e.message}", "Error reading Excel file: ${e.message}")))
             )
         }
 
@@ -442,7 +447,7 @@ object FileReaders {
         while (n != -1) {
             total += n
             if (total > maxBytes) {
-                throw IllegalStateException("حجم برگه فایل اکسل بیش از سقف مجاز است")
+                throw IllegalStateException(tr("حجم برگه فایل اکسل بیش از سقف مجاز است", "Excel worksheet size exceeds maximum allowed limit"))
             }
             buffer.write(data, 0, n)
             n = stream.read(data)

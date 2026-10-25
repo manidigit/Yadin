@@ -16,6 +16,11 @@ object FieldValidationEngine {
      * - پیشنهاد اصلاح (SUGGEST_CORRECTION): اطمینان ۸۰٪ تا ۹۸٪ برای تأیید کاربر.
      * - نیازمند بازبینی دستی (MANUAL_REVIEW): متن مخلوط، مبهم، چندخطی با چند مفهوم مجزا، ناقص یا اطمینان کمتر از ۸۰٪.
      */
+    private val isEn: Boolean
+        get() = java.util.Locale.getDefault().language.startsWith("en", ignoreCase = true)
+
+    private fun tr(fa: String, en: String): String = if (isEn) en else fa
+
     fun validateRecord(
         word: String,
         translations: List<String>,
@@ -33,7 +38,7 @@ object FieldValidationEngine {
                 suggestedWord = null,
                 suggestedTranslation = translationCombined,
                 suggestedNote = existingNote,
-                reason = "فیلد واژه خالی است"
+                reason = tr("فیلد واژه خالی است", "Word field is empty")
             )
         }
 
@@ -51,8 +56,10 @@ object FieldValidationEngine {
             if (otherLinesLatin.isNotEmpty()) {
                 val suggestedWord = firstLine
                 val noteFromOtherLines = otherLines.joinToString("\n")
-                val combinedNote = listOfNotNull(existingNote, "مفاهیم الحاقی سطر بعدی: $noteFromOtherLines")
-                    .joinToString("\n")
+                val combinedNote = listOfNotNull(
+                    existingNote,
+                    tr("مفاهیم الحاقی سطر بعدی: $noteFromOtherLines", "Additional concepts from next line: $noteFromOtherLines")
+                ).joinToString("\n")
 
                 return FieldValidationResult(
                     action = ReviewAction.MANUAL_REVIEW,
@@ -62,7 +69,10 @@ object FieldValidationEngine {
                     suggestedWord = suggestedWord,
                     suggestedTranslation = translationCombined,
                     suggestedNote = combinedNote,
-                    reason = "متن چندخطی شامل چندین واژه و مفهوم مجزا است؛ نیازمند بازبینی دستی جهت جلوگیری از حذف اطلاعات"
+                    reason = tr(
+                        "متن چندخطی شامل چندین واژه و مفهوم مجزا است؛ نیازمند بازبینی دستی جهت جلوگیری از حذف اطلاعات",
+                        "Multi-line text contains multiple distinct concepts; requires manual review to prevent data loss"
+                    )
                 )
             } else {
                 // سطرهای بعدی فقط ترجمه فارسی یا توضیحات هستند
@@ -80,7 +90,7 @@ object FieldValidationEngine {
                     suggestedWord = suggestedWord,
                     suggestedTranslation = newTrans,
                     suggestedNote = newNote.ifBlank { null },
-                    reason = "تفکیک سطرهای اضافی و انتقال توضیحات به یادداشت"
+                    reason = tr("تفکیک سطرهای اضافی و انتقال توضیحات به یادداشت", "Separated extra lines and moved notes")
                 )
             }
         }
@@ -108,7 +118,7 @@ object FieldValidationEngine {
                         suggestedWord = left,
                         suggestedTranslation = combinedTrans,
                         suggestedNote = existingNote,
-                        reason = "جداسازی ترجمه چسبیده با جداکننده صریح ($right)"
+                        reason = tr("جداسازی ترجمه چسبیده با جداکننده صریح ($right)", "Separated attached translation with explicit delimiter ($right)")
                     )
                 }
             }
@@ -128,7 +138,7 @@ object FieldValidationEngine {
                         suggestedWord = main,
                         suggestedTranslation = combinedTrans,
                         suggestedNote = existingNote,
-                        reason = "انتقال ترجمه داخل پرانتز به فیلد ترجمه ($inside)"
+                        reason = tr("انتقال ترجمه داخل پرانتز به فیلد ترجمه ($inside)", "Moved parenthetical translation to translation field ($inside)")
                     )
                 }
             }
@@ -151,7 +161,10 @@ object FieldValidationEngine {
                 suggestedWord = suggestedWord,
                 suggestedTranslation = suggestedTrans,
                 suggestedNote = existingNote,
-                reason = "حضور همزمان زبان اسپانیایی و فارسی در فیلد کلمه بدون جداکننده صریح؛ نیازمند بازبینی دستی"
+                reason = tr(
+                    "حضور همزمان زبان اسپانیایی و فارسی در فیلد کلمه بدون جداکننده صریح؛ نیازمند بازبینی دستی",
+                    "Mixed Spanish and Persian in word field without explicit delimiter; requires manual review"
+                )
             )
         }
 
@@ -165,7 +178,10 @@ object FieldValidationEngine {
                 suggestedWord = translationCombined.ifBlank { singleLine },
                 suggestedTranslation = singleLine,
                 suggestedNote = existingNote,
-                reason = "فیلد کلمه به زبان فارسی درج شده و احتمال جابه‌جایی فیلدها وجود دارد"
+                reason = tr(
+                    "فیلد کلمه به زبان فارسی درج شده و احتمال جابه‌جایی فیلدها وجود دارد",
+                    "Word field is in Persian; fields may be swapped"
+                )
             )
         }
 
@@ -177,7 +193,7 @@ object FieldValidationEngine {
             val main = parenMatch.groupValues[1].trim()
             val inside = parenMatch.groupValues[2].trim()
             if (main.isNotBlank() && inside.isNotBlank() && isStrictGrammarPosTag(inside)) {
-                val combinedNote = listOfNotNull(existingNote, "نقش/توضیح: $inside").joinToString("\n")
+                val combinedNote = listOfNotNull(existingNote, tr("نقش/توضیح: $inside", "POS/Note: $inside")).joinToString("\n")
                 return FieldValidationResult(
                     action = ReviewAction.MOVE_TO_NOTE,
                     confidence = 0.98,
@@ -186,7 +202,7 @@ object FieldValidationEngine {
                     suggestedWord = main,
                     suggestedTranslation = translationCombined,
                     suggestedNote = combinedNote,
-                    reason = "انتقال نقش یا توضیحات داخل پرانتز به یادداشت ($inside)"
+                    reason = tr("انتقال نقش یا توضیحات داخل پرانتز به یادداشت ($inside)", "Moved parenthetical POS/note to note ($inside)")
                 )
             }
         }
@@ -202,7 +218,7 @@ object FieldValidationEngine {
                 suggestedWord = normWord,
                 suggestedTranslation = translationCombined,
                 suggestedNote = existingNote,
-                reason = "اصلاح نشانه‌گذاری اسپانیایی: ${punctMods.joinToString("، ")}"
+                reason = tr("اصلاح نشانه‌گذاری اسپانیایی: ${punctMods.joinToString("، ")}", "Normalized Spanish punctuation: ${punctMods.joinToString(", ")}")
             )
         }
 
@@ -217,7 +233,7 @@ object FieldValidationEngine {
                 suggestedWord = strippedNum,
                 suggestedTranslation = translationCombined,
                 suggestedNote = existingNote,
-                reason = "حذف شماره‌گذاری یا علامت گلوله آغازین"
+                reason = tr("حذف شماره‌گذاری یا علامت گلوله آغازین", "Removed leading numbering or bullet")
             )
         }
 
@@ -232,7 +248,7 @@ object FieldValidationEngine {
                 suggestedWord = strippedQuotes,
                 suggestedTranslation = translationCombined,
                 suggestedNote = existingNote,
-                reason = "حذف گیومه‌های احاطه‌کننده واژه"
+                reason = tr("حذف گیومه‌های احاطه‌کننده واژه", "Removed surrounding quotes")
             )
         }
 
@@ -246,7 +262,7 @@ object FieldValidationEngine {
                 suggestedWord = singleLine,
                 suggestedTranslation = "",
                 suggestedNote = existingNote,
-                reason = "ترجمه برای این واژه ثبت نشده است؛ نیازمند بازبینی دستی"
+                reason = tr("ترجمه برای این واژه ثبت نشده است؛ نیازمند بازبینی دستی", "No translation provided for this word; requires manual review")
             )
         }
 
@@ -272,8 +288,11 @@ object FieldValidationEngine {
                         originalTranslation = translationCombined,
                         suggestedWord = singleLine,
                         suggestedTranslation = transPair.first.trim(),
-                        suggestedNote = listOfNotNull(existingNote, "عبارت لاتین در ترجمه: ${transPair.second.trim()}").joinToString("\n"),
-                        reason = "وجود عبارت لاتین با جداکننده در فیلد ترجمه؛ پیشنهاد تفکیک به یادداشت"
+                        suggestedNote = listOfNotNull(
+                            existingNote,
+                            tr("عبارت لاتین در ترجمه: ${transPair.second.trim()}", "Latin phrase in translation: ${transPair.second.trim()}")
+                        ).joinToString("\n"),
+                        reason = tr("وجود عبارت لاتین با جداکننده در فیلد ترجمه؛ پیشنهاد تفکیک به یادداشت", "Latin phrase with delimiter in translation field; suggested moving to note")
                     )
                 } else {
                     return FieldValidationResult(
@@ -284,7 +303,7 @@ object FieldValidationEngine {
                         suggestedWord = singleLine,
                         suggestedTranslation = translationCombined,
                         suggestedNote = existingNote,
-                        reason = "فیلد ترجمه شامل کلمات لاتین است؛ نیازمند بازبینی دستی"
+                        reason = tr("فیلد ترجمه شامل کلمات لاتین است؛ نیازمند بازبینی دستی", "Translation field contains Latin words; requires manual review")
                     )
                 }
             }
@@ -299,7 +318,7 @@ object FieldValidationEngine {
             suggestedWord = singleLine,
             suggestedTranslation = translationCombined,
             suggestedNote = existingNote,
-            reason = "کلمه اسپانیایی و ترجمه فارسی معتبر و سالم است"
+            reason = tr("کلمه اسپانیایی و ترجمه فارسی معتبر و سالم است", "Spanish word and Persian translation are valid")
         )
     }
 

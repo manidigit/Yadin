@@ -149,12 +149,17 @@ class BackupRepository(
         createBackupJsonWithOptions(options, onProgress)
     }
 
+    private val isEn: Boolean
+        get() = java.util.Locale.getDefault().language.startsWith("en", ignoreCase = true)
+
+    private fun tr(fa: String, en: String): String = if (isEn) en else fa
+
     suspend fun writeBackupJsonWithOptions(
         writer: java.io.Writer,
         options: BackupOptions,
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        onProgress(0.1f, "در حال آماده‌سازی داده‌های پشتیبان...")
+        onProgress(0.1f, tr("در حال آماده‌سازی داده‌های پشتیبان...", "Preparing backup data..."))
 
         val jsonWriter = JsonStreamWriter(writer)
         jsonWriter.beginObject()
@@ -179,7 +184,7 @@ class BackupRepository(
         jsonWriter.name("data").beginObject()
 
         if (options.includeCategories || options.includeVocabulary) {
-            onProgress(0.2f, "استخراج دسته‌بندی‌ها...")
+            onProgress(0.2f, tr("استخراج دسته‌بندی‌ها...", "Exporting categories..."))
             val categories = conceptDao.getAllCategories()
             jsonWriter.name("categories").beginArray()
             categories.forEach { cat ->
@@ -194,7 +199,7 @@ class BackupRepository(
         }
 
         if (options.includeVocabulary) {
-            onProgress(0.35f, "استخراج کلمات و ترجمه‌ها...")
+            onProgress(0.35f, tr("استخراج کلمات و ترجمه‌ها...", "Exporting words and translations..."))
             val allConcepts = conceptDao.getAllConcepts()
             val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
             
@@ -240,7 +245,7 @@ class BackupRepository(
         }
 
         if (options.includeReviewStats) {
-            onProgress(0.5f, "استخراج مراحل جعبه لایتنر...")
+            onProgress(0.5f, tr("استخراج مراحل جعبه لایتنر...", "Exporting Leitner stages..."))
             val learningStates = learningDao.getAllLearningStates()
             jsonWriter.name("learningStates").beginArray()
             learningStates.forEach { ls ->
@@ -266,7 +271,7 @@ class BackupRepository(
         }
 
         if (options.includeDifficulty) {
-            onProgress(0.6f, "استخراج وضعیت درجه سختی کلمات...")
+            onProgress(0.6f, tr("استخراج وضعیت درجه سختی کلمات...", "Exporting word difficulty states..."))
             val diffStates = learningDao.getAllDifficultyStates()
             jsonWriter.name("difficultyStates").beginArray()
             diffStates.forEach { ds ->
@@ -284,7 +289,7 @@ class BackupRepository(
         }
 
         if (options.includeProcessHistory) {
-            onProgress(0.75f, "استخراج تاریخچه جلسات و آزمون‌ها...")
+            onProgress(0.75f, tr("استخراج تاریخچه جلسات و آزمون‌ها...", "Exporting session and quiz history..."))
             val history = reviewSessionDao.getAllHistory()
             jsonWriter.name("reviewHistory").beginArray()
             history.forEach { h ->
@@ -348,7 +353,7 @@ class BackupRepository(
         }
 
         if (options.includeStreakAndProgress) {
-            onProgress(0.85f, "استخراج نشان‌ها و دستاوردها...")
+            onProgress(0.85f, tr("استخراج نشان‌ها و دستاوردها...", "Exporting badges and achievements..."))
             val achievements = achievementDao.getAllAchievements()
             jsonWriter.name("achievements").beginArray()
             achievements.forEach { a ->
@@ -362,7 +367,7 @@ class BackupRepository(
         }
 
         if (options.includeSettings) {
-            onProgress(0.9f, "استخراج تنظیمات برنامه...")
+            onProgress(0.9f, tr("استخراج تنظیمات برنامه...", "Exporting app settings..."))
             val settings = settingsDao.getAllSettings()
             jsonWriter.name("settings").beginArray()
             settings.forEach { s ->
@@ -377,7 +382,7 @@ class BackupRepository(
         jsonWriter.endObject() // data
         jsonWriter.endObject() // root
         jsonWriter.flush()
-        onProgress(1.0f, "تهیه پشتیبان با موفقیت انجام شد")
+        onProgress(1.0f, tr("تهیه پشتیبان با موفقیت انجام شد", "Backup completed successfully"))
     }
 
     suspend fun createBackupJsonWithOptions(
@@ -419,14 +424,14 @@ class BackupRepository(
         writeBom: Boolean = true,
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        onProgress(0.1f, "در حال بارگذاری کلمات و دسته‌بندی‌ها...")
+        onProgress(0.1f, tr("در حال بارگذاری کلمات و دسته‌بندی‌ها...", "Loading words and categories..."))
         val categories = conceptDao.getAllCategories().associateBy { it.id }
         val allConcepts = conceptDao.getAllConcepts().filter { it.active }
         val allContentsByConcept = conceptDao.getAllContents().groupBy { it.conceptId }
         val learningMap = learningDao.getAllLearningStates().associateBy { it.conceptId to it.direction }
         val diffMap = learningDao.getAllDifficultyStates().associateBy { it.conceptId to it.direction }
 
-        onProgress(0.5f, "در حال ساخت سطرهای اکسل...")
+        onProgress(0.5f, tr("در حال ساخت سطرهای اکسل...", "Building Excel rows..."))
         // Prepend UTF-8 BOM so Microsoft Excel seamlessly opens Persian & Spanish characters without corruption
         if (writeBom) {
             writer.write("\uFEFF")
@@ -522,7 +527,7 @@ class BackupRepository(
         options: BackupOptions = BackupOptions(),
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        onProgress(0.1f, "در حال آماده‌سازی خروجی جامع اکسل...")
+        onProgress(0.1f, tr("در حال آماده‌سازی خروجی جامع اکسل...", "Preparing complete Excel export..."))
         writer.write("\uFEFF") // UTF-8 BOM
 
         writer.write(escapeCsv("=========================================") + "\n")
@@ -833,18 +838,23 @@ class BackupRepository(
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
             // گام ۰: تهیه فایل پشتیبان اضطراری ایمن (Safety Backup) پیش از اعمال هرگونه تغییر
-            onProgress(0.02f, "ایجاد فایل پشتیبان اضطراری ایمن (Safety Backup)...")
+            onProgress(0.02f, tr("ایجاد فایل پشتیبان اضطراری ایمن (Safety Backup)...", "Creating safety backup before restore..."))
             try {
                 createSafetyBackup()
             } catch (e: Exception) {
                 android.util.Log.e("BackupRepository", "Safety backup creation failed before restore: ${e.message}", e)
                 return@withContext Result.failure(
-                    IllegalStateException("خطا در ایجاد نسخه پشتیبان اضطراری پیش از بازیابی: ${e.message ?: "خطای ناشناخته"}. عملیات بازیابی جهت حفظ ایمنی داده‌ها متوقف شد.")
+                    IllegalStateException(
+                        tr(
+                            "خطا در ایجاد نسخه پشتیبان اضطراری پیش از بازیابی: ${e.message ?: "خطای ناشناخته"}. عملیات بازیابی جهت حفظ ایمنی داده‌ها متوقف شد.",
+                            "Failed to create safety backup before restore: ${e.message ?: "Unknown error"}. Restore aborted to protect data."
+                        )
+                    )
                 )
             }
 
             // گام ۱: اعتبارسنجی اولیه ساختار، نسخه و نوع
-            onProgress(0.06f, "در حال بررسی و اعتبارسنجی ساختار فایل پشتیبان...")
+            onProgress(0.06f, tr("در حال بررسی و اعتبارسنجی ساختار فایل پشتیبان...", "Validating backup file structure..."))
             val root = JSONObject(jsonString)
 
             val format = root.optString("format", "")
@@ -852,13 +862,22 @@ class BackupRepository(
                 root.optString("app", "").equals("FlashLearn", ignoreCase = true)
 
             if (format != "yadin-backup" && !isFlashLearn) {
-                return@withContext Result.failure(IllegalArgumentException("فایل پشتیبان نامعتبر است (فرمت شناخته‌شده نیست)"))
+                return@withContext Result.failure(
+                    IllegalArgumentException(
+                        tr("فایل پشتیبان نامعتبر است (فرمت شناخته‌شده نیست)", "Invalid backup file (unrecognized format)")
+                    )
+                )
             }
 
             val schemaVersion = root.optInt("schemaVersion", 1)
             if (format == "yadin-backup" && schemaVersion > CURRENT_SUPPORTED_SCHEMA_VERSION) {
                 return@withContext Result.failure(
-                    IllegalArgumentException("نسخه فایل پشتیبان ($schemaVersion) بالاتر از نسخه پشتیبانی‌شده برنامه ($CURRENT_SUPPORTED_SCHEMA_VERSION) است. لطفاً برنامه را بروزرسانی کنید.")
+                    IllegalArgumentException(
+                        tr(
+                            "نسخه فایل پشتیبان ($schemaVersion) بالاتر از نسخه پشتیبانی‌شده برنامه ($CURRENT_SUPPORTED_SCHEMA_VERSION) است. لطفاً برنامه را بروزرسانی کنید.",
+                            "Backup file version ($schemaVersion) is newer than supported app version ($CURRENT_SUPPORTED_SCHEMA_VERSION). Please update the app."
+                        )
+                    )
                 )
             }
 
@@ -901,7 +920,9 @@ class BackupRepository(
             }
 
             if (data.length() == 0) {
-                return@withContext Result.failure(IllegalArgumentException("فایل پشتیبان نامعتبر است (داده‌ای یافت نشد)"))
+                return@withContext Result.failure(
+                    IllegalArgumentException(tr("فایل پشتیبان نامعتبر است (داده‌ای یافت نشد)", "Invalid backup file (no data found)"))
+                )
             }
 
             // گام ۲: پارس کردن تمامی موجودیت‌ها در حافظه قبل از گشودن تراکنش SQLite
@@ -910,7 +931,7 @@ class BackupRepository(
             val categoriesJson = data.optJSONArray("categories")
             val categoriesList = mutableListOf<CategoryEntity>()
             if (categoriesJson != null) {
-                onProgress(0.12f, "پردازش دسته‌بندی‌ها...")
+                onProgress(0.12f, tr("پردازش دسته‌بندی‌ها...", "Processing categories..."))
                 for (i in 0 until categoriesJson.length()) {
                     val co = categoriesJson.getJSONObject(i)
                     categoriesList.add(
@@ -931,7 +952,7 @@ class BackupRepository(
             val incomingContents = mutableListOf<ContentEntity>()
 
             if (conceptsJson != null) {
-                onProgress(0.20f, "پردازش مفاهیم و کلمات...")
+                onProgress(0.20f, tr("پردازش مفاهیم و کلمات...", "Processing concepts and words..."))
                 for (i in 0 until conceptsJson.length()) {
                     val co = conceptsJson.getJSONObject(i)
                     val cid = co.getString("id")
@@ -951,7 +972,7 @@ class BackupRepository(
             }
 
             if (contentsJson != null) {
-                onProgress(0.30f, "پردازش ترجمه‌ها و معانی...")
+                onProgress(0.30f, tr("پردازش ترجمه‌ها و معانی...", "Processing translations and meanings..."))
                 for (i in 0 until contentsJson.length()) {
                     val cto = contentsJson.getJSONObject(i)
                     incomingContents.add(
@@ -1003,7 +1024,7 @@ class BackupRepository(
             val lsJson = data.optJSONArray("learningStates")
             val incomingLearningStates = mutableListOf<LearningStateEntity>()
             if (lsJson != null) {
-                onProgress(0.40f, "پردازش مراحل یادگیری لایتنر...")
+                onProgress(0.40f, tr("پردازش مراحل یادگیری لایتنر...", "Processing Leitner learning states..."))
                 for (i in 0 until lsJson.length()) {
                     val o = lsJson.getJSONObject(i)
                     val dirStr = o.optString("direction", "NORMAL")
@@ -1039,7 +1060,7 @@ class BackupRepository(
             val dsJson = data.optJSONArray("difficultyStates")
             val incomingDifficultyStates = mutableListOf<DifficultyStateEntity>()
             if (dsJson != null) {
-                onProgress(0.50f, "پردازش سطوح دشواری کارت‌ها...")
+                onProgress(0.50f, tr("پردازش سطوح دشواری کارت‌ها...", "Processing card difficulty states..."))
                 for (i in 0 until dsJson.length()) {
                     val o = dsJson.getJSONObject(i)
                     val dirStr = o.optString("direction", "NORMAL")
@@ -1064,7 +1085,7 @@ class BackupRepository(
             val histJson = data.optJSONArray("reviewHistory")
             val incomingHistoryList = mutableListOf<ReviewHistoryEntity>()
             if (histJson != null) {
-                onProgress(0.60f, "پردازش تاریخچه مرورها و آزمون‌ها...")
+                onProgress(0.60f, tr("پردازش تاریخچه مرورها و آزمون‌ها...", "Processing review and quiz history..."))
                 for (i in 0 until histJson.length()) {
                     val o = histJson.getJSONObject(i)
                     val dirStr = o.optString("direction", "NORMAL")
@@ -1193,7 +1214,7 @@ class BackupRepository(
                 incomingSessionsList.isNotEmpty()
 
             // گام ۳: ایجاد ساختار RestoreContext و انطباق شناسه‌ها طبق الگوریتم ۶.۱۴
-            onProgress(0.70f, "تحلیل شناسه‌ها و اتصال RestoreContext...")
+            onProgress(0.70f, tr("تحلیل شناسه‌ها و اتصال RestoreContext...", "Analyzing IDs and RestoreContext mapping..."))
             val restoreContext = RestoreContext()
 
             // بازخوانی وضعیت فعلی پایگاه داده برای تطبیق
@@ -1460,7 +1481,7 @@ class BackupRepository(
             }
 
             // گام ۴: اعمال دسته‌ای و اتمیک تغییرات درون یک تراکنش واحد دیتابیس
-            onProgress(0.85f, "در حال ثبت اتمیک اطلاعات در دیتابیس...")
+            onProgress(0.85f, tr("در حال ثبت اتمیک اطلاعات در دیتابیس...", "Writing data atomically to database..."))
             database.withTransaction {
                 if (isReplace) {
                     // پاک‌سازی واژگان صرفاً در صورتی که فایل حاوی واژگان باشد
@@ -1526,8 +1547,8 @@ class BackupRepository(
                 finalSettingsToInsert.forEach { settingsDao.setSetting(it) }
             }
 
-            onProgress(1.0f, "بازیابی داده‌ها با موفقیت کامل انجام شد")
-            Result.success("اطلاعات پشتیبان با موفقیت بازیابی شدند")
+            onProgress(1.0f, tr("بازیابی داده‌ها با موفقیت کامل انجام شد", "Data restored successfully"))
+            Result.success(tr("اطلاعات پشتیبان با موفقیت بازیابی شدند", "Backup data restored successfully"))
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure(e)

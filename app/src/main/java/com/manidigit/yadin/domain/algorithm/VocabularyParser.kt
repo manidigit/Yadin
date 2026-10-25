@@ -48,6 +48,11 @@ private enum class ScriptType {
 
 object VocabularyParser {
 
+    private val isEn: Boolean
+        get() = Locale.getDefault().language.startsWith("en", ignoreCase = true)
+
+    private fun tr(fa: String, en: String): String = if (isEn) en else fa
+
     fun parse(rawText: String?): ParseResult {
         if (rawText.isNullOrBlank()) {
             return ParseResult(emptyList(), emptyList())
@@ -93,7 +98,7 @@ object VocabularyParser {
                             type = ParseWarningType.ORPHAN_SOURCE,
                             lineNumber = currentLineNumber,
                             rawText = src,
-                            message = "واژه مبدأ بدون ترجمه مشخص است"
+                            message = tr("واژه مبدأ بدون ترجمه مشخص است", "Source word has no translation")
                         )
                     )
                     currentConfidence = currentConfidence.coerceAtMost(0.4)
@@ -180,7 +185,10 @@ object VocabularyParser {
                                     type = ParseWarningType.MIXED_SCRIPT_CONFUSION,
                                     lineNumber = currentLineNumber,
                                     rawText = src,
-                                    message = "${validation.reason} (نیازمند بازبینی دستی قبل از ذخیره)"
+                                    message = tr(
+                                        "${validation.reason} (نیازمند بازبینی دستی قبل از ذخیره)",
+                                        "${validation.reason} (Requires manual review before saving)"
+                                    )
                                 )
                             )
                         }
@@ -254,7 +262,7 @@ object VocabularyParser {
                             )
                         )
                     } else {
-                        currentNotes.add("تجزیه: $content")
+                        currentNotes.add(tr("تجزیه: $content", "Breakdown: $content"))
                     }
                 }
                 LineType.NOTE, LineType.GRAMMAR_NOTE -> {
@@ -384,7 +392,7 @@ object VocabularyParser {
                                 type = ParseWarningType.UNKNOWN_FORMAT,
                                 lineNumber = lineNum,
                                 rawText = trimmed,
-                                message = "ساختار خط نامشخص است"
+                                message = tr("ساختار خط نامشخص است", "Unrecognized line format")
                             )
                         )
                     }
@@ -400,7 +408,7 @@ object VocabularyParser {
                     type = ParseWarningType.ORPHAN_TRANSLATION,
                     lineNumber = orphan.second,
                     rawText = orphan.first,
-                    message = "ترجمه فارسی بدون واژه مبدأ باقی ماند"
+                    message = tr("ترجمه فارسی بدون واژه مبدأ باقی ماند", "Orphan Persian translation without a source word")
                 )
             )
         }

@@ -321,6 +321,9 @@ class LibraryViewModel(
             }
 
             if (result.isSuccess) {
+                if (conceptId != null) {
+                    _selectedWordDetail.value = vocabularyRepo.getWordDetail(conceptId)
+                }
                 performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
                 onSuccess()
             } else {

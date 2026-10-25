@@ -8,18 +8,22 @@ import org.junit.Test
 class Sm2AlgorithmTest {
 
     @Test
-    fun `first review with GOOD sets interval to 1 day and repetitions to 1`() {
+    fun `first review differentiates HARD 1 day GOOD 2 days and EASY 4 days`() {
         val initial = Sm2State()
+        val hard = Sm2Algorithm.calculateNextReview(initial, Sm2Quality.HARD, "2026-10-19")
         val result = Sm2Algorithm.calculateNextReview(
             currentState = initial,
             quality = Sm2Quality.GOOD,
             todayDayString = "2026-10-19"
         )
+        val easy = Sm2Algorithm.calculateNextReview(initial, Sm2Quality.EASY, "2026-10-19")
 
+        assertEquals(1, hard.nextState.intervalDays)
         assertEquals(1, result.nextState.repetitions)
-        assertEquals(1, result.nextState.intervalDays)
+        assertEquals(2, result.nextState.intervalDays)
+        assertEquals(4, easy.nextState.intervalDays)
         assertEquals(2.5, result.nextState.easinessFactor, 0.01)
-        assertEquals("2026-10-20", result.nextReviewDay)
+        assertEquals("2026-10-21", result.nextReviewDay)
         assertEquals(Stage.DAILY, result.mappedStage)
     }
 

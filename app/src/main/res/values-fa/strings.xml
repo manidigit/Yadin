@@ -730,4 +730,19 @@ libro: کتاب</string>
     <string name="err_library_import_fmt">خطا در ورود کلمات: %1$s</string>
     <string name="err_library_scan_fmt">خطا در تحلیل و اسکن کلمات: %1$s</string>
     <string name="err_library_apply_audit_fmt">خطا در اعمال اصلاحات کلمات: %1$s</string>
+    <string name="settings_tts_section_title">تنظیمات تلفظ صوتی (TTS)</string>
+    <string name="settings_tts_enabled">فعال‌سازی دکمه تلفظ صوتی</string>
+    <string name="settings_tts_auto_play">پخش خودکار تلفظ در شروع کارت</string>
+    <string name="settings_tts_rate_label">سرعت خوانش صوتی</string>
+    <string name="settings_review_prefs_title">ترجیحات مرور و آزمون</string>
+    <string name="settings_show_cat_in_review">نمایش دسته‌بندی روی کارت مرور و آزمون</string>
+    <string name="settings_auto_advance_label">رفتن خودکار به سؤال بعدی آزمون</string>
+    <string name="settings_auto_advance_off">خاموش</string>
+    <string name="settings_auto_advance_sec_fmt">%1$s ثانیه</string>
+    <string name="settings_default_mode_label">حالت مرور پیش‌فرض</string>
+    <string name="settings_default_quiz_level_label">سطح پیش‌فرض آزمون</string>
+    <string name="import_review_suggestion_fmt">پیشنهاد: %1$s</string>
+    <string name="audit_alt_meaning_fmt">فرم/معنی دیگر: %1$s (%2$s)</string>
+    <string name="audit_alt_form_fmt">فرم جایگزین: %1$s</string>
+    <string name="percent_fmt">%1$s٪</string>
 </resources>

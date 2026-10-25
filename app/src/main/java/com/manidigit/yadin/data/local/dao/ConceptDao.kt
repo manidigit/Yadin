@@ -304,11 +304,15 @@ interface ConceptDao {
             COUNT(DISTINCT c.id) AS totalWords,
             COUNT(DISTINCT CASE WHEN ls.stage = 'LEARNED' THEN c.id END) AS learnedWords
         FROM categories cat
-        INNER JOIN concept_categories cc ON cc.categoryId = cat.id
-        INNER JOIN concepts c ON cc.conceptId = c.id
+        INNER JOIN concepts c ON (
+            c.active = 1 AND (
+                c.categoryId = cat.id OR
+                EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId = cat.id)
+            )
+        )
         LEFT JOIN learning_states ls ON (ls.conceptId = c.id AND ls.direction = :direction)
-        WHERE c.active = 1
         GROUP BY cat.id
+        HAVING totalWords > 0
         ORDER BY totalWords DESC
     """)
     suspend fun getCategoryMasteryRaw(direction: CardDirection): List<CategoryMasteryRaw>

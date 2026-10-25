@@ -57,7 +57,7 @@ fun AddEditWordScreen(
     initialWord: WordDetail? = null,
     categories: List<Category>,
     languageDirection: CardDirection = CardDirection.NORMAL,
-    onSave: (sourceText: String, translations: List<String>, categoryId: String?, note: String?, categoryIds: List<String>) -> Unit,
+    onSave: (sourceText: String, translations: List<String>, categoryId: String?, note: String?, categoryIds: List<String>, onError: (String) -> Unit) -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -94,7 +94,7 @@ fun AddEditWordScreen(
             }
         )
     }
-    var selectedCategoryIds by remember {
+    var selectedCategoryIds by remember(initialWord) {
         mutableStateOf(
             if (initialWord != null && initialWord.categories.isNotEmpty()) {
                 initialWord.categories.map { it.id }.toSet()
@@ -219,9 +219,13 @@ fun AddEditWordScreen(
             onClick = {
                 if (isSaving) return@Button
                 val cleanSrc = sourceText.trim()
-                val translationsList = translationsText.split("،", ",", "\n")
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
+                val translationsList = if (isNormal) {
+                    translationsText.split("،", ",", "\n")
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() }
+                } else {
+                    listOf(translationsText.trim()).filter { it.isNotEmpty() }
+                }
 
                 if (cleanSrc.isEmpty()) {
                     errorMessage = context.getString(R.string.word_error_empty_source)
@@ -229,6 +233,7 @@ fun AddEditWordScreen(
                     errorMessage = context.getString(R.string.word_error_empty_target)
                 } else {
                     isSaving = true
+                    errorMessage = null
                     val finalSrc = if (isNormal) TextUtilities.normalizeSpanishPunctuation(cleanSrc).first else cleanSrc
                     val finalTrans = translationsList.map { trans ->
                         if (!isNormal) TextUtilities.normalizeSpanishPunctuation(trans).first else trans
@@ -239,7 +244,10 @@ fun AddEditWordScreen(
                         selectedCategoryIds.firstOrNull(),
                         note.trim().ifEmpty { null },
                         selectedCategoryIds.toList()
-                    )
+                    ) { err ->
+                        isSaving = false
+                        errorMessage = err
+                    }
                 }
             },
             enabled = !isSaving,

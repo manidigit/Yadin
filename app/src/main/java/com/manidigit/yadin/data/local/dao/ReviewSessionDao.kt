@@ -8,6 +8,7 @@ import androidx.room.Update
 import com.manidigit.yadin.data.local.entity.ReviewHistoryEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionEntity
 import com.manidigit.yadin.data.local.entity.ReviewSessionItemEntity
+import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.SessionItemState
 import kotlinx.coroutines.flow.Flow
 
@@ -74,46 +75,126 @@ interface ReviewSessionDao {
     @Query("UPDATE review_session_items SET conceptId = :newConceptId WHERE conceptId IN (:oldConceptIds)")
     suspend fun repointReviewSessionItems(oldConceptIds: List<String>, newConceptId: String)
 
-    @Query("SELECT COUNT(*) FROM review_history WHERE reviewedDay = :dayString")
+    @Query("""
+        SELECT COUNT(*) FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay = :dayString
+    """)
     fun getReviewCountForDayFlow(dayString: String): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM review_history WHERE reviewedDay = :dayString")
+    @Query("""
+        SELECT COUNT(*) FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay = :dayString AND rh.direction = :direction
+    """)
+    fun getReviewCountForDayFlow(dayString: String, direction: CardDirection): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(*) FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay = :dayString
+    """)
     suspend fun getReviewCountForDay(dayString: String): Int
 
-    @Query("SELECT COUNT(*) FROM review_history")
+    @Query("""
+        SELECT COUNT(*) FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1
+    """)
     fun getTotalReviewsCountFlow(): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM review_history WHERE isCorrect = 1")
+    @Query("""
+        SELECT COUNT(*) FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.direction = :direction
+    """)
+    fun getTotalReviewsCountFlow(direction: CardDirection): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(*) FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.isCorrect = 1
+    """)
     fun getTotalCorrectReviewsCountFlow(): Flow<Int>
 
-    @Query("SELECT DISTINCT reviewedDay FROM review_history WHERE reviewedDay IS NOT NULL ORDER BY reviewedDay DESC")
+    @Query("""
+        SELECT COUNT(*) FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.isCorrect = 1 AND rh.direction = :direction
+    """)
+    fun getTotalCorrectReviewsCountFlow(direction: CardDirection): Flow<Int>
+
+    @Query("""
+        SELECT DISTINCT rh.reviewedDay FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay IS NOT NULL
+        ORDER BY rh.reviewedDay DESC
+    """)
     suspend fun getDistinctReviewedDays(): List<String>
 
     @Query("""
+        SELECT DISTINCT rh.reviewedDay FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay IS NOT NULL AND rh.direction = :direction
+        ORDER BY rh.reviewedDay DESC
+    """)
+    suspend fun getDistinctReviewedDays(direction: CardDirection): List<String>
+
+    @Query("""
         SELECT 
-            reviewedDay,
+            rh.reviewedDay AS reviewedDay,
             COUNT(*) AS totalCount,
-            SUM(CASE WHEN isCorrect = 1 THEN 1 ELSE 0 END) AS correctCount
-        FROM review_history
-        WHERE reviewedDay IS NOT NULL
-        GROUP BY reviewedDay
-        ORDER BY reviewedDay DESC
+            SUM(CASE WHEN rh.isCorrect = 1 THEN 1 ELSE 0 END) AS correctCount
+        FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay IS NOT NULL
+        GROUP BY rh.reviewedDay
+        ORDER BY rh.reviewedDay DESC
         LIMIT :limit
     """)
     suspend fun getRecentDailyStats(limit: Int = 90): List<DayCountRaw>
 
     @Query("""
         SELECT 
-            reviewedDay,
+            rh.reviewedDay AS reviewedDay,
             COUNT(*) AS totalCount,
-            SUM(CASE WHEN isCorrect = 1 THEN 1 ELSE 0 END) AS correctCount
-        FROM review_history
-        WHERE reviewedDay IS NOT NULL
-        GROUP BY reviewedDay
-        ORDER BY reviewedDay DESC
+            SUM(CASE WHEN rh.isCorrect = 1 THEN 1 ELSE 0 END) AS correctCount
+        FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay IS NOT NULL AND rh.direction = :direction
+        GROUP BY rh.reviewedDay
+        ORDER BY rh.reviewedDay DESC
+        LIMIT :limit
+    """)
+    suspend fun getRecentDailyStats(limit: Int = 90, direction: CardDirection): List<DayCountRaw>
+
+    @Query("""
+        SELECT 
+            rh.reviewedDay AS reviewedDay,
+            COUNT(*) AS totalCount,
+            SUM(CASE WHEN rh.isCorrect = 1 THEN 1 ELSE 0 END) AS correctCount
+        FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay IS NOT NULL
+        GROUP BY rh.reviewedDay
+        ORDER BY rh.reviewedDay DESC
         LIMIT :limit
     """)
     fun getRecentDailyStatsFlow(limit: Int = 90): Flow<List<DayCountRaw>>
+
+    @Query("""
+        SELECT 
+            rh.reviewedDay AS reviewedDay,
+            COUNT(*) AS totalCount,
+            SUM(CASE WHEN rh.isCorrect = 1 THEN 1 ELSE 0 END) AS correctCount
+        FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.reviewedDay IS NOT NULL AND rh.direction = :direction
+        GROUP BY rh.reviewedDay
+        ORDER BY rh.reviewedDay DESC
+        LIMIT :limit
+    """)
+    fun getRecentDailyStatsFlow(limit: Int = 90, direction: CardDirection): Flow<List<DayCountRaw>>
 
     @Query("SELECT * FROM review_history")
     suspend fun getAllHistory(): List<ReviewHistoryEntity>
@@ -157,8 +238,23 @@ interface ReviewSessionDao {
     @Query("DELETE FROM review_sessions WHERE id NOT IN (SELECT DISTINCT sessionId FROM review_session_items)")
     suspend fun deleteEmptySessions()
 
-    @Query("SELECT reviewedAt, isCorrect FROM review_history ORDER BY reviewedAt DESC LIMIT :limit")
+    @Query("""
+        SELECT rh.reviewedAt AS reviewedAt, rh.isCorrect AS isCorrect
+        FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1
+        ORDER BY rh.reviewedAt DESC LIMIT :limit
+    """)
     suspend fun getRecentReviewTimestamps(limit: Int = 2000): List<ReviewTimestampRaw>
+
+    @Query("""
+        SELECT rh.reviewedAt AS reviewedAt, rh.isCorrect AS isCorrect
+        FROM review_history rh
+        INNER JOIN concepts c ON rh.conceptId = c.id
+        WHERE c.active = 1 AND rh.direction = :direction
+        ORDER BY rh.reviewedAt DESC LIMIT :limit
+    """)
+    suspend fun getRecentReviewTimestamps(limit: Int = 2000, direction: CardDirection): List<ReviewTimestampRaw>
 
     @Query("""
         SELECT COUNT(*) FROM (

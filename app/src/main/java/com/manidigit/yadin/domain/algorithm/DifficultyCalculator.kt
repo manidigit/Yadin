@@ -119,7 +119,7 @@ object DifficultyCalculator {
             VocabularyDifficulty.HARD -> {
                 DifficultyUpdateResult(
                     newDifficulty = VocabularyDifficulty.HARD,
-                    consecutiveCorrect = 0,
+                    consecutiveCorrect = consecutiveCorrect,
                     consecutiveWrong = 0,
                     hasReachedVeryHard = baseReached
                 )

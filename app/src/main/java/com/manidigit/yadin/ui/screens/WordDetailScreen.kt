@@ -364,7 +364,10 @@ fun WordDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(stringResource(R.string.word_stat_due_date), color = colors.onSurfaceVariant)
+                        val normalHasAlgoSchedule = word.normalLearning?.nextReviewDay != null &&
+                            ((word.normalLearning.sm2Repetitions > 0) || (word.normalLearning.fsrsReps > 0))
                         val normalDueText = when {
+                            normalHasAlgoSchedule -> word.normalLearning?.nextReviewDay ?: ""
                             word.normalLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> stringResource(R.string.word_due_permanent_memory)
                             word.normalLearning?.nextReviewDay != null -> word.normalLearning.nextReviewDay
                             word.normalLearning != null -> stringResource(R.string.word_due_today)
@@ -373,7 +376,7 @@ fun WordDetailScreen(
                         Text(
                             text = normalDueText,
                             fontWeight = FontWeight.Bold,
-                            color = if (word.normalLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED) colors.success else colors.primary
+                            color = if (word.normalLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED && !normalHasAlgoSchedule) colors.success else colors.primary
                         )
                     }
                 }
@@ -434,7 +437,10 @@ fun WordDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(stringResource(R.string.word_stat_due_date), color = colors.onSurfaceVariant)
+                        val reverseHasAlgoSchedule = word.reverseLearning?.nextReviewDay != null &&
+                            ((word.reverseLearning.sm2Repetitions > 0) || (word.reverseLearning.fsrsReps > 0))
                         val reverseDueText = when {
+                            reverseHasAlgoSchedule -> word.reverseLearning?.nextReviewDay ?: ""
                             word.reverseLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED -> stringResource(R.string.word_due_permanent_memory)
                             word.reverseLearning?.nextReviewDay != null -> word.reverseLearning.nextReviewDay
                             word.reverseLearning != null -> stringResource(R.string.word_due_today)
@@ -443,7 +449,7 @@ fun WordDetailScreen(
                         Text(
                             text = reverseDueText,
                             fontWeight = FontWeight.Bold,
-                            color = if (word.reverseLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED) colors.success else colors.primary
+                            color = if (word.reverseLearning?.stage == com.manidigit.yadin.domain.model.Stage.LEARNED && !reverseHasAlgoSchedule) colors.success else colors.primary
                         )
                     }
                 }

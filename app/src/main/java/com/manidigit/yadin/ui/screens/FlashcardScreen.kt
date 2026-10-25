@@ -81,6 +81,8 @@ fun FlashcardScreen(
     currentIndex: Int,
     isFlipped: Boolean,
     showCategory: Boolean = false,
+    ttsEnabled: Boolean = true,
+    ttsAutoPlay: Boolean = false,
     isSm2Mode: Boolean = false,
     isFsrsMode: Boolean = false,
     fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION,
@@ -91,6 +93,7 @@ fun FlashcardScreen(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     var showExitConfirmDialog by remember { mutableStateOf(false) }
 
@@ -182,6 +185,13 @@ fun FlashcardScreen(
         }
     }
 
+    LaunchedEffect(card.conceptId, currentIndex, ttsEnabled, ttsAutoPlay) {
+        if (ttsEnabled && ttsAutoPlay) {
+            val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
+            com.manidigit.yadin.ui.util.TtsManager.speak(context, card.sourceText, frontLang)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -254,7 +264,9 @@ fun FlashcardScreen(
                     .pointerInput(currentIndex, isFlipped) {
                         detectHorizontalDragGestures(
                             onDragEnd = {
-                                if (dragOffset > 150f) {
+                                if (!isFlipped) {
+                                    dragOffset = 0f
+                                } else if (dragOffset > 150f) {
                                     dragOffset = 0f
                                     if (isSm2Mode || isFsrsMode) onSm2Answer(Sm2Quality.GOOD) else onAnswer(true)
                                 } else if (dragOffset < -150f) {
@@ -267,7 +279,9 @@ fun FlashcardScreen(
                             onDragCancel = { dragOffset = 0f },
                             onHorizontalDrag = { change, dragAmount ->
                                 change.consume()
-                                dragOffset += dragAmount
+                                if (isFlipped) {
+                                    dragOffset += dragAmount
+                                }
                             }
                         )
                     }
@@ -280,6 +294,7 @@ fun FlashcardScreen(
                     FlashcardFrontFace(
                         card = card,
                         showCategory = showCategory,
+                        ttsEnabled = ttsEnabled,
                         frontScrollState = frontScrollState,
                         colors = colors
                     )
@@ -555,6 +570,7 @@ private fun Sm2QualityButton(
 private fun FlashcardFrontFace(
     card: ReviewCard,
     showCategory: Boolean,
+    ttsEnabled: Boolean,
     frontScrollState: ScrollState,
     colors: YadinColors
 ) {
@@ -587,7 +603,7 @@ private fun FlashcardFrontFace(
                 Spacer(modifier = Modifier.size(1.dp))
             }
             val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
-            SpeakButton(text = card.sourceText, languageCode = frontLang)
+            SpeakButton(text = card.sourceText, languageCode = frontLang, enabled = ttsEnabled)
         }
 
         Column(

@@ -1,5 +1,6 @@
 package com.manidigit.yadin.domain.algorithm
 
+import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 
@@ -286,39 +287,69 @@ object QuizDistractorScorer {
         return kotlin.math.abs(d1.ordinal - d2.ordinal)
     }
 
+    fun entryTypeSimilarity(a: EntryType, b: EntryType): Double {
+        if (a == b) return 1.0
+        val phraseGroup = setOf(EntryType.PHRASE, EntryType.IDIOM, EntryType.COLLOCATION, EntryType.STRUCTURE)
+        if (a in phraseGroup && b in phraseGroup) return 0.9
+        if ((a == EntryType.WORD && b in phraseGroup) || (b == EntryType.WORD && a in phraseGroup)) return 0.35
+        if ((a == EntryType.SENTENCE && b in phraseGroup) || (b == EntryType.SENTENCE && a in phraseGroup)) return 0.35
+        return 0.0
+    }
+
     fun calculateConfusability(
         correctAnswer: String,
         candidateText: String,
-        correctCategory: String?,
-        candidateCategory: String?,
-        correctDifficulty: VocabularyDifficulty,
-        candidateDifficulty: VocabularyDifficulty
+        correctCategory: String? = null,
+        candidateCategory: String? = null,
+        correctDifficulty: VocabularyDifficulty = VocabularyDifficulty.MEDIUM,
+        candidateDifficulty: VocabularyDifficulty = VocabularyDifficulty.MEDIUM,
+        correctEntryType: EntryType = EntryType.WORD,
+        candidateEntryType: EntryType = EntryType.WORD,
+        sameCategoryOverride: Boolean? = null
     ): Double {
         val lexSim = quizLexicalSimilarity(correctAnswer, candidateText)
-        val catMatch = if (candidateCategory != null && candidateCategory == correctCategory) 1.0 else 0.0
-        val diffDist = diffDistance(correctDifficulty, candidateDifficulty)
-        val diffBonus = (3 - diffDist).coerceAtLeast(0) / 3.0
+        val catMatch = when {
+            sameCategoryOverride != null -> if (sameCategoryOverride) 1.0 else 0.0
+            candidateCategory != null && candidateCategory == correctCategory -> 1.0
+            else -> 0.0
+        }
+        val typeMatch = entryTypeSimilarity(correctEntryType, candidateEntryType)
 
-        return (lexSim * 0.4 + catMatch * 0.35 + diffBonus * 0.25).coerceIn(0.0, 1.0)
+        // Spec 6.6 / D24 formula: 55% lexical similarity + 25% category share + 20% entryType match.
+        // Base for same-category & same-type with 0 lexical similarity is 0.45 (< 0.52 target for NORMAL),
+        // so moderate lexical similarity (0.10..0.25) moves the score toward the NORMAL sweet spot (~0.52)
+        // instead of pushing it away.
+        return (lexSim * 0.55 + catMatch * 0.25 + typeMatch * 0.20).coerceIn(0.0, 1.0)
     }
 
     data class ScoredItem(val text: String, val score: Double)
+
+    fun <T> rankCandidatesByLevel(
+        quizLevel: QuizLevel,
+        candidates: List<T>,
+        scoreSelector: (T) -> Double,
+        repeatPenaltySelector: (T) -> Double = { 0.0 }
+    ): List<T> {
+        return when (quizLevel) {
+            QuizLevel.BEGINNER -> {
+                candidates.sortedBy { scoreSelector(it) + repeatPenaltySelector(it) }
+            }
+            QuizLevel.NORMAL -> {
+                candidates.sortedBy { kotlin.math.abs(scoreSelector(it) - 0.52) + repeatPenaltySelector(it) }
+            }
+            QuizLevel.PROFESSIONAL -> {
+                candidates.sortedByDescending { scoreSelector(it) - repeatPenaltySelector(it) }
+            }
+        }
+    }
 
     fun selectDistractorTexts(
         quizLevel: QuizLevel,
         candidates: List<ScoredItem>,
         takeCount: Int = 3
     ): List<String> {
-        return when (quizLevel) {
-            QuizLevel.BEGINNER -> {
-                candidates.sortedBy { it.score }.map { it.text }.take(takeCount)
-            }
-            QuizLevel.NORMAL -> {
-                candidates.sortedBy { kotlin.math.abs(it.score - 0.5) }.map { it.text }.take(takeCount)
-            }
-            QuizLevel.PROFESSIONAL -> {
-                candidates.sortedByDescending { it.score }.map { it.text }.take(takeCount)
-            }
-        }
+        return rankCandidatesByLevel(quizLevel, candidates, { it.score })
+            .map { it.text }
+            .take(takeCount)
     }
 }

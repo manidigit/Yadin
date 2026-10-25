@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.map
 import androidx.room.withTransaction
 import com.manidigit.yadin.data.local.database.YadinDatabase
 import java.util.UUID
+import kotlin.math.roundToInt
 
 class VocabularyRepository(
     private val database: YadinDatabase,
@@ -433,13 +434,22 @@ class VocabularyRepository(
         entryType: EntryType = EntryType.WORD,
         categoryIds: List<String> = emptyList()
     ): Result<String> {
+        val isEn = java.util.Locale.getDefault().language == "en"
         val cleanSource = sourceText.trim()
         if (cleanSource.isEmpty()) {
-            return Result.failure(IllegalArgumentException("واژه ورودی نمی‌تواند خالی باشد"))
+            return Result.failure(
+                IllegalArgumentException(
+                    if (isEn) "Source word cannot be empty" else "واژه ورودی نمی‌تواند خالی باشد"
+                )
+            )
         }
         val cleanTranslations = translations.map { it.trim() }.filter { it.isNotEmpty() }
         if (cleanTranslations.isEmpty()) {
-            return Result.failure(IllegalArgumentException("حداقل یک ترجمه باید وارد شود"))
+            return Result.failure(
+                IllegalArgumentException(
+                    if (isEn) "At least one translation must be entered" else "حداقل یک ترجمه باید وارد شود"
+                )
+            )
         }
 
         // حفظ نقش اصیل زبان‌ها در پایگاه داده (اسپانیایی: مبدأ، فارسی: مقصد)
@@ -468,8 +478,13 @@ class VocabularyRepository(
             // بررسی عدم وجود واژه فعال تکراری با همین کلید قانونی (Issue 1.1)
             val existingActive = conceptDao.findActiveContentByCanonicalKey(canonicalSourceLang, sourceCanonicalKey)
             if (existingActive != null) {
+                val dupMsg = if (isEn) {
+                    "This word («$finalSourceText») is already registered in the dictionary."
+                } else {
+                    "این واژه («$finalSourceText») قبلاً در واژه‌نامه ثبت شده است."
+                }
                 return@withTransaction Result.failure(
-                    IllegalStateException("این واژه («$finalSourceText») قبلاً در واژه‌نامه ثبت شده است.")
+                    IllegalStateException(dupMsg)
                 )
             }
 
@@ -491,7 +506,8 @@ class VocabularyRepository(
                     return@withTransaction if (updateRes.isSuccess) {
                         Result.success(existingConcept.id)
                     } else {
-                        Result.failure(updateRes.exceptionOrNull() ?: Exception("خطا در فعال‌سازی مجدد واژه"))
+                        val fallbackErr = if (isEn) "Error reactivating word" else "خطا در فعال‌سازی مجدد واژه"
+                        Result.failure(updateRes.exceptionOrNull() ?: Exception(fallbackErr))
                     }
                 }
             }
@@ -701,12 +717,20 @@ class VocabularyRepository(
         }
     }
 
-    fun getTotalCorrectReviewsCountFlow(): Flow<Int> {
-        return reviewSessionDao.getTotalCorrectReviewsCountFlow()
+    fun getTotalCorrectReviewsCountFlow(direction: CardDirection? = null): Flow<Int> {
+        return if (direction != null) {
+            reviewSessionDao.getTotalCorrectReviewsCountFlow(direction)
+        } else {
+            reviewSessionDao.getTotalCorrectReviewsCountFlow()
+        }
     }
 
-    suspend fun getRecentDailyStats(days: Int = 14): List<DayCountRaw> {
-        return reviewSessionDao.getRecentDailyStats(days)
+    suspend fun getRecentDailyStats(days: Int = 14, direction: CardDirection? = null): List<DayCountRaw> {
+        return if (direction != null) {
+            reviewSessionDao.getRecentDailyStats(days, direction)
+        } else {
+            reviewSessionDao.getRecentDailyStats(days)
+        }
     }
 
     fun getDifficultyBreakdownFlow(direction: CardDirection = CardDirection.NORMAL): Flow<Map<VocabularyDifficulty, Int>> {
@@ -752,8 +776,8 @@ class VocabularyRepository(
             data class ReviewsHolder(val dueToday: Int, val reviewedToday: Int, val totalReviews: Int)
             val reviewsFlow: Flow<ReviewsHolder> = combine(
                 learningDao.getDueCountFlow(direction, today),
-                reviewSessionDao.getReviewCountForDayFlow(today),
-                reviewSessionDao.getTotalReviewsCountFlow()
+                reviewSessionDao.getReviewCountForDayFlow(today, direction),
+                reviewSessionDao.getTotalReviewsCountFlow(direction)
             ) { dueToday, reviewedToday, totalReviews ->
                 ReviewsHolder(dueToday, reviewedToday, totalReviews)
             }
@@ -788,7 +812,7 @@ class VocabularyRepository(
                     learnedStageCount = learned,
                     dueTodayCount = reviews.dueToday,
                     reviewedTodayCount = reviews.reviewedToday,
-                    currentStreakDays = calculateStreakDays(reviewSessionDao.getDistinctReviewedDays(), today),
+                    currentStreakDays = calculateStreakDays(reviewSessionDao.getDistinctReviewedDays(direction), today),
                     totalReviewsCount = reviews.totalReviews,
                     easyCount = diffBreakdown[VocabularyDifficulty.EASY] ?: 0,
                     mediumCount = diffBreakdown[VocabularyDifficulty.MEDIUM] ?: 0,
@@ -809,24 +833,30 @@ class VocabularyRepository(
     }
 
     private fun formatEnrichedNote(entry: ParsedEntry): String? {
+        val isEn = java.util.Locale.getDefault().language == "en"
+        val sep = if (isEn) ", " else "، "
         val parts = mutableListOf<String>()
         entry.note?.takeIf { it.isNotBlank() }?.let { parts.add(it.trim()) }
-        entry.grammarNotes?.takeIf { it.isNotBlank() }?.let { parts.add("نکات گرامری: ${it.trim()}") }
+        entry.grammarNotes?.takeIf { it.isNotBlank() }?.let {
+            parts.add(if (isEn) "Grammar notes: ${it.trim()}" else "نکات گرامری: ${it.trim()}")
+        }
         if (entry.variants.isNotEmpty()) {
-            val vText = entry.variants.joinToString("، ") { 
-                if (it.translationText.isNullOrBlank()) it.sourceText else "${it.sourceText} (${it.translationText})" 
+            val vText = entry.variants.joinToString(sep) {
+                if (it.translationText.isNullOrBlank()) it.sourceText else "${it.sourceText} (${it.translationText})"
             }
-            parts.add("اشکال و گونه‌ها: $vText")
+            parts.add(if (isEn) "Forms & variants: $vText" else "اشکال و گونه‌ها: $vText")
         }
         if (entry.breakdowns.isNotEmpty()) {
             val bText = entry.breakdowns.joinToString(" + ") { "${it.sourcePart}: ${it.translationPart}" }
-            parts.add("تحلیل اجزاء: $bText")
+            parts.add(if (isEn) "Component breakdown: $bText" else "تحلیل اجزاء: $bText")
         }
         if (entry.relations.isNotEmpty()) {
-            val rText = entry.relations.joinToString("، ") { "${it.relationType.toPersianLabel()}: ${it.relatedSourceText}" }
-            parts.add("روابط واژگانی: $rText")
+            val rText = entry.relations.joinToString(sep) { "${it.relationType.toPersianLabel()}: ${it.relatedSourceText}" }
+            parts.add(if (isEn) "Lexical relations: $rText" else "روابط واژگانی: $rText")
         }
-        entry.possibleCorrection?.takeIf { it.isNotBlank() }?.let { parts.add("اصلاح پیشنهادی: ${it.trim()}") }
+        entry.possibleCorrection?.takeIf { it.isNotBlank() }?.let {
+            parts.add(if (isEn) "Suggested correction: ${it.trim()}" else "اصلاح پیشنهادی: ${it.trim()}")
+        }
         return parts.joinToString("\n").ifBlank { null }
     }
 
@@ -984,8 +1014,12 @@ class VocabularyRepository(
         }
     }
 
-    fun getRecentDailyStatsFlow(): Flow<List<DayCountRaw>> {
-        return reviewSessionDao.getRecentDailyStatsFlow(90)
+    fun getRecentDailyStatsFlow(direction: CardDirection? = null): Flow<List<DayCountRaw>> {
+        return if (direction != null) {
+            reviewSessionDao.getRecentDailyStatsFlow(90, direction)
+        } else {
+            reviewSessionDao.getRecentDailyStatsFlow(90)
+        }
     }
 
     fun getPracticedWordsCountFlow(direction: CardDirection): Flow<Int> {
@@ -1030,7 +1064,7 @@ class VocabularyRepository(
 
         val weightedScore = if (totalActive > 0) {
             val raw = (learned * 100.0 + monthly * 80.0 + weekly * 60.0 + practicedDaily * 35.0) / totalActive
-            raw.toInt().coerceIn(0, 100)
+            raw.roundToInt().coerceIn(0, 100)
         } else 0
 
         return com.manidigit.yadin.domain.model.RetentionMetrics(
@@ -1051,18 +1085,19 @@ class VocabularyRepository(
         val day3 = ClockAndDayMath.addDays(today, 3)
         val day7 = ClockAndDayMath.addDays(today, 7)
 
+        val overdueCount = learningDao.getOverduePracticedCount(direction, today)
         val scheduledList = learningDao.getScheduledReviewsByDay(direction, day1, day7)
         val scheduledMap = scheduledList.associateBy { it.nextReviewDay }
 
-        val tomorrowCount = scheduledMap[day1]?.count ?: 0
+        val tomorrowCount = overdueCount + (scheduledMap[day1]?.count ?: 0)
 
-        var next3DaysCount = 0
+        var next3DaysCount = overdueCount
         for (i in 1..3) {
             val d = ClockAndDayMath.addDays(today, i)
             next3DaysCount += scheduledMap[d]?.count ?: 0
         }
 
-        var next7DaysCount = 0
+        var next7DaysCount = overdueCount
         for (i in 1..7) {
             val d = ClockAndDayMath.addDays(today, i)
             next7DaysCount += scheduledMap[d]?.count ?: 0
@@ -1075,8 +1110,12 @@ class VocabularyRepository(
         )
     }
 
-    suspend fun getStudyHourBuckets(): List<com.manidigit.yadin.domain.model.StudyHourBucket> {
-        val history = reviewSessionDao.getRecentReviewTimestamps(2000)
+    suspend fun getStudyHourBuckets(direction: CardDirection? = null): List<com.manidigit.yadin.domain.model.StudyHourBucket> {
+        val history = if (direction != null) {
+            reviewSessionDao.getRecentReviewTimestamps(2000, direction)
+        } else {
+            reviewSessionDao.getRecentReviewTimestamps(2000)
+        }
         val zone = java.time.ZoneId.systemDefault()
 
         val buckets = com.manidigit.yadin.domain.model.StudyHourSlot.entries.associateWith {

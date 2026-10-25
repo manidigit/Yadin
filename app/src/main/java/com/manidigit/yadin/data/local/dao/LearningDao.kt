@@ -99,7 +99,20 @@ interface LearningDao {
     suspend fun clearDifficultyStates()
 
     // Due cards for review:
-    // Respects same-day lock (lastReviewedDay != today) and Leitner scheduling
+    // Respects same-day lock (lastReviewedDay != today), Leitner scheduling, and mature SM-2/FSRS scheduled cards
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId) FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1
+        AND ls.direction = :direction
+        AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)
+        AND (
+            (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+            (ls.stage = 'LEARNED' AND (ls.sm2Repetitions > 0 OR ls.fsrsReps > 0) AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+        )
+    """)
+    fun getDueCountFlow(direction: CardDirection, todayDayString: String): Flow<Int>
+
     @Query("""
         SELECT COUNT(DISTINCT ls.conceptId) FROM learning_states ls
         INNER JOIN concepts c ON ls.conceptId = c.id
@@ -107,13 +120,9 @@ interface LearningDao {
         AND ls.direction = :direction
         AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)
         AND ls.stage != 'LEARNED'
-        AND (
-            (ls.stage = 'DAILY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-            (ls.stage = 'WEEKLY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-            (ls.stage = 'MONTHLY' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString))
-        )
+        AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)
     """)
-    fun getDueCountFlow(direction: CardDirection, todayDayString: String): Flow<Int>
+    fun getRandomDueCountFlow(direction: CardDirection, todayDayString: String): Flow<Int>
 
     @Query("""
         SELECT COUNT(*) 
@@ -388,6 +397,7 @@ interface LearningDao {
         INNER JOIN concepts c ON ls.conceptId = c.id
         WHERE c.active = 1 AND ls.direction = :direction
           AND ls.nextReviewDay IS NOT NULL
+          AND (ls.stage != 'LEARNED' OR ls.sm2Repetitions > 0 OR ls.fsrsReps > 0)
           AND ls.nextReviewDay >= :startDay AND ls.nextReviewDay <= :endDay
         GROUP BY ls.nextReviewDay
     """)
@@ -396,4 +406,20 @@ interface LearningDao {
         startDay: String,
         endDay: String
     ): List<DayScheduledRaw>
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.conceptId)
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        WHERE c.active = 1 AND ls.direction = :direction
+          AND ls.lastReviewedDay IS NOT NULL
+          AND ls.lastReviewedDay != :todayDayString
+          AND ls.nextReviewDay IS NOT NULL
+          AND ls.nextReviewDay <= :todayDayString
+          AND (ls.stage != 'LEARNED' OR ls.sm2Repetitions > 0 OR ls.fsrsReps > 0)
+    """)
+    suspend fun getOverduePracticedCount(
+        direction: CardDirection,
+        todayDayString: String
+    ): Int
 }

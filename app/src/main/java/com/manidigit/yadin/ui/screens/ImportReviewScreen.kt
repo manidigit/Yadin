@@ -57,7 +57,8 @@ data class ReviewItem(
     var translationText: String,
     var noteText: String = "",
     val reason: String,
-    val confidence: Int
+    val confidence: Int,
+    val originalEntry: ParsedEntry? = null
 )
 
 @Composable
@@ -122,11 +123,17 @@ fun ImportReviewScreen(
                     ReviewItemCard(
                         item = item,
                         onApprove = { approved ->
+                            val newTranslations = TextUtilities.splitTranslations(approved.translationText)
+                            val newNote = approved.noteText.ifBlank { null }
                             approvedList.add(
-                                ParsedEntry(
+                                approved.originalEntry?.copy(
                                     sourceText = approved.sourceText,
-                                    translations = TextUtilities.splitTranslations(approved.translationText),
-                                    note = approved.noteText.ifBlank { null }
+                                    translations = newTranslations,
+                                    note = newNote
+                                ) ?: ParsedEntry(
+                                    sourceText = approved.sourceText,
+                                    translations = newTranslations,
+                                    note = newNote
                                 )
                             )
                             pendingList.remove(item)
@@ -159,10 +166,16 @@ fun ImportReviewScreen(
             Button(
                 onClick = {
                     val remainingEntries = pendingList.map {
-                        ParsedEntry(
+                        val newTranslations = TextUtilities.splitTranslations(it.translationText)
+                        val newNote = it.noteText.ifBlank { null }
+                        it.originalEntry?.copy(
                             sourceText = it.sourceText,
-                            translations = TextUtilities.splitTranslations(it.translationText),
-                            note = it.noteText.ifBlank { null }
+                            translations = newTranslations,
+                            note = newNote
+                        ) ?: ParsedEntry(
+                            sourceText = it.sourceText,
+                            translations = newTranslations,
+                            note = newNote
                         )
                     }
                     val finalApproved = approvedList + remainingEntries

@@ -689,7 +689,15 @@ class SeedImporter(
                             val stage = runCatching { Stage.valueOf(o.optString("stage", "DAILY")) }.getOrDefault(Stage.DAILY)
                             val nextDay = o.optString("nextReviewDay", "").ifEmpty { o.optString("nextReviewAt", "") }.takeIf { it.length >= 10 }?.take(10)
                             val lastDay = o.optString("lastReviewedDay", "").ifEmpty { o.optString("lastReviewedAt", "") }.takeIf { it.length >= 10 }?.take(10)
-                            if (lastDay != null || stage != Stage.DAILY) {
+                            val sm2Reps = o.optInt("sm2Repetitions", 0)
+                            val sm2Ef = o.optDouble("sm2EasinessFactor", 2.5).let { if (it.isNaN() || it < 1.3) 2.5 else it }
+                            val sm2Interval = o.optInt("sm2IntervalDays", 0)
+                            val fsrsStab = o.optDouble("fsrsStability", 0.0).let { if (it.isNaN() || it < 0.0) 0.0 else it }
+                            val fsrsDiff = o.optDouble("fsrsDifficulty", 5.0).let { if (it.isNaN() || it < 1.0 || it > 10.0) 5.0 else it }
+                            val fsrsReps = o.optInt("fsrsReps", 0)
+                            val fsrsLapses = o.optInt("fsrsLapses", 0)
+                            val fsrsState = o.optInt("fsrsState", 0)
+                            if (lastDay != null || stage != Stage.DAILY || sm2Reps > 0 || fsrsReps > 0) {
                                 hasPracticed = true
                             }
                             recoveredLearning.add(
@@ -700,7 +708,15 @@ class SeedImporter(
                                     stage = stage,
                                     nextReviewDay = nextDay,
                                     lastReviewedDay = lastDay,
-                                    updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
+                                    updatedAt = o.optLong("updatedAt", System.currentTimeMillis()),
+                                    sm2Repetitions = sm2Reps,
+                                    sm2EasinessFactor = sm2Ef,
+                                    sm2IntervalDays = sm2Interval,
+                                    fsrsStability = fsrsStab,
+                                    fsrsDifficulty = fsrsDiff,
+                                    fsrsReps = fsrsReps,
+                                    fsrsLapses = fsrsLapses,
+                                    fsrsState = fsrsState
                                 )
                             )
                         }

@@ -97,25 +97,32 @@ object Sm2Algorithm {
             newInterval = when (currentReps) {
                 0 -> when (quality) {
                     Sm2Quality.HARD -> 1
-                    Sm2Quality.GOOD -> 1
+                    Sm2Quality.GOOD -> 2
                     Sm2Quality.EASY -> 4
                     else -> 1
                 }
-                1 -> when (quality) {
-                    Sm2Quality.HARD -> max(2, (currentInterval * 1.2).roundToInt())
-                    Sm2Quality.GOOD -> 6
-                    Sm2Quality.EASY -> 8
-                    else -> 6
+                1 -> {
+                    val hardInt = max(2, (currentInterval * 1.2).roundToInt()).coerceAtMost(5)
+                    val goodInt = max(hardInt + 1, 6)
+                    val easyInt = max(goodInt + 1, 8)
+                    when (quality) {
+                        Sm2Quality.HARD -> hardInt
+                        Sm2Quality.GOOD -> goodInt
+                        Sm2Quality.EASY -> easyInt
+                        else -> goodInt
+                    }
                 }
                 else -> {
                     val baseInterval = max(1, currentInterval)
-                    val factor = when (quality) {
-                        Sm2Quality.HARD -> max(1.2, currentEf * 0.85)
-                        Sm2Quality.GOOD -> newEf
-                        Sm2Quality.EASY -> newEf * 1.3
-                        else -> newEf
+                    val hardInt = max(baseInterval + 1, (baseInterval * max(1.2, currentEf * 0.85)).roundToInt())
+                    val goodInt = max(hardInt + 1, (baseInterval * newEf).roundToInt())
+                    val easyInt = max(goodInt + 1, (baseInterval * newEf * 1.3).roundToInt())
+                    when (quality) {
+                        Sm2Quality.HARD -> hardInt
+                        Sm2Quality.GOOD -> goodInt
+                        Sm2Quality.EASY -> easyInt
+                        else -> goodInt
                     }
-                    max(baseInterval + 1, (baseInterval * factor).roundToInt())
                 }
             }
         }

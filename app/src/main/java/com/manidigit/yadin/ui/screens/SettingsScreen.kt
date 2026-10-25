@@ -37,8 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.CardDirection
+import com.manidigit.yadin.domain.model.QuizLevel
+import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.domain.model.toStringRes
 import com.manidigit.yadin.domain.model.toSubtitleRes
 import com.manidigit.yadin.domain.model.toTitleRes
 import com.manidigit.yadin.ui.components.YadinCard
@@ -46,6 +49,7 @@ import com.manidigit.yadin.ui.components.YadinScreenHeader
 import com.manidigit.yadin.ui.components.YadinSectionHeader
 import com.manidigit.yadin.ui.components.YadinSelectableChip
 import com.manidigit.yadin.ui.components.getDifficultyIcon
+import com.manidigit.yadin.ui.components.getReviewModeIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.YadinIcons
@@ -63,6 +67,13 @@ fun SettingsScreen(
     uiLanguage: String = "fa",
     reviewAlgorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
     fsrsDesiredRetention: Double = 0.90,
+    ttsEnabled: Boolean = true,
+    ttsAutoPlay: Boolean = false,
+    ttsSpeechRate: Float = 0.9f,
+    showCategoryInReview: Boolean = false,
+    quizAutoAdvanceSeconds: Int = 0,
+    defaultReviewMode: com.manidigit.yadin.domain.model.ReviewMode = com.manidigit.yadin.domain.model.ReviewMode.QUIZ,
+    defaultQuizLevel: com.manidigit.yadin.domain.model.QuizLevel = com.manidigit.yadin.domain.model.QuizLevel.NORMAL,
     onSelectTheme: (String) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onSetDifficultyThreshold: (Int) -> Unit = {},
@@ -70,6 +81,13 @@ fun SettingsScreen(
     onSetUiLanguage: (String) -> Unit = {},
     onSetReviewAlgorithm: (SpacedRepetitionAlgorithm) -> Unit = {},
     onSetFsrsDesiredRetention: (Double) -> Unit = {},
+    onSetTtsEnabled: (Boolean) -> Unit = {},
+    onSetTtsAutoPlay: (Boolean) -> Unit = {},
+    onSetTtsSpeechRate: (Float) -> Unit = {},
+    onSetShowCategoryInReview: (Boolean) -> Unit = {},
+    onSetQuizAutoAdvanceSeconds: (Int) -> Unit = {},
+    onSetDefaultReviewMode: (com.manidigit.yadin.domain.model.ReviewMode) -> Unit = {},
+    onSetDefaultQuizLevel: (com.manidigit.yadin.domain.model.QuizLevel) -> Unit = {},
     onPurgeInactiveWords: (onComplete: (Int) -> Unit) -> Unit = {},
     onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
@@ -123,7 +141,6 @@ fun SettingsScreen(
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
                             .background(colors.surfaceVariant)
-                            .clickable { onSelectTheme(currentThemeId.ifBlank { "gemini" }) }
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -364,6 +381,176 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f),
                         onClick = { onSetUiLanguage("en") }
                     )
+                }
+            }
+        }
+
+        // Section: Audio & TTS Settings
+        YadinCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_tts_section_title),
+                    icon = YadinIcons.speakAudio,
+                    iconTint = colors.primary
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    YadinSelectableChip(
+                        text = stringResource(R.string.settings_tts_enabled),
+                        isSelected = ttsEnabled,
+                        accentColor = colors.primary,
+                        preserveAccentWhenUnselected = true,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSetTtsEnabled(!ttsEnabled) }
+                    )
+                    YadinSelectableChip(
+                        text = stringResource(R.string.settings_tts_auto_play),
+                        isSelected = ttsAutoPlay,
+                        accentColor = colors.info,
+                        preserveAccentWhenUnselected = true,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSetTtsAutoPlay(!ttsAutoPlay) }
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.settings_tts_rate_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.onSurfaceVariant,
+                    fontSize = 11.sp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(0.75f to "0.75x", 0.9f to "0.9x", 1.0f to "1.0x", 1.25f to "1.25x").forEach { (rateVal, rateLabel) ->
+                        val isSelected = kotlin.math.abs(ttsSpeechRate - rateVal) < 0.05f
+                        YadinSelectableChip(
+                            text = rateLabel.formatDigits(),
+                            isSelected = isSelected,
+                            accentColor = colors.primary,
+                            preserveAccentWhenUnselected = true,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSetTtsSpeechRate(rateVal) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Section: Review & Quiz Preferences
+        YadinCard(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_review_prefs_title),
+                    icon = getReviewModeIcon(ReviewMode.QUIZ),
+                    iconTint = colors.accentPurple
+                )
+
+                YadinSelectableChip(
+                    text = stringResource(R.string.settings_show_cat_in_review),
+                    isSelected = showCategoryInReview,
+                    accentColor = colors.accentPurple,
+                    preserveAccentWhenUnselected = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onSetShowCategoryInReview(!showCategoryInReview) }
+                )
+
+                Text(
+                    text = stringResource(R.string.settings_default_mode_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.onSurfaceVariant,
+                    fontSize = 11.sp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    YadinSelectableChip(
+                        text = stringResource(R.string.review_mode_quiz),
+                        isSelected = (defaultReviewMode == ReviewMode.QUIZ),
+                        accentColor = colors.primary,
+                        preserveAccentWhenUnselected = true,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSetDefaultReviewMode(ReviewMode.QUIZ) }
+                    )
+                    YadinSelectableChip(
+                        text = stringResource(R.string.review_mode_flashcard),
+                        isSelected = (defaultReviewMode == ReviewMode.FLASHCARD),
+                        accentColor = colors.primary,
+                        preserveAccentWhenUnselected = true,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSetDefaultReviewMode(ReviewMode.FLASHCARD) }
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.settings_default_quiz_level_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.onSurfaceVariant,
+                    fontSize = 11.sp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    QuizLevel.entries.forEach { lvl ->
+                        YadinSelectableChip(
+                            text = stringResource(lvl.toStringRes()),
+                            isSelected = (defaultQuizLevel == lvl),
+                            accentColor = colors.info,
+                            preserveAccentWhenUnselected = true,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSetDefaultQuizLevel(lvl) }
+                        )
+                    }
+                }
+
+                Text(
+                    text = stringResource(R.string.settings_auto_advance_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.onSurfaceVariant,
+                    fontSize = 11.sp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(0, 1, 2, 3, 5).forEach { secVal ->
+                        val isSelected = (quizAutoAdvanceSeconds == secVal)
+                        val label = if (secVal == 0) {
+                            stringResource(R.string.settings_auto_advance_off)
+                        } else {
+                            stringResource(R.string.settings_auto_advance_sec_fmt, secVal.formatDigits())
+                        }
+                        YadinSelectableChip(
+                            text = label,
+                            isSelected = isSelected,
+                            accentColor = colors.accentPurple,
+                            preserveAccentWhenUnselected = true,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSetQuizAutoAdvanceSeconds(secVal) }
+                        )
+                    }
                 }
             }
         }

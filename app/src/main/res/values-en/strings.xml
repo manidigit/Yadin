@@ -730,4 +730,19 @@ libro: book</string>
     <string name="err_library_import_fmt">Error importing words: %1$s</string>
     <string name="err_library_scan_fmt">Error scanning words: %1$s</string>
     <string name="err_library_apply_audit_fmt">Error applying word fixes: %1$s</string>
+    <string name="settings_tts_section_title">Audio Pronunciation (TTS)</string>
+    <string name="settings_tts_enabled">Enable pronunciation button</string>
+    <string name="settings_tts_auto_play">Auto-play audio on card start</string>
+    <string name="settings_tts_rate_label">Speech rate</string>
+    <string name="settings_review_prefs_title">Review &amp; Quiz Preferences</string>
+    <string name="settings_show_cat_in_review">Show category badge in review &amp; quiz</string>
+    <string name="settings_auto_advance_label">Auto-advance to next quiz question</string>
+    <string name="settings_auto_advance_off">Off</string>
+    <string name="settings_auto_advance_sec_fmt">%1$s sec</string>
+    <string name="settings_default_mode_label">Default review mode</string>
+    <string name="settings_default_quiz_level_label">Default quiz level</string>
+    <string name="import_review_suggestion_fmt">Suggestion: %1$s</string>
+    <string name="audit_alt_meaning_fmt">Other form/meaning: %1$s (%2$s)</string>
+    <string name="audit_alt_form_fmt">Alternative form: %1$s</string>
+    <string name="percent_fmt">%1$s%%</string>
 </resources>

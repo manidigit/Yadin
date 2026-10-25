@@ -89,7 +89,8 @@ class StatisticsViewModel(
             .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0.0)
     }
 
-    val dailyStats: StateFlow<List<DayCountRaw>> = vocabularyRepo.getRecentDailyStatsFlow()
+    val dailyStats: StateFlow<List<DayCountRaw>> = combine(_progressDirection, _refreshTrigger) { dir, _ -> dir }
+        .flatMapLatest { dir -> vocabularyRepo.getRecentDailyStatsFlow(dir) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun getPracticedWordsCountFlow(directionFlow: StateFlow<CardDirection>): StateFlow<Int> {
@@ -111,7 +112,8 @@ class StatisticsViewModel(
     val achievements: StateFlow<List<AchievementEntity>> = reviewRepo.getAllAchievementsFlow()
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val totalCorrectReviewsCount: StateFlow<Int> = vocabularyRepo.getTotalCorrectReviewsCountFlow()
+    val totalCorrectReviewsCount: StateFlow<Int> = combine(_progressDirection, _refreshTrigger) { dir, _ -> dir }
+        .flatMapLatest { dir -> vocabularyRepo.getTotalCorrectReviewsCountFlow(dir) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0)
 
     fun getRetentionMetricsFlow(directionFlow: StateFlow<CardDirection>): StateFlow<com.manidigit.yadin.domain.model.RetentionMetrics> {
@@ -138,13 +140,14 @@ class StatisticsViewModel(
             .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
 
-    val studyHourBuckets: StateFlow<List<com.manidigit.yadin.domain.model.StudyHourBucket>> = _refreshTrigger
-        .flatMapLatest {
-            kotlinx.coroutines.flow.flow {
-                emit(vocabularyRepo.getStudyHourBuckets())
+    val studyHourBuckets: StateFlow<List<com.manidigit.yadin.domain.model.StudyHourBucket>> =
+        combine(_progressDirection, _refreshTrigger) { dir, _ -> dir }
+            .flatMapLatest { dir ->
+                kotlinx.coroutines.flow.flow {
+                    emit(vocabularyRepo.getStudyHourBuckets(dir))
+                }
             }
-        }
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+            .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun getCategoryMasteryFlow(directionFlow: StateFlow<CardDirection>): StateFlow<List<com.manidigit.yadin.domain.model.CategoryMasteryItem>> {
         return combine(directionFlow, _refreshTrigger) { dir, _ -> dir }

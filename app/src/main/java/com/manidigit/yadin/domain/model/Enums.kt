@@ -204,15 +204,18 @@ fun RelationType.toStringRes(): Int = when (this) {
     RelationType.DERIVED_FROM -> R.string.relation_derived_from
 }
 
-fun RelationType.toPersianLabel(): String = when (this) {
-    RelationType.SYNONYM -> "مترادف"
-    RelationType.ANTONYM -> "متضاد"
-    RelationType.USED_IN -> "به‌کاررفته در"
-    RelationType.INFLECTED_FORM -> "شکل صرف‌شده"
-    RelationType.CONTRAST -> "متمایز با"
-    RelationType.EXAMPLE_OF -> "نمونه‌ای از"
-    RelationType.RELATED_TO -> "مرتبط با"
-    RelationType.DERIVED_FROM -> "مشتق از"
+fun RelationType.toPersianLabel(): String {
+    val isEn = java.util.Locale.getDefault().language == "en"
+    return when (this) {
+        RelationType.SYNONYM -> if (isEn) "Synonym" else "مترادف"
+        RelationType.ANTONYM -> if (isEn) "Antonym" else "متضاد"
+        RelationType.USED_IN -> if (isEn) "Used in" else "به‌کاررفته در"
+        RelationType.INFLECTED_FORM -> if (isEn) "Inflected form" else "شکل صرف‌شده"
+        RelationType.CONTRAST -> if (isEn) "Contrast with" else "متمایز با"
+        RelationType.EXAMPLE_OF -> if (isEn) "Example of" else "نمونه‌ای از"
+        RelationType.RELATED_TO -> if (isEn) "Related to" else "مرتبط با"
+        RelationType.DERIVED_FROM -> if (isEn) "Derived from" else "مشتق از"
+    }
 }
 
 enum class DuplicatePolicy {

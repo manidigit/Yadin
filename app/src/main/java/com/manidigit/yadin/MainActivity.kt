@@ -184,7 +184,7 @@ fun YadinBottomBar(
     NavigationBar(
         containerColor = colors.surface,
         tonalElevation = dimensions.cardElevation,
-        modifier = Modifier.height(64.dp)
+        modifier = Modifier.height(dimensions.navHeight)
     ) {
         items.forEach { (targetScreen, label, icon) ->
             val isSelected = when (targetScreen) {
@@ -293,6 +293,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 candidateCount = candidateCount,
                 statistics = statistics,
                 appLanguageDirection = appLanguageDirection,
+                onAddNewCategory = { name, onCreated ->
+                    viewModel.createCategory(name, onCreated)
+                },
                 onFilterChanged = { filters ->
                     viewModel.updateSetupFilters(filters)
                 },
@@ -310,6 +313,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val currentIndex by viewModel.currentCardIndex.collectAsStateWithLifecycle()
             val isFlipped by viewModel.isCardFlipped.collectAsStateWithLifecycle()
             val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
+            val ttsEnabled by viewModel.ttsEnabled.collectAsStateWithLifecycle()
+            val ttsAutoPlay by viewModel.ttsAutoPlay.collectAsStateWithLifecycle()
             val activeAlgorithm by viewModel.activeAlgorithm.collectAsStateWithLifecycle()
             val activeSession by viewModel.activeSession.collectAsStateWithLifecycle()
             val fsrsDesiredRetention by viewModel.fsrsDesiredRetention.collectAsStateWithLifecycle()
@@ -325,6 +330,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 currentIndex = currentIndex,
                 isFlipped = isFlipped,
                 showCategory = showCategory,
+                ttsEnabled = ttsEnabled,
+                ttsAutoPlay = ttsAutoPlay,
                 isSm2Mode = isSm2Mode,
                 isFsrsMode = isFsrsMode,
                 fsrsDesiredRetention = fsrsDesiredRetention,
@@ -341,6 +348,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val selectedOption by viewModel.quizSelectedOption.collectAsStateWithLifecycle()
             val userAnswers by viewModel.quizUserAnswers.collectAsStateWithLifecycle()
             val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
+            val ttsEnabled by viewModel.ttsEnabled.collectAsStateWithLifecycle()
+            val ttsAutoPlay by viewModel.ttsAutoPlay.collectAsStateWithLifecycle()
+            val quizAutoAdvanceSeconds by viewModel.quizAutoAdvanceSeconds.collectAsStateWithLifecycle()
 
             QuizScreen(
                 questions = questions,
@@ -348,6 +358,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 selectedOption = selectedOption,
                 userAnswers = userAnswers,
                 showCategory = showCategory,
+                ttsEnabled = ttsEnabled,
+                ttsAutoPlay = ttsAutoPlay,
+                quizAutoAdvanceSeconds = quizAutoAdvanceSeconds,
                 onSelectOption = { optIdx -> viewModel.submitQuizAnswer(optIdx) },
                 onPreviousQuestion = { viewModel.previousQuizQuestion() },
                 onNextQuestion = { viewModel.nextQuizQuestion() },
@@ -445,8 +458,17 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 initialWord = targetWord,
                 categories = categories,
                 languageDirection = appLanguageDirection,
-                onSave = { src, trans, cat, note, catIds ->
-                    viewModel.saveWord(screen.conceptId, src, trans, cat, note, appLanguageDirection, categoryIds = catIds) {
+                onSave = { src, trans, cat, note, catIds, onError ->
+                    viewModel.saveWord(
+                        conceptId = screen.conceptId,
+                        sourceText = src,
+                        translations = trans,
+                        categoryId = cat,
+                        note = note,
+                        direction = appLanguageDirection,
+                        categoryIds = catIds,
+                        onError = onError
+                    ) {
                         if (!viewModel.navigateBack()) viewModel.navigateTo(Screen.Library)
                     }
                 },
@@ -513,6 +535,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val currentResult = parseResult
             val defaultManualReason = androidx.compose.ui.res.stringResource(R.string.import_review_manual_needed)
             val defaultAutoReason = androidx.compose.ui.res.stringResource(R.string.import_review_auto_extracted)
+            val context = LocalContext.current
             val reviewItems = remember(currentResult) {
                 currentResult?.entries?.mapIndexed { index, entry ->
                     com.manidigit.yadin.ui.screens.ReviewItem(
@@ -521,7 +544,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                         translationText = entry.translations.joinToString("، "),
                         noteText = entry.note ?: "",
                         confidence = (entry.confidence * 100).toInt(),
-                        reason = entry.possibleCorrection?.let { "پیشنهاد: $it" } ?: (entry.note ?: if (entry.confidence < 0.8f) defaultManualReason else defaultAutoReason)
+                        reason = entry.possibleCorrection?.let { context.getString(R.string.import_review_suggestion_fmt, it) }
+                            ?: (entry.note ?: if (entry.confidence < 0.8f) defaultManualReason else defaultAutoReason),
+                        originalEntry = entry
                     )
                 } ?: emptyList()
             }
@@ -588,6 +613,13 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val uiLanguage by viewModel.uiLanguage.collectAsStateWithLifecycle()
             val reviewAlgorithm by viewModel.reviewAlgorithm.collectAsStateWithLifecycle()
             val fsrsDesiredRetention by viewModel.fsrsDesiredRetention.collectAsStateWithLifecycle()
+            val ttsEnabled by viewModel.ttsEnabled.collectAsStateWithLifecycle()
+            val ttsAutoPlay by viewModel.ttsAutoPlay.collectAsStateWithLifecycle()
+            val ttsSpeechRate by viewModel.ttsSpeechRate.collectAsStateWithLifecycle()
+            val showCategoryInReview by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
+            val quizAutoAdvanceSeconds by viewModel.quizAutoAdvanceSeconds.collectAsStateWithLifecycle()
+            val defaultReviewMode by viewModel.defaultReviewMode.collectAsStateWithLifecycle()
+            val defaultQuizLevel by viewModel.defaultQuizLevel.collectAsStateWithLifecycle()
             SettingsScreen(
                 currentThemeId = themeId,
                 isDark = isDark,
@@ -596,6 +628,13 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 uiLanguage = uiLanguage,
                 reviewAlgorithm = reviewAlgorithm,
                 fsrsDesiredRetention = fsrsDesiredRetention,
+                ttsEnabled = ttsEnabled,
+                ttsAutoPlay = ttsAutoPlay,
+                ttsSpeechRate = ttsSpeechRate,
+                showCategoryInReview = showCategoryInReview,
+                quizAutoAdvanceSeconds = quizAutoAdvanceSeconds,
+                defaultReviewMode = defaultReviewMode,
+                defaultQuizLevel = defaultQuizLevel,
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                 onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
@@ -603,6 +642,13 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onSetUiLanguage = { viewModel.setUiLanguage(it) },
                 onSetReviewAlgorithm = { viewModel.setReviewAlgorithm(it) },
                 onSetFsrsDesiredRetention = { viewModel.setFsrsDesiredRetention(it) },
+                onSetTtsEnabled = { viewModel.setTtsEnabled(it) },
+                onSetTtsAutoPlay = { viewModel.setTtsAutoPlay(it) },
+                onSetTtsSpeechRate = { viewModel.setTtsSpeechRate(it) },
+                onSetShowCategoryInReview = { viewModel.setShowCategoryInReview(it) },
+                onSetQuizAutoAdvanceSeconds = { viewModel.setQuizAutoAdvanceSeconds(it) },
+                onSetDefaultReviewMode = { viewModel.setDefaultReviewMode(it) },
+                onSetDefaultQuizLevel = { viewModel.setDefaultQuizLevel(it) },
                 onPurgeInactiveWords = { onComplete -> viewModel.purgeInactiveWords(onComplete) },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },

@@ -92,6 +92,11 @@ class VocabularyAuditService(
         /**
          * پالایش واژه و جداسازی کاراکترهای نامناسب، پرانتزها، جداکننده‌ها و علائم زائد
          */
+        private val isEn: Boolean
+            get() = java.util.Locale.getDefault().language.startsWith("en", ignoreCase = true)
+
+        private fun tr(fa: String, en: String): String = if (isEn) en else fa
+
         fun cleanAndExtractWord(originalSource: String): CleanedWordResult {
             var text = originalSource.trim()
             val modifications = mutableListOf<String>()
@@ -107,10 +112,10 @@ class VocabularyAuditService(
                         val line = lines[i]
                         if (VocabularyParser.hasPersian(line)) {
                             extractedTranslations.addAll(TextUtilities.splitTranslations(line))
-                            modifications.add("استخراج ترجمه فارسی از سطر بعدی ($line)")
+                            modifications.add(tr("استخراج ترجمه فارسی از سطر بعدی ($line)", "Extracted Persian translation from next line ($line)"))
                         } else {
-                            extractedNotes.add("متن اضافی سطر بعدی: $line")
-                            modifications.add("انتقال سطر اضافی به یادداشت ($line)")
+                            extractedNotes.add(tr("متن اضافی سطر بعدی: $line", "Extra text from next line: $line"))
+                            modifications.add(tr("انتقال سطر اضافی به یادداشت ($line)", "Moved extra line to note ($line)"))
                         }
                     }
                 }
@@ -120,20 +125,20 @@ class VocabularyAuditService(
             val normalized = TextUtilities.cleanText(text)
             if (normalized != text) {
                 text = normalized
-                modifications.add("حذف کاراکترهای نامرئی و استانداردسازی فاصله")
+                modifications.add(tr("حذف کاراکترهای نامرئی و استانداردسازی فاصله", "Removed invisible characters and normalized whitespace"))
             }
 
             // ۲. حذف شماره‌گذاری آغازین یا گلوله‌های نگارشی (مانند 1. یا - یا •)
             val strippedNumbering = stripNumberingAndBullets(text)
             if (strippedNumbering != text && strippedNumbering.isNotBlank()) {
-                modifications.add("حذف شماره‌گذاری یا علامت آغازین")
+                modifications.add(tr("حذف شماره‌گذاری یا علامت آغازین", "Removed leading numbering or bullet"))
                 text = strippedNumbering
             }
 
             // ۳. حذف گیومه و نقل‌قول‌های احاطه‌کننده (مانند "word" یا «word»)
             val strippedQuotes = stripSurroundingQuotes(text)
             if (strippedQuotes != text && strippedQuotes.isNotBlank()) {
-                modifications.add("حذف گیومه یا نشانه‌های نقل‌قول")
+                modifications.add(tr("حذف گیومه یا نشانه‌های نقل‌قول", "Removed surrounding quotes"))
                 text = strippedQuotes
             }
 
@@ -153,10 +158,10 @@ class VocabularyAuditService(
                     text = left
                     if (VocabularyParser.hasPersian(right)) {
                         extractedTranslations.addAll(TextUtilities.splitTranslations(right))
-                        modifications.add("جداسازی ترجمه چسبیده به واژه ($right)")
+                        modifications.add(tr("جداسازی ترجمه چسبیده به واژه ($right)", "Separated attached translation ($right)"))
                     } else {
-                        extractedNotes.add("توضیح جداشده: $right")
-                        modifications.add("انتقال متن دوم به یادداشت ($right)")
+                        extractedNotes.add(tr("توضیح جداشده: $right", "Separated note: $right"))
+                        modifications.add(tr("انتقال متن دوم به یادداشت ($right)", "Moved secondary text to note ($right)"))
                     }
                 }
             }
@@ -175,11 +180,11 @@ class VocabularyAuditService(
                         if (VocabularyParser.hasPersian(inside)) {
                             text = main
                             extractedTranslations.addAll(TextUtilities.splitTranslations(inside))
-                            modifications.add("استخراج ترجمه فارسی داخل پرانتز ($inside)")
+                            modifications.add(tr("استخراج ترجمه فارسی داخل پرانتز ($inside)", "Extracted parenthetical Persian translation ($inside)"))
                         } else if (FieldValidationEngine.isStrictGrammarPosTag(inside)) {
                             text = main
-                            extractedNotes.add("نقش/توضیح: $inside")
-                            modifications.add("انتقال توضیحات داخل پرانتز به یادداشت ($inside)")
+                            extractedNotes.add(tr("نقش/توضیح: $inside", "POS/Note: $inside"))
+                            modifications.add(tr("انتقال توضیحات داخل پرانتز به یادداشت ($inside)", "Moved parenthetical note ($inside)"))
                         } else {
                             keepExtracting = false
                         }
@@ -216,7 +221,7 @@ class VocabularyAuditService(
                     if (persianPart.isNotBlank() && remainingText.isNotBlank()) {
                         text = remainingText
                         extractedTranslations.addAll(TextUtilities.splitTranslations(persianPart))
-                        modifications.add("تفکیک متن فارسی متداخل ($persianPart)")
+                        modifications.add(tr("تفکیک متن فارسی متداخل ($persianPart)", "Separated mixed Persian text ($persianPart)"))
                     }
                 }
             }
@@ -584,7 +589,10 @@ class VocabularyAuditService(
                     originalText = originalForms,
                     cleanedText = preferredWord,
                     actionType = AuditActionType.MERGED,
-                    description = "امکان ادغام ${items.size} واژه هم‌ریشه با حفظ فرم «$preferredWord» و بالاترین مرحله مرور"
+                    description = tr(
+                        "امکان ادغام ${items.size} واژه هم‌ریشه با حفظ فرم «$preferredWord» و بالاترین مرحله مرور",
+                        "Can merge ${items.size} duplicate words keeping «$preferredWord» and highest review stage"
+                    )
                 )
             )
         }
@@ -607,7 +615,10 @@ class VocabularyAuditService(
                             suggestedWord = secondary.cleanedResult.cleanSourceText,
                             suggestedTranslation = secTrans,
                             suggestedNote = secondary.sourceContent?.note,
-                            reason = "تشابه مشکوک با «$primaryWord» ($primaryTransPreview) — می‌توانید با آن ادغام کنید، متن را به یادداشت بفرستید یا بدون تغییر رد کنید",
+                            reason = tr(
+                                "تشابه مشکوک با «$primaryWord» ($primaryTransPreview) — می‌توانید با آن ادغام کنید، متن را به یادداشت بفرستید یا بدون تغییر رد کنید",
+                                "Suspicious similarity with «$primaryWord» ($primaryTransPreview) — you can merge, move to note, or keep original"
+                            ),
                             confidence = 0.65,
                             mergeTargetConceptId = primary.concept.id,
                             mergeTargetWord = primaryWord,
@@ -720,7 +731,7 @@ class VocabularyAuditService(
                             } else {
                                 AuditActionType.CLEANED
                             },
-                            description = "اصلاح دستی کاربر: ${item.reason}"
+                            description = tr("اصلاح دستی کاربر: ${item.reason}", "Manual user edit: ${item.reason}")
                         )
                     )
                 }
@@ -870,7 +881,7 @@ class VocabularyAuditService(
             }
             items.mapNotNull { it.spanishAnalysis.trailingParenNote }.forEach { parenNote ->
                 if (parenNote.isNotBlank() && !preferredSourceText.contains(parenNote, ignoreCase = true)) {
-                    allNotes.add("توضیح واژه: $parenNote")
+                    allNotes.add(tr("توضیح واژه: $parenNote", "Word note: $parenNote"))
                 }
             }
             val mergedNote = allNotes.distinct().joinToString("\n").ifBlank { null }
@@ -966,7 +977,10 @@ class VocabularyAuditService(
                     originalText = originalForms,
                     cleanedText = preferredSourceText,
                     actionType = AuditActionType.MERGED,
-                    description = "ادغام ${duplicates.size + 1} واژه تکراری به «$preferredSourceText» (مرحله: $bestStage، تعداد ترجمه‌ها: ${mergedTranslations.size})"
+                    description = tr(
+                        "ادغام ${duplicates.size + 1} واژه تکراری به «$preferredSourceText» (مرحله: $bestStage، تعداد ترجمه‌ها: ${mergedTranslations.size})",
+                        "Merged ${duplicates.size + 1} duplicate words into «$preferredSourceText» (stage: $bestStage, translations: ${mergedTranslations.size})"
+                    )
                 )
             )
         }
@@ -1000,7 +1014,7 @@ class VocabularyAuditService(
                     .ifEmpty { rawCombinedTargets }
                 val targetsChanged = newCombinedTargets != existingTargetTexts
                 if (targetsChanged && newCombinedTargets.size < existingTargetTexts.size) {
-                    targetMods.add("حذف ترجمه‌های فارسی تکراری")
+                    targetMods.add(tr("حذف ترجمه‌های فارسی تکراری", "Removed duplicate Persian translations"))
                 }
 
                 // فقط در صورت وجود تغییر واقعی دیتابیس آپدیت می‌شود
@@ -1039,7 +1053,7 @@ class VocabularyAuditService(
                             originalText = single.sourceContent.text,
                             cleanedText = updatedSourceText,
                             actionType = if (single.cleanedResult.extractedNotes.isNotEmpty()) AuditActionType.NOTE_EXTRACTED else AuditActionType.CLEANED,
-                            description = "پالایش واژه: ${allModifications.joinToString("، ")}"
+                            description = tr("پالایش واژه: ${allModifications.joinToString("، ")}", "Cleaned word: ${allModifications.joinToString(", ")}")
                         )
                     )
                 }

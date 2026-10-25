@@ -1186,6 +1186,7 @@ private data class NoteExtractionOutcome(
 )
 
 private fun extractSecondTextToNote(
+    context: android.content.Context,
     item: AuditReviewItem,
     currentWord: String,
     currentTranslation: String,
@@ -1318,9 +1319,9 @@ private fun extractSecondTextToNote(
     // ۸. در صورتی که کارت از نوع تشابه مشکوک با واژه دیگر است (mergeTargetWord)
     if (!item.mergeTargetWord.isNullOrBlank()) {
         val extraNote = if (tr.isNotBlank() && tr != item.mergeTargetTranslation) {
-            "فرم/معنی دیگر: $w ($tr)"
+            context.getString(R.string.audit_alt_meaning_fmt, w, tr)
         } else {
-            "فرم جایگزین: $w"
+            context.getString(R.string.audit_alt_form_fmt, w)
         }
         return NoteExtractionOutcome(
             newWord = item.mergeTargetWord,
@@ -1387,7 +1388,7 @@ private fun AuditReviewItemCard(
                     )
                 }
                 Text(
-                    text = "${(item.confidence * 100).toInt().formatDigits()}٪",
+                    text = stringResource(R.string.percent_fmt, (item.confidence * 100).toInt().formatDigits()),
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.onSurfaceVariant
                 )
@@ -1504,9 +1505,10 @@ private fun AuditReviewItemCard(
                     }
                 }
 
+                val localContext = androidx.compose.ui.platform.LocalContext.current
                 FilledTonalButton(
                     onClick = {
-                        val outcome = extractSecondTextToNote(item, word, translation, note)
+                        val outcome = extractSecondTextToNote(localContext, item, word, translation, note)
                         word = outcome.newWord
                         translation = outcome.newTranslation
                         note = outcome.newNote

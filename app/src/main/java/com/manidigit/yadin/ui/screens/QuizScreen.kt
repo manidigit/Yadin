@@ -70,6 +70,9 @@ fun QuizScreen(
     selectedOption: Int?,
     userAnswers: Map<Int, Int> = emptyMap(),
     showCategory: Boolean = false,
+    ttsEnabled: Boolean = true,
+    ttsAutoPlay: Boolean = false,
+    quizAutoAdvanceSeconds: Int = 0,
     onSelectOption: (Int) -> Unit,
     onPreviousQuestion: () -> Unit = {},
     onNextQuestion: () -> Unit,
@@ -78,6 +81,7 @@ fun QuizScreen(
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showHelpDialog by remember { mutableStateOf(false) }
     var showExitConfirmDialog by remember { mutableStateOf(false) }
 
@@ -103,13 +107,21 @@ fun QuizScreen(
 
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(currentIndex) {
+    LaunchedEffect(currentIndex, q.conceptId) {
         scrollState.scrollTo(0)
+        if (ttsEnabled && ttsAutoPlay) {
+            val promptLang = if (q.direction == CardDirection.NORMAL) "es" else "fa"
+            com.manidigit.yadin.ui.util.TtsManager.speak(context, q.promptText, promptLang)
+        }
     }
 
-    LaunchedEffect(selectedOption) {
+    LaunchedEffect(selectedOption, currentIndex, quizAutoAdvanceSeconds) {
         if (selectedOption != null) {
             scrollState.animateScrollTo(scrollState.maxValue)
+            if (quizAutoAdvanceSeconds > 0) {
+                kotlinx.coroutines.delay(quizAutoAdvanceSeconds * 1000L)
+                onNextQuestion()
+            }
         }
     }
 
@@ -278,7 +290,7 @@ fun QuizScreen(
                             }
 
                             val promptLang = if (q.direction == CardDirection.NORMAL) "es" else "fa"
-                            SpeakButton(text = q.promptText, languageCode = promptLang)
+                            SpeakButton(text = q.promptText, languageCode = promptLang, enabled = ttsEnabled)
                         }
                     }
 
