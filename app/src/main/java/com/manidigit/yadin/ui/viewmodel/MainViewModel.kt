@@ -106,7 +106,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- زیر-ویومدل‌های تفکیک‌شده طبق اصول SOLID (ISS-27) ---
     val reviewVm = ReviewViewModel(reviewRepo, viewModelScope, application)
-    val libraryVm = LibraryViewModel(vocabularyRepo, viewModelScope)
+    val libraryVm = LibraryViewModel(vocabularyRepo, viewModelScope, application)
     val statisticsVm = StatisticsViewModel(vocabularyRepo, reviewRepo, viewModelScope)
     val settingsVm = SettingsViewModel(application, settingsRepo, backupRepo, viewModelScope)
 

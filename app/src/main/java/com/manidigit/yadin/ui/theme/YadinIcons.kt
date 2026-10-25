@@ -278,21 +278,24 @@ object YadinIcons {
     val categoryDefault: ImageVector = Icons.Default.Category
     val categoryBook: ImageVector = Icons.AutoMirrored.Filled.MenuBook
 
+    private val CATEGORY_TOKEN_SPLIT = Regex("[\\s,،/()\\[\\]\\-_•|]+")
+
     fun forCategoryName(categoryName: String?): ImageVector {
         if (categoryName == null) return categoryDefault
         val lower = categoryName.lowercase()
+        val tokens = lower.split(CATEGORY_TOKEN_SPLIT).filter { it.isNotBlank() }.toSet()
         return when {
-            lower.contains("سفر") || lower.contains("گردش") || lower.contains("flight") || lower.contains("travel") -> Icons.Default.Flight
-            lower.contains("غذا") || lower.contains("خوراک") || lower.contains("نوشیدنی") || lower.contains("food") -> Icons.Default.Restaurant
-            lower.contains("مکالمه") || lower.contains("احوال") || lower.contains("گفتگو") || lower.contains("chat") -> Icons.AutoMirrored.Filled.Chat
-            lower.contains("اصطلاح") || lower.contains("ضرب") || lower.contains("idiom") -> Icons.Default.Lightbulb
-            lower.contains("گرامر") || lower.contains("قواعد") || lower.contains("دستور") || lower.contains("grammar") -> Icons.Default.Description
-            lower.contains("فعل") || lower.contains("افعال") || lower.contains("verb") -> Icons.Default.Bolt
-            lower.contains("کار") || lower.contains("شغل") || lower.contains("کسب") || lower.contains("business") -> Icons.Default.Work
-            lower.contains("طبیعت") || lower.contains("آب") || lower.contains("محیط") || lower.contains("nature") -> Icons.Default.Eco
-            lower.contains("خانه") || lower.contains("منزل") || lower.contains("خانواده") || lower.contains("home") -> Icons.Default.Home
-            lower.contains("خرید") || lower.contains("پوشاک") || lower.contains("لباس") || lower.contains("shop") -> Icons.Default.ShoppingBag
-            lower.contains("هنر") || lower.contains("فرهنگ") || lower.contains("art") -> Icons.Default.Palette
+            lower.contains("سفر") || lower.contains("گردش") || "flight" in tokens || "travel" in tokens -> Icons.Default.Flight
+            lower.contains("غذا") || lower.contains("خوراک") || lower.contains("نوشیدنی") || "food" in tokens -> Icons.Default.Restaurant
+            lower.contains("مکالمه") || lower.contains("احوال") || lower.contains("گفتگو") || "chat" in tokens -> Icons.AutoMirrored.Filled.Chat
+            lower.contains("اصطلاح") || lower.contains("ضرب") || "idiom" in tokens || "idioms" in tokens -> Icons.Default.Lightbulb
+            lower.contains("گرامر") || lower.contains("قواعد") || lower.contains("دستور") || "grammar" in tokens -> Icons.Default.Description
+            lower.contains("فعل") || lower.contains("افعال") || "verb" in tokens || "verbs" in tokens -> Icons.Default.Bolt
+            "کار" in tokens || lower.contains("شغل") || lower.contains("کسب") || "business" in tokens || "work" in tokens -> Icons.Default.Work
+            lower.contains("طبیعت") || "آب" in tokens || lower.contains("محیط") || "nature" in tokens -> Icons.Default.Eco
+            lower.contains("خانه") || lower.contains("منزل") || lower.contains("خانواده") || "home" in tokens -> Icons.Default.Home
+            lower.contains("خرید") || lower.contains("پوشاک") || lower.contains("لباس") || "shop" in tokens || "shopping" in tokens -> Icons.Default.ShoppingBag
+            lower.contains("هنر") || lower.contains("فرهنگ") || "art" in tokens || "arts" in tokens -> Icons.Default.Palette
             else -> categoryDefault
         }
     }

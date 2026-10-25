@@ -199,4 +199,13 @@ class QuizDistractorScoringTest {
         assertTrue("100 questions collision checks ($matchingTime ms) must be fast", matchingTime < 3000)
         assertTrue("Collisions should be found accurately", collisionsFound >= 100)
     }
+
+    @Test
+    fun `cleanSegment strips standalone grammar clarifiers without corrupting words containing them`() {
+        assertEquals("جمعه", QuizDistractorScorer.cleanSegment("جمعه"))
+        assertEquals("جمعیت", QuizDistractorScorer.cleanSegment("جمعیت"))
+        assertEquals("یاسمن", QuizDistractorScorer.cleanSegment("یاسمن"))
+        assertEquals("سلام", QuizDistractorScorer.cleanSegment("سلام غیررسمی"))
+        assertEquals("دوست", QuizDistractorScorer.cleanSegment("دوست اسم جمع"))
+    }
 }

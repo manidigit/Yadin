@@ -149,8 +149,7 @@ class SeedImporter(
             // رکوردهای learning_states آسیب دیده باشند، ابتدا از آخرین فایل پشتیبان داخلی (در صورت وجود) بازیابی شود
             if (existingConceptIds.isNotEmpty()) {
                 val currentLearningCount = learningDao.getLearningStateCount()
-                val practicedCount = learningDao.getTotalPracticedWordsCount()
-                if (currentLearningCount < existingConceptIds.size || practicedCount == 0) {
+                if (currentLearningCount < existingConceptIds.size * 2) {
                     recoverProgressFromLocalBackupsIfAvailable(existingConceptsMap)
                 }
             }

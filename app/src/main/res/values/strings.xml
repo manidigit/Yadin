@@ -717,4 +717,17 @@ libro: کتاب</string>
     <string name="err_complete_session_fmt">خطا در اتمام نشست آزمون: %1$s</string>
     <string name="err_abandon_session_fmt">خطا در لغو نشست: %1$s</string>
     <string name="err_word_already_exists_fmt">این واژه («%1$s») قبلاً در واژه‌نامه ثبت شده است.</string>
+    <string name="err_library_search_fmt">خطا در جستجوی کلمات: %1$s</string>
+    <string name="err_library_load_more_fmt">خطا در بارگذاری موارد بیشتر: %1$s</string>
+    <string name="err_library_reactivate_fmt">خطا در فعال‌سازی مجدد واژه: %1$s</string>
+    <string name="err_library_word_detail_fmt">خطا در واکشی جزئیات واژه: %1$s</string>
+    <string name="err_library_delete_word_fmt">خطا در حذف واژه: %1$s</string>
+    <string name="err_library_save_word">خطا در ذخیره واژه</string>
+    <string name="err_library_parse_text_fmt">خطا در پردازش متن: %1$s</string>
+    <string name="err_library_create_cat_fmt">خطا در ایجاد دسته: %1$s</string>
+    <string name="err_library_update_cat_fmt">خطا در به‌روزرسانی دسته: %1$s</string>
+    <string name="err_library_delete_cat_fmt">خطا در حذف دسته: %1$s</string>
+    <string name="err_library_import_fmt">خطا در ورود کلمات: %1$s</string>
+    <string name="err_library_scan_fmt">خطا در تحلیل و اسکن کلمات: %1$s</string>
+    <string name="err_library_apply_audit_fmt">خطا در اعمال اصلاحات کلمات: %1$s</string>
 </resources>

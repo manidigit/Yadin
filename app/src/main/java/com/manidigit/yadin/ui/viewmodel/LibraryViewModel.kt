@@ -1,7 +1,9 @@
 package com.manidigit.yadin.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.manidigit.yadin.R
 import com.manidigit.yadin.data.repository.VocabularyRepository
 import com.manidigit.yadin.domain.algorithm.VocabularyParser
 import com.manidigit.yadin.domain.model.CardDirection
@@ -34,8 +36,14 @@ import kotlinx.coroutines.launch
  */
 class LibraryViewModel(
     val vocabularyRepo: VocabularyRepository,
-    private val externalScope: CoroutineScope? = null
+    private val externalScope: CoroutineScope? = null,
+    private val appContext: Context? = null
 ) : ViewModel() {
+
+    private fun formatError(resId: Int, arg: String?, fallback: String): String {
+        val detail = arg ?: ""
+        return appContext?.getString(resId, detail) ?: "$fallback: $detail"
+    }
 
     private val scope: CoroutineScope
         get() = externalScope ?: viewModelScope
@@ -191,7 +199,7 @@ class LibraryViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در جستجوی کلمات: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_search_fmt, e.message, "خطا در جستجوی کلمات")
             }
         }
     }
@@ -222,7 +230,7 @@ class LibraryViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در بارگذاری موارد بیشتر: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_load_more_fmt, e.message, "خطا در بارگذاری موارد بیشتر")
             } finally {
                 _isLoadingMore.value = false
             }
@@ -239,7 +247,7 @@ class LibraryViewModel(
                 // Refresh current view
                 performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در فعال‌سازی مجدد واژه: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_reactivate_fmt, e.message, "خطا در فعال‌سازی مجدد واژه")
             }
         }
     }
@@ -262,7 +270,7 @@ class LibraryViewModel(
                 _selectedWordDetail.value = detail
                 onLoaded?.invoke(detail)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در واکشی جزئیات واژه: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_word_detail_fmt, e.message, "خطا در واکشی جزئیات واژه")
             }
         }
     }
@@ -282,7 +290,7 @@ class LibraryViewModel(
                 performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
                 onDeleted?.invoke()
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در حذف واژه: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_delete_word_fmt, e.message, "خطا در حذف واژه")
             }
         }
     }
@@ -316,7 +324,14 @@ class LibraryViewModel(
                 performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
                 onSuccess()
             } else {
-                val errorMsg = result.exceptionOrNull()?.message ?: "خطا در ذخیره واژه"
+                val rawMessage = result.exceptionOrNull()?.message
+                val errorMsg = if (rawMessage != null && rawMessage.startsWith("DUPLICATE_WORD:")) {
+                    val word = rawMessage.removePrefix("DUPLICATE_WORD:")
+                    appContext?.getString(R.string.err_word_already_exists_fmt, word)
+                        ?: "این واژه («$word») قبلاً در واژه‌نامه ثبت شده است."
+                } else {
+                    rawMessage ?: (appContext?.getString(R.string.err_library_save_word) ?: "خطا در ذخیره واژه")
+                }
                 _libraryErrorMessage.value = errorMsg
                 onError?.invoke(errorMsg)
             }
@@ -332,7 +347,7 @@ class LibraryViewModel(
             val result = VocabularyParser.parse(text)
             _parseResult.value = result
         } catch (e: Exception) {
-            _libraryErrorMessage.value = "خطا در پردازش متن: ${e.message}"
+            _libraryErrorMessage.value = formatError(R.string.err_library_parse_text_fmt, e.message, "خطا در پردازش متن")
         }
     }
 
@@ -363,7 +378,7 @@ class LibraryViewModel(
                 val cat = vocabularyRepo.addCategory(clean)
                 onCreated(cat.id)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در ایجاد دسته: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_create_cat_fmt, e.message, "خطا در ایجاد دسته")
             }
         }
     }
@@ -379,7 +394,7 @@ class LibraryViewModel(
                 _libraryErrorMessage.value = null
                 vocabularyRepo.updateCategory(id, clean)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در به‌روزرسانی دسته: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_update_cat_fmt, e.message, "خطا در به‌روزرسانی دسته")
             }
         }
     }
@@ -393,7 +408,7 @@ class LibraryViewModel(
                 _libraryErrorMessage.value = null
                 vocabularyRepo.deleteCategory(id)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در حذف دسته: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_delete_cat_fmt, e.message, "خطا در حذف دسته")
             }
         }
     }
@@ -432,7 +447,7 @@ class LibraryViewModel(
                 _importSummary.value = summary
                 loadRecentWords(direction)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در ورود کلمات: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_import_fmt, e.message, "خطا در ورود کلمات")
             } finally {
                 _isImporting.value = false
                 onComplete()
@@ -456,7 +471,7 @@ class LibraryViewModel(
                 }
                 _auditReport.value = report
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در تحلیل و اسکن کلمات: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_scan_fmt, e.message, "خطا در تحلیل و اسکن کلمات")
             } finally {
                 _isAuditing.value = false
             }
@@ -483,7 +498,7 @@ class LibraryViewModel(
                 _auditReport.value = report
                 performSearch(_searchQuery.value, _selectedCategoryFilter.value, _selectedStageFilter.value, direction)
             } catch (e: Exception) {
-                _libraryErrorMessage.value = "خطا در اعمال اصلاحات کلمات: ${e.message}"
+                _libraryErrorMessage.value = formatError(R.string.err_library_apply_audit_fmt, e.message, "خطا در اعمال اصلاحات کلمات")
             } finally {
                 _isAuditing.value = false
             }

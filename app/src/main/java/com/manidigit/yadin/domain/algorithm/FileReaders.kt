@@ -401,7 +401,10 @@ object FileReaders {
                 while (entry != null) {
                     val name = entry.name
                     if (name == "xl/sharedStrings.xml") {
-                        parseSharedStrings(zip, sharedStrings)
+                        val sharedStringsBytes = readBoundedBytes(zip, maxEntryBytes)
+                        sharedStringsBytes.inputStream().use { stream ->
+                            parseSharedStrings(stream, sharedStrings)
+                        }
                     } else if (name == "xl/worksheets/sheet1.xml") {
                         targetSheetBytes = readBoundedBytes(zip, maxEntryBytes)
                     } else if (name.startsWith("xl/worksheets/sheet") && name.endsWith(".xml") && targetSheetBytes == null) {

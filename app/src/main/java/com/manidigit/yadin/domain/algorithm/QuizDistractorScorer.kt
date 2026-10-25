@@ -17,11 +17,18 @@ object QuizDistractorScorer {
 
     private val GRAMMAR_CLARIFIERS = listOf(
         "برای مونث", "برای مؤنث", "برای مذکر",
+        "غیررسمی", "غیر رسمی", "رسمی",
+        "حالت امری", "زمان گذشته", "زمان حال", "زمان اینده", "زمان آینده",
         "مونث", "مؤنث", "مذکر",
         "جمع", "مفرد",
-        "رسمی", "غیررسمی", "غیر رسمی", "محترمانه", "عامیانه",
-        "حالت امری", "زمان گذشته", "زمان حال", "زمان اینده", "زمان آینده",
+        "محترمانه", "عامیانه",
         "صفت", "اسم", "فعل", "قید", "اصطلاح"
+    )
+
+    private val GRAMMAR_CLARIFIER_REGEX = Regex(
+        "(^|[\\s\u200c,،/()\\[\\]{}:;؛\\-_!؟?¡¿.\"'«»])(" +
+            GRAMMAR_CLARIFIERS.joinToString("|") { Regex.escape(it) } +
+            ")(?=$|[\\s\u200c,،/()\\[\\]{}:;؛\\-_!؟?¡¿.\"'«»])"
     )
 
     private val PERSIAN_STOP_WORDS = setOf(
@@ -84,9 +91,9 @@ object QuizDistractorScorer {
     fun cleanSegment(text: String): String {
         var t = normalizeQuiz(text)
         t = t.replace(PARENTHESIS_REGEX, " ")
-        for (clarifier in GRAMMAR_CLARIFIERS) {
-            t = t.replace(clarifier, " ")
-        }
+        // Apply twice to handle adjacent standalone clarifiers (e.g. "اسم جمع")
+        t = t.replace(GRAMMAR_CLARIFIER_REGEX, "$1 ")
+        t = t.replace(GRAMMAR_CLARIFIER_REGEX, "$1 ")
         t = t.replace(PUNCTUATION_REGEX, " ")
 
         // Unify verb prefixes "می‌" and "نمی‌" to "می" and "نمی" attached (using Unicode whitespace boundaries)

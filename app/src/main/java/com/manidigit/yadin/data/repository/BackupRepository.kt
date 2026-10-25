@@ -715,7 +715,19 @@ class BackupRepository(
     }
 
     private fun escapeCsv(value: String): String {
-        return "\"" + value.replace("\"", "\"\"") + "\""
+        val trimmed = value.trimStart()
+        val safeValue = if (
+            (trimmed.startsWith("=") && !trimmed.startsWith("===")) ||
+            trimmed.startsWith("@") ||
+            ((trimmed.startsWith("+") || trimmed.startsWith("-")) &&
+                !trimmed.startsWith("---") &&
+                trimmed.drop(1).trimStart().let { rest -> rest.isNotEmpty() && rest.toDoubleOrNull() == null })
+        ) {
+            "'$value"
+        } else {
+            value
+        }
+        return "\"" + safeValue.replace("\"", "\"\"") + "\""
     }
 
     companion object {

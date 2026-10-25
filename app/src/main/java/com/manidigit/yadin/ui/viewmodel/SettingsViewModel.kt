@@ -125,6 +125,15 @@ class SettingsViewModel(
 
     init {
         loadInternalBackups()
+        scope.launch {
+            settingsRepo.uiLanguageFlow.collect { lang ->
+                getApplication<Application>()
+                    .getSharedPreferences("yadin_settings", Context.MODE_PRIVATE)
+                    .edit()
+                    .putString("ui_language", lang)
+                    .apply()
+            }
+        }
     }
 
     /** بارگذاری و بروزرسانی لیست فایل‌های پشتیبان داخلی */
@@ -236,6 +245,11 @@ class SettingsViewModel(
     }
 
     fun setUiLanguage(language: String) {
+        getApplication<Application>()
+            .getSharedPreferences("yadin_settings", Context.MODE_PRIVATE)
+            .edit()
+            .putString("ui_language", language)
+            .apply()
         scope.launch {
             settingsRepo.setUiLanguage(language)
         }
