@@ -134,15 +134,11 @@ fun ReviewSetupScreen(
 
     LaunchedEffect(
         selectedType,
-        selectedMode,
         appLanguageDirection,
-        selectedQuizLevel,
         selectedDifficulties,
         selectedCategoryId,
         selectedEntryType,
-        selectedMaxCards,
         defaultAlgorithm,
-        difficultyCounts,
         statistics?.reviewedTodayCount
     ) {
         onFilterChanged(buildFilters())

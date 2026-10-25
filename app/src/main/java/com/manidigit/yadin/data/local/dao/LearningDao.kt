@@ -182,8 +182,6 @@ interface LearningDao {
         INNER JOIN concepts c ON ls.conceptId = c.id
         LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
         WHERE c.active = 1
-        AND EXISTS (SELECT 1 FROM contents cntSrc WHERE cntSrc.conceptId = c.id AND cntSrc.languageCode != 'fa' AND TRIM(cntSrc.text) != '')
-        AND EXISTS (SELECT 1 FROM contents cntTgt WHERE cntTgt.conceptId = c.id AND cntTgt.languageCode = 'fa' AND TRIM(cntTgt.text) != '')
         AND ls.direction = :direction
         AND (
             (:reviewType = 'DAILY' AND ls.stage = 'DAILY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
@@ -227,8 +225,6 @@ interface LearningDao {
         INNER JOIN concepts c ON ls.conceptId = c.id
         LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
         WHERE c.active = 1
-        AND EXISTS (SELECT 1 FROM contents cntSrc WHERE cntSrc.conceptId = c.id AND cntSrc.languageCode != 'fa' AND TRIM(cntSrc.text) != '')
-        AND EXISTS (SELECT 1 FROM contents cntTgt WHERE cntTgt.conceptId = c.id AND cntTgt.languageCode = 'fa' AND TRIM(cntTgt.text) != '')
         AND ls.direction = :direction
         AND (
             (:reviewType = 'DAILY' AND ls.stage = 'DAILY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR

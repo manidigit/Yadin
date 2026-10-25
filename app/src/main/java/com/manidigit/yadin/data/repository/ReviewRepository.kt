@@ -97,16 +97,19 @@ class ReviewRepository(
     suspend fun countCandidates(filters: ReviewFilters): Int {
         val today = ClockAndDayMath.todayDayString()
         val expandedTypes = expandEntryTypes(filters.entryTypes)
+        val hasDiffFilter = filters.difficulties.isNotEmpty() && filters.difficulties.size < VocabularyDifficulty.entries.size
+        val hasCatFilter = filters.categoryIds.isNotEmpty()
+        val hasTypeFilter = expandedTypes.isNotEmpty()
         return learningDao.countFilteredCandidates(
             direction = filters.direction,
             reviewType = filters.reviewType.name,
             todayDayString = today,
-            hasDifficultyFilter = if (filters.difficulties.isNotEmpty()) 1 else 0,
-            difficulties = filters.difficulties.map { it.name },
-            hasCategoryFilter = if (filters.categoryIds.isNotEmpty()) 1 else 0,
-            categoryIds = filters.categoryIds.toList(),
-            hasEntryTypeFilter = if (expandedTypes.isNotEmpty()) 1 else 0,
-            entryTypes = expandedTypes
+            hasDifficultyFilter = if (hasDiffFilter) 1 else 0,
+            difficulties = if (hasDiffFilter) filters.difficulties.map { it.name } else listOf(""),
+            hasCategoryFilter = if (hasCatFilter) 1 else 0,
+            categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
+            hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
+            entryTypes = if (hasTypeFilter) expandedTypes else listOf("")
         )
     }
 
@@ -116,17 +119,20 @@ class ReviewRepository(
 
         val today = ClockAndDayMath.todayDayString()
         val expandedTypes = expandEntryTypes(filters.entryTypes)
+        val hasDiffFilter = filters.difficulties.isNotEmpty() && filters.difficulties.size < VocabularyDifficulty.entries.size
+        val hasCatFilter = filters.categoryIds.isNotEmpty()
+        val hasTypeFilter = expandedTypes.isNotEmpty()
         val conceptIds = learningDao.getFilteredCandidateConceptIds(
             direction = filters.direction,
             reviewType = filters.reviewType.name,
             todayDayString = today,
-            hasDifficultyFilter = if (filters.difficulties.isNotEmpty()) 1 else 0,
-            difficulties = filters.difficulties.map { it.name },
-            hasCategoryFilter = if (filters.categoryIds.isNotEmpty()) 1 else 0,
-            categoryIds = filters.categoryIds.toList(),
+            hasDifficultyFilter = if (hasDiffFilter) 1 else 0,
+            difficulties = if (hasDiffFilter) filters.difficulties.map { it.name } else listOf(""),
+            hasCategoryFilter = if (hasCatFilter) 1 else 0,
+            categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
             limit = filters.maxCards,
-            hasEntryTypeFilter = if (expandedTypes.isNotEmpty()) 1 else 0,
-            entryTypes = expandedTypes
+            hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
+            entryTypes = if (hasTypeFilter) expandedTypes else listOf("")
         )
 
         val sessionId = UUID.randomUUID().toString()
