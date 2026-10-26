@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7896_v1.63.0"
+        const val CURRENT_SEED_VERSION = "7835_v1.70.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -162,6 +162,7 @@ class SeedImporter(
             val contents = mutableListOf<ContentEntity>()
             val seedDifficultyStates = mutableListOf<DifficultyStateEntity>()
             val seedConceptCategories = mutableListOf<ConceptCategoryEntity>()
+            val obsoleteSeedConceptIds = mutableSetOf<String>()
 
             reader.beginObject()
             while (reader.hasNext()) {
@@ -197,12 +198,15 @@ class SeedImporter(
                                     }
                                     "concepts" -> {
                                         reader.beginArray()
+                                        val fallbackNow = System.currentTimeMillis()
                                         while (reader.hasNext()) {
                                             reader.beginObject()
                                             var id = ""
                                             var categoryId: String? = null
                                             var entryTypeStr = "WORD"
                                             var act = true
+                                            var cAt = fallbackNow
+                                            var uAt = fallbackNow
                                             while (reader.hasNext()) {
                                                 when (reader.nextName()) {
                                                     "id" -> id = reader.nextString()
@@ -215,13 +219,15 @@ class SeedImporter(
                                                     }
                                                     "entryType" -> entryTypeStr = reader.nextString()
                                                     "active" -> act = reader.nextBoolean()
+                                                    "createdAt" -> cAt = reader.nextLong()
+                                                    "updatedAt" -> uAt = reader.nextLong()
                                                     else -> reader.skipValue()
                                                 }
                                             }
                                             reader.endObject()
                                             if (id.isNotEmpty()) {
                                                 val eType = try { EntryType.valueOf(entryTypeStr) } catch (_: Exception) { EntryType.WORD }
-                                                concepts.add(ConceptEntity(id, eType, categoryId, act))
+                                                concepts.add(ConceptEntity(id, eType, categoryId, act, cAt, uAt))
                                             }
                                         }
                                         reader.endArray()
@@ -280,12 +286,18 @@ class SeedImporter(
                                             var conceptId = ""
                                             var dirStr = "NORMAL"
                                             var currStr = "EASY"
+                                            var consCorrect = 0
+                                            var consWrong = 0
+                                            var reachedVh = false
                                             while (reader.hasNext()) {
                                                 when (reader.nextName()) {
                                                     "id" -> id = reader.nextString()
                                                     "conceptId" -> conceptId = reader.nextString()
                                                     "direction" -> dirStr = reader.nextString()
                                                     "current" -> currStr = reader.nextString()
+                                                    "consecutiveCorrect" -> consCorrect = reader.nextInt()
+                                                    "consecutiveWrong" -> consWrong = reader.nextInt()
+                                                    "hasReachedVeryHard" -> reachedVh = reader.nextBoolean()
                                                     else -> reader.skipValue()
                                                 }
                                             }
@@ -293,7 +305,17 @@ class SeedImporter(
                                             if (id.isNotEmpty() && conceptId.isNotEmpty()) {
                                                 val cardDir = try { CardDirection.valueOf(dirStr) } catch (_: Exception) { CardDirection.NORMAL }
                                                 val diffVal = try { VocabularyDifficulty.valueOf(currStr) } catch (_: Exception) { VocabularyDifficulty.EASY }
-                                                seedDifficultyStates.add(DifficultyStateEntity(id, conceptId, cardDir, diffVal))
+                                                seedDifficultyStates.add(
+                                                    DifficultyStateEntity(
+                                                        id = id,
+                                                        conceptId = conceptId,
+                                                        direction = cardDir,
+                                                        current = diffVal,
+                                                        consecutiveCorrect = consCorrect,
+                                                        consecutiveWrong = consWrong,
+                                                        hasReachedVeryHard = reachedVh || diffVal == VocabularyDifficulty.VERY_HARD
+                                                    )
+                                                )
                                             }
                                         }
                                         reader.endArray()
@@ -318,6 +340,16 @@ class SeedImporter(
                                         }
                                         reader.endArray()
                                     }
+                                    "obsoleteConceptIds" -> {
+                                        reader.beginArray()
+                                        while (reader.hasNext()) {
+                                            val obsId = reader.nextString()
+                                            if (obsId.isNotEmpty()) {
+                                                obsoleteSeedConceptIds.add(obsId)
+                                            }
+                                        }
+                                        reader.endArray()
+                                    }
                                     else -> reader.skipValue()
                                 }
                             }
@@ -336,14 +368,34 @@ class SeedImporter(
 
             onProgress(0.45f, context.getString(R.string.seed_categorizing_topics))
 
+            val existingLearningStates = if (existingConceptIds.isNotEmpty()) {
+                learningDao.getAllLearningStates()
+            } else {
+                emptyList()
+            }
+            val practicedConceptIds = existingLearningStates
+                .filter { it.lastReviewedDay != null || it.stage != Stage.DAILY || it.sm2Repetitions > 0 || it.fsrsReps > 0 }
+                .map { it.conceptId }
+                .toSet()
+            val practicedLearningKeys = existingLearningStates
+                .filter { it.lastReviewedDay != null || it.stage != Stage.DAILY || it.sm2Repetitions > 0 || it.fsrsReps > 0 }
+                .map { it.conceptId to it.direction }
+                .toSet()
+
+            // حذف مفاهیم تکراری ادغام‌شده از بذر قدیمی که توسط کاربر تمرین نشده‌اند
+            val obsoleteUnpracticedToDelete = obsoleteSeedConceptIds
+                .filter { it in existingConceptIds && it !in practicedConceptIds }
+
+            val activeExistingConceptIds = existingConceptIds - obsoleteUnpracticedToDelete.toSet()
+
             // ۱. تفکیک مفاهیم جدید از مفاهیم موجود:
             // هرگز از REPLACE روی جدول concepts استفاده نمی‌کنیم، زیرا در SQLite دستور INSERT OR REPLACE
             // ابتدا سطر والد را DELETE کرده و باعث فعال شدن ON DELETE CASCADE و پاک شدن کل پیشرفت (learning_states) می‌شود!
-            val newConcepts = concepts.filter { it.id !in existingConceptIds }
+            val newConcepts = concepts.filter { it.id !in activeExistingConceptIds }
             val conceptsToUpdateCat = concepts.mapNotNull { seedConcept ->
                 val existing = existingConceptsMap[seedConcept.id]
-                if (existing != null) {
-                    val newCatId = existing.categoryId ?: seedConcept.categoryId
+                if (existing != null && seedConcept.id in activeExistingConceptIds) {
+                    val newCatId = seedConcept.categoryId ?: existing.categoryId
                     if (newCatId != existing.categoryId || existing.entryType != seedConcept.entryType) {
                         existing.copy(
                             categoryId = newCatId,
@@ -358,8 +410,10 @@ class SeedImporter(
             }
 
             // ۲. حفظ یادداشت‌های شخصی معتبر کاربر و پاک‌سازی ترجمه‌های تکراری بدون دست زدن به جدول والد concepts
-            val existingContentsByConcept = if (existingConceptIds.isNotEmpty()) {
-                conceptDao.getAllContents().groupBy { it.conceptId }
+            val existingContentsByConcept = if (activeExistingConceptIds.isNotEmpty()) {
+                conceptDao.getAllContents()
+                    .filter { it.conceptId in activeExistingConceptIds }
+                    .groupBy { it.conceptId }
             } else {
                 emptyMap()
             }
@@ -462,6 +516,12 @@ class SeedImporter(
             val seedDiffMap = seedDifficultyStates.associateBy { it.conceptId to it.direction }
 
             database.withTransaction {
+                if (obsoleteUnpracticedToDelete.isNotEmpty()) {
+                    obsoleteUnpracticedToDelete.chunked(500).forEach { chunkIds ->
+                        conceptDao.deleteConceptsPermanently(chunkIds)
+                    }
+                }
+
                 if (categories.isNotEmpty()) {
                     conceptDao.insertCategories(categories)
                 }
@@ -478,7 +538,7 @@ class SeedImporter(
                     }
                 }
 
-                if (existingConceptIds.isNotEmpty()) {
+                if (activeExistingConceptIds.isNotEmpty()) {
                     // به‌روزرسانی جدول محتوا و دسته‌بندی برای واژگان پایه (بدون دست زدن به جدول والد concepts)
                     concepts.map { it.id }.chunked(500).forEach { chunkIds ->
                         conceptDao.deleteContentsForConcepts(chunkIds)
@@ -513,17 +573,17 @@ class SeedImporter(
                 onProgress(0.85f, context.getString(R.string.seed_categorizing_topics))
 
                 // ۳. تضمین وجود رکوردهای learning_states و difficulty_states برای تمام واژگان (عادی و معکوس)
-                // بدون بازنویسی رکوردهای موجود کاربر (استفاده از IGNORE و فیلتر کلیدهای موجود)
-                val allDbConceptIds = (existingConceptIds + concepts.map { it.id }).distinct()
+                // بدون بازنویسی رکوردهای تمرین‌شده کاربر
+                val allDbConceptIds = (activeExistingConceptIds + concepts.map { it.id }).distinct()
                 val existingLearningKeys = learningDao.getAllLearningStates()
                     .map { it.conceptId to it.direction }
                     .toSet()
-                val existingDiffKeys = learningDao.getAllDifficultyStates()
-                    .map { it.conceptId to it.direction }
-                    .toSet()
+                val existingDiffMap = learningDao.getAllDifficultyStates()
+                    .associateBy { it.conceptId to it.direction }
 
                 val missingLearningBatch = mutableListOf<LearningStateEntity>()
                 val missingDiffBatch = mutableListOf<DifficultyStateEntity>()
+                val updatedSeedDiffBatch = mutableListOf<DifficultyStateEntity>()
 
                 for (cid in allDbConceptIds) {
                     for (dir in listOf(CardDirection.NORMAL, CardDirection.REVERSE)) {
@@ -542,14 +602,25 @@ class SeedImporter(
                                 )
                             )
                         }
-                        if (key !in existingDiffKeys) {
-                            val seedDiff = seedDiffMap[key]
+                        val existingDiff = existingDiffMap[key]
+                        val seedDiff = seedDiffMap[key]
+                        if (existingDiff == null) {
                             missingDiffBatch.add(
                                 seedDiff ?: DifficultyStateEntity(
                                     id = UUID.randomUUID().toString(),
                                     conceptId = cid,
                                     direction = dir,
                                     current = VocabularyDifficulty.EASY
+                                )
+                            )
+                        } else if (seedDiff != null && key !in practicedLearningKeys &&
+                            existingDiff.consecutiveCorrect == 0 && existingDiff.consecutiveWrong == 0 &&
+                            existingDiff.current != seedDiff.current
+                        ) {
+                            updatedSeedDiffBatch.add(
+                                existingDiff.copy(
+                                    current = seedDiff.current,
+                                    hasReachedVeryHard = existingDiff.hasReachedVeryHard || seedDiff.hasReachedVeryHard
                                 )
                             )
                         }
@@ -564,6 +635,11 @@ class SeedImporter(
                 if (missingDiffBatch.isNotEmpty()) {
                     missingDiffBatch.chunked(1000).forEach {
                         learningDao.insertDifficultyStatesIgnore(it)
+                    }
+                }
+                if (updatedSeedDiffBatch.isNotEmpty()) {
+                    updatedSeedDiffBatch.chunked(1000).forEach {
+                        learningDao.insertDifficultyStates(it)
                     }
                 }
 
