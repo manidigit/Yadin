@@ -45,8 +45,8 @@ android {
         applicationId = "com.manidigit.yadin"
         minSdk = 26
         targetSdk = 34
-        versionCode = 83
-        versionName = "1.70.0"
+        versionCode = 84
+        versionName = "1.71.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

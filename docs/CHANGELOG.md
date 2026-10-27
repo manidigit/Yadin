@@ -2,6 +2,29 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۷۱.۰] - ۲۰۲۶-۱۰-۲۷ (۱۴۰۵/۰۸/۰۵)
+### بازطراحی اصولی و استاندارد معماری سیستم تمینگ (`YadinThemeSpec`، `YadinThemeRegistry` و `YadinIconSet`) و جداسازی کامل تم‌ها (کد نسخه: ۸۴)
+- **ویژگی‌های جدید و ارتقای معماری تم (Features & Architecture):**
+  - **تعریف قرارداد استاندارد و مستقل تم (`YadinThemeSpec` در `ThemeTokens.kt`):**
+    - ایجاد رابط رسمی `YadinThemeSpec` که هر تم را به عنوان یک پکیج مستقل شامل شناسه (`id`)، عنوان و توضیحات دوزبانه (`titleFa`/`titleEn` و `descriptionFa`/`descriptionEn`)، پالت‌های رنگی روز و شب (`LightColors` و `DarkColors`)، ابعاد (`Dimensions`)، اشکال هندسی (`Shapes`)، سایز آیکون‌ها (`IconSizes`)، مجموعه آیکون‌های اختصاصی (`Icons: YadinIconSet`)، تایپوگرافی (`Typography`) و نگاشت‌های Material Design 3 تعریف می‌کند.
+    - افزودن رنگ‌های رتبه‌ای دستاوردها (`tierBronze`, `tierSilver`, `tierGold`, `tierPlatinum`) به `YadinColors` تا هر تم بتواند رنگ مدال‌ها را نیز متناسب با پالت خود سفارشی‌سازی کند.
+  - **ایجاد رجیستری مرکزی تم‌ها (`YadinThemeRegistry` در `ThemeTokens.kt`):**
+    - پیاده‌سازی مخزن مرکزی `YadinThemeRegistry` با قابلیت ثبت تم‌های جدید (`register`)، بازیابی ایمن تم با شناسه (`getTheme(themeId)`) و دریافت فهرست کل تم‌های فعال (`allThemes()`).
+  - **تبدیل سیستم آیکون‌ها به معماری قابل ارث‌بری و بازنویسی (`YadinIconSet` در `YadinIcons.kt`):**
+    - طراحی کلاس پایه `open class YadinIconSet` شامل تمامی آیکون‌های برنامه، آیکون‌های تفکیک‌شده دسته‌بندی‌های موضوعی (`categoryMedical`, `categoryTransport`, `categorySports`, `categoryFamily`, `categoryNumbers` و ...) و توابع نگاشت موضوعی (`forAchievementCategory`, `forAchievementTier`, `forCategoryName`, `forStage`, `forDifficulty` و ...) با قابلیت `override` در هر تم اختصاصی.
+    - پیاده‌سازی پل پویای `object YadinIcons : YadinIconSet()` که به صورت خودکار به مجموعه آیکون تم فعال متصل می‌شود.
+- **اصلاحات و باگ‌زدایی (Fixes):**
+  - **رفع نادیده گرفته شدن `themeId` و حذف وابستگی مستقیم به `GeminiTheme` در `YadinTheme.kt`:**
+    - حذف `@Suppress("UNUSED_PARAMETER")` از پارامتر `themeId` در `YadinTheme.kt` و اتصال مستقیم آن به `YadinThemeRegistry.getTheme(themeId)` و `LocalYadinThemeSpec`.
+  - **پویاسازی بخش انتخاب تم در `SettingsScreen.kt` و `SettingsViewModel.kt`:**
+    - جایگزینی متن ثابت تم در `SettingsScreen.kt` با عنوان زنده تم فعال از `YadinThemeRegistry` و نمایش خودکار چیپ‌های انتخاب تم در صورت وجود بیش از یک تم ثبت‌شده، و اصلاح `toggleTheme()` در `SettingsViewModel.kt` جهت چرخش بین تم‌های رجیستری.
+  - **حذف وابستگی مستقیم `ProgressScreen.kt` به `YadinPalette`:**
+    - استفاده از توکن‌های `colors.tierBronze` تا `colors.tierPlatinum` و `YadinIcons.forAchievementCategory(group.category)` در کارت دستاوردهای مرحله‌ای.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم معماری `D61` و به‌روزرسانی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.71.0` (کد نسخه: `84`).
+
+---
+
 ### [نسخه ۱.۷۰.۰] - ۲۰۲۶-۱۰-۲۶ (۱۴۰۵/۰۸/۰۴)
 ### به‌روزرسانی جامع بانک پایه واژگان (`vocabulary_seed.json`) از فایل پشتیبان جدید (`docs/yadin-backup.json`) و همگام‌سازی هوشمند بذر دیتابیس (کد نسخه: ۸۳)
 - **ویژگی‌های جدید و ارتقای بانک واژگان (Features):**
