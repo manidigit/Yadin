@@ -960,7 +960,8 @@ private fun SavedBackupItemRow(
                     androidx.compose.ui.graphics.Brush.linearGradient(
                         listOf(colors.surfaceVariant.copy(alpha = 0.96f), colors.surface, colors.surfaceVariant.copy(alpha = 0.70f))
                     )
-                } else colors.surfaceVariant.copy(alpha = 0.6f)
+                } else androidx.compose.ui.graphics.SolidColor(colors.surfaceVariant.copy(alpha = 0.6f)),
+                shape = RoundedCornerShape(12.dp)
             )
             .border(
                 1.dp,
