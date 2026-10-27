@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
 
 /**
  * Glossy 3D icon treatment for the GPT theme.
@@ -53,6 +54,7 @@ fun GptGlossyIcon(
 
     Box(
         modifier = modifier
+            .size(size)
             .shadow(if (isGpt && enabled) 7.dp else 2.dp, shape)
             .background(surfaceBrush, shape)
             .border(
@@ -82,7 +84,7 @@ fun GptGlossyIcon(
                 imageVector = image,
                 contentDescription = contentDescription,
                 tint = if (enabled) iconTint else colors.onSurfaceVariant.copy(alpha = 0.55f),
-                modifier = Modifier.padding(1.dp)
+                modifier = Modifier.size(iconSize).padding(1.dp)
             )
         }
     }
