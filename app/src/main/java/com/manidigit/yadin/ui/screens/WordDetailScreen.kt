@@ -127,9 +127,9 @@ fun WordDetailScreen(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                                 .background(colors.error.copy(alpha = 0.15f))
-                                .border(1.dp, colors.error.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+                                .border(1.dp, colors.error.copy(alpha = 0.35f), RoundedCornerShape(dimensions.cornerExtraSmall))
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -180,7 +180,7 @@ fun WordDetailScreen(
                         if (onReactivate != null) {
                             Button(
                                 onClick = onReactivate,
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(dimensions.cornerExtraSmall),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = colors.success,
                                     contentColor = colors.onSuccess
@@ -227,9 +227,9 @@ fun WordDetailScreen(
                             word.categories.forEach { cat ->
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                                         .background(colors.primary.copy(alpha = 0.12f))
-                                        .border(1.dp, colors.primary.copy(alpha = 0.30f), RoundedCornerShape(8.dp))
+                                        .border(1.dp, colors.primary.copy(alpha = 0.30f), RoundedCornerShape(dimensions.cornerExtraSmall))
                                         .padding(horizontal = 10.dp, vertical = 4.dp)
                                  ) {
                                     Text(
