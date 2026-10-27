@@ -72,7 +72,6 @@ import com.manidigit.yadin.ui.components.getVocabStatIcon
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
-import com.manidigit.yadin.ui.theme.YadinPalette
 import com.manidigit.yadin.ui.util.formatDigits
 
 @Composable
@@ -650,10 +649,10 @@ private fun TieredAchievementCard(group: TieredGroupState) {
 
     // Tier badge color & title
     val tierColor = when (ach.tier) {
-        AchievementTier.BRONZE -> YadinPalette.TierBronze
-        AchievementTier.SILVER -> YadinPalette.TierSilver
-        AchievementTier.GOLD -> YadinPalette.TierGold
-        AchievementTier.PLATINUM -> YadinPalette.TierPlatinum
+        AchievementTier.BRONZE -> colors.tierBronze
+        AchievementTier.SILVER -> colors.tierSilver
+        AchievementTier.GOLD -> colors.tierGold
+        AchievementTier.PLATINUM -> colors.tierPlatinum
     }
     val tierLabel = stringResource(ach.tier.badgeLabelRes)
 
@@ -685,7 +684,7 @@ private fun TieredAchievementCard(group: TieredGroupState) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (group.isMaxLevel) YadinIcons.statusSuccess else YadinIcons.achievementTrophy,
+                        imageVector = if (group.isMaxLevel) YadinIcons.statusSuccess else YadinIcons.forAchievementCategory(group.category),
                         contentDescription = null,
                         tint = tierColor,
                         modifier = Modifier.size(26.dp)

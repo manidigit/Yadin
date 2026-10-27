@@ -181,11 +181,16 @@ class SettingsViewModel(
     }
 
     /**
-     * تنظیم تم رنگی اختصاصی Gemini برنامه.
+     * چرخش بین تم‌های ثبت‌شده در [com.manidigit.yadin.ui.theme.YadinThemeRegistry].
      */
     fun toggleTheme() {
         scope.launch {
-            settingsRepo.setThemeId("gemini")
+            val themes = com.manidigit.yadin.ui.theme.YadinThemeRegistry.allThemes()
+            if (themes.isNotEmpty()) {
+                val currentIdx = themes.indexOfFirst { it.id.equals(themeId.value, ignoreCase = true) }
+                val nextTheme = themes[(currentIdx + 1).coerceAtLeast(0) % themes.size]
+                settingsRepo.setThemeId(nextTheme.id)
+            }
         }
     }
 

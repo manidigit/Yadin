@@ -131,6 +131,13 @@ fun SettingsScreen(
                     iconTint = colors.primary
                 )
 
+                val availableThemes = remember { com.manidigit.yadin.ui.theme.YadinThemeRegistry.allThemes() }
+                val activeTheme = remember(currentThemeId) {
+                    com.manidigit.yadin.ui.theme.YadinThemeRegistry.getTheme(currentThemeId)
+                }
+                val activeThemeTitle = activeTheme.titleRes?.let { stringResource(it) }
+                    ?: activeTheme.localizedTitle(uiLanguage)
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -141,6 +148,11 @@ fun SettingsScreen(
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
                             .background(colors.surfaceVariant)
+                            .clickable(enabled = availableThemes.size > 1) {
+                                val currentIndex = availableThemes.indexOfFirst { it.id == activeTheme.id }
+                                val nextTheme = availableThemes[(currentIndex + 1).coerceAtLeast(0) % availableThemes.size]
+                                onSelectTheme(nextTheme.id)
+                            }
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -153,7 +165,7 @@ fun SettingsScreen(
                                 fontSize = 10.sp
                             )
                             Text(
-                                text = stringResource(R.string.settings_theme_gemini),
+                                text = activeThemeTitle,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -176,6 +188,27 @@ fun SettingsScreen(
                             tint = if (isDark) colors.warning else colors.primary,
                             modifier = Modifier.size(22.dp)
                         )
+                    }
+                }
+
+                if (availableThemes.size > 1) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        availableThemes.forEach { themeSpec ->
+                            val isSelected = themeSpec.id.equals(activeTheme.id, ignoreCase = true)
+                            val label = themeSpec.titleRes?.let { stringResource(it) }
+                                ?: themeSpec.localizedTitle(uiLanguage)
+                            YadinSelectableChip(
+                                text = label,
+                                isSelected = isSelected,
+                                icon = themeSpec.Icons.brandSparkle,
+                                accentColor = colors.primary,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onSelectTheme(themeSpec.id) }
+                            )
+                        }
                     }
                 }
             }

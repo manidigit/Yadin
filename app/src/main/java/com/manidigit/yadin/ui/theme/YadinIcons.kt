@@ -36,18 +36,23 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Diamond
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.FolderSpecial
 import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.HourglassEmpty
@@ -56,6 +61,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
@@ -73,6 +79,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Style
@@ -86,7 +93,9 @@ import androidx.compose.material.icons.filled.Work
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.manidigit.yadin.domain.model.EntryType
+import com.manidigit.yadin.domain.model.AchievementCategory
+import com.manidigit.yadin.domain.model.AchievementId
+import com.manidigit.yadin.domain.model.AchievementTier
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
@@ -94,32 +103,33 @@ import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 
 /**
- * مخزن استاندارد و متمرکز تمام آیکون‌های تم یادین بر پایه Material Icons.
- * تمامی صفحات و کامپوننت‌ها باید آیکون‌های خود را از این مرجع دریافت کنند تا یکدستی بصری
- * در کل برنامه تضمین شود.
+ * قرارداد استاندارد و قابل توسعه مجموعه آیکون‌های تم یادین (Themeable Icon Set Contract).
+ *
+ * هر تم در یادین می‌تواند یک نمونه از [YadinIconSet] را ارائه دهد و هر یک از آیکون‌ها یا
+ * توابع نگاشت موضوعی را متناسب با زبان بصری خود بازنویسی (override) کند.
  */
 @Immutable
-object YadinIcons {
+open class YadinIconSet {
 
     // =========================================================================
     // ۱. نوع محتوا / حالت مطالعه (ReviewMode)
     // =========================================================================
     /** آزمون ۴ گزینه‌ای: برگه آزمون با چک‌باکس و تیک */
-    val modeQuiz: ImageVector = Icons.Default.FactCheck
+    open val modeQuiz: ImageVector = Icons.Default.FactCheck
 
     /** فلش‌کارت تعاملی: دو کارت روی هم با زاویه ملایم */
-    val modeFlashcard: ImageVector = Icons.Default.Style
+    open val modeFlashcard: ImageVector = Icons.Default.Style
 
     /** چرخش / پشت‌ورو کردن فلش‌کارت */
-    val flipCard: ImageVector = Icons.Default.Flip
+    open val flipCard: ImageVector = Icons.Default.Flip
 
     /** راهنمای هوشمند و نکته آموزشی */
-    val hintLightbulb: ImageVector = Icons.Default.Lightbulb
+    open val hintLightbulb: ImageVector = Icons.Default.Lightbulb
 
     /** تلفظ صوتی (TTS) */
-    val speakAudio: ImageVector = Icons.AutoMirrored.Filled.VolumeUp
+    open val speakAudio: ImageVector = Icons.AutoMirrored.Filled.VolumeUp
 
-    fun forReviewMode(mode: ReviewMode): ImageVector = when (mode) {
+    open fun forReviewMode(mode: ReviewMode): ImageVector = when (mode) {
         ReviewMode.QUIZ -> modeQuiz
         ReviewMode.FLASHCARD -> modeFlashcard
     }
@@ -128,34 +138,34 @@ object YadinIcons {
     // ۲. دوره‌های زمانی لایتنر (Stage) و ۳. وضعیت یادگیری / فیلترهای تمرین (ReviewType)
     // =========================================================================
     /** نماد کلی جعبه لایتنر و سیستم مرور فاصله‌دار */
-    val leitnerBox: ImageVector = Icons.Default.School
+    open val leitnerBox: ImageVector = Icons.Default.School
 
     /** روزانه: تقویم تک‌برگی روزانه */
-    val stageDaily: ImageVector = Icons.Default.Today
+    open val stageDaily: ImageVector = Icons.Default.Today
 
     /** هفتگی: برگه تقویم هفتگی */
-    val stageWeekly: ImageVector = Icons.Default.DateRange
+    open val stageWeekly: ImageVector = Icons.Default.DateRange
 
     /** ماهانه: تقویم شبکه‌ای کامل ماهانه */
-    val stageMonthly: ImageVector = Icons.Default.CalendarMonth
+    open val stageMonthly: ImageVector = Icons.Default.CalendarMonth
 
     /** یادگرفته: نشان/مدال ستاره‌دار تیک‌دار رسمی */
-    val stageLearned: ImageVector = Icons.Default.Verified
+    open val stageLearned: ImageVector = Icons.Default.Verified
 
     /** تصادفی (رندوم): دو فلش متقاطع شافل */
-    val reviewRandom: ImageVector = Icons.Default.Shuffle
+    open val reviewRandom: ImageVector = Icons.Default.Shuffle
 
     /** تعداد کارت‌های هر جلسه */
-    val sessionCardCount: ImageVector = Icons.Default.FormatListNumbered
+    open val sessionCardCount: ImageVector = Icons.Default.FormatListNumbered
 
-    fun forStage(stage: Stage): ImageVector = when (stage) {
+    open fun forStage(stage: Stage): ImageVector = when (stage) {
         Stage.DAILY -> stageDaily
         Stage.WEEKLY -> stageWeekly
         Stage.MONTHLY -> stageMonthly
         Stage.LEARNED -> stageLearned
     }
 
-    fun forReviewType(type: ReviewType): ImageVector = when (type) {
+    open fun forReviewType(type: ReviewType): ImageVector = when (type) {
         ReviewType.DAILY -> stageDaily
         ReviewType.WEEKLY -> stageWeekly
         ReviewType.MONTHLY -> stageMonthly
@@ -169,21 +179,21 @@ object YadinIcons {
     // ۴. سطح دشواری محتوا (VocabularyDifficulty)
     // =========================================================================
     /** نماد کلی طیف و تنظیمات سطح دشواری */
-    val difficultySpectrum: ImageVector = Icons.Default.Tune
+    open val difficultySpectrum: ImageVector = Icons.Default.Tune
 
     /** آسان: دایره سبز ساده با تیک */
-    val difficultyEasy: ImageVector = Icons.Default.CheckCircle
+    open val difficultyEasy: ImageVector = Icons.Default.CheckCircle
 
     /** متوسط: نماد سنجش نیمه‌پر / دو خط موج‌دار */
-    val difficultyMedium: ImageVector = Icons.Default.Tune
+    open val difficultyMedium: ImageVector = Icons.Default.Tune
 
     /** سخت: شعله آتش کوچک */
-    val difficultyHard: ImageVector = Icons.Default.LocalFireDepartment
+    open val difficultyHard: ImageVector = Icons.Default.LocalFireDepartment
 
     /** خیلی سخت: صاعقه پرانرژی */
-    val difficultyVeryHard: ImageVector = Icons.Default.Bolt
+    open val difficultyVeryHard: ImageVector = Icons.Default.Bolt
 
-    fun forDifficulty(difficulty: VocabularyDifficulty): ImageVector = when (difficulty) {
+    open fun forDifficulty(difficulty: VocabularyDifficulty): ImageVector = when (difficulty) {
         VocabularyDifficulty.EASY -> difficultyEasy
         VocabularyDifficulty.MEDIUM -> difficultyMedium
         VocabularyDifficulty.HARD -> difficultyHard
@@ -194,15 +204,15 @@ object YadinIcons {
     // ۵. سطح مهارت کاربر در آزمون (Proficiency / QuizLevel)
     // =========================================================================
     /** مبتدی: جوانه گیاه دو‌برگی */
-    val proficiencyBeginner: ImageVector = Icons.Default.Eco
+    open val proficiencyBeginner: ImageVector = Icons.Default.Eco
 
     /** نرمال: سپر دفاعی ساده */
-    val proficiencyNormal: ImageVector = Icons.Default.Shield
+    open val proficiencyNormal: ImageVector = Icons.Default.Shield
 
     /** حرفه‌ای: تاج/نشان ویژه طلایی */
-    val proficiencyProfessional: ImageVector = Icons.Default.WorkspacePremium
+    open val proficiencyProfessional: ImageVector = Icons.Default.WorkspacePremium
 
-    fun forQuizLevel(level: QuizLevel): ImageVector = when (level) {
+    open fun forQuizLevel(level: QuizLevel): ImageVector = when (level) {
         QuizLevel.BEGINNER -> proficiencyBeginner
         QuizLevel.NORMAL -> proficiencyNormal
         QuizLevel.PROFESSIONAL -> proficiencyProfessional
@@ -212,90 +222,140 @@ object YadinIcons {
     // ۶. آمار و فیلترهای کلمات (VocabStatType)
     // =========================================================================
     /** کل کلمات: کتابخانه / پشته‌ای از کتاب‌ها */
-    val vocabTotal: ImageVector = Icons.AutoMirrored.Filled.LibraryBooks
+    open val vocabTotal: ImageVector = Icons.AutoMirrored.Filled.LibraryBooks
 
     /** تمرین‌شده‌ها: برگه با قلم و تیک تأیید */
-    val vocabPracticed: ImageVector = Icons.Default.AssignmentTurnedIn
+    open val vocabPracticed: ImageVector = Icons.Default.AssignmentTurnedIn
 
     /** تمرین‌نشده‌ها: ساعت شنی دست‌نخورده */
-    val vocabUnpracticed: ImageVector = Icons.Default.HourglassEmpty
+    open val vocabUnpracticed: ImageVector = Icons.Default.HourglassEmpty
 
     /** یادگرفته‌ها: یکپارچه با مرحله یادگرفته */
-    val vocabLearned: ImageVector = stageLearned
+    open val vocabLearned: ImageVector
+        get() = stageLearned
 
     // =========================================================================
     // ۷. ناوبری اصلی و جهت‌ها (Navigation & Directional)
     // =========================================================================
-    val navHome: ImageVector = Icons.Default.Home
-    val navReview: ImageVector = leitnerBox
-    val navLibrary: ImageVector = vocabTotal
-    val navProgress: ImageVector = Icons.Default.BarChart
-    val navSettings: ImageVector = Icons.Default.Settings
+    open val navHome: ImageVector = Icons.Default.Home
+    open val navReview: ImageVector
+        get() = leitnerBox
+    open val navLibrary: ImageVector
+        get() = vocabTotal
+    open val navProgress: ImageVector = Icons.Default.BarChart
+    open val navSettings: ImageVector = Icons.Default.Settings
 
-    val back: ImageVector = Icons.AutoMirrored.Filled.ArrowBack
-    val forward: ImageVector = Icons.AutoMirrored.Filled.ArrowForward
-    val dropdown: ImageVector = Icons.Default.ArrowDropDown
+    open val back: ImageVector = Icons.AutoMirrored.Filled.ArrowBack
+    open val forward: ImageVector = Icons.AutoMirrored.Filled.ArrowForward
+    open val dropdown: ImageVector = Icons.Default.ArrowDropDown
 
     // =========================================================================
     // ۸. آمار پیشرفته، نمودارها و دستاوردها (Analytics, Charts & Gamification)
     // =========================================================================
     /** زنجیره مطالعه روزانه (Streak) */
-    val streakFire: ImageVector = Icons.Default.LocalFireDepartment
+    open val streakFire: ImageVector = Icons.Default.LocalFireDepartment
 
     /** شاخص ماندگاری حافظه و تحلیل شناختی */
-    val retentionBrain: ImageVector = Icons.Default.Psychology
+    open val retentionBrain: ImageVector = Icons.Default.Psychology
 
     /** نمودار روند مرور روزانه */
-    val chartTrend: ImageVector = Icons.Default.ShowChart
+    open val chartTrend: ImageVector = Icons.Default.ShowChart
 
     /** روند رو به رشد */
-    val trendingUp: ImageVector = Icons.AutoMirrored.Filled.TrendingUp
+    open val trendingUp: ImageVector = Icons.AutoMirrored.Filled.TrendingUp
 
     /** پیش‌بینی مرورهای آینده */
-    val forecastCalendar: ImageVector = Icons.Default.CalendarMonth
+    open val forecastCalendar: ImageVector = Icons.Default.CalendarMonth
 
     /** کلمه سررسید در انتظار مرور */
-    val dueSchedule: ImageVector = Icons.Default.Schedule
+    open val dueSchedule: ImageVector = Icons.Default.Schedule
 
     /** وضعیت مرتب و بدون عقب‌افتادگی */
-    val dueClear: ImageVector = Icons.Default.CheckCircleOutline
+    open val dueClear: ImageVector = Icons.Default.CheckCircleOutline
 
     /** تحلیل عادات مطالعه و ساعات روز */
-    val studyHabitsTime: ImageVector = Icons.Default.AccessTime
+    open val studyHabitsTime: ImageVector = Icons.Default.AccessTime
 
     /** ساعت طلایی تمرکز */
-    val goldenHourStar: ImageVector = Icons.Default.Star
+    open val goldenHourStar: ImageVector = Icons.Default.Star
 
     /** تسلط به تفکیک موضوعات و دسته‌بندی‌ها */
-    val categoryMastery: ImageVector = Icons.Default.FolderSpecial
+    open val categoryMastery: ImageVector = Icons.Default.FolderSpecial
 
     /** جام دستاوردها و جشن پایان جلسه */
-    val achievementTrophy: ImageVector = Icons.Default.EmojiEvents
+    open val achievementTrophy: ImageVector = Icons.Default.EmojiEvents
+
+    /** نشان‌های رتبه‌ای دستاوردها */
+    open val tierBronze: ImageVector = Icons.Default.WorkspacePremium
+    open val tierSilver: ImageVector = Icons.Default.MilitaryTech
+    open val tierGold: ImageVector = Icons.Default.EmojiEvents
+    open val tierPlatinum: ImageVector = Icons.Default.Diamond
+
+    /** نماد غلبه بر کلمات سخت */
+    open val achievementHardWords: ImageVector = Icons.Default.FitnessCenter
+
+    open fun forAchievementTier(tier: AchievementTier): ImageVector = when (tier) {
+        AchievementTier.BRONZE -> tierBronze
+        AchievementTier.SILVER -> tierSilver
+        AchievementTier.GOLD -> tierGold
+        AchievementTier.PLATINUM -> tierPlatinum
+    }
+
+    open fun forAchievementCategory(category: AchievementCategory): ImageVector = when (category) {
+        AchievementCategory.VOCABULARY -> vocabTotal
+        AchievementCategory.STREAK -> streakFire
+        AchievementCategory.RETENTION -> retentionBrain
+        AchievementCategory.HARD_WORDS -> achievementHardWords
+        AchievementCategory.QUIZ -> achievementTrophy
+    }
+
+    open fun forAchievement(achievement: AchievementId): ImageVector =
+        forAchievementCategory(achievement.category)
 
     // =========================================================================
     // ۹. دسته‌بندی‌های موضوعی (Categories)
     // =========================================================================
-    val categoryDefault: ImageVector = Icons.Default.Category
-    val categoryBook: ImageVector = Icons.AutoMirrored.Filled.MenuBook
+    open val categoryDefault: ImageVector = Icons.Default.Category
+    open val categoryBook: ImageVector = Icons.AutoMirrored.Filled.MenuBook
+    open val categoryTravel: ImageVector = Icons.Default.Flight
+    open val categoryFood: ImageVector = Icons.Default.Restaurant
+    open val categoryConversation: ImageVector = Icons.AutoMirrored.Filled.Chat
+    open val categoryIdiom: ImageVector
+        get() = hintLightbulb
+    open val categoryGrammar: ImageVector = Icons.Default.Description
+    open val categoryVerb: ImageVector = Icons.Default.Bolt
+    open val categoryWork: ImageVector = Icons.Default.Work
+    open val categoryNature: ImageVector = Icons.Default.Eco
+    open val categoryHome: ImageVector = Icons.Default.Home
+    open val categoryShopping: ImageVector = Icons.Default.ShoppingBag
+    open val categoryArt: ImageVector = Icons.Default.Palette
+    open val categoryMedical: ImageVector = Icons.Default.Favorite
+    open val categoryTransport: ImageVector = Icons.Default.DirectionsBus
+    open val categoryFamily: ImageVector = Icons.Default.Groups
+    open val categorySports: ImageVector = Icons.Default.SportsSoccer
+    open val categoryNumbers: ImageVector = Icons.Default.CalendarMonth
 
-    private val CATEGORY_TOKEN_SPLIT = Regex("[\\s,،/()\\[\\]\\-_•|]+")
-
-    fun forCategoryName(categoryName: String?): ImageVector {
+    open fun forCategoryName(categoryName: String?): ImageVector {
         if (categoryName == null) return categoryDefault
         val lower = categoryName.lowercase()
         val tokens = lower.split(CATEGORY_TOKEN_SPLIT).filter { it.isNotBlank() }.toSet()
         return when {
-            lower.contains("سفر") || lower.contains("گردش") || "flight" in tokens || "travel" in tokens -> Icons.Default.Flight
-            lower.contains("غذا") || lower.contains("خوراک") || lower.contains("نوشیدنی") || "food" in tokens -> Icons.Default.Restaurant
-            lower.contains("مکالمه") || lower.contains("احوال") || lower.contains("گفتگو") || "chat" in tokens -> Icons.AutoMirrored.Filled.Chat
-            lower.contains("اصطلاح") || lower.contains("ضرب") || "idiom" in tokens || "idioms" in tokens -> Icons.Default.Lightbulb
-            lower.contains("گرامر") || lower.contains("قواعد") || lower.contains("دستور") || "grammar" in tokens -> Icons.Default.Description
-            lower.contains("فعل") || lower.contains("افعال") || "verb" in tokens || "verbs" in tokens -> Icons.Default.Bolt
-            "کار" in tokens || lower.contains("شغل") || lower.contains("کسب") || "business" in tokens || "work" in tokens -> Icons.Default.Work
-            lower.contains("طبیعت") || "آب" in tokens || lower.contains("محیط") || "nature" in tokens -> Icons.Default.Eco
-            lower.contains("خانه") || lower.contains("منزل") || lower.contains("خانواده") || "home" in tokens -> Icons.Default.Home
-            lower.contains("خرید") || lower.contains("پوشاک") || lower.contains("لباس") || "shop" in tokens || "shopping" in tokens -> Icons.Default.ShoppingBag
-            lower.contains("هنر") || lower.contains("فرهنگ") || "art" in tokens || "arts" in tokens -> Icons.Default.Palette
+            lower.contains("پزشکی") || lower.contains("بدن") || lower.contains("سلامت") || "medical" in tokens || "health" in tokens || "body" in tokens -> categoryMedical
+            lower.contains("حمل") || lower.contains("نقل") || "transport" in tokens || "transportation" in tokens -> categoryTransport
+            lower.contains("ورزش") || "sport" in tokens || "sports" in tokens -> categorySports
+            lower.contains("سفر") || lower.contains("گردش") || "flight" in tokens || "travel" in tokens -> categoryTravel
+            lower.contains("غذا") || lower.contains("خوراک") || lower.contains("نوشیدنی") || "food" in tokens -> categoryFood
+            lower.contains("مکالمه") || lower.contains("احوال") || lower.contains("گفتگو") || "chat" in tokens -> categoryConversation
+            lower.contains("اصطلاح") || lower.contains("ضرب") || "idiom" in tokens || "idioms" in tokens -> categoryIdiom
+            lower.contains("گرامر") || lower.contains("قواعد") || lower.contains("دستور") || "grammar" in tokens -> categoryGrammar
+            lower.contains("فعل") || lower.contains("افعال") || "verb" in tokens || "verbs" in tokens -> categoryVerb
+            "کار" in tokens || lower.contains("شغل") || lower.contains("کسب") || "business" in tokens || "work" in tokens -> categoryWork
+            lower.contains("طبیعت") || "آب" in tokens || lower.contains("محیط") || "nature" in tokens -> categoryNature
+            lower.contains("خانواده") || "family" in tokens -> categoryFamily
+            lower.contains("خانه") || lower.contains("منزل") || "home" in tokens -> categoryHome
+            lower.contains("خرید") || lower.contains("پوشاک") || lower.contains("لباس") || "shop" in tokens || "shopping" in tokens -> categoryShopping
+            lower.contains("هنر") || lower.contains("فرهنگ") || "art" in tokens || "arts" in tokens -> categoryArt
+            lower.contains("اعداد") || lower.contains("تاریخ") || "numbers" in tokens || "date" in tokens -> categoryNumbers
             else -> categoryDefault
         }
     }
@@ -303,60 +363,224 @@ object YadinIcons {
     // =========================================================================
     // ۱۰. پشتیبان‌گیری، بازیابی، درون‌ریزی و فرمت فایل‌ها (Backup, Import & Formats)
     // =========================================================================
-    val backupExport: ImageVector = Icons.Default.CloudUpload
-    val backupRestore: ImageVector = Icons.Default.CloudDownload
-    val databaseStorage: ImageVector = Icons.Default.Storage
-    val backupScopeChecklist: ImageVector = Icons.Default.Checklist
-    val processHistory: ImageVector = Icons.Default.History
-    val formatJson: ImageVector = Icons.Default.DataObject
-    val formatCsvExcel: ImageVector = Icons.Default.TableChart
-    val folderOpen: ImageVector = Icons.Default.FolderOpen
-    val fileOpen: ImageVector = Icons.Default.FileOpen
-    val batchImport: ImageVector = Icons.Default.FileUpload
-    val saveFile: ImageVector = Icons.Default.SaveAlt
-    val pasteClipboard: ImageVector = Icons.Default.ContentPaste
+    open val backupExport: ImageVector = Icons.Default.CloudUpload
+    open val backupRestore: ImageVector = Icons.Default.CloudDownload
+    open val databaseStorage: ImageVector = Icons.Default.Storage
+    open val backupScopeChecklist: ImageVector = Icons.Default.Checklist
+    open val processHistory: ImageVector = Icons.Default.History
+    open val formatJson: ImageVector = Icons.Default.DataObject
+    open val formatCsvExcel: ImageVector = Icons.Default.TableChart
+    open val folderOpen: ImageVector = Icons.Default.FolderOpen
+    open val fileOpen: ImageVector = Icons.Default.FileOpen
+    open val batchImport: ImageVector = Icons.Default.FileUpload
+    open val saveFile: ImageVector = Icons.Default.SaveAlt
+    open val pasteClipboard: ImageVector = Icons.Default.ContentPaste
 
     // =========================================================================
     // ۱۱. تنظیمات، زبان، برند و ممیزی هوشمند (Settings, Language & Smart Audit)
     // =========================================================================
-    /** نشان برند یادین و تم هوش مصنوعی Gemini */
-    val brandSparkle: ImageVector = Icons.Default.AutoAwesome
+    /** نشان برند یادین و تم هوش مصنوعی */
+    open val brandSparkle: ImageVector = Icons.Default.AutoAwesome
 
     /** ممیزی و پالایش هوشمند کلمات */
-    val smartAudit: ImageVector = Icons.Default.AutoFixHigh
+    open val smartAudit: ImageVector = Icons.Default.AutoFixHigh
 
     /** بازبینی دستی موارد مشکوک */
-    val manualReview: ImageVector = Icons.Default.RateReview
+    open val manualReview: ImageVector = Icons.Default.RateReview
 
-    val themePalette: ImageVector = Icons.Default.Palette
-    val lightMode: ImageVector = Icons.Default.LightMode
-    val darkMode: ImageVector = Icons.Default.DarkMode
-    val languageDirection: ImageVector = Icons.Default.Translate
-    val uiLanguage: ImageVector = Icons.Default.Language
-    val purgeTrash: ImageVector = Icons.Default.DeleteForever
-    val aboutInfo: ImageVector = Icons.Default.Info
-    val helpGuide: ImageVector = Icons.AutoMirrored.Filled.HelpOutline
-    val developerCode: ImageVector = Icons.Default.Code
-    val contactSupport: ImageVector = Icons.AutoMirrored.Filled.Chat
+    open val themePalette: ImageVector = Icons.Default.Palette
+    open val lightMode: ImageVector = Icons.Default.LightMode
+    open val darkMode: ImageVector = Icons.Default.DarkMode
+    open val languageDirection: ImageVector = Icons.Default.Translate
+    open val uiLanguage: ImageVector = Icons.Default.Language
+    open val purgeTrash: ImageVector = Icons.Default.DeleteForever
+    open val aboutInfo: ImageVector = Icons.Default.Info
+    open val helpGuide: ImageVector = Icons.AutoMirrored.Filled.HelpOutline
+    open val developerCode: ImageVector = Icons.Default.Code
+    open val contactSupport: ImageVector = Icons.AutoMirrored.Filled.Chat
 
     // =========================================================================
     // ۱۲. عملیات عمومی و وضعیت‌ها (Common Actions & Statuses)
     // =========================================================================
-    val add: ImageVector = Icons.Default.Add
-    val edit: ImageVector = Icons.Default.Edit
-    val delete: ImageVector = Icons.Default.Delete
-    val save: ImageVector = Icons.Default.Save
-    val search: ImageVector = Icons.Default.Search
-    val clear: ImageVector = Icons.Default.Clear
-    val close: ImageVector = Icons.Default.Close
-    val check: ImageVector = Icons.Default.Check
-    val refresh: ImageVector = Icons.Default.Refresh
-    val share: ImageVector = Icons.Default.Share
-    val play: ImageVector = Icons.Default.PlayArrow
-    val filter: ImageVector = Icons.Default.FilterList
-    val noteText: ImageVector = Icons.Default.Description
+    open val add: ImageVector = Icons.Default.Add
+    open val edit: ImageVector = Icons.Default.Edit
+    open val delete: ImageVector = Icons.Default.Delete
+    open val save: ImageVector = Icons.Default.Save
+    open val search: ImageVector = Icons.Default.Search
+    open val clear: ImageVector = Icons.Default.Clear
+    open val close: ImageVector = Icons.Default.Close
+    open val check: ImageVector = Icons.Default.Check
+    open val refresh: ImageVector = Icons.Default.Refresh
+    open val share: ImageVector = Icons.Default.Share
+    open val play: ImageVector = Icons.Default.PlayArrow
+    open val filter: ImageVector = Icons.Default.FilterList
+    open val noteText: ImageVector = Icons.Default.Description
 
-    val statusSuccess: ImageVector = Icons.Default.CheckCircle
-    val statusError: ImageVector = Icons.Default.Cancel
-    val statusWarning: ImageVector = Icons.Default.Warning
+    open val statusSuccess: ImageVector = Icons.Default.CheckCircle
+    open val statusError: ImageVector = Icons.Default.Cancel
+    open val statusWarning: ImageVector = Icons.Default.Warning
+
+    companion object {
+        private val CATEGORY_TOKEN_SPLIT = Regex("[\\s,،/()\\[\\]\\-_•|]+")
+    }
+}
+
+/**
+ * پیاده‌سازی پیش‌فرض مجموعه آیکون‌های متریال یادین.
+ */
+@Immutable
+object DefaultYadinIconSet : YadinIconSet()
+
+/**
+ * پل دسترسی پویا به مجموعه آیکون‌های تم فعال برنامه ([YadinIconSet]).
+ *
+ * این شیء به طور خودکار تمامی درخواست‌های آیکون را به مجموعه آیکون تم فعال ([activeIconSet])
+ * هدایت می‌کند؛ بنابراین چه کامپوننت‌ها از `YadinTheme.icons` استفاده کنند و چه مستقیماً
+ * `YadinIcons` را فراخوانی نمایند، همیشه آیکون‌های اختصاصی تم انتخاب‌شده را دریافت خواهند کرد.
+ */
+@Immutable
+object YadinIcons : YadinIconSet() {
+
+    @Volatile
+    private var activeDelegate: YadinIconSet = DefaultYadinIconSet
+
+    /**
+     * بروزرسانی مجموعه آیکون فعال هنگام تغییر تم در [YadinTheme].
+     */
+    fun setActiveIconSet(iconSet: YadinIconSet) {
+        activeDelegate = iconSet
+    }
+
+    /**
+     * دریافت نمونه [YadinIconSet] فعال کنونی.
+     */
+    fun currentIconSet(): YadinIconSet = activeDelegate
+
+    override val modeQuiz: ImageVector get() = activeDelegate.modeQuiz
+    override val modeFlashcard: ImageVector get() = activeDelegate.modeFlashcard
+    override val flipCard: ImageVector get() = activeDelegate.flipCard
+    override val hintLightbulb: ImageVector get() = activeDelegate.hintLightbulb
+    override val speakAudio: ImageVector get() = activeDelegate.speakAudio
+    override fun forReviewMode(mode: ReviewMode): ImageVector = activeDelegate.forReviewMode(mode)
+
+    override val leitnerBox: ImageVector get() = activeDelegate.leitnerBox
+    override val stageDaily: ImageVector get() = activeDelegate.stageDaily
+    override val stageWeekly: ImageVector get() = activeDelegate.stageWeekly
+    override val stageMonthly: ImageVector get() = activeDelegate.stageMonthly
+    override val stageLearned: ImageVector get() = activeDelegate.stageLearned
+    override val reviewRandom: ImageVector get() = activeDelegate.reviewRandom
+    override val sessionCardCount: ImageVector get() = activeDelegate.sessionCardCount
+    override fun forStage(stage: Stage): ImageVector = activeDelegate.forStage(stage)
+    override fun forReviewType(type: ReviewType): ImageVector = activeDelegate.forReviewType(type)
+
+    override val difficultySpectrum: ImageVector get() = activeDelegate.difficultySpectrum
+    override val difficultyEasy: ImageVector get() = activeDelegate.difficultyEasy
+    override val difficultyMedium: ImageVector get() = activeDelegate.difficultyMedium
+    override val difficultyHard: ImageVector get() = activeDelegate.difficultyHard
+    override val difficultyVeryHard: ImageVector get() = activeDelegate.difficultyVeryHard
+    override fun forDifficulty(difficulty: VocabularyDifficulty): ImageVector = activeDelegate.forDifficulty(difficulty)
+
+    override val proficiencyBeginner: ImageVector get() = activeDelegate.proficiencyBeginner
+    override val proficiencyNormal: ImageVector get() = activeDelegate.proficiencyNormal
+    override val proficiencyProfessional: ImageVector get() = activeDelegate.proficiencyProfessional
+    override fun forQuizLevel(level: QuizLevel): ImageVector = activeDelegate.forQuizLevel(level)
+
+    override val vocabTotal: ImageVector get() = activeDelegate.vocabTotal
+    override val vocabPracticed: ImageVector get() = activeDelegate.vocabPracticed
+    override val vocabUnpracticed: ImageVector get() = activeDelegate.vocabUnpracticed
+    override val vocabLearned: ImageVector get() = activeDelegate.vocabLearned
+
+    override val navHome: ImageVector get() = activeDelegate.navHome
+    override val navReview: ImageVector get() = activeDelegate.navReview
+    override val navLibrary: ImageVector get() = activeDelegate.navLibrary
+    override val navProgress: ImageVector get() = activeDelegate.navProgress
+    override val navSettings: ImageVector get() = activeDelegate.navSettings
+    override val back: ImageVector get() = activeDelegate.back
+    override val forward: ImageVector get() = activeDelegate.forward
+    override val dropdown: ImageVector get() = activeDelegate.dropdown
+
+    override val streakFire: ImageVector get() = activeDelegate.streakFire
+    override val retentionBrain: ImageVector get() = activeDelegate.retentionBrain
+    override val chartTrend: ImageVector get() = activeDelegate.chartTrend
+    override val trendingUp: ImageVector get() = activeDelegate.trendingUp
+    override val forecastCalendar: ImageVector get() = activeDelegate.forecastCalendar
+    override val dueSchedule: ImageVector get() = activeDelegate.dueSchedule
+    override val dueClear: ImageVector get() = activeDelegate.dueClear
+    override val studyHabitsTime: ImageVector get() = activeDelegate.studyHabitsTime
+    override val goldenHourStar: ImageVector get() = activeDelegate.goldenHourStar
+    override val categoryMastery: ImageVector get() = activeDelegate.categoryMastery
+    override val achievementTrophy: ImageVector get() = activeDelegate.achievementTrophy
+    override val tierBronze: ImageVector get() = activeDelegate.tierBronze
+    override val tierSilver: ImageVector get() = activeDelegate.tierSilver
+    override val tierGold: ImageVector get() = activeDelegate.tierGold
+    override val tierPlatinum: ImageVector get() = activeDelegate.tierPlatinum
+    override val achievementHardWords: ImageVector get() = activeDelegate.achievementHardWords
+    override fun forAchievementTier(tier: AchievementTier): ImageVector = activeDelegate.forAchievementTier(tier)
+    override fun forAchievementCategory(category: AchievementCategory): ImageVector = activeDelegate.forAchievementCategory(category)
+    override fun forAchievement(achievement: AchievementId): ImageVector = activeDelegate.forAchievement(achievement)
+
+    override val categoryDefault: ImageVector get() = activeDelegate.categoryDefault
+    override val categoryBook: ImageVector get() = activeDelegate.categoryBook
+    override val categoryTravel: ImageVector get() = activeDelegate.categoryTravel
+    override val categoryFood: ImageVector get() = activeDelegate.categoryFood
+    override val categoryConversation: ImageVector get() = activeDelegate.categoryConversation
+    override val categoryIdiom: ImageVector get() = activeDelegate.categoryIdiom
+    override val categoryGrammar: ImageVector get() = activeDelegate.categoryGrammar
+    override val categoryVerb: ImageVector get() = activeDelegate.categoryVerb
+    override val categoryWork: ImageVector get() = activeDelegate.categoryWork
+    override val categoryNature: ImageVector get() = activeDelegate.categoryNature
+    override val categoryHome: ImageVector get() = activeDelegate.categoryHome
+    override val categoryShopping: ImageVector get() = activeDelegate.categoryShopping
+    override val categoryArt: ImageVector get() = activeDelegate.categoryArt
+    override val categoryMedical: ImageVector get() = activeDelegate.categoryMedical
+    override val categoryTransport: ImageVector get() = activeDelegate.categoryTransport
+    override val categoryFamily: ImageVector get() = activeDelegate.categoryFamily
+    override val categorySports: ImageVector get() = activeDelegate.categorySports
+    override val categoryNumbers: ImageVector get() = activeDelegate.categoryNumbers
+    override fun forCategoryName(categoryName: String?): ImageVector = activeDelegate.forCategoryName(categoryName)
+
+    override val backupExport: ImageVector get() = activeDelegate.backupExport
+    override val backupRestore: ImageVector get() = activeDelegate.backupRestore
+    override val databaseStorage: ImageVector get() = activeDelegate.databaseStorage
+    override val backupScopeChecklist: ImageVector get() = activeDelegate.backupScopeChecklist
+    override val processHistory: ImageVector get() = activeDelegate.processHistory
+    override val formatJson: ImageVector get() = activeDelegate.formatJson
+    override val formatCsvExcel: ImageVector get() = activeDelegate.formatCsvExcel
+    override val folderOpen: ImageVector get() = activeDelegate.folderOpen
+    override val fileOpen: ImageVector get() = activeDelegate.fileOpen
+    override val batchImport: ImageVector get() = activeDelegate.batchImport
+    override val saveFile: ImageVector get() = activeDelegate.saveFile
+    override val pasteClipboard: ImageVector get() = activeDelegate.pasteClipboard
+
+    override val brandSparkle: ImageVector get() = activeDelegate.brandSparkle
+    override val smartAudit: ImageVector get() = activeDelegate.smartAudit
+    override val manualReview: ImageVector get() = activeDelegate.manualReview
+    override val themePalette: ImageVector get() = activeDelegate.themePalette
+    override val lightMode: ImageVector get() = activeDelegate.lightMode
+    override val darkMode: ImageVector get() = activeDelegate.darkMode
+    override val languageDirection: ImageVector get() = activeDelegate.languageDirection
+    override val uiLanguage: ImageVector get() = activeDelegate.uiLanguage
+    override val purgeTrash: ImageVector get() = activeDelegate.purgeTrash
+    override val aboutInfo: ImageVector get() = activeDelegate.aboutInfo
+    override val helpGuide: ImageVector get() = activeDelegate.helpGuide
+    override val developerCode: ImageVector get() = activeDelegate.developerCode
+    override val contactSupport: ImageVector get() = activeDelegate.contactSupport
+
+    override val add: ImageVector get() = activeDelegate.add
+    override val edit: ImageVector get() = activeDelegate.edit
+    override val delete: ImageVector get() = activeDelegate.delete
+    override val save: ImageVector get() = activeDelegate.save
+    override val search: ImageVector get() = activeDelegate.search
+    override val clear: ImageVector get() = activeDelegate.clear
+    override val close: ImageVector get() = activeDelegate.close
+    override val check: ImageVector get() = activeDelegate.check
+    override val refresh: ImageVector get() = activeDelegate.refresh
+    override val share: ImageVector get() = activeDelegate.share
+    override val play: ImageVector get() = activeDelegate.play
+    override val filter: ImageVector get() = activeDelegate.filter
+    override val noteText: ImageVector get() = activeDelegate.noteText
+
+    override val statusSuccess: ImageVector get() = activeDelegate.statusSuccess
+    override val statusError: ImageVector get() = activeDelegate.statusError
+    override val statusWarning: ImageVector get() = activeDelegate.statusWarning
 }

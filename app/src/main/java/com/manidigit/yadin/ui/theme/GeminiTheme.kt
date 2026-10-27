@@ -2,23 +2,36 @@ package com.manidigit.yadin.ui.theme
 
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.Shapes
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.Typography
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.manidigit.yadin.R
 
 /**
- * پرونده و پیکربندی اختصاصی و یکپارچه تم Gemini (هوش مصنوعی).
+ * مجموعه آیکون‌های اختصاصی تم Gemini (مشتق از [YadinIconSet]).
+ */
+@Immutable
+object GeminiIconSet : YadinIconSet()
+
+/**
+ * پرونده و پیکربندی استاندارد، مستقل و یکپارچه تم Gemini (هوش مصنوعی) مبتنی بر قرارداد [YadinThemeSpec].
  *
  * تمامی توکن‌های رنگی (حالت تاریک و روشن)، ابعاد و فواصل چیدمان،
- * اشکال هندسی کارت‌ها و المان‌ها، سایز استاندارد آیکون‌ها و اتصال به Material Design 3
- * به طور متمرکز در این فایل تعریف و مدیریت می‌شوند.
+ * اشکال هندسی کارت‌ها و المان‌ها، سایز استاندارد آیکون‌ها، مجموعه آیکون‌ها و اتصال به Material Design 3
+ * به طور متمرکز و مستقل در این پیاده‌سازی تعریف و مدیریت می‌شوند.
  */
-object GeminiTheme {
-    val LightColors = YadinColors(
+@Immutable
+object GeminiTheme : YadinThemeSpec {
+    override val id: String = "gemini"
+    override val titleFa: String = "تم Gemini (هوش مصنوعی)"
+    override val titleEn: String = "Gemini Theme (AI Aesthetic)"
+    override val descriptionFa: String = "طراحی هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم"
+    override val descriptionEn: String = "Cosmic navy, cyan accents, and soft glassmorphic cards"
+    override val titleRes: Int = R.string.settings_theme_gemini
+
+    override val LightColors = YadinColors(
         primary = YadinPalette.GeminiBlue,
         onPrimary = Color(0xFFFFFFFF),
         secondary = YadinPalette.GeminiSky,
@@ -44,6 +57,10 @@ object GeminiTheme {
         difficultyMedium = YadinPalette.WarningAmber,
         difficultyHard = YadinPalette.HardOrange,
         difficultyVeryHard = YadinPalette.ErrorRed,
+        tierBronze = YadinPalette.TierBronze,
+        tierSilver = YadinPalette.TierSilver,
+        tierGold = YadinPalette.TierGold,
+        tierPlatinum = YadinPalette.TierPlatinum,
         heroGradient = Brush.linearGradient(
             listOf(YadinPalette.GeminiBlue, YadinPalette.GeminiSky, YadinPalette.GeminiPurple)
         ),
@@ -58,7 +75,7 @@ object GeminiTheme {
         onHero = Color(0xFFFFFFFF)
     )
 
-    val DarkColors = YadinColors(
+    override val DarkColors = YadinColors(
         primary = YadinPalette.GeminiBlueLight,
         onPrimary = Color(0xFF060B14),
         secondary = YadinPalette.GeminiSkyLight,
@@ -84,6 +101,10 @@ object GeminiTheme {
         difficultyMedium = YadinPalette.WarningAmberLight,
         difficultyHard = YadinPalette.HardOrangeLight,
         difficultyVeryHard = YadinPalette.ErrorRedLight,
+        tierBronze = YadinPalette.TierBronze,
+        tierSilver = YadinPalette.TierSilver,
+        tierGold = YadinPalette.TierGold,
+        tierPlatinum = YadinPalette.TierPlatinum,
         heroGradient = Brush.linearGradient(
             listOf(YadinPalette.GeminiBlueLight, YadinPalette.GeminiSkyLight, YadinPalette.GeminiPurpleLight)
         ),
@@ -98,7 +119,7 @@ object GeminiTheme {
         onHero = Color(0xFFFFFFFF)
     )
 
-    val Dimensions = YadinDimensions(
+    override val Dimensions = YadinDimensions(
         screenPadding = 18.dp,
         contentGap = 12.dp,
         sectionGap = 16.dp,
@@ -119,7 +140,7 @@ object GeminiTheme {
         cornerPill = 40.dp
     )
 
-    val Shapes = YadinShapes(
+    override val Shapes = YadinShapes(
         extraSmall = RoundedCornerShape(8.dp),
         badge = RoundedCornerShape(12.dp),
         small = RoundedCornerShape(16.dp),
@@ -129,7 +150,7 @@ object GeminiTheme {
         circle = CircleShape
     )
 
-    val IconSizes = YadinIconSizes(
+    override val IconSizes = YadinIconSizes(
         small = 16.dp,
         medium = 20.dp,
         large = 24.dp,
@@ -137,50 +158,9 @@ object GeminiTheme {
         hero = 48.dp
     )
 
-    fun materialColorScheme(isDark: Boolean): ColorScheme {
-        val colors = if (isDark) DarkColors else LightColors
-        return if (isDark) {
-            darkColorScheme(
-                primary = colors.primary,
-                onPrimary = colors.onPrimary,
-                secondary = colors.secondary,
-                onSecondary = colors.onSecondary,
-                background = colors.background,
-                surface = colors.surface,
-                surfaceVariant = colors.surfaceVariant,
-                onSurface = colors.onSurface,
-                onSurfaceVariant = colors.onSurfaceVariant,
-                outline = colors.outline,
-                outlineVariant = colors.outlineVariant,
-                error = colors.error,
-                onError = colors.onError
-            )
-        } else {
-            lightColorScheme(
-                primary = colors.primary,
-                onPrimary = colors.onPrimary,
-                secondary = colors.secondary,
-                onSecondary = colors.onSecondary,
-                background = colors.background,
-                surface = colors.surface,
-                surfaceVariant = colors.surfaceVariant,
-                onSurface = colors.onSurface,
-                onSurfaceVariant = colors.onSurfaceVariant,
-                outline = colors.outline,
-                outlineVariant = colors.outlineVariant,
-                error = colors.error,
-                onError = colors.onError
-            )
-        }
-    }
+    override val Icons: YadinIconSet = GeminiIconSet
 
-    fun materialShapes(): Shapes = Shapes(
-        extraSmall = Shapes.extraSmall,
-        small = Shapes.small,
-        medium = Shapes.medium,
-        large = Shapes.large,
-        extraLarge = Shapes.pill
-    )
+    override val Typography: Typography = AppTypography
 }
 
 // Aliases for seamless backward compatibility across callers
