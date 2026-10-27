@@ -94,10 +94,10 @@ fun CategoryMasteryCard(
                             progress = { (cat.masteryPercent / 100f).coerceIn(0f, 1f) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
                             color = color,
-                            trackColor = color.copy(alpha = 0.18f)
+                            trackColor = colors.surfaceVariant.copy(alpha = 0.78f)
                         )
                     }
                 }
