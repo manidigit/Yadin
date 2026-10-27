@@ -162,9 +162,9 @@ fun StudyHabitsCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = if (isPeak) colors.primary else colors.primary.copy(alpha = 0.6f),
-                            trackColor = colors.primary.copy(alpha = 0.18f)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = if (isPeak) colors.accentPurple else colors.primary,
+                            trackColor = colors.surfaceVariant.copy(alpha = 0.86f)
                         )
                     }
                 }
