@@ -270,14 +270,33 @@ fun YadinStatTile(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
     val shape = RoundedCornerShape(dimensions.cornerSmall)
+    val isGpt = colors.cardBorderBrush != null
 
     Box(
         modifier = modifier
             .clip(shape)
-            .background(accentColor.copy(alpha = 0.10f))
+            .background(
+                if (isGpt) {
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(
+                            accentColor.copy(alpha = 0.16f),
+                            colors.surface.copy(alpha = 0.94f),
+                            colors.accentPurple.copy(alpha = 0.06f)
+                        )
+                    )
+                } else accentColor.copy(alpha = 0.10f)
+            )
             .border(
-                width = 1.dp,
-                color = accentColor.copy(alpha = 0.35f),
+                width = if (isGpt) 1.2.dp else 1.dp,
+                brush = if (isGpt) {
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(
+                            accentColor.copy(alpha = 0.42f),
+                            colors.outlineVariant.copy(alpha = 0.72f),
+                            colors.accentPurple.copy(alpha = 0.30f)
+                        )
+                    )
+                } else androidx.compose.ui.graphics.SolidColor(accentColor.copy(alpha = 0.35f)),
                 shape = shape
             )
             .then(
@@ -292,11 +311,12 @@ fun YadinStatTile(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Icon(
-                imageVector = icon,
+            GptGlossyIcon(
+                image = icon,
                 contentDescription = null,
-                tint = accentColor,
-                modifier = Modifier.size(18.dp)
+                size = 30.dp,
+                iconSize = 16.dp,
+                tint = accentColor
             )
             Text(
                 text = value,
