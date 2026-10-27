@@ -16,7 +16,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class AppTheme(val id: String, val titleFa: String, val descriptionFa: String) {
-    GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم")
+    GEMINI("gemini", "تم Gemini", "طراحی هوش مصنوعی، سرمه‌ای کیهانی، فیروزه‌ای و کارت‌های شیشه‌ای نرم"),
+    GPT("gpt", "تم GPT", "آبی و بنفش براق، سطوح برجسته و زبان طراحی Glossy 3D")
 }
 
 @Immutable
@@ -100,15 +101,7 @@ val LocalYadinShapes = staticCompositionLocalOf { GeminiTheme.Shapes }
 val LocalYadinIconSizes = staticCompositionLocalOf { GeminiTheme.IconSizes }
 val LocalYadinIcons = staticCompositionLocalOf { YadinIcons }
 
-/**
- * دسترسی مستقیم، تایپ‌شده و سراسری به توکن‌های تم جاری:
- * - `YadinTheme.colors`
- * - `YadinTheme.dimensions`
- * - `YadinTheme.shapes`
- * - `YadinTheme.iconSizes`
- * - `YadinTheme.icons`
- * - `YadinTheme.typography`
- */
+/** Typed, app-wide access to the active theme tokens. */
 object YadinTheme {
     val colors: YadinColors
         @Composable
