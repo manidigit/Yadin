@@ -140,8 +140,19 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.surfaceVariant)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (colors.cardBorderBrush != null) {
+                                    androidx.compose.ui.graphics.Brush.linearGradient(
+                                        listOf(colors.surfaceVariant.copy(alpha = 0.92f), colors.surface, colors.surfaceVariant.copy(alpha = 0.72f))
+                                    )
+                                } else colors.surfaceVariant
+                            )
+                            .border(
+                                1.dp,
+                                if (colors.cardBorderBrush != null) colors.cardBorderBrush else androidx.compose.ui.graphics.SolidColor(colors.outline.copy(alpha = 0.25f)),
+                                RoundedCornerShape(12.dp)
+                            )
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -169,8 +180,19 @@ fun SettingsScreen(
                         onClick = { onToggleDarkMode(!isDark) },
                         modifier = Modifier
                             .size(46.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.surfaceVariant)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (colors.cardBorderBrush != null) {
+                                    androidx.compose.ui.graphics.Brush.linearGradient(
+                                        listOf(colors.surfaceVariant.copy(alpha = 0.92f), colors.surface, colors.surfaceVariant.copy(alpha = 0.72f))
+                                    )
+                                } else colors.surfaceVariant
+                            )
+                            .border(
+                                1.dp,
+                                if (colors.cardBorderBrush != null) colors.cardBorderBrush else androidx.compose.ui.graphics.SolidColor(colors.outline.copy(alpha = 0.25f)),
+                                RoundedCornerShape(12.dp)
+                            )
                     ) {
                         Icon(
                             imageVector = if (isDark) YadinIcons.lightMode else YadinIcons.darkMode,
