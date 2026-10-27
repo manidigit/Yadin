@@ -655,14 +655,34 @@ fun YadinSelectableChip(
         else -> colors.onSurfaceVariant.copy(alpha = 0.8f)
     }
 
+    val isGptTheme = colors.cardBorderBrush != null
+    val chipBackground = if (isGptTheme) {
+        androidx.compose.ui.graphics.Brush.linearGradient(
+            listOf(
+                bgColor,
+                colors.surfaceVariant.copy(alpha = if (isSelected) 0.88f else 0.58f),
+                bgColor
+            )
+        )
+    } else androidx.compose.ui.graphics.SolidColor(bgColor)
+    val chipBorder = if (isGptTheme) {
+        androidx.compose.ui.graphics.Brush.linearGradient(
+            listOf(
+                borderColor,
+                colors.accentPurple.copy(alpha = if (isSelected) 0.62f else 0.30f),
+                borderColor
+            )
+        )
+    } else androidx.compose.ui.graphics.SolidColor(borderColor)
+
     Box(
         modifier = modifier
             .heightIn(min = minHeight)
             .clip(shape)
-            .background(bgColor)
+            .background(chipBackground)
             .border(
-                width = borderWidth,
-                color = borderColor,
+                width = if (isGptTheme && isSelected) borderWidth.coerceAtLeast(1.5.dp) else borderWidth,
+                brush = chipBorder,
                 shape = shape
             )
             .clickable { onClick() }
