@@ -323,7 +323,8 @@ private fun HelpAlgorithmDetailBox(
                             colors.accentPurple.copy(alpha = 0.06f)
                         )
                     )
-                } else accentColor.copy(alpha = 0.07f)
+                } else androidx.compose.ui.graphics.SolidColor(accentColor.copy(alpha = 0.07f)),
+                shape = RoundedCornerShape(dimensions.cornerSmall)
             )
             .border(
                 if (colors.cardBorderBrush != null) 1.2.dp else 1.dp,
