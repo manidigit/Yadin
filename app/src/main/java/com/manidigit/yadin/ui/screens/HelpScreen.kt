@@ -252,6 +252,7 @@ private fun HelpQuickStepRow(
     description: String
 ) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
 
     Row(
         modifier = Modifier
@@ -307,6 +308,7 @@ private fun HelpAlgorithmDetailBox(
     description: String
 ) {
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
 
     Column(
         modifier = Modifier
