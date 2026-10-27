@@ -204,12 +204,12 @@ fun QuizScreen(
                     Box(
                         modifier = Modifier
                             .size(32.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                             .background(bgColor)
                             .border(
                                 width = if (isCurrent) 2.dp else if (isAnswered) 1.dp else 0.dp,
                                 color = if (isCurrent) colors.primary else if (isAnswered) textColor.copy(alpha = 0.5f) else Color.Transparent,
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(dimensions.cornerExtraSmall)
                             )
                             .clickable { onGoToQuestion(idx) },
                         contentAlignment = Alignment.Center
@@ -256,7 +256,7 @@ fun QuizScreen(
                         if (showCategory && q.categoryName != null) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                                     .background(colors.surfaceVariant)
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
@@ -417,7 +417,7 @@ fun QuizScreen(
                 modifier = Modifier
                     .weight(0.35f)
                     .height(46.dp),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(dimensions.cornerExtraSmall),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colors.onSurface,
                     disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.35f)
@@ -451,7 +451,7 @@ fun QuizScreen(
                 modifier = Modifier
                     .weight(0.65f)
                     .height(46.dp),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(dimensions.cornerExtraSmall),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.secondary,
                     contentColor = colors.onSecondary,
@@ -574,7 +574,7 @@ fun QuizScreen(
                 }
             },
             containerColor = colors.surface,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(dimensions.cornerSmall)
         )
     }
 
@@ -611,7 +611,7 @@ fun QuizScreen(
                 }
             },
             containerColor = colors.surface,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(dimensions.cornerSmall)
         )
     }
 }
