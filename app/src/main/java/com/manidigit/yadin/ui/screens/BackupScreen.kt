@@ -954,8 +954,19 @@ private fun SavedBackupItemRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.surfaceVariant.copy(alpha = 0.6f))
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (colors.cardBorderBrush != null) {
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(colors.surfaceVariant.copy(alpha = 0.96f), colors.surface, colors.surfaceVariant.copy(alpha = 0.70f))
+                    )
+                } else colors.surfaceVariant.copy(alpha = 0.6f)
+            )
+            .border(
+                1.dp,
+                if (colors.cardBorderBrush != null) colors.cardBorderBrush else androidx.compose.ui.graphics.SolidColor(colors.outline.copy(alpha = 0.22f)),
+                RoundedCornerShape(12.dp)
+            )
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
