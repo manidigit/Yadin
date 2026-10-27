@@ -284,7 +284,8 @@ fun YadinStatTile(
                             colors.accentPurple.copy(alpha = 0.06f)
                         )
                     )
-                } else accentColor.copy(alpha = 0.10f)
+                } else androidx.compose.ui.graphics.SolidColor(accentColor.copy(alpha = 0.10f)),
+                shape = shape
             )
             .border(
                 width = if (isGpt) 1.2.dp else 1.dp,
