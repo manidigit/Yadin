@@ -535,6 +535,7 @@ private fun Sm2QualityButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val dimensions = LocalYadinDimensions.current
     Button(
         onClick = onClick,
         modifier = modifier.height(52.dp),
@@ -574,6 +575,7 @@ private fun FlashcardFrontFace(
     frontScrollState: ScrollState,
     colors: YadinColors
 ) {
+    val dimensions = LocalYadinDimensions.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -657,6 +659,7 @@ private fun FlashcardBackFace(
     backScrollState: ScrollState,
     colors: YadinColors
 ) {
+    val dimensions = LocalYadinDimensions.current
     Column(
         modifier = Modifier
             .fillMaxSize()
