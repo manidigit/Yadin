@@ -1584,6 +1584,7 @@ private fun LibraryFilterDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val colors = LocalYadinColors.current
+    val dimensions = LocalYadinDimensions.current
 
     val shape = RoundedCornerShape(dimensions.cornerBadge)
     val bgColor = if (isFilterActive) activeAccentColor.copy(alpha = 0.10f) else colors.surface
