@@ -46,6 +46,7 @@ import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.theme.LocalYadinShapes
 import com.manidigit.yadin.ui.theme.YadinColors
 import com.manidigit.yadin.ui.theme.YadinIcons
+import com.manidigit.yadin.ui.theme.GptGlossyIcon
 import com.manidigit.yadin.ui.util.TtsManager
 import com.manidigit.yadin.ui.util.formatDigits
 
@@ -214,21 +215,14 @@ fun YadinSectionHeader(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.weight(1f)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(iconTint.copy(alpha = 0.14f))
-                    .border(0.8.dp, iconTint.copy(alpha = 0.32f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
+            GptGlossyIcon(
+                image = icon,
+                contentDescription = null,
+                modifier = Modifier,
+                size = 38.dp,
+                iconSize = 19.dp,
+                tint = iconTint
+            )
             Column {
                 Text(
                     text = title,
