@@ -149,7 +149,7 @@ fun LibraryScreen(
                         FilledTonalButton(
                             onClick = { showAuditDialog = true },
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(dimensions.cornerBadge)
                         ) {
                             Icon(
                                 imageVector = YadinIcons.smartAudit,
@@ -961,7 +961,7 @@ fun LibraryAuditDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                                 .background(colors.success.copy(alpha = 0.12f))
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -979,7 +979,7 @@ fun LibraryAuditDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                                 .background(colors.success.copy(alpha = 0.12f))
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1007,7 +1007,7 @@ fun LibraryAuditDialog(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                                     .background(colors.surfaceVariant.copy(alpha = 0.5f))
                                     .padding(8.dp)
                             ) {
@@ -1585,7 +1585,7 @@ private fun LibraryFilterDropdown(
     var expanded by remember { mutableStateOf(false) }
     val colors = LocalYadinColors.current
 
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(dimensions.cornerBadge)
     val bgColor = if (isFilterActive) activeAccentColor.copy(alpha = 0.10f) else colors.surface
     val borderColor = if (isFilterActive) activeAccentColor.copy(alpha = 0.55f) else colors.outline.copy(alpha = 0.25f)
     val accentColor = if (isFilterActive) activeAccentColor else colors.onSurfaceVariant
