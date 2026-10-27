@@ -209,12 +209,29 @@ fun DailyReviewChart(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(
-                                        if (isSelected) colors.primary.copy(alpha = 0.18f)
+                                        if (colors.cardBorderBrush != null) {
+                                            androidx.compose.ui.graphics.Brush.linearGradient(
+                                                listOf(
+                                                    colors.primary.copy(alpha = if (isSelected) 0.24f else 0.10f),
+                                                    colors.accentPurple.copy(alpha = if (isSelected) 0.18f else 0.05f),
+                                                    colors.surfaceVariant.copy(alpha = if (isSelected) 0.72f else 0.42f)
+                                                )
+                                            )
+                                        } else if (isSelected) colors.primary.copy(alpha = 0.18f)
                                         else colors.primary.copy(alpha = 0.06f)
                                     )
                                     .border(
                                         width = if (isSelected) 1.5.dp else 1.dp,
-                                        color = if (isSelected) colors.primary else colors.primary.copy(alpha = 0.28f),
+                                        brush = if (colors.cardBorderBrush != null) {
+                                            androidx.compose.ui.graphics.Brush.linearGradient(
+                                                listOf(
+                                                    colors.primary.copy(alpha = if (isSelected) 0.72f else 0.38f),
+                                                    colors.accentPurple.copy(alpha = if (isSelected) 0.58f else 0.24f)
+                                                )
+                                            )
+                                        } else androidx.compose.ui.graphics.SolidColor(
+                                            if (isSelected) colors.primary else colors.primary.copy(alpha = 0.28f)
+                                        ),
                                         shape = RoundedCornerShape(8.dp)
                                     )
                                     .clickable {
