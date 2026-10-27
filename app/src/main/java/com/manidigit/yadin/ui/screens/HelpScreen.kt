@@ -311,9 +311,27 @@ private fun HelpAlgorithmDetailBox(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(accentColor.copy(alpha = 0.07f))
-            .border(1.2.dp, accentColor.copy(alpha = 0.32f), RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                if (colors.cardBorderBrush != null) {
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(
+                            accentColor.copy(alpha = 0.15f),
+                            colors.surface.copy(alpha = 0.96f),
+                            colors.accentPurple.copy(alpha = 0.06f)
+                        )
+                    )
+                } else accentColor.copy(alpha = 0.07f)
+            )
+            .border(
+                if (colors.cardBorderBrush != null) 1.2.dp else 1.dp,
+                if (colors.cardBorderBrush != null) {
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(accentColor.copy(alpha = 0.4f), colors.outlineVariant, colors.accentPurple.copy(alpha = 0.28f))
+                    )
+                } else androidx.compose.ui.graphics.SolidColor(accentColor.copy(alpha = 0.32f)),
+                RoundedCornerShape(16.dp)
+            )
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
