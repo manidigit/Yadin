@@ -217,8 +217,11 @@ fun DailyReviewChart(
                                                     colors.surfaceVariant.copy(alpha = if (isSelected) 0.72f else 0.42f)
                                                 )
                                             )
-                                        } else if (isSelected) colors.primary.copy(alpha = 0.18f)
-                                        else colors.primary.copy(alpha = 0.06f)
+                                        } else androidx.compose.ui.graphics.SolidColor(
+                                            if (isSelected) colors.primary.copy(alpha = 0.18f)
+                                            else colors.primary.copy(alpha = 0.06f)
+                                        ),
+                                        shape = RoundedCornerShape(8.dp)
                                     )
                                     .border(
                                         width = if (isSelected) 1.5.dp else 1.dp,
