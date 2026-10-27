@@ -549,7 +549,7 @@ private fun LeitnerSelectableStageBox(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val shape = RoundedCornerShape(10.dp)
+    val shape = RoundedCornerShape(dimensions.cornerExtraSmall)
 
     val containerBg = if (isSelected) {
         accentColor.copy(alpha = 0.28f)
@@ -655,7 +655,7 @@ private fun CompactHorizontalSourceBox(
     onClick: () -> Unit
 ) {
     val colors = LocalYadinColors.current
-    val shape = RoundedCornerShape(10.dp)
+    val shape = RoundedCornerShape(dimensions.cornerExtraSmall)
     val containerBg = if (isSelected) accentColor.copy(alpha = 0.28f) else colors.surfaceVariant.copy(alpha = 0.22f)
     val borderColor = if (isSelected) accentColor else accentColor.copy(alpha = 0.16f)
     val iconTint = if (isSelected) accentColor else accentColor.copy(alpha = 0.42f)
