@@ -43,8 +43,8 @@ fun GptGlossyIcon(
             val picture: Picture? = svg?.let {
                 runCatching {
                     it.renderToPicture(
-                        size.width.toInt().coerceAtLeast(1),
-                        size.height.toInt().coerceAtLeast(1)
+                        this.size.width.toInt().coerceAtLeast(1),
+                        this.size.height.toInt().coerceAtLeast(1)
                     )
                 }.getOrNull()
             }
