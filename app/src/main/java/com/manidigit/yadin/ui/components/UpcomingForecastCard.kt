@@ -1,6 +1,7 @@
 package com.manidigit.yadin.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,8 +100,21 @@ private fun ForecastColumn(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.surfaceVariant.copy(alpha = 0.5f))
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                androidx.compose.ui.graphics.Brush.linearGradient(
+                    listOf(
+                        accentColor.copy(alpha = 0.13f),
+                        colors.surfaceVariant.copy(alpha = 0.72f),
+                        colors.surface.copy(alpha = 0.96f)
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                color = accentColor.copy(alpha = 0.24f),
+                shape = RoundedCornerShape(16.dp)
+            )
             .padding(vertical = 12.dp, horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {
