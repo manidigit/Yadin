@@ -195,8 +195,9 @@ fun ExposedCategoryDropdown(
     }
 
     val shape = RoundedCornerShape(12.dp)
-    val bgColor = if (isFilterActive) colors.primary.copy(alpha = 0.10f) else colors.surface
-    val borderColor = if (isFilterActive) colors.primary.copy(alpha = 0.55f) else colors.outline.copy(alpha = 0.25f)
+    val isGptTheme = colors.cardBorderBrush != null
+    val bgColor = if (isFilterActive) colors.primary.copy(alpha = 0.12f) else colors.surface
+    val borderColor = if (isFilterActive) colors.primary.copy(alpha = 0.55f) else colors.outline.copy(alpha = if (isGptTheme) 0.42f else 0.25f)
     val accentColor = if (isFilterActive) colors.primary else colors.onSurfaceVariant
 
     Box(modifier = modifier) {
@@ -205,8 +206,18 @@ fun ExposedCategoryDropdown(
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
                 .clip(shape)
-                .background(bgColor)
-                .border(if (isFilterActive) 1.2.dp else 1.dp, borderColor, shape)
+                .background(
+                    if (isGptTheme) androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(bgColor, colors.surfaceVariant.copy(alpha = 0.72f), bgColor)
+                    ) else androidx.compose.ui.graphics.SolidColor(bgColor)
+                )
+                .border(
+                    if (isFilterActive || isGptTheme) 1.2.dp else 1.dp,
+                    if (isGptTheme) androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(borderColor, colors.accentPurple.copy(alpha = 0.28f), borderColor)
+                    ) else androidx.compose.ui.graphics.SolidColor(borderColor),
+                    shape
+                )
                 .clickable { expanded = true }
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -453,8 +464,9 @@ fun ExposedEntryTypeDropdown(
     val isFilterActive = selectedEntryType != null
 
     val shape = RoundedCornerShape(12.dp)
-    val bgColor = if (isFilterActive) colors.primary.copy(alpha = 0.10f) else colors.surface
-    val borderColor = if (isFilterActive) colors.primary.copy(alpha = 0.55f) else colors.outline.copy(alpha = 0.25f)
+    val isGptTheme = colors.cardBorderBrush != null
+    val bgColor = if (isFilterActive) colors.primary.copy(alpha = 0.12f) else colors.surface
+    val borderColor = if (isFilterActive) colors.primary.copy(alpha = 0.55f) else colors.outline.copy(alpha = if (isGptTheme) 0.42f else 0.25f)
     val accentColor = if (isFilterActive) colors.primary else colors.onSurfaceVariant
 
     Box(modifier = modifier) {
@@ -463,8 +475,18 @@ fun ExposedEntryTypeDropdown(
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
                 .clip(shape)
-                .background(bgColor)
-                .border(if (isFilterActive) 1.2.dp else 1.dp, borderColor, shape)
+                .background(
+                    if (isGptTheme) androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(bgColor, colors.surfaceVariant.copy(alpha = 0.72f), bgColor)
+                    ) else androidx.compose.ui.graphics.SolidColor(bgColor)
+                )
+                .border(
+                    if (isFilterActive || isGptTheme) 1.2.dp else 1.dp,
+                    if (isGptTheme) androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(borderColor, colors.accentPurple.copy(alpha = 0.28f), borderColor)
+                    ) else androidx.compose.ui.graphics.SolidColor(borderColor),
+                    shape
+                )
                 .clickable { expanded = true }
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
