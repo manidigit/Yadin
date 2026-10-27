@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -140,8 +141,21 @@ fun RetentionGaugeCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(statusColor.copy(alpha = 0.16f))
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                androidx.compose.ui.graphics.Brush.linearGradient(
+                                    listOf(
+                                        statusColor.copy(alpha = 0.22f),
+                                        statusColor.copy(alpha = 0.08f),
+                                        colors.surfaceVariant.copy(alpha = 0.72f)
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = statusColor.copy(alpha = 0.28f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Row(
