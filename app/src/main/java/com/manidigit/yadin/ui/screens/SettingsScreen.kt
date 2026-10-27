@@ -52,6 +52,7 @@ import com.manidigit.yadin.ui.components.getDifficultyIcon
 import com.manidigit.yadin.ui.components.getReviewModeIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
+import com.manidigit.yadin.ui.theme.AppTheme
 import com.manidigit.yadin.ui.theme.YadinIcons
 import com.manidigit.yadin.ui.util.formatDigits
 
@@ -153,7 +154,8 @@ fun SettingsScreen(
                                 fontSize = 10.sp
                             )
                             Text(
-                                text = stringResource(R.string.settings_theme_gemini),
+                                text = AppTheme.entries.firstOrNull { it.id == currentThemeId }?.titleFa
+                                    ?: AppTheme.GPT.titleFa,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface
@@ -178,6 +180,30 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AppTheme.entries.forEach { theme ->
+                        YadinSelectableChip(
+                            text = theme.titleFa,
+                            isSelected = currentThemeId == theme.id,
+                            accentColor = if (theme == AppTheme.GPT) colors.accentPurple else colors.primary,
+                            preserveAccentWhenUnselected = true,
+                            fontSize = 12.sp,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSelectTheme(theme.id) }
+                        )
+                    }
+                }
+
+                Text(
+                    text = AppTheme.entries.firstOrNull { it.id == currentThemeId }?.descriptionFa
+                        ?: AppTheme.GPT.descriptionFa,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
             }
         }
 
