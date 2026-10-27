@@ -256,9 +256,9 @@ private fun HelpQuickStepRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dimensions.cornerBadge))
             .background(accentColor.copy(alpha = 0.06f))
-            .border(1.dp, accentColor.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+            .border(1.dp, accentColor.copy(alpha = 0.22f), RoundedCornerShape(dimensions.cornerBadge))
             .padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top
@@ -311,7 +311,7 @@ private fun HelpAlgorithmDetailBox(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(dimensions.cornerSmall))
             .background(
                 if (colors.cardBorderBrush != null) {
                     androidx.compose.ui.graphics.Brush.linearGradient(
@@ -330,7 +330,7 @@ private fun HelpAlgorithmDetailBox(
                         listOf(accentColor.copy(alpha = 0.4f), colors.outlineVariant, colors.accentPurple.copy(alpha = 0.28f))
                     )
                 } else androidx.compose.ui.graphics.SolidColor(accentColor.copy(alpha = 0.32f)),
-                RoundedCornerShape(16.dp)
+                RoundedCornerShape(dimensions.cornerSmall)
             )
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -369,9 +369,9 @@ private fun HelpAlgorithmDetailBox(
 
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                     .background(accentColor.copy(alpha = 0.16f))
-                    .border(1.dp, accentColor.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                    .border(1.dp, accentColor.copy(alpha = 0.35f), RoundedCornerShape(dimensions.cornerExtraSmall))
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
