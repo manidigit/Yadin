@@ -139,7 +139,7 @@ fun FlashcardScreen(
                 Button(
                     onClick = onExit,
                     colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(dimensions.cornerBadge),
                     modifier = Modifier.height(44.dp)
                 ) {
                     Text(stringResource(R.string.summary_back_home), fontWeight = FontWeight.Bold)
@@ -400,7 +400,7 @@ fun FlashcardScreen(
                         onClick = onFlip,
                         modifier = Modifier
                             .size(44.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                             .background(colors.surfaceVariant)
                     ) {
                         Icon(
@@ -422,7 +422,7 @@ fun FlashcardScreen(
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(dimensions.cornerExtraSmall),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colors.error.copy(alpha = 0.15f),
                             contentColor = colors.error
@@ -437,7 +437,7 @@ fun FlashcardScreen(
                         onClick = onFlip,
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                             .background(colors.surfaceVariant)
                     ) {
                         Icon(
@@ -453,7 +453,7 @@ fun FlashcardScreen(
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(dimensions.cornerExtraSmall),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colors.success,
                             contentColor = colors.onSuccess
@@ -471,7 +471,7 @@ fun FlashcardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(dimensions.cornerExtraSmall),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.primary,
                     contentColor = colors.onPrimary
@@ -521,7 +521,7 @@ fun FlashcardScreen(
                 }
             },
             containerColor = colors.surface,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(dimensions.cornerSmall)
         )
     }
 }
@@ -538,7 +538,7 @@ private fun Sm2QualityButton(
     Button(
         onClick = onClick,
         modifier = modifier.height(52.dp),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(dimensions.cornerExtraSmall),
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
@@ -589,7 +589,7 @@ private fun FlashcardFrontFace(
             if (showCategory && card.categoryName != null) {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                         .background(colors.surfaceVariant)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
@@ -705,7 +705,7 @@ private fun FlashcardBackFace(
                     ) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(dimensions.cornerExtraSmall))
                                 .background(colors.surfaceVariant)
                                 .padding(horizontal = 14.dp, vertical = 6.dp)
                         ) {
