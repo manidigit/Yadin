@@ -146,7 +146,8 @@ fun SettingsScreen(
                                     androidx.compose.ui.graphics.Brush.linearGradient(
                                         listOf(colors.surfaceVariant.copy(alpha = 0.92f), colors.surface, colors.surfaceVariant.copy(alpha = 0.72f))
                                     )
-                                } else colors.surfaceVariant
+                                } else androidx.compose.ui.graphics.SolidColor(colors.surfaceVariant),
+                                shape = RoundedCornerShape(12.dp)
                             )
                             .border(
                                 1.dp,
@@ -186,7 +187,8 @@ fun SettingsScreen(
                                     androidx.compose.ui.graphics.Brush.linearGradient(
                                         listOf(colors.surfaceVariant.copy(alpha = 0.92f), colors.surface, colors.surfaceVariant.copy(alpha = 0.72f))
                                     )
-                                } else colors.surfaceVariant
+                                } else androidx.compose.ui.graphics.SolidColor(colors.surfaceVariant),
+                                shape = RoundedCornerShape(12.dp)
                             )
                             .border(
                                 1.dp,
