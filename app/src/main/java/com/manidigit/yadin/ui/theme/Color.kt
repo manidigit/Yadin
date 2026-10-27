@@ -3,7 +3,7 @@ package com.manidigit.yadin.ui.theme
 import androidx.compose.ui.graphics.Color
 
 object YadinPalette {
-    // Gemini Theme Colors
+    // Existing Gemini palette (preserved)
     val GeminiBlue = Color(0xFF1A73E8)
     val GeminiBlueLight = Color(0xFF8AB4F8)
     val GeminiSky = Color(0xFF00B4D8)
@@ -19,6 +19,23 @@ object YadinPalette {
     val GeminiOutlineLight = Color(0xFFCBD5E1)
     val GeminiOutlineDark = Color(0xFF2E3E5B)
 
+    // GPT Glossy 3D theme palette
+    val GptBlue = Color(0xFF315BFF)
+    val GptBlueDeep = Color(0xFF2336C9)
+    val GptCyan = Color(0xFF27C7F5)
+    val GptPurple = Color(0xFF8752F5)
+    val GptLilac = Color(0xFFECE8FF)
+    val GptBgLight = Color(0xFFF5F6FF)
+    val GptBgDark = Color(0xFF111329)
+    val GptSurfaceLight = Color(0xFFFFFFFF)
+    val GptSurfaceDark = Color(0xFF1B1D3A)
+    val GptSurfaceVarLight = Color(0xFFEAEFFF)
+    val GptSurfaceVarDark = Color(0xFF292B50)
+    val GptOutlineLight = Color(0xFFD8DDF8)
+    val GptOutlineDark = Color(0xFF41456E)
+    val GptPink = Color(0xFFFF5EAA)
+    val GptGold = Color(0xFFFFBD38)
+
     // Semantic Status & Difficulty Spectrum Colors
     val SuccessGreen = Color(0xFF138A5B)
     val SuccessGreenLight = Color(0xFF52D49A)
@@ -31,7 +48,7 @@ object YadinPalette {
     val InfoBlue = Color(0xFF3B82F6)
     val InfoBlueLight = Color(0xFF7C8CFF)
 
-    // Tier Badges Colors (Clean Semantic Tokens)
+    // Tier Badges Colors
     val TierBronze = Color(0xFFCD7F32)
     val TierSilver = Color(0xFF9E9E9E)
     val TierGold = Color(0xFFFFB300)
