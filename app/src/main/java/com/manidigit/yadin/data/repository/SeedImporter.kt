@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7835_v1.70.0"
+        const val CURRENT_SEED_VERSION = "7875_v1.71.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -263,13 +263,6 @@ class SeedImporter(
                                             }
                                             reader.endObject()
                                             if (id.isNotEmpty() && conceptId.isNotEmpty()) {
-                                                if (lang != "fa") {
-                                                    val normalizedText = TextUtilities.normalizeSpanishPunctuation(text).first
-                                                    if (normalizedText != text) {
-                                                        text = normalizedText
-                                                        canonical = TextUtilities.toCanonicalKey(text)
-                                                    }
-                                                }
                                                 if (canonical.isEmpty()) {
                                                     canonical = TextUtilities.toCanonicalKey(text)
                                                 }
@@ -418,8 +411,6 @@ class SeedImporter(
                 emptyMap()
             }
 
-            val seedSpanishByConcept = contents.filter { it.languageCode != "fa" }
-                .associate { it.conceptId to it.text }
             val legacyNoteRegex = Regex("""^[\d۰-۹\s.،؛مترادفابعادزیادماشینحجمموتور]+$""")
             val mergedSeedContents = contents.map { seedContent ->
                 if (seedContent.languageCode != "fa") {
@@ -435,74 +426,9 @@ class SeedImporter(
                         seedContent
                     }
                 } else {
-                    val esText = seedSpanishByConcept[seedContent.conceptId]
-                    val normFa = TextUtilities.normalizePersianTranslation(seedContent.text, esText).first
-                    if (normFa != seedContent.text && normFa.isNotBlank()) {
-                        seedContent.copy(
-                            text = normFa,
-                            canonicalKey = TextUtilities.toCanonicalKey(normFa)
-                        )
-                    } else {
-                        seedContent
-                    }
+                    seedContent
                 }
             }.toMutableList()
-
-            // پاک‌سازی ترجمه‌های فارسی تکراری در واژگان شخصی کاربر (خارج از واژگان پایه) بدون حذف یا تغییر رکوردهای concepts
-            val seedConceptIdSet = concepts.map { it.id }.toSet()
-            val userConceptIdsToRefreshContents = mutableListOf<String>()
-            val cleanedUserContents = mutableListOf<ContentEntity>()
-
-            for ((cid, existingList) in existingContentsByConcept) {
-                if (cid in seedConceptIdSet) continue
-                val sourceRows = existingList.filter { it.languageCode != "fa" }
-                val faRows = existingList.filter { it.languageCode == "fa" }.sortedBy { it.translationIndex }
-
-                var sourceModified = false
-                val normalizedSourceRows = sourceRows.map { row ->
-                    val normalizedEs = TextUtilities.normalizeSpanishPunctuation(row.text).first
-                    if (normalizedEs != row.text) {
-                        sourceModified = true
-                        row.copy(
-                            text = normalizedEs,
-                            canonicalKey = TextUtilities.toCanonicalKey(normalizedEs)
-                        )
-                    } else {
-                        row
-                    }
-                }
-
-                val esTextForConcept = normalizedSourceRows.firstOrNull()?.text
-                val originalFaTexts = faRows.map { it.text }
-                val normalizedFaTexts = originalFaTexts.map { fa ->
-                    TextUtilities.normalizePersianTranslation(fa, esTextForConcept).first.ifBlank { fa }
-                }
-                val dedupedFaTexts = if (normalizedFaTexts.size > 1) {
-                    TextUtilities.deduplicatePersianTranslations(normalizedFaTexts).ifEmpty { normalizedFaTexts }
-                } else {
-                    normalizedFaTexts
-                }
-                val faModified = dedupedFaTexts.isNotEmpty() && dedupedFaTexts != originalFaTexts
-
-                if (sourceModified || faModified) {
-                    userConceptIdsToRefreshContents.add(cid)
-                    cleanedUserContents.addAll(normalizedSourceRows)
-                    dedupedFaTexts.forEachIndexed { idx, cleanFa ->
-                        val preservedId = faRows.getOrNull(idx)?.id ?: UUID.randomUUID().toString()
-                        cleanedUserContents.add(
-                            ContentEntity(
-                                id = preservedId,
-                                conceptId = cid,
-                                languageCode = "fa",
-                                text = cleanFa,
-                                canonicalKey = TextUtilities.toCanonicalKey(cleanFa),
-                                note = null,
-                                translationIndex = idx
-                            )
-                        )
-                    }
-                }
-            }
 
             val primaryConceptCategories = concepts.mapNotNull { concept ->
                 concept.categoryId?.let { catId ->
@@ -544,12 +470,6 @@ class SeedImporter(
                         conceptDao.deleteContentsForConcepts(chunkIds)
                         conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
                     }
-
-                    if (userConceptIdsToRefreshContents.isNotEmpty()) {
-                        userConceptIdsToRefreshContents.chunked(500).forEach { chunkIds ->
-                            conceptDao.deleteContentsForConcepts(chunkIds)
-                        }
-                    }
                 }
 
                 onProgress(0.65f, context.getString(R.string.seed_categorizing_topics))
@@ -562,12 +482,6 @@ class SeedImporter(
 
                 mergedSeedContents.chunked(1000).forEach { chunk ->
                     conceptDao.insertContents(chunk)
-                }
-
-                if (cleanedUserContents.isNotEmpty()) {
-                    cleanedUserContents.chunked(1000).forEach { chunk ->
-                        conceptDao.insertContents(chunk)
-                    }
                 }
 
                 onProgress(0.85f, context.getString(R.string.seed_categorizing_topics))
