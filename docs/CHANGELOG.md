@@ -2,6 +2,28 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۷۸.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
+### پالایش جامع سطح «آسان» و انتقال ۱,۵۵۶ مفهوم (اصطلاحات فنی خودرو و آیین‌نامه رانندگی DGT، کلمات کم‌کاربرد گیاهی و تخصصی مانند `canónigos`، تله‌های آوایی بین‌المللی مانند `trayectoria` و `fábrica`، و دوستان دروغین با فارسی مانند `furgón`، `saco` و `bomba`) به سطح «سخت» (`HARD`) در هر دو جهت (`NORMAL` و `REVERSE`) (کد نسخه: ۹۱)
+- **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**
+  - **شناسایی و انتقال متقارن ۱,۵۵۶ مفهوم (معادل ۳,۱۱۲ رکورد `difficultyStates` در هر دو جهت `NORMAL` و `REVERSE`) به سطح «سخت» (`HARD`) در `docs/yadin-backup.json` و `app/src/main/assets/seed/vocabulary_seed.json`:**
+    - **۱,۱۸۱ مفهوم (۲,۳۶۲ رکورد)** از سطح `EASY` به `HARD`، **۳۷۴ مفهوم (۷۴۸ رکورد)** از سطح `MEDIUM` به `HARD` و **۱ مفهوم (`canónigos` / سنبل‌الطیب خوراکی - ۲ رکورد)** از سطح `VERY_HARD` به `HARD` منتقل شدند (شامل **۴۵۰ تک‌واژه `WORD`**، **۸۷۹ عبارت `PHRASE`** و **۲۲۷ جمله `SENTENCE`**؛ بدون هیچ‌گونه تغییر در متون، ترجمه‌ها، یادداشت‌ها یا دسته‌بندی‌ها و با حفظ ۱۰۰٪ تقارن بین دو جهت `NORMAL` و `REVERSE`):
+      1. **دوستان دروغین با فارسی و وام‌واژه‌های فرانسوی با معنای متفاوت در اسپانیایی (Persian-Spanish False Friends):** شامل `Furgón` و `Furgoneta` (ون باری / وانت مسقف در اسپانیایی، در حالی که در فارسی «فرقون» معنای چرخ‌دستی بنایی می‌دهد)، `Saco` (کیسه/گونی/کت ≠ ساک دستی)، `Bomba` (پمپ/موتور پمپ/بمب)، `Pila` (باتری قلمی/سینک ظرف‌شویی/توده)، `Goma` (پاک‌کن/لاستیک/چسب)، `Mono` (میمون/لباس کار یکسره/سرهمی)، `Pasta` (پاستا/پول نقد عامیانه/خمیر)، `Compresa` (نوار بهداشتی/کمپرس)، `Persiana` (کرکره پنجره)، `Cómoda` (دراور/راحت)، `Lima` (سوهان ناخن/لیمو ترش)، `Mango` (دسته ابزار/انبه) و `Pastilla` (قرص دارویی/قالب صابون/لنت ترمز).
+      2. **تله‌های آوایی بین‌المللی و انگلیسی و عبارات شامل آن‌ها (International & English Lookalikes):** شامل `Trayectoria` (مسیر حرکت/خط سیر خودرو، در حالی که از نظر آوایی شبیه «تراکتور» است)، `Fábrica` (کارخانه ≠ پارچه/فابریک)، `Conductor` / `Conducir`، `Carrera`، `Estación`، `Dirección`، `Colegio`، `Librería`، `Lectura`، `Realizar`، `Actual`، `Sensible`، `Compromiso`، `Argumento`، `Discutir`، `Educado`، `Pretender`، `Recordar`، `Soportar`، `Atender`، `Suceso`، `Casualidad`، `Receta`، `Saldo`، `Paro` و `Borrar` به همراه عبارات و جملات شامل آن‌ها.
+      3. **کلمات کم‌کاربرد گیاهی، خوراکی، پزشکی و هواشناسی:** شامل `canónigos` (سنبل‌الطیب خوراکی / کاهوی کوهی)، `cúrcuma` (زردچوبه)، `azafrán` (زعفران)، `berenjena` (بادمجان)، `batata` (سیب‌زمینی شیرین)، `semillas de lino` (تخم کتان)، `nueces de Brasil` (آجیل برزیلی)، اصطلاحات تخصصی آناتومی و پزشکی (`bronquio`، `deltoides`، `lóbulo`، `neurona`، `cesárea`، `cirrosis`، `faringitis`، `gastritis`، `antihistamínico`، `liposucción`، `torniquete`) و اصطلاحات تخصصی هواشناسی (`cúmulonimbos`، `nimboestratos`، `altocúmulos`، `presión atmosférica`، `sensación térmica`).
+      4. **بیش از ۷۵۰ اصطلاح فنی خودرو و آیین‌نامه راهنمایی و رانندگی (DGT):** شامل `Inmovilización` (توقیف خودرو)، `Glorieta` (میدان/فلکه)، `Calzada` (سوارهرو)، `Arcén` (شانه راه)، `Alcoholemia` (تست الکل خون)، `Tacógrafo`، `Catalizador`، `Carburador`، `Diferencial`، `Salpicadero` (داشبورد)، `Reposacabezas` (پشت‌سری صندلی)، `Aminorar la marcha` (کاهش سرعت)، `Fase de aproximación` (مرحله نزدیک شدن به تقاطع) و کلیه عبارات آیین‌نامه رانندگی؛ با حفظ کلمات پایه و روزمره حمل‌ونقل (`taxi`، `autobús`، `tren`، `metro`، `avión`، `bicicleta`، `aeropuerto`، `calle`) در سطح `EASY`.
+    - **توزیع متقارن نهایی در هر دو جهت `NORMAL` و `REVERSE` (۷,۸۷۵ مفهوم / ۱۵,۷۵۰ رکورد `difficultyStates`):**
+      - `EASY`: **۱,۱۷۲ رکورد (۷.۴۴٪)** — جهت `NORMAL`: **۵۸۶** | جهت `REVERSE`: **۵۸۶**
+      - `MEDIUM`: **۵,۸۴۶ رکورد (۳۷.۱۲٪)** — جهت `NORMAL`: **۲,۹۲۳** | جهت `REVERSE`: **۲,۹۲۳**
+      - `HARD`: **۷,۷۵۸ رکورد (۴۹.۲۶٪)** — جهت `NORMAL`: **۳,۸۷۹** | جهت `REVERSE`: **۳,۸۷۹**
+      - `VERY_HARD`: **۹۷۴ رکورد (۶.۱۸٪)** — جهت `NORMAL`: **۴۸۷** | جهت `REVERSE`: **۴۸۷**
+- **اصلاحات و همگام‌سازی (`SeedImporter.kt`):**
+  - ارتقای شناسه نسخه بذر به `7875_v1.78.0`.
+  - بهبود منطق همگام‌سازی وضعیت دشواری (`isPracticedSeedDifficultyUpgrade`) به‌گونه‌ای که ارتقای سطح دشواری بذر به `HARD` حتی برای کارت‌هایی که قبلاً توسط کاربر تمرین شده‌اند (مانند کارت‌های موجود در مرحله روزانه یا هفتگی) نیز به‌صورت خودکار اعمال شود، در حالی که مرحله یادگیری لایتنر (`stage`)، تاریخ مرور بعدی (`nextReviewDay`)، پارامترهای `SM-2`/`FSRS` و یادداشت‌های شخصی کاربر کاملاً دست‌نخورده و محفوظ باقی می‌مانند.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D68` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md`، `docs/RELEASE_ROUTINE_CHECKLIST.md` و `docs/yadin-backup.json` با نسخه `1.78.0` (کد نسخه: `91`).
+
+---
+
 ### [نسخه ۱.۷۷.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
 ### انتقال کلمات مشابه ظاهری و آوایی با معنای متفاوت (Paronyms & Minimal Pairs مانند `sentir`، `sentar`، `cantar`، `contar`، `hombre`/`hambre`/`hombro` و `caro`/`carro`) و عبارات و صرف‌های مشترک آن‌ها به سطح «سخت» (`HARD`) در هر دو جهت (`NORMAL` و `REVERSE`) (کد نسخه: ۹۰)
 - **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**
