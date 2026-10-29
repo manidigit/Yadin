@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7875_v1.77.0"
+        const val CURRENT_SEED_VERSION = "7875_v1.78.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -532,20 +532,27 @@ class SeedImporter(
                                     current = VocabularyDifficulty.EASY
                                 )
                             )
-                        } else if (seedDiff != null && key !in practicedLearningKeys &&
-                            (existingDiff.current != seedDiff.current ||
-                                existingDiff.hasReachedVeryHard != seedDiff.hasReachedVeryHard ||
-                                existingDiff.consecutiveCorrect != 0 ||
-                                existingDiff.consecutiveWrong != 0)
-                        ) {
-                            updatedSeedDiffBatch.add(
-                                existingDiff.copy(
-                                    current = seedDiff.current,
-                                    consecutiveCorrect = 0,
-                                    consecutiveWrong = 0,
-                                    hasReachedVeryHard = seedDiff.hasReachedVeryHard || seedDiff.current == VocabularyDifficulty.VERY_HARD
-                                )
+                        } else if (seedDiff != null) {
+                            val isUnpracticedUpdate = key !in practicedLearningKeys && (
+                                existingDiff.current != seedDiff.current ||
+                                    existingDiff.hasReachedVeryHard != seedDiff.hasReachedVeryHard ||
+                                    existingDiff.consecutiveCorrect != 0 ||
+                                    existingDiff.consecutiveWrong != 0
                             )
+                            val isPracticedSeedDifficultyUpgrade = key in practicedLearningKeys && (
+                                seedDiff.current.ordinal > existingDiff.current.ordinal ||
+                                    (seedDiff.current == VocabularyDifficulty.HARD && existingDiff.current != VocabularyDifficulty.HARD)
+                            )
+                            if (isUnpracticedUpdate || isPracticedSeedDifficultyUpgrade) {
+                                updatedSeedDiffBatch.add(
+                                    existingDiff.copy(
+                                        current = seedDiff.current,
+                                        consecutiveCorrect = 0,
+                                        consecutiveWrong = 0,
+                                        hasReachedVeryHard = existingDiff.hasReachedVeryHard || seedDiff.hasReachedVeryHard || seedDiff.current == VocabularyDifficulty.VERY_HARD
+                                    )
+                                )
+                            }
                         }
                     }
                 }
