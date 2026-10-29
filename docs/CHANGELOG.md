@@ -2,6 +2,118 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۷۷.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
+### انتقال کلمات مشابه ظاهری و آوایی با معنای متفاوت (Paronyms & Minimal Pairs مانند `sentir`، `sentar`، `cantar`، `contar`، `hombre`/`hambre`/`hombro` و `caro`/`carro`) و عبارات و صرف‌های مشترک آن‌ها به سطح «سخت» (`HARD`) در هر دو جهت (`NORMAL` و `REVERSE`) (کد نسخه: ۹۰)
+- **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**
+  - **شناسایی و ارتقای ۲۲۸ مفهوم دارای شباهت ظاهری، املایی یا تلفظی با معنای متفاوت (معادل ۴۵۶ رکورد `difficultyStates` در هر دو جهت `NORMAL` و `REVERSE`) از سطوح آسان و متوسط منحصراً به سطح «سخت» (`HARD`) در `docs/yadin-backup.json` و `app/src/main/assets/seed/vocabulary_seed.json`:**
+    - **۵۲ مفهوم (۱۰۴ رکورد)** از سطح `EASY` به `HARD` و **۱۷۶ مفهوم (۳۵۲ رکورد)** از سطح `MEDIUM` به `HARD` ارتقا یافتند (شامل **۳۸ تک‌واژه `WORD`**، **۱۱۳ عبارت `PHRASE`** و **۷۷ جمله کوتاه `SENTENCE` تا حداکثر ۶ کلمه**؛ بدون هیچ‌گونه تغییر در متون، ترجمه‌ها، یادداشت‌ها یا دسته‌بندی‌ها و با حفظ ۱۰۰٪ تقارن بین دو جهت `NORMAL` و `REVERSE`):
+      1. **افعال هم‌ریشه، هم‌آوا و دارای صرف‌های مشترک یا نزدیک:** شامل `sentir` / `sentirse` / `sentar` / `sentarse` و صرف‌های مشترک آن‌ها (`Sentir`، `sentir los movimientos`، `sentir el rocío`، `sentarse en la orilla`، `¡Me siento mal!`، `No me siento bien`، `me siento estancado`، `yo siento`، `me siento sola`، `Me siento solo.`، `Me siento bien.`، `Me siento genial.`، `usted sienta`، `sentirse querido`)، `cantar` / `contar` (`Contar`، `contar con los dedos`، `Ser coser y cantar.`)، `creer` / `crear` (`nosotros creemos`، `creo que te estás enamorando`)، `llamar` / `llevar` / `llegar` / `llorar` / `llenar` (`llegar`، `llevar el apellido`)، `pensar` / `pesar` / `pisar` / `posar` (`pisar sobre los talones`، `piensa pensamientos positivos`، `usted piensa`)، `esperar` / `respirar` (`Me cuesta respirar.`، `No puedo respirar bien`)، `dormir` / `morir` (`No puedo dormir.`، `No duermo bien.`، `dormir al bebé`، `usted duerme`، `morirse de hambre`)، `comprar` / `comparar` (`tengo que comprar tampones`)، `volver` / `devolver` / `envolver` / `resolver` (`resolver conflictos`)، `parecer` / `perecer` / `aparecer` (`parecerse a su madre`)، `beber` / `deber` (`beber`)، `perder` / `pedir` / `medir` (`perder sangre`)، `saber` / `caber`، `secar` / `sacar`، `pegar` / `pagar` / `apagar`، `gastar` / `gustar`، `cubrir` / `abrir` و `salir` / `subir` (`subir`، `subir al telesilla`، `salir a comer`، `salir juntos`، `salir mal`).
+      2. **واژگان با اختلاف یک یا دو حرف (Minimal Orthographic Pairs):** شامل `hombre` / `hambre` / `hombro`، `mejor` / `mujer`، `pollo` / `polo`، `cerca` / `cerdo` (`Cerdo`)، `pecho` / `techo` (`Me duele el pecho`)، `queso` / `beso` / `peso`، `pelo` / `palo` (`Pelo`، `Pelo lacio`، `Pelo rizado`)، `oveja` / `abeja` / `oreja`، `caballo` / `cabello` (`Cabello`)، `plato` / `plata`، `pato` / `rato`، `vaso` / `paso`، `misa` / `masa` (`Masa muscular`)، `sopa` / `ropa` / `copa`، `lata` / `rata` / `pata`، `piel` / `miel`، `cielo` / `celo` / `hielo`، `viejo` / `viaje`، `lento` / `lente`، `frente` / `fuente` / `puente` (`Frente`) و `cuarto` / `cuatro`.
+      3. **واژگان با تلفظ، تکیه یا کشش آوایی مشابه:** شامل `caro` / `carro`، `pero` / `perro`، `sonar` / `soñar`، `coser` / `cocer` (`cocer a presión`، `Ser coser y cantar.`)، `cazar` / `casar` / `caza` / `caso` (`cambiar el apellido al casarse`، `obligar a casarse`) و `sábana` / `sabana`.
+    - **توزیع متقارن نهایی در هر دو جهت `NORMAL` و `REVERSE` (۷,۸۷۵ مفهوم / ۱۵,۷۵۰ رکورد `difficultyStates`):**
+      - `EASY`: **۳,۵۳۴ رکورد (۲۲.۴۴٪)** — جهت `NORMAL`: **۱,۷۶۷** | جهت `REVERSE`: **۱,۷۶۷**
+      - `MEDIUM`: **۶,۵۹۴ رکورد (۴۱.۸۷٪)** — جهت `NORMAL`: **۳,۲۹۷** | جهت `REVERSE`: **۳,۲۹۷**
+      - `HARD`: **۴,۶۴۶ رکورد (۲۹.۵۰٪)** — جهت `NORMAL`: **۲,۳۲۳** | جهت `REVERSE`: **۲,۳۲۳**
+      - `VERY_HARD`: **۹۷۶ رکورد (۶.۲۰٪)** — جهت `NORMAL`: **۴۸۸** | جهت `REVERSE`: **۴۸۸**
+- **اصلاحات و همگام‌سازی (`SeedImporter.kt`):**
+  - ارتقای شناسه نسخه بذر به `7875_v1.77.0` جهت اعمال خودکار سطوح دشواری جدید بر روی کارت‌های تمرین‌نشده در هر دو جهت `NORMAL` و `REVERSE`.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D67` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.77.0` (کد نسخه: `90`).
+
+---
+
+### [نسخه ۱.۷۶.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
+### انتقال کلمات فریبنده، دوستان دروغین (False Friends / Falsos Amigos) و عبارات شامل آن‌ها (مانند `partido`، `carpeta`، `examinarle`) به سطح «سخت» (`HARD`) در هر دو جهت (`NORMAL` و `REVERSE`) (کد نسخه: ۸۹)
+- **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**
+  - **شناسایی و ارتقای ۲۷۱ مفهوم فریبنده و مستعد خطای معنایی (معادل ۵۴۲ رکورد `difficultyStates` در هر دو جهت `NORMAL` و `REVERSE`) از سطوح آسان و متوسط منحصراً به سطح «سخت» (`HARD`) در `docs/yadin-backup.json` و `app/src/main/assets/seed/vocabulary_seed.json`:**
+    - **۱۲۰ مفهوم (۲۴۰ رکورد)** از سطح `EASY` به `HARD` و **۱۵۱ مفهوم (۳۰۲ رکورد)** از سطح `MEDIUM` به `HARD` ارتقا یافتند (بدون هیچ‌گونه تغییر در متون، ترجمه‌ها، یادداشت‌ها یا دسته‌بندی‌ها و با حفظ ۱۰۰٪ تقارن بین دو جهت `NORMAL` و `REVERSE`):
+      1. **نمونه‌های صریح و واژگان اسپانیایی با معنای متفاوت از انتظار اولیه زبان‌آموز:** شامل `el partido` و عبارات آن (`el partido del siglo`، `el hombre del partido` — مسابقه ورزشی/حزب سیاسی در برابر انتظار معنای Party)، `carpeta` (پوشه/پرونده در برابر Carpet)، `examinarle` و افعال ضمیردار معاینه پزشکی (`tengo que examinarle el pecho`، `Voy a medirle`، `Voy a tomarle la temperatura`، `Voy a escucharle los pulmones`)، `carrera` (`¿Cuánto es la carrera?` کرایه تاکسی، `quiero un cambio de carrera` تغییر رشته/مسیر شغلی)، `la carta` (نامه/منو/ورق بازی)، `la dirección` (آدرس/مدیریت/فرمان خودرو)، `estación` (`Estación del año` فصل سال / ایستگاه)، `planta` (طبقه/گیاه/پلان)، `cuadro` (`Cuadro de instrumentos` صفحه پشت آمپر / تابلو)، `obras` (عملیات عمرانی و راه‌سازی)، `marchas largas` (دنده‌های سبک خودرو) و `largas` (چراغ نور بالا / طولانی).
+      2. **دوستان دروغین کلاسیک مشابه انگلیسی (English-Spanish False Friends):** شامل `éxito` (موفقیت ≠ exit)، `embarazada` / `embarazo` (باردار/بارداری ≠ embarrassed)، `asistir` (حضور یافتن ≠ assist)، `atender` (رسیدگی کردن/پذیرش ≠ attend)، `realizar` (انجام دادن ≠ realize)، `actual` / `actualmente` (فعلی/در حال حاضر ≠ actual)، `sensible` (حساس ≠ sensible)، `recordar` (به یاد آوردن ≠ record)، `educado` (مؤدب ≠ educated)، `compromiso` (تعهد/قرار ≠ compromise)، `constipado` (سرماخورده ≠ constipated)، `delito` (جرم ≠ delight)، `disgusto` (ناراحتی ≠ disgust)، `suceso` (رویداد ≠ success)، `pretender` (قصد داشتن ≠ pretend)، `intentar` (تلاش کردن ≠ intend)، `ropa` (لباس ≠ rope)، `vaso` (لیوان/رگ خونی ≠ vase)، `fábrica` (کارخانه ≠ fabric)، `librería` (کتاب‌فروشی ≠ library)، `lectura` (مطالعه ≠ lecture)، `idioma` (زبان ≠ idiom)، `pariente` (خویشاوند ≠ parent)، `conductor` (راننده/رسانا ≠ conductor)، `firma` / `firmar` (امضا ≠ firm)، `arena` (شن و ماسه ≠ arena)، `collar` (گردنبند ≠ collar)، `grosero` (بی‌ادب ≠ grocery)، `informe` (گزارش ≠ inform)، `decepción` (ناامیدی ≠ deception)، `molestar` (مزاحم شدن ≠ molest)، `soportar` (تحمل کردن ≠ support)، `receta` (نسخه پزشکی/دستور پخت ≠ receipt) و `tarjeta` (کارت بانکی).
+    - **توزیع متقارن نهایی در هر دو جهت `NORMAL` و `REVERSE` (۷,۸۷۵ مفهوم / ۱۵,۷۵۰ رکورد `difficultyStates`):**
+      - `EASY`: **۳,۶۳۸ رکورد (۲۳.۱۰٪)** — جهت `NORMAL`: **۱,۸۱۹** | جهت `REVERSE`: **۱,۸۱۹**
+      - `MEDIUM`: **۶,۹۴۶ رکورد (۴۴.۱۰٪)** — جهت `NORMAL`: **۳,۴۷۳** | جهت `REVERSE`: **۳,۴۷۳**
+      - `HARD`: **۴,۱۹۰ رکورد (۲۶.۶۰٪)** — جهت `NORMAL`: **۲,۰۹۵** | جهت `REVERSE`: **۲,۰۹۵**
+      - `VERY_HARD`: **۹۷۶ رکورد (۶.۲۰٪)** — جهت `NORMAL`: **۴۸۸** | جهت `REVERSE`: **۴۸۸**
+- **اصلاحات و همگام‌سازی (`SeedImporter.kt`):**
+  - ارتقای شناسه نسخه بذر به `7875_v1.76.0` جهت اعمال خودکار سطوح دشواری جدید بر روی کارت‌های تمرین‌نشده در هر دو جهت `NORMAL` و `REVERSE`.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D66` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.76.0` (کد نسخه: `89`).
+
+---
+
+### [نسخه ۱.۷۵.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
+### همگام‌سازی و تقارن ۱۰۰٪ سطوح دشواری اولیه در هر دو جهت یادگیری (`NORMAL`: اسپانیایی به فارسی و `REVERSE`: فارسی به اسپانیایی) برای تمامی ۷,۸۷۵ مفهوم (کد نسخه: ۸۸)
+- **ویژگی‌های جدید و کالیبراسیون بانک واژگان (Features & Seed Calibration):**
+  - **یکسان‌سازی کامل سطح دشواری اولیه هر دو جهت `NORMAL` و `REVERSE` در کل بانک واژگان (`docs/yadin-backup.json` و `app/src/main/assets/seed/vocabulary_seed.json`):**
+    - رفع عدم تقارن تاریخی در **۱,۶۷۸ مفهوم** که سطح دشواری جهت معکوس (`REVERSE`: فارسی $\to$ اسپانیایی) آن‌ها با جهت عادی (`NORMAL`: اسپانیایی $\to$ فارسی) متفاوت مانده بود:
+      - `REVERSE: MEDIUM -> EASY`: **۷۸۸ مفهوم**
+      - `REVERSE: MEDIUM -> HARD`: **۶۳۸ مفهوم**
+      - `REVERSE: EASY -> HARD`: **۱۰۵ مفهوم**
+      - `REVERSE: EASY -> MEDIUM`: **۹۱ مفهوم**
+      - `REVERSE: MEDIUM -> VERY_HARD`: **۵۴ مفهوم**
+      - `REVERSE: EASY -> VERY_HARD`: **۱ مفهوم**
+      - `REVERSE: HARD -> VERY_HARD`: **۱ مفهوم**
+    - بازنشانی شمارنده‌های موقت `consecutiveCorrect = 0` و `consecutiveWrong = 0` و همگام‌سازی دقیق پرچم `hasReachedVeryHard = (current == "VERY_HARD")` در تمامی ۱۵,۷۵۰ رکورد (مجموعاً اصلاح و استانداردسازی ۲,۴۰۹ رکورد وضعیت دشواری) بدون هیچ‌گونه تغییر در متون، معانی یا دسته‌بندی‌ها.
+    - **توزیع متقارن نهایی در هر دو جهت `NORMAL` و `REVERSE` (۷,۸۷۵ مفهوم / ۱۵,۷۵۰ رکورد `difficultyStates`):**
+      - `EASY`: **۳,۸۷۸ رکورد (۲۴.۶۲٪)** — جهت `NORMAL`: **۱,۹۳۹** | جهت `REVERSE`: **۱,۹۳۹**
+      - `MEDIUM`: **۷,۲۴۸ رکورد (۴۶.۰۲٪)** — جهت `NORMAL`: **۳,۶۲۴** | جهت `REVERSE`: **۳,۶۲۴**
+      - `HARD`: **۳,۶۴۸ رکورد (۲۳.۱۶٪)** — جهت `NORMAL`: **۱,۸۲۴** | جهت `REVERSE`: **۱,۸۲۴**
+      - `VERY_HARD`: **۹۷۶ رکورد (۶.۲۰٪)** — جهت `NORMAL`: **۴۸۸** | جهت `REVERSE`: **۴۸۸**
+- **اصلاحات و همگام‌سازی (`SeedImporter.kt`):**
+  - **پشتیبانی هم‌زمان از ساختار `"data"` و `"payloads"` در `SeedImporter.importSeedIfNeeded`:** استخراج تابع `parseVocabularyObject` جهت خواندن یکپارچه فایل بذر چه در قالب استاندارد `"data"` و چه در قالب `"payloads" -> "VOCABULARY"`.
+  - **ارتقای نسخه بذر به `7875_v1.75.0` و تضمین به‌روزرسانی کارت‌های تمرین‌نشده در هر دو جهت:** اصلاح شرط همگام‌سازی `updatedSeedDiffBatch` برای اعمال سطوح دشواری کالیبره‌شده بر روی تمامی کارت‌های تمرین‌نشده در هر دو جهت `NORMAL` و `REVERSE`.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D65` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.75.0` (کد نسخه: `88`).
+
+---
+
+### [نسخه ۱.۷۴.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
+### انتقال کلمات هم‌آوا و وام‌واژه‌های مشترک فارسی و اسپانیایی به سطح «آسان» (`EASY`) در هر دو جهت (`NORMAL` و `REVERSE`) (کد نسخه: ۸۷)
+- **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**
+  - **شناسایی و تنظیم سطح دشواری ۱۶۰ مفهوم هم‌آوا (Cognates & Loanwords) بین فارسی و اسپانیایی بر روی «آسان» (`EASY`) در هر دو جهت (`docs/yadin-backup.json` و `vocabulary_seed.json`):**
+    - **دامنه ساختاری:** منحصراً تک‌واژه‌ها و اسم‌های همراه با حرف تعریف (`el`, `la`, `los`, `las`, `un`, `una`)؛ بدون دست‌زدن به عبارات چندکلمه‌ای یا اصطلاحات ورزشی غیرهم‌آوا (مانند ضربات گلف `Birdie`, `Bogey`, `Driver`, `Putter`).
+    - **۴ گروه واژگانی منتقل‌شده به `EASY` در هر دو جهت `NORMAL` و `REVERSE` (`hasReachedVeryHard = false`):**
+      1. **وام‌واژه‌های روزمره و عمومی (۱۰۵ مفهوم):** شامل `El hotel` (هتل)، `El hostal` (هاستل)، `el apartamento` (آپارتمان)، `el taxi` (تاکسی)، `el metro` (مترو)، `Autobús` (اتوبوس)، `el tren` (ترن)، `El banco` (بانک)، `el euro` (یورو)، `el dólar` (دلار)، `el cheque` (چک)، `la factura` (فاکتور)، `Cine` (سینما)، `Teatro` (تئاتر)، `Concierto` (کنسرت)، `Ópera` (اپرا)، `Guitarra` (گیتار)، `Piano` (پیانو)، `Violín` (ویولن)، `Radio` (رادیو)، `el teléfono` (تلفن)، `Internet` (اینترنت)، `Cable` (کابل)، `Antena` (آنتن)، `Batería` (باتری)، `Motor` (موتور)، `Gasolina` (بنزین/گازوئیل)، `Gas` (گاز)، `Plástico` (پلاستیک)، `Cemento` (سیمان)، `Asfalto` (آسفالت)، `Cristal` (کریستال)، `Aluminio` (آلومینیوم)، `Bronce` (برنز)، `Pizza` (پیتزا)، `Chocolate` (شکلات)، `Café` (قهوه/کافه)، `Cacao` (کاکائو)، `Vainilla` (وانیل)، `Salsa` (سس)، `Sopa` (سوپ)، `Salchicha` (سوسیس)، `el menú` (منو)، `el restaurante` (رستوران)، `el bar` (بار)، `el salón` (سالن)، `el balcón` (بالکن)، `Terraza` (تراس)، `el parque` (پارک)، `el garaje` (گاراژ)، `Pijama` (پیژامه)، `Chaqueta` (ژاکت)، `Blusa` (بلوز)، `Botas` (بوت)، `Sandalias` (صندل)، `el uniforme` (یونیفرم)، `Champú` (شامپو)، `Crema` (کرم)، `Ducha` (دوش)، `Masaje` (ماساژ)، `Fútbol` (فوتبال)، `Tenis` (تنیس)، `Voleibol` (والیبال)، `Golf` (گلف)، `Esquí` (اسکی)، `Boxeo` (بوکس)، `el yoga` (یوگا)، `el estadio` (استادیوم)، `Medalla` (مدال)، `Récord` (رکورد) و ...
+      2. **نام کشورها، شهرها و جغرافیا (۱۲ مفهوم):** `España` (اسپانیا)، `China` (چین)، `Alemania` (آلمان)، `Francia` (فرانسه)، `Italia` (ایتالیا)، `Inglaterra` (انگلستان)، `Rusia` (روسیه)، `Japón` (ژاپن)، `América` (آمریکا)، `Europa` (اروپا)، `Asia` (آسیا) و `Barcelona` (بارسلونا).
+      3. **وام‌واژه‌های رایج پزشکی و علمی (۱۳ مفهوم):** `Esqueleto` (اسکلت)، `Clínica` (کلینیک)، `terapia` (تراپی)، `ambulancia` (آمبولانس)، `alcohol` (الکل)، `Ácido` (اسید)، `Química` (شیمی)، `Física` (فیزیک)، `Biología` (بیولوژی)، `Geografía` (جغرافیا)، `Energía` (انرژی)، `Átomo` (اتم) و `el gas` (گاز).
+      4. **وام‌واژه‌های تخصصی علمی، پزشکی، فنی و هواشناسی که در فارسی با همان لفظ به‌کار می‌روند (۳۰ مفهوم):** شامل `El catalizador` (کاتالیزور)، `Antibiótico` (آنتی‌بیوتیک)، `Antihistamínico` (آنتی‌هیستامین)، `Neurona` (نورون)، `Bronquio` (برونش)، `Cesárea` (سزارین)، `Cirrosis` (سیروز)، `Faringitis` (فارنژیت)، `Gastritis` (گاستریت)، `Hepatitis` (هپاتیت)، `Liposucción` (لیپوساکشن)، `Prótesis` (پروتز)، `torniquete` (تورنیکت)، `carburador` (کاربراتور)، `diferencial` (دیفرانسیل)، `pistón` (پیستون)، `termostato` (ترموستات)، `Ciclomotor` (موتورسیکلت)، `Tacógrafo` (تاچوگراف)، `Aquaplaning` (آکواپلنینگ)، `Ciclón` (سیکلون)، `Tifón` (تایفون)، `Cúmulus` (کومولوس)، `Cúmulonimbos` (کومولونیمبوس)، `Estratos` (استراتوس)، `Cirros` (سیروس)، `Nimboestratos` (نیمبواستراتوس) و `Altocúmulos` (آلتوکومولوس).
+    - **خلاصه آماری و توزیع نهایی ۱۵,۷۵۰ رکورد `difficultyStates`:**
+      - به‌روزرسانی **۲۲۵ رکورد وضعیت دشواری** در ۱۶۰ مفهوم (۶۵ مفهوم که در هیچ‌یک از دو جهت آسان نبودند + ۹۵ مفهوم که فقط در یک جهت آسان بودند و اکنون در هر دو جهت `EASY/EASY` شدند).
+      - `EASY`: **۳,۲۸۷ رکورد (۲۰.۸۷٪)** (جهت `NORMAL`: ۱,۹۳۹ | جهت `REVERSE`: ۱,۳۴۸)
+      - `MEDIUM`: **۸,۶۳۷ رکورد (۵۴.۸۴٪)** (جهت `NORMAL`: ۳,۶۲۴ | جهت `REVERSE`: ۵,۰۱۳)
+      - `HARD`: **۲,۹۰۶ رکورد (۱۸.۴۵٪)** (جهت `NORMAL`: ۱,۸۲۴ | جهت `REVERSE`: ۱,۰۸۲)
+      - `VERY_HARD`: **۹۲۰ رکورد (۵.۸۴٪)** (جهت `NORMAL`: ۴۸۸ | جهت `REVERSE`: ۴۳۲)
+      - **مجموع `HARD` و `VERY_HARD`:** **۳,۸۲۶ رکورد (۲۴.۲۹٪ کل بانک)** — حفظ کامل تعادل ۲۰ تا ۲۵ درصدی سطوح سخت و خیلی سخت.
+- **اصلاحات و همگام‌سازی (`SeedImporter.kt`):**
+  - ارتقای شناسه نسخه بذر به `7875_v1.74.0` جهت همگام‌سازی خودکار سطوح دشواری کلمات هم‌آوا در نصب‌های موجود.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D64` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.74.0` (کد نسخه: `87`).
+
+---
+
+### [نسخه ۱.۷۳.۰] - ۲۰۲۶-۱۰-۲۸ (۱۴۰۵/۰۸/۰۶)
+### کالیبراسیون هوشمند و چهارمعیاره سطح دشواری واژگان و عبارات (`HARD` و `VERY_HARD`) با تراکم متعادل ۲۴.۷۵٪ کل بانک (کد نسخه: ۸۶)
+- **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**
+  - **اعمال موتور ارزیابی چهارمعیاره بر روی واژگان و عبارات باقی‌مانده در سطوح آسان و متوسط (`docs/yadin-backup.json` و `vocabulary_seed.json`):**
+    - **ارتقای ۱۰۷ مفهوم جدید به سطح «خیلی سخت» (`VERY_HARD`: ۲۱۴ رکورد در دو جهت `NORMAL` و `REVERSE` با `hasReachedVeryHard = true`):**
+      - شامل **۷۲ اصطلاح عامیانه و کنایی پیشرفته (Modismos C1/C2)** (مانند `COSTAR UN RIÑÓN`, `ESTAR EN LA INOPIA`, `NO PEGAR OJO`, `SER PAN COMIDO`, `METER LA PATA`, `DORMIRSE EN LOS LAURELES`, `PASAR OLÍMPICAMENTE`, `QUEDARSE A CUADROS`, `HACER UN SIMPA`) و **۳۵ ضرب‌المثل، اصطلاح کنایی و واژه تخصصی اداری، حقوقی، مالی، علمی و فنی** (مانند `la curiosidad mató al gato`, `hacer caso omiso`, `dar por sentado`, `brillar por su ausencia`, `tutoría legal`, `unión civil`, `declaración de la renta`, `reconocimiento médico`, `líquido refrigerante`).
+    - **ارتقای ۳۸۴ مفهوم جدید به سطح «سخت» (`HARD`: ۷۶۸ رکورد در دو جهت `NORMAL` و `REVERSE`):**
+      - **معیار ۱ (عبارات ۴+ کلمه‌ای غیرمبتدی و اصطلاحات کنایی):** ۲۵۳ عبارت شامل عبارات فعلی و ترکیبی با حذف الگوهای مقدماتی A1/A2 (`Me duele...`, `Tengo dolor de...`, `el X de la Y`).
+      - **معیار ۲ (ساختارهای گرامری پیشرفته):** ۱۲۵ مدخل دارای وجه التزامی (`Subjuntivo` مانند `quisiera`, `cuando quieras`, `aunque sea`), وجه شرطی (`debería`, `tendría`, `gustaría`), ضمایر مفعولی دوگانه (`agradecértelo`, `se lo`, `me lo`) و زمان‌های کامل/ترکیبی (`haber + participio`).
+      - **معیار ۳ (واژگان چندمعنایی و کلمات انتزاعی طولانی):** ۳۸ واژه دارای پسوندهای انتزاعی (`-miento`, `-ción`, `-dad`, `-encia`, `-ismo`) و تعدد معانی متمایز در فارسی.
+    - **تثبیت توزیع متوازن نهایی در کل ۱۵,۷۵۰ رکورد `difficultyStates`:**
+      - `EASY`: **۳,۰۶۲ رکورد (۱۹.۴۴٪)**
+      - `MEDIUM`: **۸,۷۹۰ رکورد (۵۵.۸۱٪)**
+      - `HARD`: **۲,۹۱۳ رکورد (۱۸.۵۰٪)**
+      - `VERY_HARD`: **۹۸۵ رکورد (۶.۲۵٪)**
+      - **مجموع `HARD` و `VERY_HARD`:** **۳,۸۹۸ رکورد از ۱۵,۷۵۰ رکورد (۲۴.۷۵٪ کل بانک)** — دقیقاً در بازه هدف ۲۰ تا ۲۵ درصد، بدون تغییر در معانی، دسته‌بندی‌ها یا جملات آسان.
+- **اصلاحات و همگام‌سازی (`SeedImporter.kt`):**
+  - ارتقای شناسه نسخه بذر به `7875_v1.73.0` جهت اعمال خودکار سطوح دشواری کالیبره‌شده بر روی کارت‌های تمرین‌نشده در نصب‌های موجود.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D63` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.73.0` (کد نسخه: `86`).
+
+---
+
 ### [نسخه ۱.۷۲.۰] - ۲۰۲۶-۱۰-۲۸ (۱۴۰۵/۰۸/۰۶)
 ### همگام‌سازی فایل پشتیبان جدید (`docs/yadin-backup.json` و `vocabulary_seed.json`: ۷,۸۷۵ مفهوم) و کالیبراسیون هدفمند سطح دشواری واژگان تخصصی (`VERY_HARD`) و جملات بیش از ۵ کلمه (`HARD`) (کد نسخه: ۸۵)
 - **ویژگی‌های جدید و کالیبراسیون بانک واژگان (Features & Seed Calibration):**

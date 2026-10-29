@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7875_v1.72.0"
+        const val CURRENT_SEED_VERSION = "7875_v1.77.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -164,196 +164,201 @@ class SeedImporter(
             val seedConceptCategories = mutableListOf<ConceptCategoryEntity>()
             val obsoleteSeedConceptIds = mutableSetOf<String>()
 
-            reader.beginObject()
-            while (reader.hasNext()) {
-                val name = reader.nextName()
-                if (name == "payloads") {
-                    reader.beginObject()
-                    while (reader.hasNext()) {
-                        val payloadName = reader.nextName()
-                        if (payloadName == "VOCABULARY") {
-                            reader.beginObject()
+            fun parseVocabularyObject(reader: JsonReader) {
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    when (reader.nextName()) {
+                        "categories" -> {
+                            reader.beginArray()
+                            var sortOrder = 0
                             while (reader.hasNext()) {
-                                when (reader.nextName()) {
-                                    "categories" -> {
-                                        reader.beginArray()
-                                        var sortOrder = 0
-                                        while (reader.hasNext()) {
-                                            reader.beginObject()
-                                            var id = ""
-                                            var catName = ""
-                                            while (reader.hasNext()) {
-                                                when (reader.nextName()) {
-                                                    "id" -> id = reader.nextString()
-                                                    "name" -> catName = reader.nextString()
-                                                    else -> reader.skipValue()
-                                                }
-                                            }
-                                            reader.endObject()
-                                            if (id.isNotEmpty() && catName.isNotEmpty()) {
-                                                categories.add(CategoryEntity(id, catName, sortOrder++, false))
-                                            }
-                                        }
-                                        reader.endArray()
+                                reader.beginObject()
+                                var id = ""
+                                var catName = ""
+                                while (reader.hasNext()) {
+                                    when (reader.nextName()) {
+                                        "id" -> id = reader.nextString()
+                                        "name" -> catName = reader.nextString()
+                                        else -> reader.skipValue()
                                     }
-                                    "concepts" -> {
-                                        reader.beginArray()
-                                        val fallbackNow = System.currentTimeMillis()
-                                        while (reader.hasNext()) {
-                                            reader.beginObject()
-                                            var id = ""
-                                            var categoryId: String? = null
-                                            var entryTypeStr = "WORD"
-                                            var act = true
-                                            var cAt = fallbackNow
-                                            var uAt = fallbackNow
-                                            while (reader.hasNext()) {
-                                                when (reader.nextName()) {
-                                                    "id" -> id = reader.nextString()
-                                                    "categoryId" -> {
-                                                        if (reader.peek() == android.util.JsonToken.NULL) {
-                                                            reader.nextNull()
-                                                        } else {
-                                                            categoryId = reader.nextString()
-                                                        }
-                                                    }
-                                                    "entryType" -> entryTypeStr = reader.nextString()
-                                                    "active" -> act = reader.nextBoolean()
-                                                    "createdAt" -> cAt = reader.nextLong()
-                                                    "updatedAt" -> uAt = reader.nextLong()
-                                                    else -> reader.skipValue()
-                                                }
-                                            }
-                                            reader.endObject()
-                                            if (id.isNotEmpty()) {
-                                                val eType = try { EntryType.valueOf(entryTypeStr) } catch (_: Exception) { EntryType.WORD }
-                                                concepts.add(ConceptEntity(id, eType, categoryId, act, cAt, uAt))
-                                            }
-                                        }
-                                        reader.endArray()
-                                    }
-                                    "contents" -> {
-                                        reader.beginArray()
-                                        while (reader.hasNext()) {
-                                            reader.beginObject()
-                                            var id = ""
-                                            var conceptId = ""
-                                            var lang = "es"
-                                            var text = ""
-                                            var canonical = ""
-                                            var notes: String? = null
-                                            var transIdx = 0
-                                            while (reader.hasNext()) {
-                                                when (reader.nextName()) {
-                                                    "id" -> id = reader.nextString()
-                                                    "conceptId" -> conceptId = reader.nextString()
-                                                    "languageCode" -> lang = reader.nextString()
-                                                    "text" -> text = reader.nextString()
-                                                    "canonicalKey" -> canonical = reader.nextString()
-                                                    "notes", "note" -> {
-                                                        if (reader.peek() == android.util.JsonToken.NULL) {
-                                                            reader.nextNull()
-                                                        } else {
-                                                            notes = reader.nextString()
-                                                        }
-                                                    }
-                                                    "translationIndex" -> transIdx = reader.nextInt()
-                                                    else -> reader.skipValue()
-                                                }
-                                            }
-                                            reader.endObject()
-                                            if (id.isNotEmpty() && conceptId.isNotEmpty()) {
-                                                if (canonical.isEmpty()) {
-                                                    canonical = TextUtilities.toCanonicalKey(text)
-                                                }
-                                                contents.add(ContentEntity(id, conceptId, lang, text, canonical, notes, transIdx))
-                                            }
-                                        }
-                                        reader.endArray()
-                                    }
-                                    "difficultyStates" -> {
-                                        reader.beginArray()
-                                        while (reader.hasNext()) {
-                                            reader.beginObject()
-                                            var id = ""
-                                            var conceptId = ""
-                                            var dirStr = "NORMAL"
-                                            var currStr = "EASY"
-                                            var consCorrect = 0
-                                            var consWrong = 0
-                                            var reachedVh = false
-                                            while (reader.hasNext()) {
-                                                when (reader.nextName()) {
-                                                    "id" -> id = reader.nextString()
-                                                    "conceptId" -> conceptId = reader.nextString()
-                                                    "direction" -> dirStr = reader.nextString()
-                                                    "current" -> currStr = reader.nextString()
-                                                    "consecutiveCorrect" -> consCorrect = reader.nextInt()
-                                                    "consecutiveWrong" -> consWrong = reader.nextInt()
-                                                    "hasReachedVeryHard" -> reachedVh = reader.nextBoolean()
-                                                    else -> reader.skipValue()
-                                                }
-                                            }
-                                            reader.endObject()
-                                            if (id.isNotEmpty() && conceptId.isNotEmpty()) {
-                                                val cardDir = try { CardDirection.valueOf(dirStr) } catch (_: Exception) { CardDirection.NORMAL }
-                                                val diffVal = try { VocabularyDifficulty.valueOf(currStr) } catch (_: Exception) { VocabularyDifficulty.EASY }
-                                                seedDifficultyStates.add(
-                                                    DifficultyStateEntity(
-                                                        id = id,
-                                                        conceptId = conceptId,
-                                                        direction = cardDir,
-                                                        current = diffVal,
-                                                        consecutiveCorrect = consCorrect,
-                                                        consecutiveWrong = consWrong,
-                                                        hasReachedVeryHard = reachedVh || diffVal == VocabularyDifficulty.VERY_HARD
-                                                    )
-                                                )
-                                            }
-                                        }
-                                        reader.endArray()
-                                    }
-                                    "conceptCategories" -> {
-                                        reader.beginArray()
-                                        while (reader.hasNext()) {
-                                            reader.beginObject()
-                                            var cId = ""
-                                            var catId = ""
-                                            while (reader.hasNext()) {
-                                                when (reader.nextName()) {
-                                                    "conceptId" -> cId = reader.nextString()
-                                                    "categoryId" -> catId = reader.nextString()
-                                                    else -> reader.skipValue()
-                                                }
-                                            }
-                                            reader.endObject()
-                                            if (cId.isNotEmpty() && catId.isNotEmpty()) {
-                                                seedConceptCategories.add(ConceptCategoryEntity(cId, catId))
-                                            }
-                                        }
-                                        reader.endArray()
-                                    }
-                                    "obsoleteConceptIds" -> {
-                                        reader.beginArray()
-                                        while (reader.hasNext()) {
-                                            val obsId = reader.nextString()
-                                            if (obsId.isNotEmpty()) {
-                                                obsoleteSeedConceptIds.add(obsId)
-                                            }
-                                        }
-                                        reader.endArray()
-                                    }
-                                    else -> reader.skipValue()
+                                }
+                                reader.endObject()
+                                if (id.isNotEmpty() && catName.isNotEmpty()) {
+                                    categories.add(CategoryEntity(id, catName, sortOrder++, false))
                                 }
                             }
-                            reader.endObject()
-                        } else {
-                            reader.skipValue()
+                            reader.endArray()
                         }
+                        "concepts" -> {
+                            reader.beginArray()
+                            val fallbackNow = System.currentTimeMillis()
+                            while (reader.hasNext()) {
+                                reader.beginObject()
+                                var id = ""
+                                var categoryId: String? = null
+                                var entryTypeStr = "WORD"
+                                var act = true
+                                var cAt = fallbackNow
+                                var uAt = fallbackNow
+                                while (reader.hasNext()) {
+                                    when (reader.nextName()) {
+                                        "id" -> id = reader.nextString()
+                                        "categoryId" -> {
+                                            if (reader.peek() == android.util.JsonToken.NULL) {
+                                                reader.nextNull()
+                                            } else {
+                                                categoryId = reader.nextString()
+                                            }
+                                        }
+                                        "entryType" -> entryTypeStr = reader.nextString()
+                                        "active" -> act = reader.nextBoolean()
+                                        "createdAt" -> cAt = reader.nextLong()
+                                        "updatedAt" -> uAt = reader.nextLong()
+                                        else -> reader.skipValue()
+                                    }
+                                }
+                                reader.endObject()
+                                if (id.isNotEmpty()) {
+                                    val eType = try { EntryType.valueOf(entryTypeStr) } catch (_: Exception) { EntryType.WORD }
+                                    concepts.add(ConceptEntity(id, eType, categoryId, act, cAt, uAt))
+                                }
+                            }
+                            reader.endArray()
+                        }
+                        "contents" -> {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                reader.beginObject()
+                                var id = ""
+                                var conceptId = ""
+                                var lang = "es"
+                                var text = ""
+                                var canonical = ""
+                                var notes: String? = null
+                                var transIdx = 0
+                                while (reader.hasNext()) {
+                                    when (reader.nextName()) {
+                                        "id" -> id = reader.nextString()
+                                        "conceptId" -> conceptId = reader.nextString()
+                                        "languageCode" -> lang = reader.nextString()
+                                        "text" -> text = reader.nextString()
+                                        "canonicalKey" -> canonical = reader.nextString()
+                                        "notes", "note" -> {
+                                            if (reader.peek() == android.util.JsonToken.NULL) {
+                                                reader.nextNull()
+                                            } else {
+                                                notes = reader.nextString()
+                                            }
+                                        }
+                                        "translationIndex" -> transIdx = reader.nextInt()
+                                        else -> reader.skipValue()
+                                    }
+                                }
+                                reader.endObject()
+                                if (id.isNotEmpty() && conceptId.isNotEmpty()) {
+                                    if (canonical.isEmpty()) {
+                                        canonical = TextUtilities.toCanonicalKey(text)
+                                    }
+                                    contents.add(ContentEntity(id, conceptId, lang, text, canonical, notes, transIdx))
+                                }
+                            }
+                            reader.endArray()
+                        }
+                        "difficultyStates" -> {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                reader.beginObject()
+                                var id = ""
+                                var conceptId = ""
+                                var dirStr = "NORMAL"
+                                var currStr = "EASY"
+                                var consCorrect = 0
+                                var consWrong = 0
+                                var reachedVh = false
+                                while (reader.hasNext()) {
+                                    when (reader.nextName()) {
+                                        "id" -> id = reader.nextString()
+                                        "conceptId" -> conceptId = reader.nextString()
+                                        "direction" -> dirStr = reader.nextString()
+                                        "current" -> currStr = reader.nextString()
+                                        "consecutiveCorrect" -> consCorrect = reader.nextInt()
+                                        "consecutiveWrong" -> consWrong = reader.nextInt()
+                                        "hasReachedVeryHard" -> reachedVh = reader.nextBoolean()
+                                        else -> reader.skipValue()
+                                    }
+                                }
+                                reader.endObject()
+                                if (id.isNotEmpty() && conceptId.isNotEmpty()) {
+                                    val cardDir = try { CardDirection.valueOf(dirStr) } catch (_: Exception) { CardDirection.NORMAL }
+                                    val diffVal = try { VocabularyDifficulty.valueOf(currStr) } catch (_: Exception) { VocabularyDifficulty.EASY }
+                                    seedDifficultyStates.add(
+                                        DifficultyStateEntity(
+                                            id = id,
+                                            conceptId = conceptId,
+                                            direction = cardDir,
+                                            current = diffVal,
+                                            consecutiveCorrect = consCorrect,
+                                            consecutiveWrong = consWrong,
+                                            hasReachedVeryHard = reachedVh || diffVal == VocabularyDifficulty.VERY_HARD
+                                        )
+                                    )
+                                }
+                            }
+                            reader.endArray()
+                        }
+                        "conceptCategories" -> {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                reader.beginObject()
+                                var cId = ""
+                                var catId = ""
+                                while (reader.hasNext()) {
+                                    when (reader.nextName()) {
+                                        "conceptId" -> cId = reader.nextString()
+                                        "categoryId" -> catId = reader.nextString()
+                                        else -> reader.skipValue()
+                                    }
+                                }
+                                reader.endObject()
+                                if (cId.isNotEmpty() && catId.isNotEmpty()) {
+                                    seedConceptCategories.add(ConceptCategoryEntity(cId, catId))
+                                }
+                            }
+                            reader.endArray()
+                        }
+                        "obsoleteConceptIds" -> {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                val obsId = reader.nextString()
+                                if (obsId.isNotEmpty()) {
+                                    obsoleteSeedConceptIds.add(obsId)
+                                }
+                            }
+                            reader.endArray()
+                        }
+                        else -> reader.skipValue()
                     }
-                    reader.endObject()
-                } else {
-                    reader.skipValue()
+                }
+                reader.endObject()
+            }
+
+            reader.beginObject()
+            while (reader.hasNext()) {
+                when (reader.nextName()) {
+                    "data" -> parseVocabularyObject(reader)
+                    "payloads" -> {
+                        reader.beginObject()
+                        while (reader.hasNext()) {
+                            val payloadName = reader.nextName()
+                            if (payloadName == "VOCABULARY") {
+                                parseVocabularyObject(reader)
+                            } else {
+                                reader.skipValue()
+                            }
+                        }
+                        reader.endObject()
+                    }
+                    else -> reader.skipValue()
                 }
             }
             reader.endObject()
@@ -528,13 +533,17 @@ class SeedImporter(
                                 )
                             )
                         } else if (seedDiff != null && key !in practicedLearningKeys &&
-                            existingDiff.consecutiveCorrect == 0 && existingDiff.consecutiveWrong == 0 &&
-                            existingDiff.current != seedDiff.current
+                            (existingDiff.current != seedDiff.current ||
+                                existingDiff.hasReachedVeryHard != seedDiff.hasReachedVeryHard ||
+                                existingDiff.consecutiveCorrect != 0 ||
+                                existingDiff.consecutiveWrong != 0)
                         ) {
                             updatedSeedDiffBatch.add(
                                 existingDiff.copy(
                                     current = seedDiff.current,
-                                    hasReachedVeryHard = existingDiff.hasReachedVeryHard || seedDiff.hasReachedVeryHard
+                                    consecutiveCorrect = 0,
+                                    consecutiveWrong = 0,
+                                    hasReachedVeryHard = seedDiff.hasReachedVeryHard || seedDiff.current == VocabularyDifficulty.VERY_HARD
                                 )
                             )
                         }
