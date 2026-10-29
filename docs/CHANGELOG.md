@@ -2,6 +2,30 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۷۹.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
+### بازبینی و کالیبراسیون ۴ سطحی پیش‌فرض واژگان (`EASY -> MEDIUM`، `EASY -> HARD`، `EASY -> VERY_HARD`، `MEDIUM -> HARD`، `MEDIUM -> VERY_HARD`) و اجرای قانون مطلق عدم کاهش سطح در هر دو جهت (`NORMAL` و `REVERSE`) (کد نسخه: ۹۲)
+- **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**
+  - **ممیزی جامع و ارتقای متقارن ۵۱۶ مفهوم (معادل ۱,۰۳۲ رکورد `difficultyStates` در هر دو جهت `NORMAL` و `REVERSE`) در `docs/yadin-backup.json` و `app/src/main/assets/seed/vocabulary_seed.json` بر اساس معیارهای زبان‌شناختی فارسی‌زبانان:**
+    - **اجرای قانون غیرقابل‌مذاکره عدم کاهش سطح (`HARD` و `VERY_HARD` بدون تغییر):** بازگرداندن مدخل `canónigos` (`9e3369ee-912e-4d85-b10b-1078f0205777` — سنبل‌الطیب خوراکی / کاهوی کوهی) به سطح اصلی `VERY_HARD` (`hasReachedVeryHard = true`) تا هیچ مدخلی از `HARD` یا `VERY_HARD` نسبت به نسخه‌های `1.77.0` و `1.78.0` کاهش سطح نداشته باشد (تعداد کاهش سطح: **۰**).
+    - **تفکیک دقیق ۵ انتقال مجاز (نسبت به نسخه ۱.۷۸.۰ و تجمعی نسبت به ۱.۷۷.۰):**
+      1. **`EASY -> MEDIUM` (۸۹ مفهوم / ۱۷۸ رکورد):** انتقال صفت‌ها، قیدها و واژگان غیرمبتدی نیازمند بهخاطرْسپاری فعال که نباید در سطح ابتدایی `EASY` باشند (مانند `orgulloso`، `incómodo`، `extraño`، `peligroso`، `imposible`، `necesario`، `suficiente`، `seguro`، `oscuro`، `vacío`، `lleno`، `limpio`، `sucio`، `barato`، `rico`، `pobre`، `joven`، `nuevo`، `antiguo`، `famoso`، `importante`).
+      2. **`EASY -> HARD` (۲۰ مفهوم جدید در ۱.۷۹.۰؛ تجمعی ۱,۲۰۱ مفهوم نسبت به ۱.۷۷.۰):** انتقال کلمات دارای تفاوت معنایی/فرهنگی یا مستعد تداخل برای فارسی‌زبانان (مانند `jamón`، `manteca`، `tortilla`، `fresa`، `piña`، `grifo`، `enchufe`، `timbre`، `modales`، `nevera`، `lavabo`، `ducha`، `toalla`، `jabón`، `cepillo`، `peine`، `espejo`، `llave`، `escalera`، `pasillo`).
+      3. **`EASY -> VERY_HARD` (۵ مفهوم / ۱۰ رکورد):** انتقال وام‌واژه‌های بسیار کم‌کاربرد، تخصصی یا فریبنده که به دلیل شباهت ظاهری در سطح آسان قرار گرفته بودند (`bonsái`، `yurt`، `cólera` به معنای وبا/خشم، `bistec` و `champú`).
+      4. **`MEDIUM -> HARD` (۳۵۸ مفهوم جدید در ۱.۷۹.۰؛ تجمعی ۷۳۲ مفهوم نسبت به ۱.۷۷.۰):** شامل **۱۹۹ واژه، عبارت و جمله** دارای ساختار گرامری چالش‌برانگیز (وجه التزامی، شرطی، ضمایر مفعولی، افعال بازتابی یا معنای غیرشفاف) و **۱۵۹ تمرین صرف افعال بی‌قاعده، التزامی و هم‌آوا** (`ir`، `ser`، `estar`، `tener`، `hacer`، `poder`، `poner`، `decir`، `venir`، `ver`، `dar`، `querer`، `saber`، `salir`، `traer`، `oír`، `caer`، `conducir`، `traducir`، `producir`).
+      5. **`MEDIUM -> VERY_HARD` (۴۳ مفهوم / ۸۶ رکورد):** انتقال اصطلاحات کنایی، عبارات عامیانه و واژگان بسیار کم‌کاربرد خوراکی/جانوری/تخصصی به بالاترین سطح دشواری (مانند `alcaparras` کَبَر، `berberecho` صدف قلبی، `rodaballo` سپرماهی، `percebe` صدف کشتی‌چسب، `tío`/`tía` در معنای عامیانه رفیق/یارو، `¡Qué guay!`، `Subirse por las paredes`، `Costar un ojo de la cara`، `Tomar el pelo`، `Meter la pata`، `Echar de menos`، `Dar la lata`، `Importar un pimiento` و ...).
+    - **توزیع متقارن نهایی در هر دو جهت `NORMAL` و `REVERSE` (۷,۸۷۵ مفهوم / ۱۵,۷۵۰ رکورد `difficultyStates`):**
+      - `EASY`: **۹۴۴ رکورد (۵.۹۹٪)** — جهت `NORMAL`: **۴۷۲** | جهت `REVERSE`: **۴۷۲**
+      - `MEDIUM`: **۵,۲۲۲ رکورد (۳۳.۱۶٪)** — جهت `NORMAL`: **۲,۶۱۱** | جهت `REVERSE`: **۲,۶۱۱**
+      - `HARD`: **۸,۵۱۲ رکورد (۵۴.۰۴٪)** — جهت `NORMAL`: **۴,۲۵۶** | جهت `REVERSE`: **۴,۲۵۶**
+      - `VERY_HARD`: **۱,۰۷۲ رکورد (۶.۸۱٪)** — جهت `NORMAL`: **۵۳۶** | جهت `REVERSE`: **۵۳۶**
+- **اصلاحات و همگام‌سازی (`SeedImporter.kt`):**
+  - ارتقای شناسه نسخه بذر به `7875_v1.79.0`.
+  - اصلاح شرط `isPracticedSeedDifficultyUpgrade` به `key in practicedLearningKeys && seedDiff.current.ordinal > existingDiff.current.ordinal` تا کارت‌های تمرین‌شده قبلی کاربر در صورت افزایش سطح دشواری بذر (به `MEDIUM`، `HARD` یا `VERY_HARD`) به‌صورت خودکار ارتقا یابند و هرگز هیچ کارت تمرین‌شده‌ای کاهش سطح پیدا نکند.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D69` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md`، `docs/RELEASE_ROUTINE_CHECKLIST.md` و `docs/yadin-backup.json` با نسخه `1.79.0` (کد نسخه: `92`).
+
+---
+
 ### [نسخه ۱.۷۸.۰] - ۲۰۲۶-۱۰-۲۹ (۱۴۰۵/۰۸/۰۷)
 ### پالایش جامع سطح «آسان» و انتقال ۱,۵۵۶ مفهوم (اصطلاحات فنی خودرو و آیین‌نامه رانندگی DGT، کلمات کم‌کاربرد گیاهی و تخصصی مانند `canónigos`، تله‌های آوایی بین‌المللی مانند `trayectoria` و `fábrica`، و دوستان دروغین با فارسی مانند `furgón`، `saco` و `bomba`) به سطح «سخت» (`HARD`) در هر دو جهت (`NORMAL` و `REVERSE`) (کد نسخه: ۹۱)
 - **ویژگی‌های جدید و کالیبراسیون زبان‌شناختی بانک واژگان (Features & Seed Calibration):**

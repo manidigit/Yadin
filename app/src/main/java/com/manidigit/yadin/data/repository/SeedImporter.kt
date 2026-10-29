@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7875_v1.78.0"
+        const val CURRENT_SEED_VERSION = "7875_v1.79.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -539,10 +539,8 @@ class SeedImporter(
                                     existingDiff.consecutiveCorrect != 0 ||
                                     existingDiff.consecutiveWrong != 0
                             )
-                            val isPracticedSeedDifficultyUpgrade = key in practicedLearningKeys && (
-                                seedDiff.current.ordinal > existingDiff.current.ordinal ||
-                                    (seedDiff.current == VocabularyDifficulty.HARD && existingDiff.current != VocabularyDifficulty.HARD)
-                            )
+                            val isPracticedSeedDifficultyUpgrade = key in practicedLearningKeys &&
+                                seedDiff.current.ordinal > existingDiff.current.ordinal
                             if (isUnpracticedUpdate || isPracticedSeedDifficultyUpgrade) {
                                 updatedSeedDiffBatch.add(
                                     existingDiff.copy(
