@@ -745,4 +745,13 @@ libro: کتاب</string>
     <string name="audit_alt_meaning_fmt">فرم/معنی دیگر: %1$s (%2$s)</string>
     <string name="audit_alt_form_fmt">فرم جایگزین: %1$s</string>
     <string name="percent_fmt">%1$s٪</string>
+    <string name="flashcard_hint_btn">راهنمایی</string>
+    <string name="flashcard_hint_tooltip">راهنمایی و سرنخ واژه</string>
+    <string name="flashcard_hint_dialog_title">راهنمایی و سرنخ یادآوری</string>
+    <string name="flashcard_hint_clue_label">سرنخ یادآوری پاسخ:</string>
+    <string name="flashcard_hint_structure_fmt">شروع با «%1$s» • %2$s کلمه (%3$s حرف)</string>
+    <string name="flashcard_hint_meanings_count_fmt">تعداد معانی ثبت‌شده: %1$s معنی</string>
+    <string name="flashcard_hint_context_clue_label">توضیح کمکی مفهوم:</string>
+    <string name="flashcard_hint_reveal_more">سرنخ بیشتر (حرف بعدی)</string>
+    <string name="flashcard_hint_inline_prefix">سرنخ: %1$s</string>
 </resources>

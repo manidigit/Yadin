@@ -84,6 +84,7 @@ fun QuizScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     var showHelpDialog by remember { mutableStateOf(false) }
     var showExitConfirmDialog by remember { mutableStateOf(false) }
+    var hintRevealCount by remember { mutableStateOf(0) }
 
     androidx.activity.compose.BackHandler {
         showExitConfirmDialog = true
@@ -109,6 +110,8 @@ fun QuizScreen(
 
     LaunchedEffect(currentIndex, q.conceptId) {
         scrollState.scrollTo(0)
+        showHelpDialog = false
+        hintRevealCount = 0
         if (ttsEnabled && ttsAutoPlay) {
             val promptLang = if (q.direction == CardDirection.NORMAL) "es" else "fa"
             com.manidigit.yadin.ui.util.TtsManager.speak(context, q.promptText, promptLang)
@@ -487,6 +490,12 @@ fun QuizScreen(
     }
 
     if (showHelpDialog) {
+        val activeHintInfo = remember(q.conceptId, q.correctAnswer, hintRevealCount) {
+            buildFlashcardHintInfo(
+                rawTranslation = q.correctAnswer,
+                revealCount = hintRevealCount.coerceAtLeast(1)
+            )
+        }
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
             confirmButton = {
@@ -529,6 +538,86 @@ fun QuizScreen(
                             fontWeight = FontWeight.Bold,
                             color = colors.primary
                         )
+                    }
+
+                    if (activeHintInfo != null) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.warning.copy(alpha = 0.10f))
+                                .border(1.dp, colors.warning.copy(alpha = 0.32f), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.flashcard_hint_clue_label),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.warning
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.flashcard_hint_structure_fmt,
+                                    activeHintInfo.firstLetter,
+                                    activeHintInfo.wordCount.formatDigits(),
+                                    activeHintInfo.letterCount.formatDigits()
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
+
+                            val isTargetLtr = (q.direction == CardDirection.REVERSE) || !TextUtilities.isRtlText(activeHintInfo.coreAnswer)
+                            CompositionLocalProvider(LocalLayoutDirection provides (if (isTargetLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                                Text(
+                                    text = activeHintInfo.maskedPreview,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        textDirection = if (isTargetLtr) TextDirection.Ltr else TextDirection.Rtl
+                                    ),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = colors.onSurface,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 2.dp)
+                                )
+                            }
+
+                            if (hintRevealCount.coerceAtLeast(1) < activeHintInfo.maxRevealableLetters) {
+                                TextButton(
+                                    onClick = { hintRevealCount = hintRevealCount.coerceAtLeast(1) + 1 }
+                                ) {
+                                    Icon(
+                                        imageVector = YadinIcons.hintLightbulb,
+                                        contentDescription = null,
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.flashcard_hint_reveal_more),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primary
+                                    )
+                                }
+                            }
+                        }
+
+                        if (!activeHintInfo.parentheticalClue.isNullOrBlank()) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = stringResource(R.string.flashcard_hint_context_clue_label),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.onSurfaceVariant
+                                )
+                                Text(
+                                    text = activeHintInfo.parentheticalClue,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.onSurface
+                                )
+                            }
+                        }
                     }
 
                     if (!q.note.isNullOrBlank()) {

@@ -745,4 +745,13 @@ libro: book</string>
     <string name="audit_alt_meaning_fmt">Other form/meaning: %1$s (%2$s)</string>
     <string name="audit_alt_form_fmt">Alternative form: %1$s</string>
     <string name="percent_fmt">%1$s%%</string>
+    <string name="flashcard_hint_btn">Hint</string>
+    <string name="flashcard_hint_tooltip">Word hint &amp; memory clue</string>
+    <string name="flashcard_hint_dialog_title">Word Hint &amp; Memory Clue</string>
+    <string name="flashcard_hint_clue_label">Answer Memory Clue:</string>
+    <string name="flashcard_hint_structure_fmt">Starts with &quot;%1$s&quot; • %2$s words (%3$s letters)</string>
+    <string name="flashcard_hint_meanings_count_fmt">Recorded meanings: %1$s</string>
+    <string name="flashcard_hint_context_clue_label">Contextual Clue:</string>
+    <string name="flashcard_hint_reveal_more">More clue (next letter)</string>
+    <string name="flashcard_hint_inline_prefix">Clue: %1$s</string>
 </resources>

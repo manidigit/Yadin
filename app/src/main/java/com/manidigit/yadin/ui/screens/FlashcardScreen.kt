@@ -72,8 +72,76 @@ import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
+
+internal data class FlashcardHintInfo(
+    val coreAnswer: String,
+    val firstLetter: String,
+    val wordCount: Int,
+    val letterCount: Int,
+    val maskedPreview: String,
+    val maxRevealableLetters: Int,
+    val parentheticalClue: String?
+)
+
+internal fun buildFlashcardHintInfo(
+    rawTranslation: String?,
+    revealCount: Int
+): FlashcardHintInfo? {
+    if (rawTranslation.isNullOrBlank()) return null
+    val trimmed = rawTranslation.trim()
+    val parenRegex = Regex("\\(([^()]+)\\)")
+    val parenMatches = parenRegex.findAll(trimmed)
+        .map { it.groupValues[1].trim() }
+        .filter { it.isNotEmpty() }
+        .toList()
+    val stripped = parenRegex.replace(trimmed, "").replace(Regex("\\s+"), " ").trim()
+    val core = if (stripped.isNotEmpty()) stripped else trimmed
+    val parentheticalClue = if (stripped.isNotEmpty() && parenMatches.isNotEmpty()) {
+        parenMatches.joinToString(" • ")
+    } else {
+        null
+    }
+
+    val words = core.split(Regex("\\s+")).filter { it.isNotBlank() }
+    val wordCount = words.size.coerceAtLeast(1)
+    val letterCount = core.count { !it.isWhitespace() }
+    val firstChar = core.firstOrNull { !it.isWhitespace() }?.toString() ?: ""
+    val maxRevealable = (letterCount - 1).coerceAtLeast(1)
+    val effectiveReveal = revealCount.coerceIn(1, maxRevealable)
+
+    var revealedSoFar = 0
+    val maskedWords = words.map { word ->
+        word.map { ch ->
+            if (ch.isLetterOrDigit()) {
+                if (revealedSoFar < effectiveReveal) {
+                    revealedSoFar++
+                    ch.toString()
+                } else {
+                    "•"
+                }
+            } else {
+                ch.toString()
+            }
+        }.joinToString(" ")
+    }
+    val maskedPreview = maskedWords.joinToString("   ")
+
+    return FlashcardHintInfo(
+        coreAnswer = core,
+        firstLetter = firstChar,
+        wordCount = wordCount,
+        letterCount = letterCount,
+        maskedPreview = maskedPreview,
+        maxRevealableLetters = maxRevealable,
+        parentheticalClue = parentheticalClue
+    )
+}
 
 @Composable
 fun FlashcardScreen(
@@ -96,6 +164,8 @@ fun FlashcardScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
 
     var showExitConfirmDialog by remember { mutableStateOf(false) }
+    var showHelpDialog by remember { mutableStateOf(false) }
+    var hintRevealCount by remember { mutableStateOf(0) }
 
     if (cards.isEmpty() || currentIndex >= cards.size) {
         Box(
@@ -170,9 +240,25 @@ fun FlashcardScreen(
 
     LaunchedEffect(currentIndex) {
         dragOffset = 0f
+        showHelpDialog = false
+        hintRevealCount = 0
         frontScrollState.scrollTo(0)
         backScrollState.scrollTo(0)
         rotationAnimatable.snapTo(0f)
+    }
+
+    val activeHintInfo = remember(card.conceptId, card.targetTranslations, hintRevealCount) {
+        buildFlashcardHintInfo(
+            rawTranslation = card.targetTranslations.firstOrNull(),
+            revealCount = hintRevealCount.coerceAtLeast(1)
+        )
+    }
+
+    val openHintDialog = {
+        if (hintRevealCount == 0) {
+            hintRevealCount = 1
+        }
+        showHelpDialog = true
     }
 
     LaunchedEffect(isFlipped) {
@@ -296,13 +382,18 @@ fun FlashcardScreen(
                         showCategory = showCategory,
                         ttsEnabled = ttsEnabled,
                         frontScrollState = frontScrollState,
-                        colors = colors
+                        colors = colors,
+                        inlineHintText = if (hintRevealCount > 0) activeHintInfo?.maskedPreview else null,
+                        onShowHint = openHintDialog
                     )
                 } else {
                     FlashcardBackFace(
                         card = card,
+                        showCategory = showCategory,
+                        ttsEnabled = ttsEnabled,
                         backScrollState = backScrollState,
-                        colors = colors
+                        colors = colors,
+                        onShowHint = openHintDialog
                     )
                 }
             }
@@ -466,26 +557,262 @@ fun FlashcardScreen(
                 }
             }
         } else {
-            Button(
-                onClick = onFlip,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = YadinIcons.flipCard,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.flashcard_show_answer), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                OutlinedButton(
+                    onClick = openHintDialog,
+                    modifier = Modifier
+                        .weight(0.36f)
+                        .height(48.dp)
+                        .testTag("flashcard_hint_button"),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = colors.warning.copy(alpha = 0.10f),
+                        contentColor = colors.onSurface
+                    ),
+                    border = BorderStroke(1.dp, colors.warning.copy(alpha = 0.45f))
+                ) {
+                    Icon(
+                        imageVector = YadinIcons.hintLightbulb,
+                        contentDescription = null,
+                        tint = colors.warning,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = stringResource(R.string.flashcard_hint_btn),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.5.sp,
+                        maxLines = 1
+                    )
+                }
+
+                Button(
+                    onClick = onFlip,
+                    modifier = Modifier
+                        .weight(0.64f)
+                        .height(48.dp)
+                        .testTag("flashcard_show_answer_button"),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary
+                    )
+                ) {
+                    Icon(
+                        imageVector = YadinIcons.flipCard,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.flashcard_show_answer),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        maxLines = 1
+                    )
+                }
             }
         }
+    }
+
+    if (showHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showHelpDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showHelpDialog = false }) {
+                    Text(
+                        text = stringResource(R.string.action_close),
+                        color = colors.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = YadinIcons.hintLightbulb,
+                        contentDescription = null,
+                        tint = colors.warning
+                    )
+                    Text(
+                        text = stringResource(R.string.flashcard_hint_dialog_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val isHintSourceLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CompositionLocalProvider(LocalLayoutDirection provides (if (isHintSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                            Text(
+                                text = card.sourceText,
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    textDirection = if (isHintSourceLtr) TextDirection.Ltr else TextDirection.Rtl
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                color = colors.primary,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
+                        SpeakButton(text = card.sourceText, languageCode = frontLang, enabled = ttsEnabled)
+                    }
+
+                    if (activeHintInfo != null) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.warning.copy(alpha = 0.10f))
+                                .border(1.dp, colors.warning.copy(alpha = 0.32f), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.flashcard_hint_clue_label),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.warning
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.flashcard_hint_structure_fmt,
+                                    activeHintInfo.firstLetter,
+                                    activeHintInfo.wordCount.formatDigits(),
+                                    activeHintInfo.letterCount.formatDigits()
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
+                            if (card.targetTranslations.size > 1) {
+                                Text(
+                                    text = stringResource(
+                                        R.string.flashcard_hint_meanings_count_fmt,
+                                        card.targetTranslations.size.formatDigits()
+                                    ),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colors.onSurfaceVariant
+                                )
+                            }
+
+                            val isTargetLtr = (card.direction == CardDirection.REVERSE) || !TextUtilities.isRtlText(activeHintInfo.coreAnswer)
+                            CompositionLocalProvider(LocalLayoutDirection provides (if (isTargetLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                                Text(
+                                    text = activeHintInfo.maskedPreview,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        textDirection = if (isTargetLtr) TextDirection.Ltr else TextDirection.Rtl
+                                    ),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = colors.onSurface,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 2.dp)
+                                )
+                            }
+
+                            if (hintRevealCount < activeHintInfo.maxRevealableLetters) {
+                                TextButton(
+                                    onClick = { hintRevealCount++ },
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                    modifier = Modifier.testTag("flashcard_reveal_more_hint_button")
+                                ) {
+                                    Icon(
+                                        imageVector = YadinIcons.hintLightbulb,
+                                        contentDescription = null,
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.flashcard_hint_reveal_more),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primary
+                                    )
+                                }
+                            }
+                        }
+
+                        if (!activeHintInfo.parentheticalClue.isNullOrBlank()) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = stringResource(R.string.flashcard_hint_context_clue_label),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.onSurfaceVariant
+                                )
+                                Text(
+                                    text = activeHintInfo.parentheticalClue,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    if (!card.note.isNullOrBlank()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = stringResource(R.string.quiz_grammar_notes),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onSurfaceVariant
+                            )
+                            Text(
+                                text = card.note,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.onSurface
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(R.string.quiz_no_notes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+
+                    if (card.categoryName != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.quiz_category_label),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSurfaceVariant
+                            )
+                            Text(
+                                text = card.categoryName,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.secondary
+                            )
+                        }
+                    }
+                }
+            },
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 
     if (showExitConfirmDialog) {
@@ -572,7 +899,9 @@ private fun FlashcardFrontFace(
     showCategory: Boolean,
     ttsEnabled: Boolean,
     frontScrollState: ScrollState,
-    colors: YadinColors
+    colors: YadinColors,
+    inlineHintText: String? = null,
+    onShowHint: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -602,13 +931,35 @@ private fun FlashcardFrontFace(
             } else {
                 Spacer(modifier = Modifier.size(1.dp))
             }
-            val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
-            SpeakButton(text = card.sourceText, languageCode = frontLang, enabled = ttsEnabled)
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(
+                    onClick = onShowHint,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(colors.surfaceVariant)
+                        .testTag("flashcard_front_help_button")
+                ) {
+                    Icon(
+                        imageVector = YadinIcons.helpGuide,
+                        contentDescription = stringResource(R.string.flashcard_hint_tooltip),
+                        tint = colors.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
+                SpeakButton(text = card.sourceText, languageCode = frontLang, enabled = ttsEnabled)
+            }
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .weight(1f, fill = false)
                 .verticalScroll(frontScrollState)
@@ -629,6 +980,37 @@ private fun FlashcardFrontFace(
                     color = colors.onSurface,
                     textAlign = TextAlign.Center
                 )
+            }
+
+            if (!inlineHintText.isNullOrBlank()) {
+                val isHintLtr = (card.direction == CardDirection.REVERSE) || !TextUtilities.isRtlText(inlineHintText)
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.warning.copy(alpha = 0.12f))
+                        .border(1.dp, colors.warning.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                        .clickable { onShowHint() }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = YadinIcons.hintLightbulb,
+                        contentDescription = null,
+                        tint = colors.warning,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    CompositionLocalProvider(LocalLayoutDirection provides (if (isHintLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                        Text(
+                            text = stringResource(R.string.flashcard_hint_inline_prefix, inlineHintText),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                textDirection = if (isHintLtr) TextDirection.Ltr else TextDirection.Rtl
+                            ),
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface
+                        )
+                    }
+                }
             }
         }
 
@@ -654,8 +1036,11 @@ private fun FlashcardFrontFace(
 @Composable
 private fun FlashcardBackFace(
     card: ReviewCard,
+    showCategory: Boolean,
+    ttsEnabled: Boolean,
     backScrollState: ScrollState,
-    colors: YadinColors
+    colors: YadinColors,
+    onShowHint: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -665,15 +1050,68 @@ private fun FlashcardBackFace(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        val isSourceLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
-        CompositionLocalProvider(LocalLayoutDirection provides (if (isSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
-            Text(
-                text = card.sourceText,
-                style = MaterialTheme.typography.titleMedium.copy(textDirection = if (isSourceLtr) TextDirection.Ltr else TextDirection.Rtl),
-                color = colors.primary,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
-            )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (showCategory && card.categoryName != null) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.surfaceVariant)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = card.categoryName,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.size(1.dp))
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(
+                        onClick = onShowHint,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceVariant)
+                            .testTag("flashcard_back_help_button")
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.helpGuide,
+                            contentDescription = stringResource(R.string.flashcard_hint_tooltip),
+                            tint = colors.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    val frontLang = if (card.direction == CardDirection.NORMAL) "es" else "fa"
+                    SpeakButton(text = card.sourceText, languageCode = frontLang, enabled = ttsEnabled)
+                }
+            }
+
+            val isSourceLtr = (card.direction == CardDirection.NORMAL) || !TextUtilities.isRtlText(card.sourceText)
+            CompositionLocalProvider(LocalLayoutDirection provides (if (isSourceLtr) LayoutDirection.Ltr else LayoutDirection.Rtl)) {
+                Text(
+                    text = card.sourceText,
+                    style = MaterialTheme.typography.titleMedium.copy(textDirection = if (isSourceLtr) TextDirection.Ltr else TextDirection.Rtl),
+                    color = colors.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
         Column(
@@ -741,4 +1179,5 @@ private fun FlashcardBackFace(
         )
     }
 }
+
 
