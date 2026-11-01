@@ -512,7 +512,7 @@ fun ImportScreen(
             }
 
             // Unified scrollable LazyColumn containing settings, warnings, and all parsed entry cards
-            val itemsNeedingReview = parseResult.entries.count { it.confidence < 0.98 || it.possibleCorrection != null }
+            val itemsNeedingReview = parseResult.entries.count { it.needsManualReview() }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -714,7 +714,7 @@ fun ImportScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (onNavigateToReview != null && parseResult.entries.isNotEmpty()) {
+                    if (onNavigateToReview != null && itemsNeedingReview > 0) {
                         OutlinedButton(
                             onClick = onNavigateToReview,
                             modifier = Modifier
@@ -725,7 +725,7 @@ fun ImportScreen(
                             Icon(YadinIcons.manualReview, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = stringResource(R.string.import_review_before_save, parseResult.entries.size.formatDigits()),
+                                text = stringResource(R.string.import_review_before_save, itemsNeedingReview.formatDigits()),
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp
                             )

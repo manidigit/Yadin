@@ -166,7 +166,10 @@ data class ParsedEntry(
     val breakdowns: List<VocabularyBreakdownEntry> = emptyList(),
     val relations: List<VocabularyRelationEntry> = emptyList(),
     val possibleCorrection: String? = null
-)
+) {
+    fun needsManualReview(): Boolean =
+        confidence < 0.90 || possibleCorrection != null || translations.isEmpty() || translations.all { it.isBlank() }
+}
 
 data class VocabularyVariantEntry(
     val sourceText: String,

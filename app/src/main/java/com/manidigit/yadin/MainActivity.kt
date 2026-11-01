@@ -537,15 +537,19 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val defaultAutoReason = androidx.compose.ui.res.stringResource(R.string.import_review_auto_extracted)
             val context = LocalContext.current
             val reviewItems = remember(currentResult) {
-                currentResult?.entries?.mapIndexed { index, entry ->
+                currentResult?.entries?.mapIndexedNotNull { index, entry ->
+                    if (!entry.needsManualReview()) return@mapIndexedNotNull null
+                    val lineWarning = currentResult.warnings.firstOrNull { it.lineNumber == entry.lineNumber }?.message
                     com.manidigit.yadin.ui.screens.ReviewItem(
                         id = "${index}_${entry.lineNumber}_${entry.sourceText.hashCode()}",
+                        originalIndex = index,
                         sourceText = entry.sourceText,
                         translationText = entry.translations.joinToString("، "),
                         noteText = entry.note ?: "",
                         confidence = (entry.confidence * 100).toInt(),
                         reason = entry.possibleCorrection?.let { context.getString(R.string.import_review_suggestion_fmt, it) }
-                            ?: (entry.note ?: if (entry.confidence < 0.8f) defaultManualReason else defaultAutoReason),
+                            ?: lineWarning
+                            ?: (entry.note ?: if (entry.confidence < 0.90) defaultManualReason else defaultAutoReason),
                         originalEntry = entry
                     )
                 } ?: emptyList()
@@ -553,11 +557,22 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
 
             com.manidigit.yadin.ui.screens.ImportReviewScreen(
                 itemsToReview = reviewItems,
-                onApproveItems = { approvedEntries: List<com.manidigit.yadin.domain.model.ParsedEntry> ->
+                onApproveItems = { approvedByIndex: Map<Int, com.manidigit.yadin.domain.model.ParsedEntry> ->
                     if (currentResult != null) {
+                        val reviewedIndices = reviewItems.map { it.originalIndex }.toSet()
+                        val reviewedLineNumbers = reviewItems.mapNotNull { it.originalEntry?.lineNumber }.toSet()
+                        val mergedEntries = currentResult.entries.mapIndexedNotNull { index, entry ->
+                            if (index in reviewedIndices) {
+                                approvedByIndex[index]
+                            } else {
+                                entry
+                            }
+                        }
+                        val remainingWarnings = currentResult.warnings.filterNot { it.lineNumber in reviewedLineNumbers }
                         viewModel.setParseResult(
                             currentResult.copy(
-                                entries = approvedEntries
+                                entries = mergedEntries,
+                                warnings = remainingWarnings
                             )
                         )
                     }

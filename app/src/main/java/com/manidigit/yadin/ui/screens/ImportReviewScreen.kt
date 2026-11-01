@@ -53,6 +53,7 @@ import com.manidigit.yadin.ui.util.formatDigits
 
 data class ReviewItem(
     val id: String,
+    val originalIndex: Int = -1,
     var sourceText: String,
     var translationText: String,
     var noteText: String = "",
@@ -64,14 +65,14 @@ data class ReviewItem(
 @Composable
 fun ImportReviewScreen(
     itemsToReview: List<ReviewItem>,
-    onApproveItems: (List<ParsedEntry>) -> Unit,
+    onApproveItems: (Map<Int, ParsedEntry>) -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
     val pendingList = remember { mutableStateListOf<ReviewItem>().apply { addAll(itemsToReview) } }
-    val approvedList = remember { mutableStateListOf<ParsedEntry>() }
+    val approvedList = remember { mutableStateListOf<Pair<Int, ParsedEntry>>() }
 
     Column(
         modifier = Modifier
@@ -123,20 +124,28 @@ fun ImportReviewScreen(
                     ReviewItemCard(
                         item = item,
                         onApprove = { approved ->
+                            val cleanSource = approved.sourceText.trim()
                             val newTranslations = TextUtilities.splitTranslations(approved.translationText)
+                                .map { it.trim() }
+                                .filter { it.isNotBlank() }
                             val newNote = approved.noteText.ifBlank { null }
-                            approvedList.add(
-                                approved.originalEntry?.copy(
-                                    sourceText = approved.sourceText,
+                            if (cleanSource.isNotBlank() && newTranslations.isNotEmpty()) {
+                                val updatedEntry = approved.originalEntry?.copy(
+                                    sourceText = cleanSource,
                                     translations = newTranslations,
-                                    note = newNote
+                                    note = newNote,
+                                    confidence = 1.0,
+                                    possibleCorrection = null
                                 ) ?: ParsedEntry(
-                                    sourceText = approved.sourceText,
+                                    sourceText = cleanSource,
                                     translations = newTranslations,
-                                    note = newNote
+                                    note = newNote,
+                                    confidence = 1.0,
+                                    possibleCorrection = null
                                 )
-                            )
-                            pendingList.remove(item)
+                                approvedList.add(approved.originalIndex to updatedEntry)
+                                pendingList.remove(item)
+                            }
                         },
                         onReject = {
                             pendingList.remove(item)
@@ -165,23 +174,35 @@ fun ImportReviewScreen(
 
             Button(
                 onClick = {
-                    val remainingEntries = pendingList.map {
-                        val newTranslations = TextUtilities.splitTranslations(it.translationText)
-                        val newNote = it.noteText.ifBlank { null }
-                        it.originalEntry?.copy(
-                            sourceText = it.sourceText,
-                            translations = newTranslations,
-                            note = newNote
-                        ) ?: ParsedEntry(
-                            sourceText = it.sourceText,
-                            translations = newTranslations,
-                            note = newNote
-                        )
+                    val finalMap = mutableMapOf<Int, ParsedEntry>()
+                    approvedList.forEach { (idx, entry) ->
+                        finalMap[idx] = entry
                     }
-                    val finalApproved = approvedList + remainingEntries
-                    onApproveItems(finalApproved)
+                    pendingList.forEach { it ->
+                        val cleanSource = it.sourceText.trim()
+                        val newTranslations = TextUtilities.splitTranslations(it.translationText)
+                            .map { t -> t.trim() }
+                            .filter { t -> t.isNotBlank() }
+                        val newNote = it.noteText.ifBlank { null }
+                        if (cleanSource.isNotBlank() && newTranslations.isNotEmpty()) {
+                            finalMap[it.originalIndex] = it.originalEntry?.copy(
+                                sourceText = cleanSource,
+                                translations = newTranslations,
+                                note = newNote,
+                                confidence = 1.0,
+                                possibleCorrection = null
+                            ) ?: ParsedEntry(
+                                sourceText = cleanSource,
+                                translations = newTranslations,
+                                note = newNote,
+                                confidence = 1.0,
+                                possibleCorrection = null
+                            )
+                        }
+                    }
+                    onApproveItems(finalMap)
                 },
-                enabled = approvedList.isNotEmpty() || pendingList.isNotEmpty(),
+                enabled = itemsToReview.isNotEmpty(),
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),

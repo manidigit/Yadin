@@ -570,7 +570,14 @@ object VocabularyParser {
         return trimmed.replace("\"\"", "\"")
     }
 
+    private fun hasUnbalancedParentheses(s: String): Boolean {
+        val openParen = s.count { it == '(' || it == '（' } - s.count { it == ')' || it == '）' }
+        val openBracket = s.count { it == '[' } - s.count { it == ']' }
+        return openParen != 0 || openBracket != 0
+    }
+
     private fun isCrossLanguagePair(left: String, right: String): Boolean {
+        if (hasUnbalancedParentheses(left) || hasUnbalancedParentheses(right)) return false
         val leftLatin = hasLatin(left)
         val rightPersian = hasPersian(right)
         val leftPersian = hasPersian(left)
@@ -600,7 +607,7 @@ object VocabularyParser {
             if (idx in 1 until s.length - arrow.length) {
                 val left = cleanCsvField(s.substring(0, idx))
                 val right = cleanCsvField(s.substring(idx + arrow.length))
-                if (left.isNotBlank() && right.isNotBlank()) {
+                if (left.isNotBlank() && right.isNotBlank() && !hasUnbalancedParentheses(left) && !hasUnbalancedParentheses(right)) {
                     return SplitResult(left, right, "arrow", 1.0)
                 }
             }
@@ -639,7 +646,7 @@ object VocabularyParser {
             if (idx in 1 until s.length - delimiter.length) {
                 val left = cleanCsvField(s.substring(0, idx))
                 val right = cleanCsvField(s.substring(idx + delimiter.length))
-                if (left.isNotBlank() && right.isNotBlank()) {
+                if (left.isNotBlank() && right.isNotBlank() && !hasUnbalancedParentheses(left) && !hasUnbalancedParentheses(right)) {
                     val leftHasLatin = hasLatin(left)
                     val rightHasPersian = hasPersian(right)
                     val leftHasPersian = hasPersian(left)
