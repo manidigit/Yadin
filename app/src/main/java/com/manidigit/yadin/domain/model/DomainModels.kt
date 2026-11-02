@@ -216,7 +216,8 @@ data class ImportSummary(
     val addedCount: Int,
     val updatedCount: Int,
     val skippedCount: Int,
-    val categoryName: String? = null
+    val categoryName: String? = null,
+    val difficulty: VocabularyDifficulty? = null
 )
 
 data class StatisticsSummary(

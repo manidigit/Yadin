@@ -607,3 +607,138 @@ fun ExposedEntryTypeDropdown(
     }
 }
 
+@Composable
+fun ExposedDifficultyDropdown(
+    selectedDifficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty,
+    onSelectDifficulty: (com.manidigit.yadin.domain.model.VocabularyDifficulty) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null
+) {
+    val colors = LocalYadinColors.current
+    var expanded by remember { mutableStateOf(false) }
+
+    val resolvedLabel = label ?: stringResource(R.string.import_default_difficulty_label)
+
+    val difficultyOptions = listOf(
+        com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY to stringResource(R.string.difficulty_easy),
+        com.manidigit.yadin.domain.model.VocabularyDifficulty.MEDIUM to stringResource(R.string.difficulty_medium),
+        com.manidigit.yadin.domain.model.VocabularyDifficulty.HARD to stringResource(R.string.difficulty_hard),
+        com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD to stringResource(R.string.difficulty_very_hard)
+    )
+
+    val displayText = difficultyOptions.firstOrNull { it.first == selectedDifficulty }?.second
+        ?: stringResource(R.string.difficulty_easy)
+    val icon = getDifficultyIcon(selectedDifficulty)
+    val accentColor = getDifficultyColor(selectedDifficulty, colors)
+
+    val shape = RoundedCornerShape(12.dp)
+    val bgColor = accentColor.copy(alpha = 0.10f)
+    val borderColor = accentColor.copy(alpha = 0.55f)
+
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(shape)
+                .background(bgColor)
+                .border(1.2.dp, borderColor, shape)
+                .clickable { expanded = true }
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = resolvedLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 9.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = displayText,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = accentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 11.5.sp
+                    )
+                }
+            }
+
+            Icon(
+                imageVector = YadinIcons.dropdown,
+                contentDescription = null,
+                tint = accentColor,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(colors.surface)
+        ) {
+            difficultyOptions.forEach { (diff, diffLabel) ->
+                val isSelected = diff == selectedDifficulty
+                val itemColor = getDifficultyColor(diff, colors)
+                val itemIcon = getDifficultyIcon(diff)
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = itemIcon,
+                                    contentDescription = null,
+                                    tint = itemColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = diffLabel,
+                                    color = if (isSelected) itemColor else colors.onSurface,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = YadinIcons.check,
+                                    contentDescription = null,
+                                    tint = itemColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    onClick = {
+                        onSelectDifficulty(diff)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+

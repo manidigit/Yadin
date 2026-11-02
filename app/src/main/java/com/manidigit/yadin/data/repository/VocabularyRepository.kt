@@ -432,7 +432,8 @@ class VocabularyRepository(
         note: String? = null,
         direction: CardDirection = CardDirection.NORMAL,
         entryType: EntryType = EntryType.WORD,
-        categoryIds: List<String> = emptyList()
+        categoryIds: List<String> = emptyList(),
+        initialDifficulty: VocabularyDifficulty = VocabularyDifficulty.EASY
     ): Result<String> {
         val isEn = java.util.Locale.getDefault().language == "en"
         val cleanSource = sourceText.trim()
@@ -504,6 +505,7 @@ class VocabularyRepository(
                         categoryIds = categoryIds
                     )
                     return@withTransaction if (updateRes.isSuccess) {
+                        updateConceptDifficulty(existingConcept.id, initialDifficulty)
                         Result.success(existingConcept.id)
                     } else {
                         val fallbackErr = if (isEn) "Error reactivating word" else "خطا در فعال‌سازی مجدد واژه"
@@ -575,13 +577,15 @@ class VocabularyRepository(
                 id = UUID.randomUUID().toString(),
                 conceptId = conceptId,
                 direction = CardDirection.NORMAL,
-                current = VocabularyDifficulty.EASY
+                current = initialDifficulty,
+                hasReachedVeryHard = initialDifficulty == VocabularyDifficulty.VERY_HARD
             )
             val reverseDiff = DifficultyStateEntity(
                 id = UUID.randomUUID().toString(),
                 conceptId = conceptId,
                 direction = CardDirection.REVERSE,
-                current = VocabularyDifficulty.EASY
+                current = initialDifficulty,
+                hasReachedVeryHard = initialDifficulty == VocabularyDifficulty.VERY_HARD
             )
 
             conceptDao.insertConcept(concept)
@@ -860,11 +864,36 @@ class VocabularyRepository(
         return parts.joinToString("\n").ifBlank { null }
     }
 
+    private suspend fun updateConceptDifficulty(conceptId: String, difficulty: VocabularyDifficulty) {
+        for (dir in listOf(CardDirection.NORMAL, CardDirection.REVERSE)) {
+            val existing = learningDao.getDifficultyState(conceptId, dir)
+            if (existing != null) {
+                learningDao.updateDifficultyState(
+                    existing.copy(
+                        current = difficulty,
+                        hasReachedVeryHard = existing.hasReachedVeryHard || difficulty == VocabularyDifficulty.VERY_HARD
+                    )
+                )
+            } else {
+                learningDao.insertDifficultyState(
+                    DifficultyStateEntity(
+                        id = UUID.randomUUID().toString(),
+                        conceptId = conceptId,
+                        direction = dir,
+                        current = difficulty,
+                        hasReachedVeryHard = difficulty == VocabularyDifficulty.VERY_HARD
+                    )
+                )
+            }
+        }
+    }
+
     suspend fun importParsedEntries(
         entries: List<ParsedEntry>,
         policy: DuplicatePolicy,
         targetCategoryId: String? = null,
         direction: CardDirection = CardDirection.NORMAL,
+        targetDifficulty: VocabularyDifficulty = VocabularyDifficulty.EASY,
         onProgress: (Int, Int) -> Unit
     ): com.manidigit.yadin.domain.model.ImportSummary {
         val total = entries.size
@@ -998,6 +1027,7 @@ class VocabularyRepository(
                             )
                             if (res.isSuccess) {
                                 updatedCount++
+                                updateConceptDifficulty(existingContent.conceptId, targetDifficulty)
                                 registerSourceContentInIndex(existingContent.conceptId, cleanSource, enrichedNote)
                                 if (entryCategoryIds.size > 1) {
                                     entryCategoryIds.drop(1).forEach { extraCat ->
@@ -1064,6 +1094,9 @@ class VocabularyRepository(
                             )
                             if (res.isSuccess) {
                                 updatedCount++
+                                if (targetDifficulty != VocabularyDifficulty.EASY) {
+                                    updateConceptDifficulty(existingContent.conceptId, targetDifficulty)
+                                }
                                 registerSourceContentInIndex(existingContent.conceptId, finalSourceText, mergedNote)
                                 if (entryCategoryIds.size > 1) {
                                     entryCategoryIds.drop(1).forEach { extraCat ->
@@ -1078,7 +1111,8 @@ class VocabularyRepository(
                                 translations = entry.translations,
                                 categoryId = primaryCatId,
                                 note = enrichedNote,
-                                entryType = entry.entryType
+                                entryType = entry.entryType,
+                                initialDifficulty = targetDifficulty
                             )
                             if (res.isSuccess) {
                                 addedCount++
@@ -1099,7 +1133,8 @@ class VocabularyRepository(
                         translations = entry.translations,
                         categoryId = primaryCatId,
                         note = enrichedNote,
-                        entryType = entry.entryType
+                        entryType = entry.entryType,
+                        initialDifficulty = targetDifficulty
                     )
                     if (res.isSuccess) {
                         addedCount++
@@ -1122,7 +1157,8 @@ class VocabularyRepository(
             addedCount = addedCount,
             updatedCount = updatedCount,
             skippedCount = skippedCount,
-            categoryName = catName
+            categoryName = catName,
+            difficulty = targetDifficulty
         )
     }
 

@@ -368,10 +368,6 @@
     <string name="audit_applied_success">اصلاحات و ادغام‌ها با موفقیت در کتابخانه اعمال شد.</string>
     <string name="action_confirm_close">تأیید و بستن</string>
     <string name="audit_btn_retry">بررسی مجدد</string>
-    <string name="import_sample_amigo">amigo: دوست (مذکر)</string>
-    <string name="import_sample_casa">casa: خانه، منزل</string>
-    <string name="import_sample_libro">libro: کتاب</string>
-    <string name="import_sample_feliz">feliz: خوشحال، شاد</string>
     <string name="import_err_read_file">خطا در خواندن فایل: %1$s</string>
     <string name="import_summary_desc">عملیات ورود با موفقیت به پایان رسید و در پایگاه داده ثبت شد.</string>
     <string name="import_total_rows">کل ردیف‌های پردازش‌شده:</string>
@@ -381,12 +377,12 @@
     <string name="import_btn_new_batch">ورود دسته جدید</string>
     <string name="import_btn_view_library">مشاهده در کتابخانه</string>
     <string name="import_instructions">متن کلمات را در کادر زیر وارد کنید (پشتیبانی از فرمت دو نقطه : یا خط تیره - و جداکننده کاما):</string>
-    <string name="import_err_clipboard">خطا در خواندن کلیپ‌بورد: %1$s</string>
     <string name="import_err_file_picker">عدم امکان باز کردن انتخابگر فایل روی این دستگاه: %1$s</string>
     <string name="import_btn_select_file">انتخاب فایل</string>
     <string name="import_btn_clear">پاک</string>
-    <string name="import_btn_sample">نمونه</string>
     <string name="import_default_category_label">دسته‌بندی موضوعی برای این کلمات (اختیاری)</string>
+    <string name="import_default_difficulty_label">سطح سختی برای این کلمات</string>
+    <string name="import_difficulty_summary_label">سطح سختی انتخاب‌شده:</string>
     <string name="import_text_placeholder">متن کلمات را اینجا کپی یا بنویسید...
 مثال:
 amigo: دوست
@@ -624,7 +620,6 @@ libro: کتاب</string>
     <string name="habits_accuracy_fmt">%1$s٪ دقت</string>
     <string name="forecast_due_words">کلمه سررسید</string>
     <string name="forecast_all_clear">مرتب است</string>
-    <string name="import_btn_paste">چسباندن</string>
     <string name="import_warning_line_fmt">• خط %1$s («%2$s»): %3$s</string>
     <string name="parse_warning_fmt">خط %1$d («%2$s»): %3$s</string>
     <string name="relation_synonym">مترادف</string>

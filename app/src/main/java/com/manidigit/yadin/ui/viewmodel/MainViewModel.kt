@@ -502,8 +502,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * اجرای ورود گروهی با تضمین ریست وضعیت در بلوک finally (حل ISS-22).
      */
-    fun executeImport(policy: DuplicatePolicy, categoryId: String? = null, onComplete: () -> Unit = {}) {
-        libraryVm.executeImport(policy, categoryId, appLanguageDirection.value, onComplete)
+    fun executeImport(
+        policy: DuplicatePolicy,
+        categoryId: String? = null,
+        difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty = com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY,
+        onComplete: () -> Unit = {}
+    ) {
+        libraryVm.executeImport(policy, categoryId, appLanguageDirection.value, difficulty, onComplete)
     }
 
     // ==========================================

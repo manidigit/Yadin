@@ -368,10 +368,6 @@
     <string name="audit_applied_success">Modifications and merges were successfully applied to the library.</string>
     <string name="action_confirm_close">Confirm &amp; Close</string>
     <string name="audit_btn_retry">Re-audit</string>
-    <string name="import_sample_amigo">amigo: friend (male)</string>
-    <string name="import_sample_casa">casa: house, home</string>
-    <string name="import_sample_libro">libro: book</string>
-    <string name="import_sample_feliz">feliz: happy, cheerful</string>
     <string name="import_err_read_file">Error reading file: %1$s</string>
     <string name="import_summary_desc">Import operation completed successfully and saved to database.</string>
     <string name="import_total_rows">Total Processed Rows:</string>
@@ -381,12 +377,12 @@
     <string name="import_btn_new_batch">Import New Batch</string>
     <string name="import_btn_view_library">View in Library</string>
     <string name="import_instructions">Enter vocabulary text below (supports colon :, hyphen -, and comma separator):</string>
-    <string name="import_err_clipboard">Error reading clipboard: %1$s</string>
     <string name="import_err_file_picker">Could not open file picker on this device: %1$s</string>
     <string name="import_btn_select_file">Select File</string>
     <string name="import_btn_clear">Clear</string>
-    <string name="import_btn_sample">Sample</string>
     <string name="import_default_category_label">Topic category for these words (optional)</string>
+    <string name="import_default_difficulty_label">Difficulty level for these words</string>
+    <string name="import_difficulty_summary_label">Selected Difficulty:</string>
     <string name="import_text_placeholder">Paste or write vocabulary text here...
 Example:
 amigo: friend
@@ -624,7 +620,6 @@ libro: book</string>
     <string name="habits_accuracy_fmt">%1$s%% accuracy</string>
     <string name="forecast_due_words">Due words</string>
     <string name="forecast_all_clear">All clear</string>
-    <string name="import_btn_paste">Paste</string>
     <string name="import_warning_line_fmt">• Line %1$s («%2$s»): %3$s</string>
     <string name="parse_warning_fmt">Line %1$d («%2$s»): %3$s</string>
     <string name="relation_synonym">Synonym</string>

@@ -433,6 +433,7 @@ class LibraryViewModel(
         policy: DuplicatePolicy,
         categoryId: String? = null,
         direction: CardDirection = CardDirection.NORMAL,
+        difficulty: com.manidigit.yadin.domain.model.VocabularyDifficulty = com.manidigit.yadin.domain.model.VocabularyDifficulty.EASY,
         onComplete: () -> Unit = {}
     ) {
         val result = _parseResult.value ?: return
@@ -441,7 +442,7 @@ class LibraryViewModel(
             _importProgress.value = 0f
             _libraryErrorMessage.value = null
             try {
-                val summary = vocabularyRepo.importParsedEntries(result.entries, policy, categoryId, direction) { done, total ->
+                val summary = vocabularyRepo.importParsedEntries(result.entries, policy, categoryId, direction, difficulty) { done, total ->
                     if (total > 0) {
                         _importProgress.value = done.toFloat() / total
                     }

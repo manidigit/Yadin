@@ -45,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -62,7 +61,10 @@ import com.manidigit.yadin.domain.model.DuplicatePolicy
 import com.manidigit.yadin.domain.model.ImportSummary
 import com.manidigit.yadin.domain.model.ParseResult
 import com.manidigit.yadin.domain.model.ParsedEntry
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
+import com.manidigit.yadin.ui.components.DifficultyBadge
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
+import com.manidigit.yadin.ui.components.ExposedDifficultyDropdown
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
 import com.manidigit.yadin.ui.components.YadinSelectableChip
@@ -83,7 +85,7 @@ fun ImportScreen(
     importSummary: ImportSummary? = null,
     onParseText: (String) -> Unit,
     onParseResult: ((ParseResult) -> Unit)? = null,
-    onConfirmImport: (policy: DuplicatePolicy, categoryId: String?) -> Unit,
+    onConfirmImport: (policy: DuplicatePolicy, categoryId: String?, difficulty: VocabularyDifficulty) -> Unit,
     onResetParse: (() -> Unit)? = null,
     onGoToLibrary: () -> Unit = {},
     onAddNewCategory: ((String, (String) -> Unit) -> Unit)? = null,
@@ -91,24 +93,16 @@ fun ImportScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
     var fileLoadError by remember { mutableStateOf<String?>(null) }
 
     var inputText by remember { mutableStateOf("") }
-    var isShowingSample by remember { mutableStateOf(false) }
     var selectedPolicy by remember { mutableStateOf(DuplicatePolicy.MERGE) }
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    var selectedDifficulty by remember { mutableStateOf(VocabularyDifficulty.EASY) }
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
-
-    val sampleText = listOf(
-        stringResource(R.string.import_sample_amigo),
-        stringResource(R.string.import_sample_casa),
-        stringResource(R.string.import_sample_libro),
-        stringResource(R.string.import_sample_feliz)
-    ).joinToString("\n")
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -270,6 +264,16 @@ fun ImportScreen(
                                     Text(importSummary.categoryName, fontWeight = FontWeight.Bold, color = colors.primary)
                                 }
                             }
+                            if (importSummary.difficulty != null) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(stringResource(R.string.import_difficulty_summary_label), color = colors.onSurfaceVariant)
+                                    DifficultyBadge(difficulty = importSummary.difficulty)
+                                }
+                            }
                         }
 
                         // Action Buttons
@@ -280,7 +284,6 @@ fun ImportScreen(
                             OutlinedButton(
                                 onClick = {
                                     inputText = ""
-                                    isShowingSample = false
                                     onResetParse?.invoke()
                                 },
                                 modifier = Modifier
@@ -332,36 +335,13 @@ fun ImportScreen(
                     OutlinedButton(
                         onClick = {
                             try {
-                                val clip = clipboardManager.getText()?.text
-                                if (!clip.isNullOrBlank()) {
-                                    inputText = clip
-                                    isShowingSample = false
-                                }
-                            } catch (e: Exception) {
-                                fileLoadError = context.getString(R.string.import_err_clipboard, e.message ?: "")
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(42.dp),
-                        shape = RoundedCornerShape(dimensions.cornerSmall),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
-                    ) {
-                        Icon(YadinIcons.pasteClipboard, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.import_btn_paste), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            try {
                                 filePickerLauncher.launch(arrayOf("*/*"))
                             } catch (e: Exception) {
                                 fileLoadError = context.getString(R.string.import_err_file_picker, e.localizedMessage ?: "")
                             }
                         },
                         modifier = Modifier
-                            .weight(1.1f)
+                            .weight(1f)
                             .height(42.dp),
                         shape = RoundedCornerShape(dimensions.cornerSmall),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
@@ -375,10 +355,9 @@ fun ImportScreen(
                         OutlinedButton(
                             onClick = {
                                 inputText = ""
-                                isShowingSample = false
                             },
                             modifier = Modifier
-                                .weight(0.9f)
+                                .weight(0.7f)
                                 .height(42.dp),
                             shape = RoundedCornerShape(dimensions.cornerSmall),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
@@ -386,20 +365,6 @@ fun ImportScreen(
                             Icon(YadinIcons.clear, contentDescription = null, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(stringResource(R.string.import_btn_clear), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = {
-                                inputText = sampleText
-                                isShowingSample = true
-                            },
-                            modifier = Modifier
-                                .weight(0.9f)
-                                .height(42.dp),
-                            shape = RoundedCornerShape(dimensions.cornerSmall),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
-                        ) {
-                            Text(stringResource(R.string.import_btn_sample), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -443,11 +408,17 @@ fun ImportScreen(
                     label = stringResource(R.string.import_default_category_label)
                 )
 
+                // Difficulty selection BEFORE parsing
+                ExposedDifficultyDropdown(
+                    selectedDifficulty = selectedDifficulty,
+                    onSelectDifficulty = { selectedDifficulty = it },
+                    label = stringResource(R.string.import_default_difficulty_label)
+                )
+
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = {
                         inputText = it
-                        isShowingSample = false
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -459,7 +430,6 @@ fun ImportScreen(
                         if (inputText.isNotEmpty()) {
                             IconButton(onClick = {
                                 inputText = ""
-                                isShowingSample = false
                             }) {
                                 Icon(YadinIcons.clear, contentDescription = stringResource(R.string.action_clear))
                             }
@@ -535,6 +505,13 @@ fun ImportScreen(
                                 }
                             },
                             label = stringResource(R.string.import_default_category_label)
+                        )
+
+                        // Difficulty selection for imported words
+                        ExposedDifficultyDropdown(
+                            selectedDifficulty = selectedDifficulty,
+                            onSelectDifficulty = { selectedDifficulty = it },
+                            label = stringResource(R.string.import_default_difficulty_label)
                         )
 
                         // Duplicate policy selection
@@ -686,7 +663,8 @@ fun ImportScreen(
                 ) { _, entry ->
                     ParsedEntryCard(
                         entry = entry,
-                        categoryName = selectedCategory?.name
+                        categoryName = selectedCategory?.name,
+                        difficulty = selectedDifficulty
                     )
                 }
             }
@@ -733,7 +711,7 @@ fun ImportScreen(
                     }
 
                     Button(
-                        onClick = { onConfirmImport(selectedPolicy, selectedCategoryId) },
+                        onClick = { onConfirmImport(selectedPolicy, selectedCategoryId, selectedDifficulty) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -776,7 +754,8 @@ fun PolicyChip(
 @Composable
 fun ParsedEntryCard(
     entry: ParsedEntry,
-    categoryName: String? = null
+    categoryName: String? = null,
+    difficulty: VocabularyDifficulty = VocabularyDifficulty.EASY
 ) {
     val colors = LocalYadinColors.current
 
@@ -804,6 +783,7 @@ fun ParsedEntryCard(
                             color = colors.onSurface
                         )
                     }
+                    DifficultyBadge(difficulty = difficulty)
                     if (!categoryName.isNullOrBlank()) {
                         Box(
                             modifier = Modifier

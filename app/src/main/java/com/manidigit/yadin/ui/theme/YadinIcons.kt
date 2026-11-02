@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.DateRange
@@ -374,7 +373,6 @@ open class YadinIconSet {
     open val fileOpen: ImageVector = Icons.Default.FileOpen
     open val batchImport: ImageVector = Icons.Default.FileUpload
     open val saveFile: ImageVector = Icons.Default.SaveAlt
-    open val pasteClipboard: ImageVector = Icons.Default.ContentPaste
 
     // =========================================================================
     // ۱۱. تنظیمات، زبان، برند و ممیزی هوشمند (Settings, Language & Smart Audit)
@@ -550,7 +548,6 @@ object YadinIcons : YadinIconSet() {
     override val fileOpen: ImageVector get() = activeDelegate.fileOpen
     override val batchImport: ImageVector get() = activeDelegate.batchImport
     override val saveFile: ImageVector get() = activeDelegate.saveFile
-    override val pasteClipboard: ImageVector get() = activeDelegate.pasteClipboard
 
     override val brandSparkle: ImageVector get() = activeDelegate.brandSparkle
     override val smartAudit: ImageVector get() = activeDelegate.smartAudit

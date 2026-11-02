@@ -2,6 +2,22 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۸۴.۰] - ۲۰۲۶-۱۱-۰۲ (۱۴۰۵/۰۸/۱۱)
+### حذف دکمه‌های «چسباندن» و «نمونه» از تم و کد و افزودن منوی انتخاب سطح سختی کلمات در ورود گروهی (کد نسخه: ۹۷)
+- **ویژگی‌های جدید و بهبودهای رابط کاربری و ورود گروهی (Features & UI Enhancements):**
+  - **افزودن منوی کشویی انتخاب سطح سختی واژگان در ورود گروهی (`CategoryDropdown.kt`، `ImportScreen.kt`، `VocabularyRepository.kt`، `LibraryViewModel.kt` و `MainViewModel.kt`):**
+    - طراحی کامپوننت استاندارد `ExposedDifficultyDropdown` با همان ساختار و زبان بصری منوی انتخاب دسته‌بندی (`ExposedCategoryDropdown`) شامل هر ۴ سطح دشواری (**آسان** `EASY`، **متوسط** `MEDIUM`، **سخت** `HARD` و **خیلی سخت** `VERY_HARD`) به همراه آیکون و رنگ معنایی اختصاصی هر سطح از تم فعال یادین.
+    - قرارگیری منوی انتخاب سطح سختی در هر دو مرحله ورود گروهی (قبل از پردازش متن و در بخش پیش‌نمایش استخراج زیر دسته‌بندی موضوعی)، نمایش زنده نشان سطح سختی (`DifficultyBadge`) روی تمام کارت‌های پیش‌نمایش (`ParsedEntryCard`) و نمایش سطح سختی ثبت‌شده در کارت گزارش نهایی ورود (`ImportSummary`).
+    - پشتیبانی از ثبت سطح سختی انتخابی برای هر دو جهت کارت (`NORMAL` و `REVERSE`) در `VocabularyRepository.addWord` و `VocabularyRepository.importParsedEntries` (اعمال روی واژگان جدید، واژگان جایگزین‌شده در سیاست `REPLACE` و واژگان ادغام‌شده در صورت انتخاب سطح سختی بالاتر از پیش‌فرض).
+- **پاک‌سازی کد و تم (Cleanups & Removals):**
+  - **حذف کامل دکمه‌های «چسباندن» (`چسباندن`) و «نمونه» (`نمونه`) از تم و کد (`YadinIcons.kt`، `ImportScreen.kt` و `strings.xml`):**
+    - حذف آیکون `pasteClipboard` و ایمپورت `ContentPaste` از قرارداد مجموعه آیکون‌های تم (`YadinIconSet` و `YadinIcons`).
+    - حذف دکمه‌های «چسباندن» و «نمونه»، وضعیت‌های مرتبط (`clipboardManager`، `isShowingSample` و `sampleText`) از `ImportScreen.kt` و حذف رشته‌های بلااستفاده (`import_btn_paste`، `import_btn_sample`، `import_err_clipboard` و `import_sample_*`) از تمامی فایل‌های منابع متنی فارسی و انگلیسی (`values/strings.xml`، `values-fa/strings.xml` و `values-en/strings.xml`).
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D74` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.84.0` (کد نسخه: `97`).
+
+---
+
 ### [نسخه ۱.۸۳.۰] - ۲۰۲۶-۱۱-۰۲ (۱۴۰۵/۰۸/۱۱)
 ### غنی‌سازی جامع ترجمه‌های فارسی تک‌واژه‌ها (`WORD`)، یکپارچه‌سازی واژگان مذکر و مؤنث با خط کج (`/`) و نرمال‌سازی کلمات جمع به مفرد با انتقال فرم جمع به یادداشت (کد نسخه: ۹۶)
 - **ویژگی‌های جدید و بهبودهای بانک واژگان و موتور پالایش (Features & Enhancements):**

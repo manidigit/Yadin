@@ -508,8 +508,8 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onAddNewCategory = { name, onCreated ->
                     viewModel.createCategory(name, onCreated)
                 },
-                onConfirmImport = { policy, categoryId ->
-                    viewModel.executeImport(policy, categoryId)
+                onConfirmImport = { policy, categoryId, difficulty ->
+                    viewModel.executeImport(policy, categoryId, difficulty)
                 },
                 onNavigateToReview = {
                     viewModel.navigateTo(Screen.ImportReview)
