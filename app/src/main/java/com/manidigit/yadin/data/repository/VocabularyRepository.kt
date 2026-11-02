@@ -876,10 +876,75 @@ class VocabularyRepository(
             val (sourceLang, targetLang) = direction.resolveSourceAndTarget()
             val allCategories = conceptDao.getAllCategories().toMutableList()
 
+            val activeConceptIds = conceptDao.getAllConcepts().filter { it.active }.map { it.id }.toSet()
+            val activeSourceContents = conceptDao.getAllContents()
+                .filter { it.languageCode == sourceLang && it.conceptId in activeConceptIds }
+            val byAccentKey = mutableMapOf<String, MutableList<Pair<ContentEntity, TextUtilities.SpanishHeadwordAnalysis>>>()
+            for (sc in activeSourceContents) {
+                val analysis = TextUtilities.analyzeSpanishHeadword(sc.text)
+                if (analysis.accentInsensitiveKey.isNotBlank()) {
+                    byAccentKey.getOrPut(analysis.accentInsensitiveKey) { mutableListOf() }.add(sc to analysis)
+                }
+            }
+
+            fun registerSourceContentInIndex(conceptId: String, text: String, note: String?) {
+                val entity = ContentEntity(
+                    id = UUID.randomUUID().toString(),
+                    conceptId = conceptId,
+                    languageCode = sourceLang,
+                    text = text,
+                    canonicalKey = TextUtilities.toCanonicalKey(text),
+                    note = note,
+                    translationIndex = 0
+                )
+                val analysis = TextUtilities.analyzeSpanishHeadword(text)
+                if (analysis.accentInsensitiveKey.isNotBlank()) {
+                    val list = byAccentKey.getOrPut(analysis.accentInsensitiveKey) { mutableListOf() }
+                    list.removeAll { it.first.conceptId == conceptId }
+                    list.add(entity to analysis)
+                }
+            }
+
             entries.forEachIndexed { index, entry ->
                 val cleanSource = entry.sourceText.trim()
                 val canonical = TextUtilities.toCanonicalKey(cleanSource)
-                val existingContent = conceptDao.findActiveContentByCanonicalKey(sourceLang, canonical)
+                val entryAnalysis = TextUtilities.analyzeSpanishHeadword(cleanSource)
+
+                var existingContent = conceptDao.findActiveContentByCanonicalKey(sourceLang, canonical)
+                if (existingContent == null && sourceLang == "es" && policy != DuplicatePolicy.KEEP_SEPARATE) {
+                    // ۱. تطبیق بر اساس کلید بدون حرف تعریف (مانند El testigo و Testigo)
+                    existingContent = byAccentKey[entryAnalysis.accentInsensitiveKey]
+                        ?.firstOrNull()
+                        ?.first
+
+                    // ۲. اگر ورودی جدید فرم جمع است، جستجوی فرم مفرد موجود در دیتابیس
+                    if (existingContent == null) {
+                        val candidateSingKeys = TextUtilities.spanishSingularCandidateKeys(entryAnalysis)
+                        existingContent = candidateSingKeys
+                            .flatMap { key -> byAccentKey[key].orEmpty() }
+                            .firstOrNull { (_, existingAnalysis) ->
+                                TextUtilities.isSpanishPhrasePluralOf(
+                                    pluralAnalysis = entryAnalysis,
+                                    singularAnalysis = existingAnalysis,
+                                    pluralPersianTranslations = entry.translations
+                                )
+                            }?.first
+                    }
+
+                    // ۳. اگر ورودی جدید فرم مفرد است، بررسی اینکه آیا فرم جمع آن قبلاً در دیتابیس ثبت شده است
+                    if (existingContent == null && entryAnalysis.accentInsensitiveKey.isNotBlank()) {
+                        existingContent = byAccentKey.values
+                            .asSequence()
+                            .flatten()
+                            .firstOrNull { (_, existingAnalysis) ->
+                                TextUtilities.isSpanishPhrasePluralOf(
+                                    pluralAnalysis = existingAnalysis,
+                                    singularAnalysis = entryAnalysis
+                                )
+                            }?.first
+                    }
+                }
+
                 val enrichedNote = formatEnrichedNote(entry)
 
                 // ISS-49: Resolve categories from entry or fallback to targetCategoryId
@@ -919,6 +984,7 @@ class VocabularyRepository(
                             )
                             if (res.isSuccess) {
                                 updatedCount++
+                                registerSourceContentInIndex(existingContent.conceptId, cleanSource, enrichedNote)
                                 if (entryCategoryIds.size > 1) {
                                     entryCategoryIds.drop(1).forEach { extraCat ->
                                         conceptDao.insertConceptCategory(ConceptCategoryEntity(existingContent.conceptId, extraCat))
@@ -929,14 +995,54 @@ class VocabularyRepository(
                         DuplicatePolicy.MERGE -> {
                             val currentContents = conceptDao.getContentsForConcept(existingContent.conceptId)
                             val existingTranslations = currentContents.filter { it.languageCode == targetLang }.map { it.text }
-                            val merged = TextUtilities.deduplicatePersianTranslations(existingTranslations + entry.translations)
-                                .ifEmpty { (existingTranslations + entry.translations).distinct() }
                             val currentSourceContent = currentContents.firstOrNull { it.languageCode == sourceLang }
-                            val mergedNote = listOfNotNull(currentSourceContent?.note, enrichedNote).distinct().joinToString("\n").ifBlank { null }
+                            val existingSourceText = currentSourceContent?.text ?: existingContent.text
+                            val existingAnalysis = TextUtilities.analyzeSpanishHeadword(existingSourceText)
+
+                            val incomingIsPluralOfExisting = sourceLang == "es" && TextUtilities.isSpanishPhrasePluralOf(
+                                pluralAnalysis = entryAnalysis,
+                                singularAnalysis = existingAnalysis,
+                                pluralPersianTranslations = entry.translations
+                            )
+                            val existingIsPluralOfIncoming = sourceLang == "es" && TextUtilities.isSpanishPhrasePluralOf(
+                                pluralAnalysis = existingAnalysis,
+                                singularAnalysis = entryAnalysis,
+                                pluralPersianTranslations = existingTranslations
+                            )
+
+                            val finalSourceText = if (sourceLang == "es") {
+                                TextUtilities.selectPreferredSpanishHeadword(listOf(existingSourceText, cleanSource))
+                                    .ifBlank { existingSourceText }
+                            } else {
+                                cleanSource
+                            }
+
+                            val mergedTranslations = when {
+                                incomingIsPluralOfExisting -> {
+                                    existingTranslations.ifEmpty { entry.translations }
+                                }
+                                existingIsPluralOfIncoming -> {
+                                    entry.translations.ifEmpty { existingTranslations }
+                                }
+                                else -> {
+                                    TextUtilities.deduplicatePersianTranslations(existingTranslations + entry.translations)
+                                        .ifEmpty { (existingTranslations + entry.translations).distinct() }
+                                }
+                            }
+
+                            var mergedNote = TextUtilities.mergeNotesWithPluralSupport(currentSourceContent?.note, enrichedNote)
+                            if (incomingIsPluralOfExisting) {
+                                val pluralNote = TextUtilities.formatPluralFormNote(cleanSource, entry.translations)
+                                mergedNote = TextUtilities.mergeNotesWithPluralSupport(mergedNote, pluralNote)
+                            } else if (existingIsPluralOfIncoming) {
+                                val pluralNote = TextUtilities.formatPluralFormNote(existingSourceText, existingTranslations)
+                                mergedNote = TextUtilities.mergeNotesWithPluralSupport(mergedNote, pluralNote)
+                            }
+
                             val res = updateWord(
                                 conceptId = existingContent.conceptId,
-                                sourceText = cleanSource,
-                                translations = merged,
+                                sourceText = finalSourceText,
+                                translations = mergedTranslations,
                                 categoryId = effectiveCat,
                                 note = mergedNote,
                                 direction = direction,
@@ -944,6 +1050,7 @@ class VocabularyRepository(
                             )
                             if (res.isSuccess) {
                                 updatedCount++
+                                registerSourceContentInIndex(existingContent.conceptId, finalSourceText, mergedNote)
                                 if (entryCategoryIds.size > 1) {
                                     entryCategoryIds.drop(1).forEach { extraCat ->
                                         conceptDao.insertConceptCategory(ConceptCategoryEntity(existingContent.conceptId, extraCat))
@@ -962,6 +1069,7 @@ class VocabularyRepository(
                             if (res.isSuccess) {
                                 addedCount++
                                 res.getOrNull()?.let { newConceptId ->
+                                    registerSourceContentInIndex(newConceptId, cleanSource, enrichedNote)
                                     if (entryCategoryIds.size > 1) {
                                         entryCategoryIds.drop(1).forEach { extraCat ->
                                             conceptDao.insertConceptCategory(ConceptCategoryEntity(newConceptId, extraCat))
@@ -982,6 +1090,7 @@ class VocabularyRepository(
                     if (res.isSuccess) {
                         addedCount++
                         res.getOrNull()?.let { newConceptId ->
+                            registerSourceContentInIndex(newConceptId, cleanSource, enrichedNote)
                             if (entryCategoryIds.size > 1) {
                                 entryCategoryIds.drop(1).forEach { extraCat ->
                                     conceptDao.insertConceptCategory(ConceptCategoryEntity(newConceptId, extraCat))

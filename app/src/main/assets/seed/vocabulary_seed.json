@@ -305,14 +305,6 @@
         "updatedAt": 1792225889077
       },
       {
-        "id": "43ddff0a-1894-42e1-a6d1-27d353c4ee0c",
-        "entryType": "WORD",
-        "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
-        "active": true,
-        "createdAt": 1792225889077,
-        "updatedAt": 1792225889077
-      },
-      {
         "id": "ae73a733-d36b-4300-96a4-b62683b29d49",
         "entryType": "WORD",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
@@ -1577,14 +1569,6 @@
         "updatedAt": 1792225889087
       },
       {
-        "id": "c180a1a5-a452-43dc-a57f-5ff701ba4cdf",
-        "entryType": "WORD",
-        "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
-        "active": true,
-        "createdAt": 1792225889087,
-        "updatedAt": 1792225889087
-      },
-      {
         "id": "6b1c71fb-14e5-4f23-9643-fa802eaaa648",
         "entryType": "WORD",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
@@ -2689,14 +2673,6 @@
         "updatedAt": 1792225889095
       },
       {
-        "id": "434e2e91-cdf8-48c6-9612-cd24acc9b9ed",
-        "entryType": "WORD",
-        "categoryId": "883ee2e9-039c-423a-9211-380862f09d99",
-        "active": true,
-        "createdAt": 1792225889095,
-        "updatedAt": 1792225889095
-      },
-      {
         "id": "62ffb937-55d7-4872-839d-b1b901b2625f",
         "entryType": "WORD",
         "categoryId": "883ee2e9-039c-423a-9211-380862f09d99",
@@ -2978,14 +2954,6 @@
       },
       {
         "id": "ddf5e6e9-c241-4cec-8cab-d1ff4a5c3596",
-        "entryType": "WORD",
-        "categoryId": "5c5103c7-3de0-44cb-9b16-c780ff8ca59d",
-        "active": true,
-        "createdAt": 1792225889096,
-        "updatedAt": 1792225889096
-      },
-      {
-        "id": "5925254b-d57c-4169-b500-fdc66fff4062",
         "entryType": "WORD",
         "categoryId": "5c5103c7-3de0-44cb-9b16-c780ff8ca59d",
         "active": true,
@@ -26361,14 +26329,6 @@
         "updatedAt": 1792225889140
       },
       {
-        "id": "7f8b0159-3629-4e66-89b1-5b3b0eb44510",
-        "entryType": "WORD",
-        "categoryId": "476656a7-5638-4b73-9b7c-f44e17fae6ae",
-        "active": true,
-        "createdAt": 1792225889140,
-        "updatedAt": 1792225889140
-      },
-      {
         "id": "50bd622a-8182-48cc-8ec1-3a4a13b32198",
         "entryType": "PHRASE",
         "categoryId": "476656a7-5638-4b73-9b7c-f44e17fae6ae",
@@ -29009,14 +28969,6 @@
         "updatedAt": 1792257525400
       },
       {
-        "id": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "entryType": "WORD",
-        "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
-        "active": true,
-        "createdAt": 1792225889144,
-        "updatedAt": 1792257525401
-      },
-      {
         "id": "7946e4f8-b1e1-4635-a69c-65b9f40c0d26",
         "entryType": "SENTENCE",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
@@ -29218,14 +29170,6 @@
       },
       {
         "id": "19bed0ed-b13b-4b8a-ab75-dd75ca15c87b",
-        "entryType": "WORD",
-        "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
-        "active": true,
-        "createdAt": 1792225889144,
-        "updatedAt": 1792225889144
-      },
-      {
-        "id": "d299d37e-1ace-45b2-a585-7ad5f5d5e860",
         "entryType": "WORD",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec",
         "active": true,
@@ -32265,14 +32209,6 @@
         "updatedAt": 1792760094136
       },
       {
-        "id": "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
-        "entryType": "WORD",
-        "categoryId": "2e946eb5-3705-46d6-83f0-d7a85409cc46",
-        "active": true,
-        "createdAt": 1792225889149,
-        "updatedAt": 1792225889149
-      },
-      {
         "id": "5bda6113-cb1f-4bd0-b9eb-309ed75f11b6",
         "entryType": "WORD",
         "categoryId": "2e946eb5-3705-46d6-83f0-d7a85409cc46",
@@ -32985,14 +32921,6 @@
         "updatedAt": 1792225889150
       },
       {
-        "id": "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889150,
-        "updatedAt": 1792225889150
-      },
-      {
         "id": "c67c801e-d80c-477e-8354-b6a935d5cd44",
         "entryType": "PHRASE",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
@@ -33490,14 +33418,6 @@
       },
       {
         "id": "2b7fa2c2-00a1-4958-8466-fd629f04526a",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889151,
-        "updatedAt": 1792225889151
-      },
-      {
-        "id": "1d869d66-160f-47e8-8736-e5be1aa19bc2",
         "entryType": "WORD",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
         "active": true,
@@ -36217,14 +36137,6 @@
         "updatedAt": 1792760094191
       },
       {
-        "id": "3df9ddeb-f173-4f0f-ba5e-3ca99e4be3ff",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889155,
-        "updatedAt": 1792225889155
-      },
-      {
         "id": "0732388b-f288-45df-8859-5a6b018fa760",
         "entryType": "PHRASE",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
@@ -37471,14 +37383,6 @@
         "active": true,
         "createdAt": 1792225889157,
         "updatedAt": 1792225889157
-      },
-      {
-        "id": "9213a64d-c402-4cad-8bba-ca41491edf81",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889157,
-        "updatedAt": 1792760094201
       },
       {
         "id": "22699fef-d13d-4d43-93ce-91e1aa3d7ed6",
@@ -42241,14 +42145,6 @@
         "updatedAt": 1792225889164
       },
       {
-        "id": "933ce6ea-6bf9-4a03-933d-dfaf524756e7",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889164,
-        "updatedAt": 1792225889164
-      },
-      {
         "id": "e1376f5d-5ebd-4ef2-b488-8c31546cb8c8",
         "entryType": "WORD",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
@@ -42561,23 +42457,7 @@
         "updatedAt": 1792225889165
       },
       {
-        "id": "f2522797-0a09-42f9-91d7-558b9e81790f",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889165,
-        "updatedAt": 1792225889165
-      },
-      {
         "id": "d2df3e18-f93f-4284-89ae-c3e138d42505",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889165,
-        "updatedAt": 1792225889165
-      },
-      {
-        "id": "99c3cade-3178-4170-9dba-17ffbb8e4635",
         "entryType": "WORD",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
         "active": true,
@@ -43762,14 +43642,6 @@
       },
       {
         "id": "45634889-21ae-46f8-a491-34d960146b6a",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889167,
-        "updatedAt": 1792225889167
-      },
-      {
-        "id": "fe132a65-63fa-4818-9a86-4145651cefdd",
         "entryType": "WORD",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
         "active": true,
@@ -45690,14 +45562,6 @@
       },
       {
         "id": "83120e47-d1c7-47e6-82ef-420e6db49766",
-        "entryType": "WORD",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
-        "active": true,
-        "createdAt": 1792225889169,
-        "updatedAt": 1792225889169
-      },
-      {
-        "id": "a29a18e3-0d84-4893-9991-9c84380b12eb",
         "entryType": "WORD",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8",
         "active": true,
@@ -48073,14 +47937,6 @@
         "updatedAt": 1792760094044
       },
       {
-        "id": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889173,
-        "updatedAt": 1792225889173
-      },
-      {
         "id": "9c2a6961-6fcb-49b2-ba6b-43a3469808ff",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -48561,14 +48417,6 @@
         "updatedAt": 1792225889174
       },
       {
-        "id": "942a8c67-e1b2-4f3a-aa51-ea40331ae9ac",
-        "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889174,
-        "updatedAt": 1792225889174
-      },
-      {
         "id": "56565ddb-2543-4122-80f0-56af698a1258",
         "entryType": "WORD",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247",
@@ -48969,22 +48817,6 @@
         "updatedAt": 1792225889174
       },
       {
-        "id": "86f25d5c-9d27-4b5f-951c-792414fd0bf1",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889174,
-        "updatedAt": 1792760094285
-      },
-      {
-        "id": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889174,
-        "updatedAt": 1792228200539
-      },
-      {
         "id": "7c6333e6-f4d1-4fde-a331-edb187a89bf4",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -49089,14 +48921,6 @@
         "updatedAt": 1792225889174
       },
       {
-        "id": "1653b2e7-7420-4832-8b2a-4ca405ea559b",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889174,
-        "updatedAt": 1792225889174
-      },
-      {
         "id": "22e19b64-cbce-4b8d-9902-4d3e0432cc4b",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -49138,14 +48962,6 @@
       },
       {
         "id": "9d25317a-47e5-42f7-9186-efd036ece5af",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889174,
-        "updatedAt": 1792225889174
-      },
-      {
-        "id": "37cc7903-fca2-48ad-926f-810abebc2452",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
@@ -49218,14 +49034,6 @@
       },
       {
         "id": "d6594edf-a4fd-4c03-9a0e-ff8a1b6c2ef9",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889174,
-        "updatedAt": 1792225889174
-      },
-      {
-        "id": "5ca98071-6b0c-46d7-8ed5-9134e121b5ce",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
@@ -49353,14 +49161,6 @@
         "updatedAt": 1792225889175
       },
       {
-        "id": "c1e17138-1733-451b-92f4-74320704434f",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889175,
-        "updatedAt": 1792225889175
-      },
-      {
         "id": "20af32e1-c7a2-451e-9a5f-2e1229ecf73a",
         "entryType": "WORD",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -49407,14 +49207,6 @@
         "active": true,
         "createdAt": 1792225889175,
         "updatedAt": 1792225889175
-      },
-      {
-        "id": "b98aad98-fd69-4cb5-9af6-ca77927041ca",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889175,
-        "updatedAt": 1792228200518
       },
       {
         "id": "3466dff9-b8c9-4141-a90e-3ffef68af84d",
@@ -49503,14 +49295,6 @@
         "active": true,
         "createdAt": 1792225889175,
         "updatedAt": 1792760094286
-      },
-      {
-        "id": "10be8270-05a8-4ec1-8353-8e6b98d5edf1",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889175,
-        "updatedAt": 1792225889175
       },
       {
         "id": "d190bda0-554a-48a2-be06-71540ac56821",
@@ -49969,14 +49753,6 @@
         "updatedAt": 1792225889175
       },
       {
-        "id": "d14e1bb3-478f-4106-b264-477b4aacf870",
-        "entryType": "WORD",
-        "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247",
-        "active": true,
-        "createdAt": 1792225889175,
-        "updatedAt": 1792225889175
-      },
-      {
         "id": "e79aa19e-2545-4607-98d0-b80ce01b5402",
         "entryType": "WORD",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247",
@@ -50131,14 +49907,6 @@
       {
         "id": "92ef73db-9ea2-41ba-b415-12908ec8c270",
         "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889176,
-        "updatedAt": 1792225889176
-      },
-      {
-        "id": "a25abedf-b936-4fe5-a878-167cc4eaaa8f",
-        "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
         "createdAt": 1792225889176,
@@ -50609,14 +50377,6 @@
         "updatedAt": 1792225889176
       },
       {
-        "id": "95b11de9-fd12-44b2-8f66-5dafcef1407a",
-        "entryType": "WORD",
-        "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247",
-        "active": true,
-        "createdAt": 1792225889176,
-        "updatedAt": 1792225889176
-      },
-      {
         "id": "49286fda-c159-4474-a8de-38cc284c009a",
         "entryType": "WORD",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247",
@@ -50889,14 +50649,6 @@
         "updatedAt": 1792760592427
       },
       {
-        "id": "c9d934b0-1538-4bda-a14e-214b9c90952d",
-        "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889177,
-        "updatedAt": 1792225889177
-      },
-      {
         "id": "ca6e6299-3fe6-406b-aadc-ceefcb985c4e",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -50953,14 +50705,6 @@
         "updatedAt": 1792225889177
       },
       {
-        "id": "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889177,
-        "updatedAt": 1792228154128
-      },
-      {
         "id": "5df0e704-d85d-40cf-9945-ba96aa7b041e",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -51003,14 +50747,6 @@
       {
         "id": "54b40b00-9173-4c52-b322-89a60d9adbd5",
         "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889177,
-        "updatedAt": 1792225889177
-      },
-      {
-        "id": "cdb1d520-c55b-4d33-ac6d-f44193f6d4b1",
-        "entryType": "WORD",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
         "createdAt": 1792225889177,
@@ -54113,23 +53849,7 @@
         "updatedAt": 1792225889182
       },
       {
-        "id": "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
         "id": "96bd1a9f-9c3f-4aa2-8a3d-61cdaffd84ee",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
@@ -54146,30 +53866,6 @@
       },
       {
         "id": "414b75ad-15ac-496c-a0ee-b78ac0a296b8",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "66917c88-65a9-4788-b9fe-eb745dfc6fb9",
-        "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "82e895cf-a3d3-4532-843a-ec75c7b63d57",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
@@ -54275,22 +53971,6 @@
       {
         "id": "57533497-5455-43eb-aa60-6e982176955e",
         "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "284dc445-87a7-43fa-a561-406e6d22d983",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
-        "entryType": "WORD",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
         "createdAt": 1792225889182,
@@ -54593,52 +54273,12 @@
         "updatedAt": 1792225889182
       },
       {
-        "id": "66a441d7-8b72-4656-9916-1e81445b561f",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "ba49d8ba-f0a3-44c3-a437-b2abd15662a5",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "e98a4474-2cc1-48de-ae23-427356f43e11",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792225889182
-      },
-      {
-        "id": "e40ef618-638a-45a5-9134-9d44acce5a13",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792228154101
-      },
-      {
         "id": "713b2ce0-5c20-4efb-9254-2836e4e1dd7f",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
         "active": true,
         "createdAt": 1792225889182,
         "updatedAt": 1792228154150
-      },
-      {
-        "id": "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889182,
-        "updatedAt": 1792228154152
       },
       {
         "id": "0c5673c2-b013-4542-88cd-15c5ba108e5e",
@@ -54993,14 +54633,6 @@
         "updatedAt": 1792225889183
       },
       {
-        "id": "36f40391-0237-4344-b1fc-6727aca49eaf",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889183,
-        "updatedAt": 1792225889183
-      },
-      {
         "id": "472e4198-b655-4243-bd0b-e5c6a7c017b6",
         "entryType": "SENTENCE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -55175,14 +54807,6 @@
         "active": true,
         "createdAt": 1792225889183,
         "updatedAt": 1792228200513
-      },
-      {
-        "id": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
-        "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792225889183,
-        "updatedAt": 1792257526466
       },
       {
         "id": "078266f7-d628-4363-a5a5-a3570ce6fdd9",
@@ -56001,14 +55625,6 @@
         "updatedAt": 1792227922874
       },
       {
-        "id": "532f4831-e9fb-46b3-806b-fa3b3c13f1cf",
-        "entryType": "WORD",
-        "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688",
-        "active": true,
-        "createdAt": 1792227922878,
-        "updatedAt": 1792227922878
-      },
-      {
         "id": "ce45add1-383c-4bb9-9a3b-5f81d3ff6f90",
         "entryType": "PHRASE",
         "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688",
@@ -56023,14 +55639,6 @@
         "active": true,
         "createdAt": 1792227922882,
         "updatedAt": 1792227922882
-      },
-      {
-        "id": "d59b0fd5-11c3-4d4d-9e6a-7c2016c86900",
-        "entryType": "WORD",
-        "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688",
-        "active": true,
-        "createdAt": 1792227922884,
-        "updatedAt": 1792227922884
       },
       {
         "id": "04bf291e-e2eb-4440-a416-c50d9e8ca769",
@@ -56975,14 +56583,6 @@
         "active": true,
         "createdAt": 1792227923073,
         "updatedAt": 1792227923073
-      },
-      {
-        "id": "8baa1de7-f9c2-42e1-93ff-6d82dc31f429",
-        "entryType": "WORD",
-        "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688",
-        "active": true,
-        "createdAt": 1792227923074,
-        "updatedAt": 1792227923074
       },
       {
         "id": "acae0f48-dcf9-4fe2-93fa-b2b31aab0baf",
@@ -59393,30 +58993,6 @@
         "updatedAt": 1792431335735
       },
       {
-        "id": "d19a1d8e-1605-4ddb-bcb5-4f042772ebb2",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792431335742,
-        "updatedAt": 1792431335742
-      },
-      {
-        "id": "b0652d9b-f06f-49a4-875e-1f69837f7a68",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792431335748,
-        "updatedAt": 1792431335748
-      },
-      {
-        "id": "f58e078a-5034-491a-995d-2855f0eca295",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792431335754,
-        "updatedAt": 1792760094284
-      },
-      {
         "id": "e55ba313-2b82-4e58-891f-297f8a37c78b",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -59431,14 +59007,6 @@
         "active": true,
         "createdAt": 1792431335770,
         "updatedAt": 1792431335770
-      },
-      {
-        "id": "f171f4b9-a4f7-48d0-aee7-e38bb372ddad",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792431335776,
-        "updatedAt": 1792431335776
       },
       {
         "id": "d9d7f811-4439-417f-8de2-ec9161486056",
@@ -59495,14 +59063,6 @@
         "active": true,
         "createdAt": 1792431335813,
         "updatedAt": 1792431335813
-      },
-      {
-        "id": "6f79f0e3-75fd-4c8b-8902-cd4b3a60c861",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792431335818,
-        "updatedAt": 1792431335818
       },
       {
         "id": "eb379b91-3415-4609-aa70-a64edb436388",
@@ -60409,14 +59969,6 @@
         "updatedAt": 1792523879323
       },
       {
-        "id": "d825f0ac-9d8e-48cb-b35c-779457d11d02",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792523879327,
-        "updatedAt": 1792523879327
-      },
-      {
         "id": "67bbc44b-5a49-49ec-9af5-917d0e54cbfe",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -60439,14 +59991,6 @@
         "active": true,
         "createdAt": 1792523879342,
         "updatedAt": 1792523879342
-      },
-      {
-        "id": "271ce1ac-f3fe-407c-8878-50e2eed15e06",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792523879346,
-        "updatedAt": 1792523879346
       },
       {
         "id": "a26b6dfb-c0c7-4192-b736-1f43eda8646b",
@@ -62009,14 +61553,6 @@
         "updatedAt": 1792695359103
       },
       {
-        "id": "6f05d736-8972-4253-ae1c-2ea602af5300",
-        "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1792695359107,
-        "updatedAt": 1792695359107
-      },
-      {
         "id": "ab467155-f98b-48b5-a3d0-ab2fdcaf6eca",
         "entryType": "WORD",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -62857,22 +62393,6 @@
         "updatedAt": 1793116732607
       },
       {
-        "id": "e49e1328-e833-4a9c-b805-3443290668f2",
-        "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1793116732683,
-        "updatedAt": 1793116732683
-      },
-      {
-        "id": "abf6d788-a9cd-4405-a8d5-267b3df3b949",
-        "entryType": "WORD",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1793116732689,
-        "updatedAt": 1793116732689
-      },
-      {
         "id": "5b2bd042-d568-4c77-83f2-d68425ef33b8",
         "entryType": "PHRASE",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
@@ -62999,14 +62519,6 @@
         "active": true,
         "createdAt": 1793210979617,
         "updatedAt": 1793210979617
-      },
-      {
-        "id": "3ba226f9-3426-4b3a-90a5-b906c202ba59",
-        "entryType": "PHRASE",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb",
-        "active": true,
-        "createdAt": 1793210979622,
-        "updatedAt": 1793210979622
       },
       {
         "id": "c8047ecf-b333-4acf-9965-889f2e5952b2",
@@ -63778,9 +63290,9 @@
         "id": "e71e264e-7661-4948-aa66-8108af53cfa3",
         "conceptId": "2942df5a-7a96-4227-b5cb-1063250e7883",
         "languageCode": "es",
-        "text": "Lengua",
-        "canonicalKey": "lengua",
-        "note": null,
+        "text": "La lengua",
+        "canonicalKey": "la lengua",
+        "note": "فرم جمع: las lenguas (زبان‌ها)",
         "translationIndex": 0
       },
       {
@@ -64014,7 +63526,7 @@
         "languageCode": "es",
         "text": "Pantorrilla",
         "canonicalKey": "pantorrilla",
-        "note": null,
+        "note": "فرم جمع: Pantorrillas (ساق‌های پا)",
         "translationIndex": 0
       },
       {
@@ -64034,24 +63546,6 @@
         "canonicalKey": "ماهیچه پشت پا",
         "note": null,
         "translationIndex": 1
-      },
-      {
-        "id": "fc2c13a1-0f34-4636-9c2f-ab9c3c9212af",
-        "conceptId": "43ddff0a-1894-42e1-a6d1-27d353c4ee0c",
-        "languageCode": "es",
-        "text": "Pantorrillas",
-        "canonicalKey": "pantorrillas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "120f3318-b341-4927-89a6-0dcfb71bf68c",
-        "conceptId": "43ddff0a-1894-42e1-a6d1-27d353c4ee0c",
-        "languageCode": "fa",
-        "text": "ساق‌های پا",
-        "canonicalKey": "ساق‌های پا",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "8afdf7f8-9c0f-4c7d-a997-78e22ebfaa3a",
@@ -68269,9 +67763,9 @@
         "id": "272f8134-6710-4e41-a5e9-53a4211e2486",
         "conceptId": "f60fede1-aee0-446b-be7e-884309192701",
         "languageCode": "es",
-        "text": "la compresa",
+        "text": "La compresa",
         "canonicalKey": "la compresa",
-        "note": null,
+        "note": "فرم جمع: las compresas (پدهای بهداشتی)",
         "translationIndex": 0
       },
       {
@@ -68291,24 +67785,6 @@
         "canonicalKey": "کمپرس",
         "note": null,
         "translationIndex": 1
-      },
-      {
-        "id": "99422755-1494-46fe-83ba-9837f5fb5e4e",
-        "conceptId": "c180a1a5-a452-43dc-a57f-5ff701ba4cdf",
-        "languageCode": "es",
-        "text": "las compresas",
-        "canonicalKey": "las compresas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "df7e4c38-7abe-4c3a-afd3-17ebccc1789a",
-        "conceptId": "c180a1a5-a452-43dc-a57f-5ff701ba4cdf",
-        "languageCode": "fa",
-        "text": "پدهای بهداشتی",
-        "canonicalKey": "پدهای بهداشتی",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "df9b9a8f-d5bd-4098-90b8-93f4e483738b",
@@ -69594,7 +69070,7 @@
         "languageCode": "es",
         "text": "Espejo retrovisor",
         "canonicalKey": "espejo retrovisor",
-        "note": null,
+        "note": "فرم جمع: Espejos retrovisores (آینه‌های دید عقب)",
         "translationIndex": 0
       },
       {
@@ -69828,7 +69304,7 @@
         "languageCode": "es",
         "text": "Rueda",
         "canonicalKey": "rueda",
-        "note": null,
+        "note": "فرم جمع: Ruedas (چرخ‌ها)",
         "translationIndex": 0
       },
       {
@@ -69936,7 +69412,7 @@
         "languageCode": "es",
         "text": "Señal vertical",
         "canonicalKey": "señal vertical",
-        "note": null,
+        "note": "فرم جمع: Señales verticales (تابلوهای عمودی راهنمایی و رانندگی)",
         "translationIndex": 0
       },
       {
@@ -71808,7 +71284,7 @@
         "languageCode": "es",
         "text": "Silla",
         "canonicalKey": "silla",
-        "note": null,
+        "note": "فرم جمع: Sillas (صندلی‌ها)",
         "translationIndex": 0
       },
       {
@@ -72125,24 +71601,6 @@
         "canonicalKey": "صندلی‌های راحتی",
         "note": null,
         "translationIndex": 1
-      },
-      {
-        "id": "c9cd7252-18de-4d62-9fae-7748b146a4c1",
-        "conceptId": "434e2e91-cdf8-48c6-9612-cd24acc9b9ed",
-        "languageCode": "es",
-        "text": "Sillas",
-        "canonicalKey": "sillas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "cbf76171-113b-4e29-8e49-7df6290578bb",
-        "conceptId": "434e2e91-cdf8-48c6-9612-cd24acc9b9ed",
-        "languageCode": "fa",
-        "text": "صندلی‌ها",
-        "canonicalKey": "صندلی‌ها",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "9b7ad25d-b266-4d07-a626-447306e434ef",
@@ -73158,7 +72616,7 @@
         "languageCode": "es",
         "text": "Primo",
         "canonicalKey": "primo",
-        "note": null,
+        "note": "فرم جمع: Primos (پسرعموها و دخترعموها (عموزاده‌ها، عمه‌زاده‌ها، دایی‌زاده‌ها و خاله‌زاده‌ها))",
         "translationIndex": 0
       },
       {
@@ -73223,24 +72681,6 @@
         "canonicalKey": "ساده‌لوح (در اصطلاح عامیانه)",
         "note": null,
         "translationIndex": 6
-      },
-      {
-        "id": "5cf26c5b-d699-4ca1-8873-c6120303bb78",
-        "conceptId": "5925254b-d57c-4169-b500-fdc66fff4062",
-        "languageCode": "es",
-        "text": "Primos",
-        "canonicalKey": "primos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "f3c3c644-9a9a-4fb9-969c-e1d317b704ae",
-        "conceptId": "5925254b-d57c-4169-b500-fdc66fff4062",
-        "languageCode": "fa",
-        "text": "پسرعموها و دخترعموها (عموزاده‌ها، عمه‌زاده‌ها، دایی‌زاده‌ها و خاله‌زاده‌ها)",
-        "canonicalKey": "پسرعموها و دخترعموها (عموزاده‌ها، عمه‌زاده‌ها، دایی‌زاده‌ها و خاله‌زاده‌ها)",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "5c61e3a1-134c-4137-b721-c81485ebacd7",
@@ -83121,7 +82561,7 @@
         "languageCode": "es",
         "text": "Serie",
         "canonicalKey": "serie",
-        "note": null,
+        "note": "فرم جمع: Series (ست‌ها)",
         "translationIndex": 0
       },
       {
@@ -83364,7 +82804,7 @@
         "languageCode": "es",
         "text": "Bombero",
         "canonicalKey": "bombero",
-        "note": null,
+        "note": "فرم جمع: Bomberos (آتش‌نشانی، مأموران آتش‌نشانی)",
         "translationIndex": 0
       },
       {
@@ -129424,9 +128864,9 @@
         "id": "b336c25e-1c4f-4594-8905-5a6d54ded90b",
         "conceptId": "0944051a-8fcb-4e53-935d-c8849d804b34",
         "languageCode": "es",
-        "text": "el chiste",
+        "text": "El chiste",
         "canonicalKey": "el chiste",
-        "note": null,
+        "note": "فرم جمع: chistes (جوک‌ها، لطیفه‌ها)",
         "translationIndex": 0
       },
       {
@@ -135499,9 +134939,9 @@
         "id": "d0547f0a-7d45-4e7c-97dd-a8e2a27f6fdf",
         "conceptId": "c100c36f-6d69-4179-bd8f-74c0700d6286",
         "languageCode": "es",
-        "text": "la propina",
+        "text": "La propina",
         "canonicalKey": "la propina",
-        "note": null,
+        "note": "فرم جمع: las propinas (انعام‌ها)",
         "translationIndex": 0
       },
       {
@@ -135521,24 +134961,6 @@
         "canonicalKey": "انعام پرداختی",
         "note": null,
         "translationIndex": 1
-      },
-      {
-        "id": "4b5d719c-69d0-4d5a-ad27-649524dd08db",
-        "conceptId": "7f8b0159-3629-4e66-89b1-5b3b0eb44510",
-        "languageCode": "es",
-        "text": "las propinas",
-        "canonicalKey": "las propinas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "06b27d97-6a50-48de-a8e6-5cb803201fac",
-        "conceptId": "7f8b0159-3629-4e66-89b1-5b3b0eb44510",
-        "languageCode": "fa",
-        "text": "انعام‌ها",
-        "canonicalKey": "انعام‌ها",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "27af2b84-e974-44b6-807a-bd5266b9c5b7",
@@ -138012,7 +137434,7 @@
         "languageCode": "es",
         "text": "La luz de cruce",
         "canonicalKey": "la luz de cruce",
-        "note": null,
+        "note": "چراغ ۲۲.\nتوضیح واژه: Corto alcance\nفرم جمع: Luces de cruce (نور پایین)",
         "translationIndex": 0
       },
       {
@@ -138057,7 +137479,7 @@
         "languageCode": "es",
         "text": "La luz de emergencia",
         "canonicalKey": "la luz de emergencia",
-        "note": null,
+        "note": "فرم جمع: Luces de emergencia (چراغ‌های اضطراری، چراغ‌های فلاشر، چراغ‌های هشدار خطر)",
         "translationIndex": 0
       },
       {
@@ -144082,60 +143504,6 @@
         "translationIndex": 1
       },
       {
-        "id": "fceea9c5-24e2-45a7-8ad9-03f8df036962",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "languageCode": "es",
-        "text": "las pruebas",
-        "canonicalKey": "las pruebas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "dc5c0b41-ae85-49e2-885a-b811a3a614b1",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "languageCode": "fa",
-        "text": "مدارک",
-        "canonicalKey": "مدارک",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "4509cb82-13af-440f-9487-81f1586edaa4",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "languageCode": "fa",
-        "text": "شواهد",
-        "canonicalKey": "شواهد",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "69d887b2-ac03-4665-8745-8b0d074e06bd",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "languageCode": "fa",
-        "text": "آزمایش‌ها",
-        "canonicalKey": "آزمایش‌ها",
-        "note": null,
-        "translationIndex": 2
-      },
-      {
-        "id": "5578315d-e509-4268-9cd4-389c1a2f6427",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "languageCode": "fa",
-        "text": "امتحانات",
-        "canonicalKey": "امتحانات",
-        "note": null,
-        "translationIndex": 3
-      },
-      {
-        "id": "93786b6b-24f0-4bb8-97e3-ffd878cfde26",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "languageCode": "fa",
-        "text": "آزمون‌ها",
-        "canonicalKey": "آزمون‌ها",
-        "note": null,
-        "translationIndex": 4
-      },
-      {
         "id": "a9a6c891-eda5-4fc4-83ca-a13b367c1a24",
         "conceptId": "7946e4f8-b1e1-4635-a69c-65b9f40c0d26",
         "languageCode": "es",
@@ -144730,24 +144098,6 @@
         "translationIndex": 2
       },
       {
-        "id": "253ae104-ec9f-4d42-8eb2-cebf5123005b",
-        "conceptId": "d299d37e-1ace-45b2-a585-7ad5f5d5e860",
-        "languageCode": "es",
-        "text": "las lenguas",
-        "canonicalKey": "las lenguas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5b9c1b59-11a9-4bb1-afb2-c4f6906fc833",
-        "conceptId": "d299d37e-1ace-45b2-a585-7ad5f5d5e860",
-        "languageCode": "fa",
-        "text": "زبان‌ها",
-        "canonicalKey": "زبان‌ها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "ac58d739-882f-4f34-8c21-bf19f5f4579c",
         "conceptId": "e3d716b5-0aa2-4040-b0b1-61c0f61ee30f",
         "languageCode": "es",
@@ -145257,7 +144607,7 @@
         "languageCode": "es",
         "text": "La señal de indicación",
         "canonicalKey": "la señal de indicación",
-        "note": null,
+        "note": "فرم جمع: Señales de indicación (تابلوهای راهنما، علائم اخباری)",
         "translationIndex": 0
       },
       {
@@ -145293,7 +144643,7 @@
         "languageCode": "es",
         "text": "La señal de obligación",
         "canonicalKey": "la señal de obligación",
-        "note": null,
+        "note": "دایره‌ای آبی‌رنگ\nفرم جمع: Señales de obligación (تابلوهای دستوری، تابلوهای الزام‌آور)",
         "translationIndex": 0
       },
       {
@@ -145338,7 +144688,7 @@
         "languageCode": "es",
         "text": "La señal de peligro",
         "canonicalKey": "la señal de peligro",
-        "note": null,
+        "note": "فرم جمع: Señales de peligro (تابلوهای هشداردهنده خطر)",
         "translationIndex": 0
       },
       {
@@ -145383,7 +144733,7 @@
         "languageCode": "es",
         "text": "La señal de prohibición",
         "canonicalKey": "la señal de prohibición",
-        "note": null,
+        "note": "فرم جمع: Señales de prohibición (تابلوهای ممنوعیت، تابلوهای بازدارنده)",
         "translationIndex": 0
       },
       {
@@ -145419,7 +144769,7 @@
         "languageCode": "es",
         "text": "La señal de tráfico",
         "canonicalKey": "la señal de tráfico",
-        "note": null,
+        "note": "فرم جمع: Señales de tráfico (تابلوها و علائم راهنمایی و رانندگی)",
         "translationIndex": 0
       },
       {
@@ -146139,7 +145489,7 @@
         "languageCode": "es",
         "text": "El permiso de conducir",
         "canonicalKey": "el permiso de conducir",
-        "note": null,
+        "note": "انواع گواهینامه رانندگی\nفرم جمع: Permisos de conducir (A1, A2, A, B) (انواع گواهینامه رانندگی (A1، A2، A، B))",
         "translationIndex": 0
       },
       {
@@ -147165,7 +146515,7 @@
         "languageCode": "es",
         "text": "La infracción",
         "canonicalKey": "la infracción",
-        "note": null,
+        "note": "فرم جمع: Infracciones (تخلفات)",
         "translationIndex": 0
       },
       {
@@ -153672,7 +153022,7 @@
         "languageCode": "es",
         "text": "La tarea",
         "canonicalKey": "la tarea",
-        "note": null,
+        "note": "فرم جمع: las tareas (وظایف، امور روزمره)",
         "translationIndex": 0
       },
       {
@@ -153710,33 +153060,6 @@
         "canonicalKey": "کار",
         "note": null,
         "translationIndex": 3
-      },
-      {
-        "id": "d6165e99-352f-4d88-81af-963757f01b7d",
-        "conceptId": "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
-        "languageCode": "es",
-        "text": "las tareas",
-        "canonicalKey": "las tareas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "d4ced183-f4ba-4b0c-b0d4-46dbe8ae75df",
-        "conceptId": "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
-        "languageCode": "fa",
-        "text": "وظایف",
-        "canonicalKey": "وظایف",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "7d5c8917-76c8-48ad-896e-790b70927d07",
-        "conceptId": "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
-        "languageCode": "fa",
-        "text": "امور روزمره",
-        "canonicalKey": "امور روزمره",
-        "note": null,
-        "translationIndex": 1
       },
       {
         "id": "de08bbcf-ca33-43a1-b989-cb6e1ce20462",
@@ -155620,33 +154943,6 @@
         "translationIndex": 0
       },
       {
-        "id": "5f93a159-4e57-4ab0-b155-ca70aef7eebb",
-        "conceptId": "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
-        "languageCode": "es",
-        "text": "los acuerdos",
-        "canonicalKey": "los acuerdos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "d6571c7f-45e0-479c-ba9a-a6da85c16c24",
-        "conceptId": "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
-        "languageCode": "fa",
-        "text": "توافق‌نامه‌ها",
-        "canonicalKey": "توافق‌نامه‌ها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "42375188-a5ea-43e4-b6a0-1ebc1561b71e",
-        "conceptId": "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
-        "languageCode": "fa",
-        "text": "توافقات",
-        "canonicalKey": "توافقات",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
         "id": "06227770-7bb4-422e-9996-56763bc66d2e",
         "conceptId": "c67c801e-d80c-477e-8354-b6a935d5cd44",
         "languageCode": "es",
@@ -156964,9 +156260,9 @@
         "id": "e0e28c46-7c8c-4a8d-a55a-54538605e139",
         "conceptId": "2b7fa2c2-00a1-4958-8466-fd629f04526a",
         "languageCode": "es",
-        "text": "el consumidor",
+        "text": "El consumidor",
         "canonicalKey": "el consumidor",
-        "note": null,
+        "note": "فرم جمع: los consumidores (مصرف‌کنندگان)",
         "translationIndex": 0
       },
       {
@@ -156975,24 +156271,6 @@
         "languageCode": "fa",
         "text": "مصرف‌کننده",
         "canonicalKey": "مصرف‌کننده",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "24838a2e-16cc-45e5-8187-c5cb0b1087fa",
-        "conceptId": "1d869d66-160f-47e8-8736-e5be1aa19bc2",
-        "languageCode": "es",
-        "text": "los consumidores",
-        "canonicalKey": "los consumidores",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "bc1eca58-e9d4-42c3-8155-1cdb6093ebd8",
-        "conceptId": "1d869d66-160f-47e8-8736-e5be1aa19bc2",
-        "languageCode": "fa",
-        "text": "مصرف‌کنندگان",
-        "canonicalKey": "مصرف‌کنندگان",
         "note": null,
         "translationIndex": 0
       },
@@ -160096,9 +159374,9 @@
         "id": "6e8c55fe-da75-4a22-9e2e-a92772620263",
         "conceptId": "9d166c7f-4fad-4d2c-bda7-14692cfb1635",
         "languageCode": "es",
-        "text": "el acuerdo",
+        "text": "El acuerdo",
         "canonicalKey": "el acuerdo",
-        "note": null,
+        "note": "فرم جمع: los acuerdos (توافق‌نامه‌ها، توافقات)",
         "translationIndex": 0
       },
       {
@@ -164341,24 +163619,6 @@
         "translationIndex": 0
       },
       {
-        "id": "96edde96-97a8-431c-9488-22d05bca9c36",
-        "conceptId": "3df9ddeb-f173-4f0f-ba5e-3ca99e4be3ff",
-        "languageCode": "es",
-        "text": "los domingos",
-        "canonicalKey": "los domingos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "76a69fa9-4771-4b29-a77c-dfabd2fcada9",
-        "conceptId": "3df9ddeb-f173-4f0f-ba5e-3ca99e4be3ff",
-        "languageCode": "fa",
-        "text": "یکشنبه‌ها",
-        "canonicalKey": "یکشنبه‌ها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "2c11c9cc-672d-489b-b54f-b6f79758fdb4",
         "conceptId": "0732388b-f288-45df-8859-5a6b018fa760",
         "languageCode": "es",
@@ -167741,42 +167001,6 @@
         "canonicalKey": "مرا نگران می‌کند",
         "note": null,
         "translationIndex": 0
-      },
-      {
-        "id": "946de73b-c15a-4e28-b519-c13d9b516cdb",
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
-        "languageCode": "es",
-        "text": "Las dudas",
-        "canonicalKey": "las dudas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "d1bf81bd-d488-4e5a-af5f-eee7d7709ac5",
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
-        "languageCode": "fa",
-        "text": "شک و تردیدها",
-        "canonicalKey": "شک و تردیدها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "2aaec158-a627-46d6-a93b-5dc9aa6678d9",
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
-        "languageCode": "fa",
-        "text": "تردیدها",
-        "canonicalKey": "تردیدها",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "7c66028b-2efb-454e-b5d7-d9b61253a8cc",
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
-        "languageCode": "fa",
-        "text": "سؤال‌ها",
-        "canonicalKey": "سؤال‌ها",
-        "note": null,
-        "translationIndex": 2
       },
       {
         "id": "ab153ce9-8c15-424f-9f00-ef609f485f29",
@@ -180382,9 +179606,9 @@
         "id": "e68a5a4d-3a90-4ba7-9113-d85f7dafc252",
         "conceptId": "a86a45db-6d84-4978-a65a-e60114b17255",
         "languageCode": "es",
-        "text": "la duda",
+        "text": "La duda",
         "canonicalKey": "la duda",
-        "note": null,
+        "note": "فرم جمع: Las dudas (شک و تردیدها، تردیدها، سؤال‌ها)",
         "translationIndex": 0
       },
       {
@@ -181543,9 +180767,9 @@
         "id": "6afe122f-d7bf-4839-8ce6-84d34bbd440d",
         "conceptId": "8e7e0fe7-037b-40c0-82d1-7403257ffd89",
         "languageCode": "es",
-        "text": "el logro",
+        "text": "El logro",
         "canonicalKey": "el logro",
-        "note": null,
+        "note": "فرم جمع: los logros (دستاوردها)",
         "translationIndex": 0
       },
       {
@@ -181565,24 +180789,6 @@
         "canonicalKey": "موفقیت",
         "note": null,
         "translationIndex": 1
-      },
-      {
-        "id": "b57a792e-7af9-4fbe-bec9-4c5df89a4692",
-        "conceptId": "933ce6ea-6bf9-4a03-933d-dfaf524756e7",
-        "languageCode": "es",
-        "text": "los logros",
-        "canonicalKey": "los logros",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "a17e8fb0-32be-4dfd-8ba6-eb191a440930",
-        "conceptId": "933ce6ea-6bf9-4a03-933d-dfaf524756e7",
-        "languageCode": "fa",
-        "text": "دستاوردها",
-        "canonicalKey": "دستاوردها",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "ed1f988f-d870-4211-a082-1d789ad61412",
@@ -182542,9 +181748,9 @@
         "id": "426d5ead-573e-4ff6-acc5-f42edead1637",
         "conceptId": "27d5de84-d2fa-4023-9f37-d57fde051391",
         "languageCode": "es",
-        "text": "la fuerza",
+        "text": "La fuerza",
         "canonicalKey": "la fuerza",
-        "note": null,
+        "note": "فرم جمع: las fuerzas (نیروها، قوای جسمانی)",
         "translationIndex": 0
       },
       {
@@ -182575,39 +181781,12 @@
         "translationIndex": 2
       },
       {
-        "id": "c343b6b3-035b-4dca-aa1f-402a7c5fda54",
-        "conceptId": "f2522797-0a09-42f9-91d7-558b9e81790f",
-        "languageCode": "es",
-        "text": "las fuerzas",
-        "canonicalKey": "las fuerzas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "480608b4-add9-452b-9359-f73b51a3c838",
-        "conceptId": "f2522797-0a09-42f9-91d7-558b9e81790f",
-        "languageCode": "fa",
-        "text": "نیروها",
-        "canonicalKey": "نیروها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "1b2a2559-8d54-4837-8213-fe870d75646c",
-        "conceptId": "f2522797-0a09-42f9-91d7-558b9e81790f",
-        "languageCode": "fa",
-        "text": "قوای جسمانی",
-        "canonicalKey": "قوای جسمانی",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
         "id": "2a81a56c-4ea1-4940-adcd-93803b5afa2a",
         "conceptId": "d2df3e18-f93f-4284-89ae-c3e138d42505",
         "languageCode": "es",
-        "text": "la gana",
+        "text": "La gana",
         "canonicalKey": "la gana",
-        "note": null,
+        "note": "فرم جمع: las ganas (تمایل، اشتیاق)",
         "translationIndex": 0
       },
       {
@@ -182625,33 +181804,6 @@
         "languageCode": "fa",
         "text": "رغبت",
         "canonicalKey": "رغبت",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "8e138e03-c670-433d-8818-1541d9266648",
-        "conceptId": "99c3cade-3178-4170-9dba-17ffbb8e4635",
-        "languageCode": "es",
-        "text": "las ganas",
-        "canonicalKey": "las ganas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "f312a2e4-27de-4848-912b-a034b8be59f8",
-        "conceptId": "99c3cade-3178-4170-9dba-17ffbb8e4635",
-        "languageCode": "fa",
-        "text": "تمایل",
-        "canonicalKey": "تمایل",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "c76d9883-acf1-4821-8206-bbf857f6bce6",
-        "conceptId": "99c3cade-3178-4170-9dba-17ffbb8e4635",
-        "languageCode": "fa",
-        "text": "اشتیاق",
-        "canonicalKey": "اشتیاق",
         "note": null,
         "translationIndex": 1
       },
@@ -186529,9 +185681,9 @@
         "id": "4f98bbcb-002f-438d-bf32-a7425da6a622",
         "conceptId": "45634889-21ae-46f8-a491-34d960146b6a",
         "languageCode": "es",
-        "text": "el camino",
+        "text": "El camino",
         "canonicalKey": "el camino",
-        "note": null,
+        "note": "فرم جمع: los caminos (راه‌ها، مسیرها)",
         "translationIndex": 0
       },
       {
@@ -186549,33 +185701,6 @@
         "languageCode": "fa",
         "text": "مسیر",
         "canonicalKey": "مسیر",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "e9565bc1-4bb9-46ca-96b0-65a9ea00a94f",
-        "conceptId": "fe132a65-63fa-4818-9a86-4145651cefdd",
-        "languageCode": "es",
-        "text": "los caminos",
-        "canonicalKey": "los caminos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "c736b37e-004c-4090-9855-fdb50c0cc59a",
-        "conceptId": "fe132a65-63fa-4818-9a86-4145651cefdd",
-        "languageCode": "fa",
-        "text": "راه‌ها",
-        "canonicalKey": "راه‌ها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e53b69ef-0e9e-4c1c-b96c-8a144f674691",
-        "conceptId": "fe132a65-63fa-4818-9a86-4145651cefdd",
-        "languageCode": "fa",
-        "text": "مسیرها",
-        "canonicalKey": "مسیرها",
         "note": null,
         "translationIndex": 1
       },
@@ -192172,9 +191297,9 @@
         "id": "b6d1b572-8434-42a2-a783-d832e2782be8",
         "conceptId": "83120e47-d1c7-47e6-82ef-420e6db49766",
         "languageCode": "es",
-        "text": "el resultado",
+        "text": "El resultado",
         "canonicalKey": "el resultado",
-        "note": null,
+        "note": "فرم جمع: los resultados (نتایج)",
         "translationIndex": 0
       },
       {
@@ -192183,24 +191308,6 @@
         "languageCode": "fa",
         "text": "نتیجه",
         "canonicalKey": "نتیجه",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "37e35f0b-7c16-4837-b7f6-bf22241531a4",
-        "conceptId": "a29a18e3-0d84-4893-9991-9c84380b12eb",
-        "languageCode": "es",
-        "text": "los resultados",
-        "canonicalKey": "los resultados",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "fd1166c7-b2ee-4859-a3d1-88718c8d4292",
-        "conceptId": "a29a18e3-0d84-4893-9991-9c84380b12eb",
-        "languageCode": "fa",
-        "text": "نتایج",
-        "canonicalKey": "نتایج",
         "note": null,
         "translationIndex": 0
       },
@@ -193200,7 +192307,7 @@
         "languageCode": "es",
         "text": "Neumático",
         "canonicalKey": "neumático",
-        "note": null,
+        "note": "فرم جمع: Neumáticos (لاستیک‌ها، تایرها)",
         "translationIndex": 0
       },
       {
@@ -193450,9 +192557,9 @@
         "id": "827b293a-904b-4dad-bd7c-c663606cf40b",
         "conceptId": "04b48832-6a83-4841-a0c4-71e42cc3004f",
         "languageCode": "es",
-        "text": "amortiguador",
+        "text": "Amortiguador",
         "canonicalKey": "amortiguador",
-        "note": null,
+        "note": "فرم جمع: Amortiguadores (کمک‌فنرها)",
         "translationIndex": 0
       },
       {
@@ -194170,9 +193277,9 @@
         "id": "c1de5c6e-d9bd-4604-beef-677cf314585a",
         "conceptId": "d0f35afb-e06d-4f3a-8a48-09a7017880f6",
         "languageCode": "es",
-        "text": "luz de posición",
+        "text": "Luz de posición",
         "canonicalKey": "luz de posición",
-        "note": null,
+        "note": "فرم جمع: Luces de posición (چراغ پارک، چراغ‌های کوچک خودرو، چراغ‌های موقعیت)",
         "translationIndex": 0
       },
       {
@@ -194584,9 +193691,9 @@
         "id": "765620e4-0f09-4dea-a032-fd669edde9ed",
         "conceptId": "db18f831-2a98-4c01-bc10-3a86af9890e7",
         "languageCode": "es",
-        "text": "droga",
+        "text": "Droga",
         "canonicalKey": "droga",
-        "note": null,
+        "note": "فرم جمع: drogas (مواد مخدر)",
         "translationIndex": 0
       },
       {
@@ -194784,7 +193891,7 @@
         "languageCode": "es",
         "text": "Semáforo",
         "canonicalKey": "semáforo",
-        "note": null,
+        "note": "فرم جمع: Semáforos (چراغ‌های راهنمایی)",
         "translationIndex": 0
       },
       {
@@ -195979,9 +195086,9 @@
         "id": "9b410f31-0512-4221-bbb2-9c668e1d56eb",
         "conceptId": "c8b8d2f1-1cab-4e52-a886-904454151f9b",
         "languageCode": "es",
-        "text": "señal de prioridad",
+        "text": "Señal de prioridad",
         "canonicalKey": "señal de prioridad",
-        "note": null,
+        "note": "فرم جمع: Señales de prioridad (تابلوهای حق تقدم)",
         "translationIndex": 0
       },
       {
@@ -196654,9 +195761,9 @@
         "id": "83e91807-68cc-4e34-92ba-696c16a8eede",
         "conceptId": "334c025d-c4b3-4a5d-8937-b24b1c4a1241",
         "languageCode": "es",
-        "text": "marca vial",
+        "text": "Marca vial",
         "canonicalKey": "marca vial",
-        "note": null,
+        "note": "فرم جمع: Marcas viales (خط‌کشی‌های سطح جاده، علائم افقی کف خیابان)",
         "translationIndex": 0
       },
       {
@@ -196843,9 +195950,9 @@
         "id": "dfd31a97-d175-4ae9-9700-49c4baadf932",
         "conceptId": "4e7bb836-8115-4aee-bd14-8ca4bef67da1",
         "languageCode": "es",
-        "text": "cono",
+        "text": "Cono",
         "canonicalKey": "cono",
-        "note": null,
+        "note": "فرم جمع: Conos (کله‌قندی‌های ترافیکی، مخروط‌های راهنمایی)",
         "translationIndex": 0
       },
       {
@@ -197077,9 +196184,9 @@
         "id": "82c9bc99-6b69-41c8-b573-4be1e6b0aadc",
         "conceptId": "4ed191b1-c95e-47b9-b0f6-b3648baa2609",
         "languageCode": "es",
-        "text": "señal acústica",
+        "text": "Señal acústica",
         "canonicalKey": "señal acústica",
-        "note": null,
+        "note": "فرم جمع: Señales acústicas (علائم صوتی، بوق زدن)",
         "translationIndex": 0
       },
       {
@@ -198888,7 +197995,7 @@
         "languageCode": "es",
         "text": "El punto",
         "canonicalKey": "el punto",
-        "note": null,
+        "note": "فرم جمع: Puntos (امتیازات گواهینامه، نمرات رانندگی)",
         "translationIndex": 0
       },
       {
@@ -200380,9 +199487,9 @@
         "id": "5e5f083f-ee0b-49b3-97ee-9efa83f94081",
         "conceptId": "c75501cb-5746-4c40-a9cc-3e2d966c006e",
         "languageCode": "es",
-        "text": "vía interurbana",
+        "text": "Vía interurbana",
         "canonicalKey": "vía interurbana",
-        "note": null,
+        "note": "فرم جمع: Vías interurbanas (راه‌های برون‌شهری)",
         "translationIndex": 0
       },
       {
@@ -200508,7 +199615,7 @@
         "languageCode": "es",
         "text": "La luz de carretera",
         "canonicalKey": "la luz de carretera",
-        "note": null,
+        "note": "چراغ ۲۳.\nتوضیح واژه: Largo alcance\nفرم جمع: Luces de carretera (نور بالا)",
         "translationIndex": 0
       },
       {
@@ -200528,42 +199635,6 @@
         "canonicalKey": "چراغ نور بالای خودرو",
         "note": null,
         "translationIndex": 1
-      },
-      {
-        "id": "9cf0571c-b8bb-4981-99af-c4d140f563c7",
-        "conceptId": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
-        "languageCode": "es",
-        "text": "Luces de emergencia",
-        "canonicalKey": "luces de emergencia",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "7eb2acac-2221-49ea-9a29-713ecec74dfd",
-        "conceptId": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
-        "languageCode": "fa",
-        "text": "چراغ‌های اضطراری",
-        "canonicalKey": "چراغ‌های اضطراری",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "85394704-ef89-48d2-9e82-85acebbc6370",
-        "conceptId": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
-        "languageCode": "fa",
-        "text": "چراغ‌های فلاشر",
-        "canonicalKey": "چراغ‌های فلاشر",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "d7d2bd81-91e0-43c3-865c-fbf13dfa6398",
-        "conceptId": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
-        "languageCode": "fa",
-        "text": "چراغ‌های هشدار خطر",
-        "canonicalKey": "چراغ‌های هشدار خطر",
-        "note": null,
-        "translationIndex": 2
       },
       {
         "id": "2b212194-ac08-4699-b6eb-326d0ded03f0",
@@ -202213,24 +201284,6 @@
         "translationIndex": 0
       },
       {
-        "id": "56cf006b-bb27-486f-b387-03853d70b2a1",
-        "conceptId": "942a8c67-e1b2-4f3a-aa51-ea40331ae9ac",
-        "languageCode": "es",
-        "text": "drogas",
-        "canonicalKey": "drogas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "a8fd66d9-4dd6-4137-bde2-e05d0401ba21",
-        "conceptId": "942a8c67-e1b2-4f3a-aa51-ea40331ae9ac",
-        "languageCode": "fa",
-        "text": "مواد مخدر",
-        "canonicalKey": "مواد مخدر",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "221f34e7-b693-4a9a-9dc8-0a5ce9b832dd",
         "conceptId": "56565ddb-2543-4122-80f0-56af698a1258",
         "languageCode": "es",
@@ -202567,9 +201620,9 @@
         "id": "bbe1bf0b-c11f-49ea-b4d0-f9cc82970544",
         "conceptId": "f1eadace-1239-4315-87e4-dd16815a9aef",
         "languageCode": "es",
-        "text": "ángulo muerto",
+        "text": "Ángulo muerto",
         "canonicalKey": "ángulo muerto",
-        "note": null,
+        "note": "فرم جمع: Ángulos muertos (Puntos ciegos) (نقاط کور آینه)",
         "translationIndex": 0
       },
       {
@@ -203581,60 +202634,6 @@
         "translationIndex": 0
       },
       {
-        "id": "76d05289-a5b9-4827-9639-78fa3dc6651d",
-        "conceptId": "86f25d5c-9d27-4b5f-951c-792414fd0bf1",
-        "languageCode": "es",
-        "text": "Luces de carretera",
-        "canonicalKey": "luces de carretera",
-        "note": "چراغ ۲۳.\nتوضیح واژه: Largo alcance",
-        "translationIndex": 0
-      },
-      {
-        "id": "e30c7141-218e-4758-8bea-f9d44cf51f6f",
-        "conceptId": "86f25d5c-9d27-4b5f-951c-792414fd0bf1",
-        "languageCode": "fa",
-        "text": "نور بالا",
-        "canonicalKey": "نور بالا",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "219132b4-b9a4-422c-ab27-efc4d95f15c0",
-        "conceptId": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "languageCode": "es",
-        "text": "Luces de posición",
-        "canonicalKey": "luces de posición",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "11218953-f442-4f36-ae8e-d2f655eba0cc",
-        "conceptId": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "languageCode": "fa",
-        "text": "چراغ پارک",
-        "canonicalKey": "چراغ پارک",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "da462ca7-ad7d-4cdc-8205-39b0ca7edefe",
-        "conceptId": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "languageCode": "fa",
-        "text": "چراغ‌های کوچک خودرو",
-        "canonicalKey": "چراغ‌های کوچک خودرو",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "078e5855-942d-4cb6-baec-028f052942df",
-        "conceptId": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "languageCode": "fa",
-        "text": "چراغ‌های موقعیت",
-        "canonicalKey": "چراغ‌های موقعیت",
-        "note": null,
-        "translationIndex": 2
-      },
-      {
         "id": "85dbab14-7d2e-4d49-bcff-7b8252de2409",
         "conceptId": "7c6333e6-f4d1-4fde-a331-edb187a89bf4",
         "languageCode": "es",
@@ -203941,24 +202940,6 @@
         "translationIndex": 1
       },
       {
-        "id": "14c0d2e4-b544-4780-be9f-5edc9ff520c5",
-        "conceptId": "1653b2e7-7420-4832-8b2a-4ca405ea559b",
-        "languageCode": "es",
-        "text": "Triángulos de preseñalización",
-        "canonicalKey": "triángulos de preseñalización",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "9e30205c-34d4-4370-bd6a-151521d83fea",
-        "conceptId": "1653b2e7-7420-4832-8b2a-4ca405ea559b",
-        "languageCode": "fa",
-        "text": "مثلث‌های هشدار اولیه",
-        "canonicalKey": "مثلث‌های هشدار اولیه",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "f4a5367a-d3e3-4665-98dc-5573ff56dad6",
         "conceptId": "22e19b64-cbce-4b8d-9902-4d3e0432cc4b",
         "languageCode": "es",
@@ -204063,24 +203044,6 @@
         "languageCode": "fa",
         "text": "عنصر بازتاب‌دهنده‌ی نور",
         "canonicalKey": "عنصر بازتاب‌دهنده‌ی نور",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "dd6404b9-d2c6-4eb5-96ce-01253fa2be11",
-        "conceptId": "37cc7903-fca2-48ad-926f-810abebc2452",
-        "languageCode": "es",
-        "text": "Usuarios vulnerables",
-        "canonicalKey": "usuarios vulnerables",
-        "note": "عابران، دوچرخه‌سواران و... ۴. ۴. ۴.",
-        "translationIndex": 0
-      },
-      {
-        "id": "0c9c0e21-c527-473e-a90b-118d02117d7f",
-        "conceptId": "37cc7903-fca2-48ad-926f-810abebc2452",
-        "languageCode": "fa",
-        "text": "کاربران آسیب‌پذیر جاده",
-        "canonicalKey": "کاربران آسیب‌پذیر جاده",
         "note": null,
         "translationIndex": 0
       },
@@ -204297,24 +203260,6 @@
         "languageCode": "fa",
         "text": "وسیله‌ی حیوان‌کش",
         "canonicalKey": "وسیله‌ی حیوان‌کش",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e3325dfd-bb3f-4e8c-8f70-9328f9e21dcb",
-        "conceptId": "5ca98071-6b0c-46d7-8ed5-9134e121b5ce",
-        "languageCode": "es",
-        "text": "Vehículos especiales",
-        "canonicalKey": "vehículos especiales",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "ce302a00-3588-4ea8-8bff-4f85db4418d0",
-        "conceptId": "5ca98071-6b0c-46d7-8ed5-9134e121b5ce",
-        "languageCode": "fa",
-        "text": "خودروهای ویژه",
-        "canonicalKey": "خودروهای ویژه",
         "note": null,
         "translationIndex": 0
       },
@@ -204567,7 +203512,7 @@
         "languageCode": "es",
         "text": "Retención",
         "canonicalKey": "retención",
-        "note": null,
+        "note": "فرم جمع: Retenciones (ترافیک سنگین، راه‌بندان)",
         "translationIndex": 0
       },
       {
@@ -204630,24 +203575,6 @@
         "languageCode": "fa",
         "text": "خط اصلی",
         "canonicalKey": "خط اصلی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "9adf1ece-f056-4eb9-83d0-e0c825c6267f",
-        "conceptId": "c1e17138-1733-451b-92f4-74320704434f",
-        "languageCode": "es",
-        "text": "Vías interurbanas",
-        "canonicalKey": "vías interurbanas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e9007be9-de17-4bac-8874-df318305fffa",
-        "conceptId": "c1e17138-1733-451b-92f4-74320704434f",
-        "languageCode": "fa",
-        "text": "راه‌های برون‌شهری",
-        "canonicalKey": "راه‌های برون‌شهری",
         "note": null,
         "translationIndex": 0
       },
@@ -204785,33 +203712,6 @@
         "canonicalKey": "سیگار (در برخی کشورها)",
         "note": null,
         "translationIndex": 2
-      },
-      {
-        "id": "6cdd6f1b-7cfb-4cc7-ac72-f0ae06194b60",
-        "conceptId": "b98aad98-fd69-4cb5-9af6-ca77927041ca",
-        "languageCode": "es",
-        "text": "Señales acústicas",
-        "canonicalKey": "señales acústicas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5b27cdc7-bd8f-4ff0-aec5-c3fa4c44a60d",
-        "conceptId": "b98aad98-fd69-4cb5-9af6-ca77927041ca",
-        "languageCode": "fa",
-        "text": "علائم صوتی",
-        "canonicalKey": "علائم صوتی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "06422001-f706-4de5-879d-f6bfeef91adc",
-        "conceptId": "b98aad98-fd69-4cb5-9af6-ca77927041ca",
-        "languageCode": "fa",
-        "text": "بوق زدن",
-        "canonicalKey": "بوق زدن",
-        "note": null,
-        "translationIndex": 1
       },
       {
         "id": "77f19839-40fc-4534-8e61-bad96cca951f",
@@ -205073,24 +203973,6 @@
         "canonicalKey": "قانون «آینه - راهنما - مانور»",
         "note": null,
         "translationIndex": 1
-      },
-      {
-        "id": "dd4c45b0-7d8a-4747-815a-22692a09c496",
-        "conceptId": "10be8270-05a8-4ec1-8353-8e6b98d5edf1",
-        "languageCode": "es",
-        "text": "Vehículos prioritarios",
-        "canonicalKey": "vehículos prioritarios",
-        "note": "آمبولانس و... ۶۰.",
-        "translationIndex": 0
-      },
-      {
-        "id": "4d891d0d-66ec-48df-8759-684a21b8b133",
-        "conceptId": "10be8270-05a8-4ec1-8353-8e6b98d5edf1",
-        "languageCode": "fa",
-        "text": "خودروهای دارای حق تقدم",
-        "canonicalKey": "خودروهای دارای حق تقدم",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "178ce6f3-ba97-4769-a30a-3fecc5266830",
@@ -206614,24 +205496,6 @@
         "translationIndex": 3
       },
       {
-        "id": "776e1ff8-a485-441f-ab6c-aa14a5411648",
-        "conceptId": "d14e1bb3-478f-4106-b264-477b4aacf870",
-        "languageCode": "es",
-        "text": "Infracciones",
-        "canonicalKey": "infracciones",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "dbb0f633-801a-4d4c-b2a7-3b902daeaf6a",
-        "conceptId": "d14e1bb3-478f-4106-b264-477b4aacf870",
-        "languageCode": "fa",
-        "text": "تخلفات",
-        "canonicalKey": "تخلفات",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "4067b6da-8fac-45f2-b7c8-917f733ab9cf",
         "conceptId": "e79aa19e-2545-4607-98d0-b80ce01b5402",
         "languageCode": "es",
@@ -207051,7 +205915,7 @@
         "languageCode": "es",
         "text": "Vehículo agrícola",
         "canonicalKey": "vehículo agrícola",
-        "note": null,
+        "note": "فرم جمع: Vehículos agrícolas (ماشین‌آلات و ادوات کشاورزی)",
         "translationIndex": 0
       },
       {
@@ -207116,24 +205980,6 @@
         "canonicalKey": "قدرت بزرگ جهانی",
         "note": null,
         "translationIndex": 2
-      },
-      {
-        "id": "3eceeac8-1feb-46b5-b121-76ffc1c307fd",
-        "conceptId": "a25abedf-b936-4fe5-a878-167cc4eaaa8f",
-        "languageCode": "es",
-        "text": "Permisos de conducir (A1, A2, A, B)",
-        "canonicalKey": "permisos de conducir (a1, a2, a, b)",
-        "note": "انواع گواهینامه رانندگی",
-        "translationIndex": 0
-      },
-      {
-        "id": "a9316795-2bfc-4217-9965-2d37b8c6bfe8",
-        "conceptId": "a25abedf-b936-4fe5-a878-167cc4eaaa8f",
-        "languageCode": "fa",
-        "text": "انواع گواهینامه رانندگی (A1، A2، A، B)",
-        "canonicalKey": "انواع گواهینامه رانندگی (a1، a2، a، b)",
-        "note": null,
-        "translationIndex": 0
       },
       {
         "id": "208e80b1-2053-491b-848a-5a15af5f639e",
@@ -208774,33 +207620,6 @@
         "translationIndex": 0
       },
       {
-        "id": "9e4d8620-ae38-4728-8fc9-6595d12e5523",
-        "conceptId": "95b11de9-fd12-44b2-8f66-5dafcef1407a",
-        "languageCode": "es",
-        "text": "chistes",
-        "canonicalKey": "chistes",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "b0c28330-ec2f-47b4-b6a2-28c77cc9440a",
-        "conceptId": "95b11de9-fd12-44b2-8f66-5dafcef1407a",
-        "languageCode": "fa",
-        "text": "جوک‌ها",
-        "canonicalKey": "جوک‌ها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "98060cb7-21c6-444c-81a2-92aaffa3f5af",
-        "conceptId": "95b11de9-fd12-44b2-8f66-5dafcef1407a",
-        "languageCode": "fa",
-        "text": "لطیفه‌ها",
-        "canonicalKey": "لطیفه‌ها",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
         "id": "3a48dd4f-4ab5-4d0a-bf50-89d59b09c152",
         "conceptId": "49286fda-c159-4474-a8de-38cc284c009a",
         "languageCode": "es",
@@ -209679,7 +208498,7 @@
         "languageCode": "es",
         "text": "Vehículo prioritario",
         "canonicalKey": "vehículo prioritario",
-        "note": null,
+        "note": "آمبولانس و... ۶۰.\nفرم جمع: Vehículos prioritarios (خودروهای دارای حق تقدم)",
         "translationIndex": 0
       },
       {
@@ -209735,33 +208554,6 @@
         "canonicalKey": "مأمور پلیس",
         "note": null,
         "translationIndex": 2
-      },
-      {
-        "id": "b1a7538e-8ddb-49af-a966-ffba3f824e10",
-        "conceptId": "c9d934b0-1538-4bda-a14e-214b9c90952d",
-        "languageCode": "es",
-        "text": "Bomberos",
-        "canonicalKey": "bomberos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "52ceadd2-1ac9-44d6-9ced-923dd62a1f48",
-        "conceptId": "c9d934b0-1538-4bda-a14e-214b9c90952d",
-        "languageCode": "fa",
-        "text": "آتش‌نشانی",
-        "canonicalKey": "آتش‌نشانی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "af88b941-d7b8-431b-953c-ee91eed36621",
-        "conceptId": "c9d934b0-1538-4bda-a14e-214b9c90952d",
-        "languageCode": "fa",
-        "text": "مأموران آتش‌نشانی",
-        "canonicalKey": "مأموران آتش‌نشانی",
-        "note": null,
-        "translationIndex": 1
       },
       {
         "id": "5f431594-7c59-4eb0-b812-f1a0242db56a",
@@ -209841,7 +208633,7 @@
         "languageCode": "es",
         "text": "Triángulo de preseñalización",
         "canonicalKey": "triángulo de preseñalización",
-        "note": null,
+        "note": "فرم جمع: Triángulos de preseñalización (مثلث‌های هشدار اولیه)",
         "translationIndex": 0
       },
       {
@@ -209897,33 +208689,6 @@
         "canonicalKey": "زنجیر چرخ",
         "note": null,
         "translationIndex": 0
-      },
-      {
-        "id": "6fead991-733a-475c-9be4-83dabbc5b027",
-        "conceptId": "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
-        "languageCode": "es",
-        "text": "Neumáticos de invierno",
-        "canonicalKey": "neumáticos de invierno",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "0bc22660-a944-4337-8c3e-717fcd0d2f7b",
-        "conceptId": "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
-        "languageCode": "fa",
-        "text": "لاستیک‌های زمستانی",
-        "canonicalKey": "لاستیک‌های زمستانی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "591f9436-9c1e-4dfd-bbdc-f0f4c35ade8c",
-        "conceptId": "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
-        "languageCode": "fa",
-        "text": "لاستیک‌های مخصوص زمستان",
-        "canonicalKey": "لاستیک‌های مخصوص زمستان",
-        "note": null,
-        "translationIndex": 1
       },
       {
         "id": "79f165f2-50f4-4ab1-bc7a-076c5dbbe34b",
@@ -210048,24 +208813,6 @@
         "languageCode": "fa",
         "text": "دیسک‌های ترمز",
         "canonicalKey": "دیسک‌های ترمز",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "3987a125-f424-4fb0-93d9-d1183568b2c0",
-        "conceptId": "cdb1d520-c55b-4d33-ac6d-f44193f6d4b1",
-        "languageCode": "es",
-        "text": "Amortiguadores",
-        "canonicalKey": "amortiguadores",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e58dd23e-c608-4add-a654-59115d27e089",
-        "conceptId": "cdb1d520-c55b-4d33-ac6d-f44193f6d4b1",
-        "languageCode": "fa",
-        "text": "کمک‌فنرها",
-        "canonicalKey": "کمک‌فنرها",
         "note": null,
         "translationIndex": 0
       },
@@ -211270,9 +210017,9 @@
         "id": "c458bdbf-b295-488f-b8b3-020feca6f795",
         "conceptId": "adc250c8-4804-4801-8c2c-dd6f542e2e9c",
         "languageCode": "es",
-        "text": "Domingo",
-        "canonicalKey": "domingo",
-        "note": null,
+        "text": "El domingo",
+        "canonicalKey": "el domingo",
+        "note": "فرم جمع: los domingos (یکشنبه‌ها)",
         "translationIndex": 0
       },
       {
@@ -222292,33 +221039,6 @@
         "translationIndex": 0
       },
       {
-        "id": "1e22cc02-4d40-4182-9a70-99c41a21695f",
-        "conceptId": "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
-        "languageCode": "es",
-        "text": "Agentes de circulación",
-        "canonicalKey": "agentes de circulación",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "ee0300af-7149-4847-8836-c35ba842b44c",
-        "conceptId": "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
-        "languageCode": "fa",
-        "text": "ماموران راهنمایی و رانندگی",
-        "canonicalKey": "ماموران راهنمایی و رانندگی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "421ccb07-4fac-4b22-af9a-a1b1bd62a770",
-        "conceptId": "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
-        "languageCode": "fa",
-        "text": "پلیس راهور",
-        "canonicalKey": "پلیس راهور",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
         "id": "94cdb92b-c193-492b-a417-cb3e1a6de055",
         "conceptId": "96bd1a9f-9c3f-4aa2-8a3d-61cdaffd84ee",
         "languageCode": "es",
@@ -222342,33 +221062,6 @@
         "languageCode": "fa",
         "text": "موانع و تجهیزات راهنمای مسیر",
         "canonicalKey": "موانع و تجهیزات راهنمای مسیر",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "03d34f91-357d-4bff-9b1c-c3395793c9c9",
-        "conceptId": "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
-        "languageCode": "es",
-        "text": "Señales circunstanciales",
-        "canonicalKey": "señales circunstanciales",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "3b36d1a6-66d4-4183-9d37-fd133013f35a",
-        "conceptId": "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
-        "languageCode": "fa",
-        "text": "علائم موقت ترافیکی",
-        "canonicalKey": "علائم موقت ترافیکی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5e106b58-6e45-4212-a6b1-6e68423cdeb2",
-        "conceptId": "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
-        "languageCode": "fa",
-        "text": "تابلوهای شرایط خاص",
-        "canonicalKey": "تابلوهای شرایط خاص",
         "note": null,
         "translationIndex": 1
       },
@@ -222416,69 +221109,6 @@
         "canonicalKey": "زمینه زرد",
         "note": null,
         "translationIndex": 0
-      },
-      {
-        "id": "043bd03e-25ed-42f4-8a27-ce6d58088edb",
-        "conceptId": "66917c88-65a9-4788-b9fe-eb745dfc6fb9",
-        "languageCode": "es",
-        "text": "Semáforos",
-        "canonicalKey": "semáforos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5907061e-4815-40ed-99c2-3441cf581963",
-        "conceptId": "66917c88-65a9-4788-b9fe-eb745dfc6fb9",
-        "languageCode": "fa",
-        "text": "چراغ‌های راهنمایی",
-        "canonicalKey": "چراغ‌های راهنمایی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "21ab89d9-0b0b-4284-9788-36340dee85b3",
-        "conceptId": "82e895cf-a3d3-4532-843a-ec75c7b63d57",
-        "languageCode": "es",
-        "text": "Señales verticales",
-        "canonicalKey": "señales verticales",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "dbe37e09-1d19-4ccd-bb58-96c7512407d7",
-        "conceptId": "82e895cf-a3d3-4532-843a-ec75c7b63d57",
-        "languageCode": "fa",
-        "text": "تابلوهای عمودی راهنمایی و رانندگی",
-        "canonicalKey": "تابلوهای عمودی راهنمایی و رانندگی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "fedeef38-ab59-4ce5-af94-1a009a5d8ab1",
-        "conceptId": "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
-        "languageCode": "es",
-        "text": "Marcas viales",
-        "canonicalKey": "marcas viales",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "fc8dccc7-5cfb-4af0-917b-317b8b14e8c7",
-        "conceptId": "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
-        "languageCode": "fa",
-        "text": "خط‌کشی‌های سطح جاده",
-        "canonicalKey": "خط‌کشی‌های سطح جاده",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "3fa60dfb-1466-48e7-bc9e-4f3c9a1c52df",
-        "conceptId": "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
-        "languageCode": "fa",
-        "text": "علائم افقی کف خیابان",
-        "canonicalKey": "علائم افقی کف خیابان",
-        "note": null,
-        "translationIndex": 1
       },
       {
         "id": "c2c20b81-bbd7-429e-b7f4-aa3b140ce1a2",
@@ -222751,60 +221381,6 @@
         "translationIndex": 0
       },
       {
-        "id": "68b34a5e-2fcd-4cc6-a963-cdc8a061639f",
-        "conceptId": "284dc445-87a7-43fa-a561-406e6d22d983",
-        "languageCode": "es",
-        "text": "Paneles direccionales",
-        "canonicalKey": "paneles direccionales",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "b9033fbb-a430-4965-9f74-4e8e63f8cc41",
-        "conceptId": "284dc445-87a7-43fa-a561-406e6d22d983",
-        "languageCode": "fa",
-        "text": "تابلوهای جهت‌نمای پیچ خطرناک",
-        "canonicalKey": "تابلوهای جهت‌نمای پیچ خطرناک",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5ff379b7-7221-4de9-ba61-e0ae21a4128d",
-        "conceptId": "284dc445-87a7-43fa-a561-406e6d22d983",
-        "languageCode": "fa",
-        "text": "پانل‌های هدایت مسیر",
-        "canonicalKey": "پانل‌های هدایت مسیر",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "2b3212b7-78de-4dce-b8e7-18eaae52dd40",
-        "conceptId": "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
-        "languageCode": "es",
-        "text": "Conos",
-        "canonicalKey": "conos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "fd78d5de-7b7f-49d9-b807-bf13fdd0f68a",
-        "conceptId": "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
-        "languageCode": "fa",
-        "text": "کله‌قندی‌های ترافیکی",
-        "canonicalKey": "کله‌قندی‌های ترافیکی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "f4afc169-9999-4d83-902d-98a3f31386e1",
-        "conceptId": "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
-        "languageCode": "fa",
-        "text": "مخروط‌های راهنمایی",
-        "canonicalKey": "مخروط‌های راهنمایی",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
         "id": "d1e3c1d8-d128-4bdb-a2ec-519f06d0337a",
         "conceptId": "ebd52a8b-2c84-4aed-ab2b-5f42c49428c3",
         "languageCode": "es",
@@ -223008,7 +221584,7 @@
         "languageCode": "es",
         "text": "Luz de posición delantera",
         "canonicalKey": "luz de posición delantera",
-        "note": null,
+        "note": "فرم جمع: Luces de posición delanteras (چراغ‌های کوچک جلو)",
         "translationIndex": 0
       },
       {
@@ -223026,7 +221602,7 @@
         "languageCode": "es",
         "text": "Luz de posición trasera",
         "canonicalKey": "luz de posición trasera",
-        "note": null,
+        "note": "فرم جمع: Luces de posición traseras (چراغ‌های کوچک عقب)",
         "translationIndex": 0
       },
       {
@@ -223134,7 +221710,7 @@
         "languageCode": "es",
         "text": "Luz de estacionamiento",
         "canonicalKey": "luz de estacionamiento",
-        "note": null,
+        "note": "فرم جمع: Luces de estacionamiento (چراغ‌های پارک خودرو)",
         "translationIndex": 0
       },
       {
@@ -223215,7 +221791,7 @@
         "languageCode": "es",
         "text": "Luz de circulación diurna",
         "canonicalKey": "luz de circulación diurna",
-        "note": null,
+        "note": "فرم جمع: Luces de circulación diurna (چراغ‌های روشنایی روز (دی‌لایت))",
         "translationIndex": 0
       },
       {
@@ -223543,96 +222119,6 @@
         "translationIndex": 0
       },
       {
-        "id": "36f29d37-2c10-40ec-bc14-f697205793fb",
-        "conceptId": "66a441d7-8b72-4656-9916-1e81445b561f",
-        "languageCode": "es",
-        "text": "Señales de tráfico",
-        "canonicalKey": "señales de tráfico",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "0baf3b03-2aa6-4789-813c-a1f45ca244a7",
-        "conceptId": "66a441d7-8b72-4656-9916-1e81445b561f",
-        "languageCode": "fa",
-        "text": "تابلوها و علائم راهنمایی و رانندگی",
-        "canonicalKey": "تابلوها و علائم راهنمایی و رانندگی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "531b958b-ea77-4d52-b9fc-ae895970be25",
-        "conceptId": "ba49d8ba-f0a3-44c3-a437-b2abd15662a5",
-        "languageCode": "es",
-        "text": "Señales de peligro",
-        "canonicalKey": "señales de peligro",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e84c8667-c551-4765-851d-8ef9a26295b7",
-        "conceptId": "ba49d8ba-f0a3-44c3-a437-b2abd15662a5",
-        "languageCode": "fa",
-        "text": "تابلوهای هشداردهنده خطر",
-        "canonicalKey": "تابلوهای هشداردهنده خطر",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "b5c98f55-de1f-4e45-9a0b-eebae0010448",
-        "conceptId": "e98a4474-2cc1-48de-ae23-427356f43e11",
-        "languageCode": "es",
-        "text": "Señales de prohibición",
-        "canonicalKey": "señales de prohibición",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "8d3b70d2-fb28-4ce4-939b-d579df411753",
-        "conceptId": "e98a4474-2cc1-48de-ae23-427356f43e11",
-        "languageCode": "fa",
-        "text": "تابلوهای ممنوعیت",
-        "canonicalKey": "تابلوهای ممنوعیت",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "f792e86a-45aa-4f42-8c7f-68408af27680",
-        "conceptId": "e98a4474-2cc1-48de-ae23-427356f43e11",
-        "languageCode": "fa",
-        "text": "تابلوهای بازدارنده",
-        "canonicalKey": "تابلوهای بازدارنده",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "a7ab95e7-7f35-4fa8-b9b1-76120bc8f798",
-        "conceptId": "e40ef618-638a-45a5-9134-9d44acce5a13",
-        "languageCode": "es",
-        "text": "Señales de obligación",
-        "canonicalKey": "señales de obligación",
-        "note": "دایره‌ای آبی‌رنگ",
-        "translationIndex": 0
-      },
-      {
-        "id": "e043d552-b60a-4647-ac6f-a7d9d1b810db",
-        "conceptId": "e40ef618-638a-45a5-9134-9d44acce5a13",
-        "languageCode": "fa",
-        "text": "تابلوهای دستوری",
-        "canonicalKey": "تابلوهای دستوری",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "525f6b56-9b2f-49a3-8d42-afa85b6d2b77",
-        "conceptId": "e40ef618-638a-45a5-9134-9d44acce5a13",
-        "languageCode": "fa",
-        "text": "تابلوهای الزام‌آور",
-        "canonicalKey": "تابلوهای الزام‌آور",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
         "id": "dd5f7dbb-7068-4b85-9bee-65b2affd538f",
         "conceptId": "713b2ce0-5c20-4efb-9254-2836e4e1dd7f",
         "languageCode": "es",
@@ -223656,33 +222142,6 @@
         "languageCode": "fa",
         "text": "تابلوهای اطلاعاتی",
         "canonicalKey": "تابلوهای اطلاعاتی",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "877229cd-62d8-46bf-830c-f66a11189a10",
-        "conceptId": "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
-        "languageCode": "es",
-        "text": "Señales de indicación",
-        "canonicalKey": "señales de indicación",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "4abdd354-9532-4b0a-87a5-7ec70a35b32e",
-        "conceptId": "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
-        "languageCode": "fa",
-        "text": "تابلوهای راهنما",
-        "canonicalKey": "تابلوهای راهنما",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "c3eaa6af-bf46-4ae2-9c2f-37de1a833fd2",
-        "conceptId": "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
-        "languageCode": "fa",
-        "text": "علائم اخباری",
-        "canonicalKey": "علائم اخباری",
         "note": null,
         "translationIndex": 1
       },
@@ -224614,24 +223073,6 @@
         "translationIndex": 0
       },
       {
-        "id": "05d944f4-588e-4e97-b681-666f27d1d8de",
-        "conceptId": "36f40391-0237-4344-b1fc-6727aca49eaf",
-        "languageCode": "es",
-        "text": "Vehículos agrícolas",
-        "canonicalKey": "vehículos agrícolas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "f2bf75f2-36dc-4f04-8b40-ac84ae6e8eca",
-        "conceptId": "36f40391-0237-4344-b1fc-6727aca49eaf",
-        "languageCode": "fa",
-        "text": "ماشین‌آلات و ادوات کشاورزی",
-        "canonicalKey": "ماشین‌آلات و ادوات کشاورزی",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "1d539ae8-27be-458d-9a22-07d98ac7d699",
         "conceptId": "472e4198-b655-4243-bd0b-e5c6a7c017b6",
         "languageCode": "es",
@@ -225062,33 +223503,6 @@
         "canonicalKey": "چراغ ترمز",
         "note": null,
         "translationIndex": 0
-      },
-      {
-        "id": "2fd0bb33-1bb2-46af-9f3d-a2e954d6c28d",
-        "conceptId": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
-        "languageCode": "es",
-        "text": "Retenciones",
-        "canonicalKey": "retenciones",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "6b7fdfca-434b-454d-ab23-7ba1d3021cab",
-        "conceptId": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
-        "languageCode": "fa",
-        "text": "ترافیک سنگین",
-        "canonicalKey": "ترافیک سنگین",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "6cd65ef9-21be-421c-adef-8a9e296c6f1b",
-        "conceptId": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
-        "languageCode": "fa",
-        "text": "راه‌بندان",
-        "canonicalKey": "راه‌بندان",
-        "note": null,
-        "translationIndex": 1
       },
       {
         "id": "06739dbd-8f5f-4a1a-b47e-d7b54d122746",
@@ -226552,9 +224966,9 @@
         "id": "644538f5-5ff8-4acd-812a-c9be254d7176",
         "conceptId": "b95608bc-2003-4a26-9934-3ceb02c5c454",
         "languageCode": "es",
-        "text": "Vestuario",
-        "canonicalKey": "vestuario",
-        "note": null,
+        "text": "El vestuario",
+        "canonicalKey": "el vestuario",
+        "note": "فرم جمع: Los vestuarios (رختکن‌ها)",
         "translationIndex": 0
       },
       {
@@ -226588,9 +225002,9 @@
         "id": "9d773959-4121-4547-aac9-c0ae189e5f8c",
         "conceptId": "2b2f3661-0341-4e81-906e-44f2840087c2",
         "languageCode": "es",
-        "text": "Taquilla",
-        "canonicalKey": "taquilla",
-        "note": null,
+        "text": "La taquilla",
+        "canonicalKey": "la taquilla",
+        "note": "فرم جمع: Las taquillas (کمدهای رختکن)",
         "translationIndex": 0
       },
       {
@@ -227395,24 +225809,6 @@
         "translationIndex": 1
       },
       {
-        "id": "8de380a5-93a5-4472-bf83-cc460a7cce65",
-        "conceptId": "532f4831-e9fb-46b3-806b-fa3b3c13f1cf",
-        "languageCode": "es",
-        "text": "Los vestuarios",
-        "canonicalKey": "los vestuarios",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "12b0f7c7-4ab0-4048-b7a5-d55a69a462b9",
-        "conceptId": "532f4831-e9fb-46b3-806b-fa3b3c13f1cf",
-        "languageCode": "fa",
-        "text": "رختکن‌ها",
-        "canonicalKey": "رختکن‌ها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "f93560e5-3ad2-4955-be64-f86ba372976d",
         "conceptId": "ce45add1-383c-4bb9-9a3b-5f81d3ff6f90",
         "languageCode": "es",
@@ -227445,24 +225841,6 @@
         "languageCode": "fa",
         "text": "رختکن بانوان",
         "canonicalKey": "رختکن بانوان",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "bc811f72-11e0-4f68-92fb-e1b501ba450f",
-        "conceptId": "d59b0fd5-11c3-4d4d-9e6a-7c2016c86900",
-        "languageCode": "es",
-        "text": "Las taquillas",
-        "canonicalKey": "las taquillas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "40fcbd0d-2ae8-4541-ba4a-57a5943e0eaf",
-        "conceptId": "d59b0fd5-11c3-4d4d-9e6a-7c2016c86900",
-        "languageCode": "fa",
-        "text": "کمدهای رختکن",
-        "canonicalKey": "کمدهای رختکن",
         "note": null,
         "translationIndex": 0
       },
@@ -229659,24 +228037,6 @@
         "languageCode": "fa",
         "text": "تحرک‌پذیری مفاصل",
         "canonicalKey": "تحرک‌پذیری مفاصل",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "d4396182-9ecc-4ac8-beae-2041c213a890",
-        "conceptId": "8baa1de7-f9c2-42e1-93ff-6d82dc31f429",
-        "languageCode": "es",
-        "text": "Series",
-        "canonicalKey": "series",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "fe314f9c-0632-4e94-93c5-e4c69b028bbc",
-        "conceptId": "8baa1de7-f9c2-42e1-93ff-6d82dc31f429",
-        "languageCode": "fa",
-        "text": "ست‌ها",
-        "canonicalKey": "ست‌ها",
         "note": null,
         "translationIndex": 0
       },
@@ -235396,60 +233756,6 @@
         "translationIndex": 0
       },
       {
-        "id": "8394f55c-6cac-4e89-a0f6-60d7f244f173",
-        "conceptId": "d19a1d8e-1605-4ddb-bcb5-4f042772ebb2",
-        "languageCode": "es",
-        "text": "Luces de posición delanteras",
-        "canonicalKey": "luces de posición delanteras",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e4fe47f7-b5e8-4de2-85b4-69b4b162b789",
-        "conceptId": "d19a1d8e-1605-4ddb-bcb5-4f042772ebb2",
-        "languageCode": "fa",
-        "text": "چراغ‌های کوچک جلو",
-        "canonicalKey": "چراغ‌های کوچک جلو",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e57fbcd0-a4d0-4c1e-bbaa-40a465c78e96",
-        "conceptId": "b0652d9b-f06f-49a4-875e-1f69837f7a68",
-        "languageCode": "es",
-        "text": "Luces de posición traseras",
-        "canonicalKey": "luces de posición traseras",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "4296c9a5-2e23-4cec-bddd-7ba9c845cc79",
-        "conceptId": "b0652d9b-f06f-49a4-875e-1f69837f7a68",
-        "languageCode": "fa",
-        "text": "چراغ‌های کوچک عقب",
-        "canonicalKey": "چراغ‌های کوچک عقب",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5832cc2c-f15b-49b5-9ed6-07f0ce4783ad",
-        "conceptId": "f58e078a-5034-491a-995d-2855f0eca295",
-        "languageCode": "es",
-        "text": "Luces de cruce",
-        "canonicalKey": "luces de cruce",
-        "note": "چراغ ۲۲.\nتوضیح واژه: Corto alcance",
-        "translationIndex": 0
-      },
-      {
-        "id": "f5081b83-38ec-4ced-b16e-390ddcb4f0e1",
-        "conceptId": "f58e078a-5034-491a-995d-2855f0eca295",
-        "languageCode": "fa",
-        "text": "نور پایین",
-        "canonicalKey": "نور پایین",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "471d6965-f407-4a7a-99b8-1f56d4abee1f",
         "conceptId": "e55ba313-2b82-4e58-891f-297f8a37c78b",
         "languageCode": "es",
@@ -235482,24 +233788,6 @@
         "languageCode": "fa",
         "text": "چراغ راهنمای جانبی روی آینه بغل",
         "canonicalKey": "چراغ راهنمای جانبی روی آینه بغل",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "31679831-ccbf-42d7-bffa-dec4588e25c8",
-        "conceptId": "f171f4b9-a4f7-48d0-aee7-e38bb372ddad",
-        "languageCode": "es",
-        "text": "Luces de circulación diurna",
-        "canonicalKey": "luces de circulación diurna",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "4d8f8b23-4694-4b1d-82e3-5ceddfc3034f",
-        "conceptId": "f171f4b9-a4f7-48d0-aee7-e38bb372ddad",
-        "languageCode": "fa",
-        "text": "چراغ‌های روشنایی روز (دی‌لایت)",
-        "canonicalKey": "چراغ‌های روشنایی روز (دی‌لایت)",
         "note": null,
         "translationIndex": 0
       },
@@ -235626,24 +233914,6 @@
         "languageCode": "fa",
         "text": "رنگ زرد کهربایی استاندارد خودرویی (ویژه چراغ‌های راهنما)",
         "canonicalKey": "رنگ زرد کهربایی استاندارد خودرویی (ویژه چراغ‌های راهنما)",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5b579cc7-a0be-4bdd-a74e-6a4283da0307",
-        "conceptId": "6f79f0e3-75fd-4c8b-8902-cd4b3a60c861",
-        "languageCode": "es",
-        "text": "Luces de estacionamiento",
-        "canonicalKey": "luces de estacionamiento",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "a727b60c-7a00-4f13-b118-84f31e3286b5",
-        "conceptId": "6f79f0e3-75fd-4c8b-8902-cd4b3a60c861",
-        "languageCode": "fa",
-        "text": "چراغ‌های پارک خودرو",
-        "canonicalKey": "چراغ‌های پارک خودرو",
         "note": null,
         "translationIndex": 0
       },
@@ -235797,7 +234067,7 @@
         "languageCode": "es",
         "text": "Vehículo especial",
         "canonicalKey": "vehículo especial",
-        "note": null,
+        "note": "فرم جمع: Vehículos especiales (خودروهای ویژه)",
         "translationIndex": 0
       },
       {
@@ -237754,24 +236024,6 @@
         "translationIndex": 0
       },
       {
-        "id": "6a058f74-a54c-416b-9a59-08608d019c33",
-        "conceptId": "d825f0ac-9d8e-48cb-b35c-779457d11d02",
-        "languageCode": "es",
-        "text": "Espejos retrovisores",
-        "canonicalKey": "espejos retrovisores",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "6864f514-2eff-44af-a095-13b9b897d78f",
-        "conceptId": "d825f0ac-9d8e-48cb-b35c-779457d11d02",
-        "languageCode": "fa",
-        "text": "آینه‌های دید عقب",
-        "canonicalKey": "آینه‌های دید عقب",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "05c84071-df87-424f-8d4b-83e4f99bb9ac",
         "conceptId": "67bbc44b-5a49-49ec-9af5-917d0e54cbfe",
         "languageCode": "es",
@@ -237822,24 +236074,6 @@
         "languageCode": "fa",
         "text": "تنظیم آینه‌های دید عقب",
         "canonicalKey": "تنظیم آینه‌های دید عقب",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "890aa5e3-21d1-4676-b65d-5bbb9211bc7a",
-        "conceptId": "271ce1ac-f3fe-407c-8878-50e2eed15e06",
-        "languageCode": "es",
-        "text": "Ángulos muertos (Puntos ciegos)",
-        "canonicalKey": "ángulos muertos (puntos ciegos)",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "f41eb3d7-fd2c-4cb9-9264-b068a7fe2012",
-        "conceptId": "271ce1ac-f3fe-407c-8878-50e2eed15e06",
-        "languageCode": "fa",
-        "text": "نقاط کور آینه",
-        "canonicalKey": "نقاط کور آینه",
         "note": null,
         "translationIndex": 0
       },
@@ -241717,9 +239951,9 @@
         "id": "939e0bda-dbfd-4423-a4f8-cafc4b3f9fa9",
         "conceptId": "8f2bb0ef-222d-4e1d-a195-8861f2143dc7",
         "languageCode": "es",
-        "text": "Prueba",
-        "canonicalKey": "prueba",
-        "note": null,
+        "text": "La prueba",
+        "canonicalKey": "la prueba",
+        "note": "فرم جمع: las pruebas (مدارک، شواهد، آزمایش‌ها، امتحانات، آزمون‌ها)",
         "translationIndex": 0
       },
       {
@@ -241773,33 +240007,6 @@
         "languageCode": "fa",
         "text": "تست سلامت و روان‌شناختی رانندگی",
         "canonicalKey": "تست سلامت و روان‌شناختی رانندگی",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "6679d6e4-79cd-415f-9da6-1c09017ff69f",
-        "conceptId": "6f05d736-8972-4253-ae1c-2ea602af5300",
-        "languageCode": "es",
-        "text": "Puntos",
-        "canonicalKey": "puntos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "5d575c55-05ee-418d-a8ef-31fe699bfe2b",
-        "conceptId": "6f05d736-8972-4253-ae1c-2ea602af5300",
-        "languageCode": "fa",
-        "text": "امتیازات گواهینامه",
-        "canonicalKey": "امتیازات گواهینامه",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "1b5c3efa-3a31-4b46-9e90-c8afa24c9316",
-        "conceptId": "6f05d736-8972-4253-ae1c-2ea602af5300",
-        "languageCode": "fa",
-        "text": "نمرات رانندگی",
-        "canonicalKey": "نمرات رانندگی",
         "note": null,
         "translationIndex": 1
       },
@@ -242979,7 +241186,7 @@
         "languageCode": "es",
         "text": "Señal circunstancial",
         "canonicalKey": "señal circunstancial",
-        "note": null,
+        "note": "فرم جمع: Señales circunstanciales (علائم موقت ترافیکی، تابلوهای شرایط خاص)",
         "translationIndex": 0
       },
       {
@@ -243105,7 +241312,7 @@
         "languageCode": "es",
         "text": "Panel direccional",
         "canonicalKey": "panel direccional",
-        "note": null,
+        "note": "فرم جمع: Paneles direccionales (تابلوهای جهت‌نمای پیچ خطرناک، پانل‌های هدایت مسیر)",
         "translationIndex": 0
       },
       {
@@ -243636,7 +241843,7 @@
         "languageCode": "es",
         "text": "Neumático de invierno",
         "canonicalKey": "neumático de invierno",
-        "note": null,
+        "note": "فرم جمع: Neumáticos de invierno (لاستیک‌های زمستانی، لاستیک‌های مخصوص زمستان)",
         "translationIndex": 0
       },
       {
@@ -243834,7 +242041,7 @@
         "languageCode": "es",
         "text": "Usuario vulnerable",
         "canonicalKey": "usuario vulnerable",
-        "note": null,
+        "note": "عابران، دوچرخه‌سواران و... ۴. ۴. ۴.\nفرم جمع: Usuarios vulnerables (کاربران آسیب‌پذیر جاده)",
         "translationIndex": 0
       },
       {
@@ -243879,51 +242086,6 @@
         "languageCode": "fa",
         "text": "صندلی مخصوص کودک در خودرو",
         "canonicalKey": "صندلی مخصوص کودک در خودرو",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "33941ac2-7f49-4401-b5fb-3dbc403f2fd4",
-        "conceptId": "e49e1328-e833-4a9c-b805-3443290668f2",
-        "languageCode": "es",
-        "text": "Neumáticos",
-        "canonicalKey": "neumáticos",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "2f9bc22f-4c5c-423e-94f7-6407381b0791",
-        "conceptId": "e49e1328-e833-4a9c-b805-3443290668f2",
-        "languageCode": "fa",
-        "text": "لاستیک‌ها",
-        "canonicalKey": "لاستیک‌ها",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "1fa27d35-99f3-42b1-8059-0335c959499f",
-        "conceptId": "e49e1328-e833-4a9c-b805-3443290668f2",
-        "languageCode": "fa",
-        "text": "تایرها",
-        "canonicalKey": "تایرها",
-        "note": null,
-        "translationIndex": 1
-      },
-      {
-        "id": "ae3b0564-8bb3-4707-8a6d-40a0226d1197",
-        "conceptId": "abf6d788-a9cd-4405-a8d5-267b3df3b949",
-        "languageCode": "es",
-        "text": "Ruedas",
-        "canonicalKey": "ruedas",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "f4a0298d-8dd4-4d05-bedf-b2a665508808",
-        "conceptId": "abf6d788-a9cd-4405-a8d5-267b3df3b949",
-        "languageCode": "fa",
-        "text": "چرخ‌ها",
-        "canonicalKey": "چرخ‌ها",
         "note": null,
         "translationIndex": 0
       },
@@ -244216,30 +242378,12 @@
         "translationIndex": 0
       },
       {
-        "id": "7d17a6a5-bd0c-4b8e-9044-c52a39a7fc9a",
-        "conceptId": "3ba226f9-3426-4b3a-90a5-b906c202ba59",
-        "languageCode": "es",
-        "text": "Señales de prioridad",
-        "canonicalKey": "señales de prioridad",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
-        "id": "e370891d-ec9f-41e0-81c0-e00a02604ccd",
-        "conceptId": "3ba226f9-3426-4b3a-90a5-b906c202ba59",
-        "languageCode": "fa",
-        "text": "تابلوهای حق تقدم",
-        "canonicalKey": "تابلوهای حق تقدم",
-        "note": null,
-        "translationIndex": 0
-      },
-      {
         "id": "a2be35fc-f945-4dae-bb09-277dd183636f",
         "conceptId": "c8047ecf-b333-4acf-9965-889f2e5952b2",
         "languageCode": "es",
         "text": "Agente de circulación",
         "canonicalKey": "agente de circulación",
-        "note": null,
+        "note": "فرم جمع: Agentes de circulación (ماموران راهنمایی و رانندگی، پلیس راهور)",
         "translationIndex": 0
       },
       {
@@ -244530,10 +242674,6 @@
       },
       {
         "conceptId": "94d697c3-e282-498d-aeae-bbcd9afbb0a3",
-        "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
-      },
-      {
-        "conceptId": "43ddff0a-1894-42e1-a6d1-27d353c4ee0c",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
       },
       {
@@ -245169,10 +243309,6 @@
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
       },
       {
-        "conceptId": "c180a1a5-a452-43dc-a57f-5ff701ba4cdf",
-        "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
-      },
-      {
         "conceptId": "6b1c71fb-14e5-4f23-9643-fa802eaaa648",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
       },
@@ -245725,10 +243861,6 @@
         "categoryId": "883ee2e9-039c-423a-9211-380862f09d99"
       },
       {
-        "conceptId": "434e2e91-cdf8-48c6-9612-cd24acc9b9ed",
-        "categoryId": "883ee2e9-039c-423a-9211-380862f09d99"
-      },
-      {
         "conceptId": "62ffb937-55d7-4872-839d-b1b901b2625f",
         "categoryId": "883ee2e9-039c-423a-9211-380862f09d99"
       },
@@ -245870,10 +244002,6 @@
       },
       {
         "conceptId": "ddf5e6e9-c241-4cec-8cab-d1ff4a5c3596",
-        "categoryId": "5c5103c7-3de0-44cb-9b16-c780ff8ca59d"
-      },
-      {
-        "conceptId": "5925254b-d57c-4169-b500-fdc66fff4062",
         "categoryId": "5c5103c7-3de0-44cb-9b16-c780ff8ca59d"
       },
       {
@@ -257561,10 +255689,6 @@
         "categoryId": "476656a7-5638-4b73-9b7c-f44e17fae6ae"
       },
       {
-        "conceptId": "7f8b0159-3629-4e66-89b1-5b3b0eb44510",
-        "categoryId": "476656a7-5638-4b73-9b7c-f44e17fae6ae"
-      },
-      {
         "conceptId": "50bd622a-8182-48cc-8ec1-3a4a13b32198",
         "categoryId": "476656a7-5638-4b73-9b7c-f44e17fae6ae"
       },
@@ -258873,7 +256997,7 @@
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
       },
       {
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
+        "conceptId": "8f2bb0ef-222d-4e1d-a195-8861f2143dc7",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
       },
       {
@@ -258978,10 +257102,6 @@
       },
       {
         "conceptId": "19bed0ed-b13b-4b8a-ab75-dd75ca15c87b",
-        "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
-      },
-      {
-        "conceptId": "d299d37e-1ace-45b2-a585-7ad5f5d5e860",
         "categoryId": "5b212ca4-8e95-49bd-b9b0-9ab422ffdfec"
       },
       {
@@ -260429,10 +258549,6 @@
         "categoryId": "2e946eb5-3705-46d6-83f0-d7a85409cc46"
       },
       {
-        "conceptId": "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
-        "categoryId": "2e946eb5-3705-46d6-83f0-d7a85409cc46"
-      },
-      {
         "conceptId": "5bda6113-cb1f-4bd0-b9eb-309ed75f11b6",
         "categoryId": "2e946eb5-3705-46d6-83f0-d7a85409cc46"
       },
@@ -260789,7 +258905,7 @@
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
-        "conceptId": "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
+        "conceptId": "9d166c7f-4fad-4d2c-bda7-14692cfb1635",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -261042,10 +259158,6 @@
       },
       {
         "conceptId": "2b7fa2c2-00a1-4958-8466-fd629f04526a",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
-        "conceptId": "1d869d66-160f-47e8-8736-e5be1aa19bc2",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -261618,10 +259730,6 @@
       },
       {
         "conceptId": "069793be-6632-4714-b482-417216c62d70",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
-        "conceptId": "9d166c7f-4fad-4d2c-bda7-14692cfb1635",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -262405,7 +260513,7 @@
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
-        "conceptId": "3df9ddeb-f173-4f0f-ba5e-3ca99e4be3ff",
+        "conceptId": "adc250c8-4804-4801-8c2c-dd6f542e2e9c",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -263033,7 +261141,7 @@
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
+        "conceptId": "a86a45db-6d84-4978-a65a-e60114b17255",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -265253,10 +263361,6 @@
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
-        "conceptId": "a86a45db-6d84-4978-a65a-e60114b17255",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
         "conceptId": "63a8cd89-22b5-436d-a169-725086be57ec",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
@@ -265410,10 +263514,6 @@
       },
       {
         "conceptId": "8e7e0fe7-037b-40c0-82d1-7403257ffd89",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
-        "conceptId": "933ce6ea-6bf9-4a03-933d-dfaf524756e7",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -265573,15 +263673,7 @@
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
-        "conceptId": "f2522797-0a09-42f9-91d7-558b9e81790f",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
         "conceptId": "d2df3e18-f93f-4284-89ae-c3e138d42505",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
-        "conceptId": "99c3cade-3178-4170-9dba-17ffbb8e4635",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -266170,10 +264262,6 @@
       },
       {
         "conceptId": "45634889-21ae-46f8-a491-34d960146b6a",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
-        "conceptId": "fe132a65-63fa-4818-9a86-4145651cefdd",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -267134,10 +265222,6 @@
       },
       {
         "conceptId": "83120e47-d1c7-47e6-82ef-420e6db49766",
-        "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
-      },
-      {
-        "conceptId": "a29a18e3-0d84-4893-9991-9c84380b12eb",
         "categoryId": "ae0e9f97-c1d1-4211-9fe4-3bf185695de8"
       },
       {
@@ -268313,7 +266397,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
+        "conceptId": "29454426-3626-4ee4-b5a2-8f24e6ae28b7",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -268553,10 +266637,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "942a8c67-e1b2-4f3a-aa51-ea40331ae9ac",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "56565ddb-2543-4122-80f0-56af698a1258",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
@@ -268757,14 +266837,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "86f25d5c-9d27-4b5f-951c-792414fd0bf1",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "7c6333e6-f4d1-4fde-a331-edb187a89bf4",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -268817,7 +266889,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "1653b2e7-7420-4832-8b2a-4ca405ea559b",
+        "conceptId": "3f2bb87d-2002-426a-9bcf-a4ce263cc32d",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -268845,7 +266917,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "37cc7903-fca2-48ad-926f-810abebc2452",
+        "conceptId": "7cff1eda-4f55-42fe-af0b-28371b085c9a",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -268885,7 +266957,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "5ca98071-6b0c-46d7-8ed5-9134e121b5ce",
+        "conceptId": "05c86051-36db-455c-a260-578ebf856015",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -268949,10 +267021,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "c1e17138-1733-451b-92f4-74320704434f",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "20af32e1-c7a2-451e-9a5f-2e1229ecf73a",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -268974,10 +267042,6 @@
       },
       {
         "conceptId": "3884d7b4-1728-425b-88d7-fd278f04e809",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "b98aad98-fd69-4cb5-9af6-ca77927041ca",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -269025,7 +267089,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "10be8270-05a8-4ec1-8353-8e6b98d5edf1",
+        "conceptId": "723ae384-8dc1-4ddc-a073-94bd41565cb3",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -269257,7 +267321,7 @@
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
       {
-        "conceptId": "d14e1bb3-478f-4106-b264-477b4aacf870",
+        "conceptId": "06bc5f3a-f628-4823-bf23-9e64661e5a55",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
       {
@@ -269341,7 +267405,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "a25abedf-b936-4fe5-a878-167cc4eaaa8f",
+        "conceptId": "792cd2e0-bc90-4361-8956-0ff8ac01563a",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -269577,7 +267641,7 @@
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
       {
-        "conceptId": "95b11de9-fd12-44b2-8f66-5dafcef1407a",
+        "conceptId": "0944051a-8fcb-4e53-935d-c8849d804b34",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
       {
@@ -269709,15 +267773,11 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "723ae384-8dc1-4ddc-a073-94bd41565cb3",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "62860b69-15a6-4be7-9d7a-9d947f7eabf9",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "c9d934b0-1538-4bda-a14e-214b9c90952d",
+        "conceptId": "17fb6869-3a7b-4aad-8d7d-dc1d7c801973",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -269737,10 +267797,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "3f2bb87d-2002-426a-9bcf-a4ce263cc32d",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "2e76f011-0e58-43bb-8112-3fe2f6aabc53",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -269749,7 +267805,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
+        "conceptId": "b5f5d24f-9482-4454-8ab4-2c3fddfd3f5f",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -269774,10 +267830,6 @@
       },
       {
         "conceptId": "54b40b00-9173-4c52-b322-89a60d9adbd5",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "cdb1d520-c55b-4d33-ac6d-f44193f6d4b1",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -271329,7 +269381,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
+        "conceptId": "c8047ecf-b333-4acf-9965-889f2e5952b2",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -271337,7 +269389,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
+        "conceptId": "52897919-a9c3-40b6-8ea2-8549c5726f96",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -271346,18 +269398,6 @@
       },
       {
         "conceptId": "414b75ad-15ac-496c-a0ee-b78ac0a296b8",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "66917c88-65a9-4788-b9fe-eb745dfc6fb9",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "82e895cf-a3d3-4532-843a-ec75c7b63d57",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -271413,11 +269453,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "284dc445-87a7-43fa-a561-406e6d22d983",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
+        "conceptId": "d3813e21-5373-4e0f-9584-6cbbc1600f9f",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -271569,27 +269605,19 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "66a441d7-8b72-4656-9916-1e81445b561f",
+        "conceptId": "79641085-d586-44d2-bdf5-b4616b41b456",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "ba49d8ba-f0a3-44c3-a437-b2abd15662a5",
+        "conceptId": "0d05ee03-dd30-447a-a46f-6fc18ef9716f",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "e98a4474-2cc1-48de-ae23-427356f43e11",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "e40ef618-638a-45a5-9134-9d44acce5a13",
+        "conceptId": "2c311149-96c5-4947-95f5-184d5a4f3d63",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
         "conceptId": "713b2ce0-5c20-4efb-9254-2836e4e1dd7f",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -271769,10 +269797,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "36f40391-0237-4344-b1fc-6727aca49eaf",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "472e4198-b655-4243-bd0b-e5c6a7c017b6",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -271858,10 +269882,6 @@
       },
       {
         "conceptId": "4c46c1d9-00e7-47b1-bc35-44ddf6034294",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -272273,19 +270293,11 @@
         "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688"
       },
       {
-        "conceptId": "532f4831-e9fb-46b3-806b-fa3b3c13f1cf",
-        "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688"
-      },
-      {
         "conceptId": "ce45add1-383c-4bb9-9a3b-5f81d3ff6f90",
         "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688"
       },
       {
         "conceptId": "8e9bc31a-eb24-4333-bb13-b8f2a4f7a988",
-        "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688"
-      },
-      {
-        "conceptId": "d59b0fd5-11c3-4d4d-9e6a-7c2016c86900",
         "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688"
       },
       {
@@ -272758,10 +270770,6 @@
       },
       {
         "conceptId": "bba0930a-f26c-4cd3-8222-ea14775e7cb4",
-        "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688"
-      },
-      {
-        "conceptId": "8baa1de7-f9c2-42e1-93ff-6d82dc31f429",
         "categoryId": "9e2eb307-47ea-4ee3-b270-78fbb1482688"
       },
       {
@@ -273969,15 +271977,7 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "d19a1d8e-1605-4ddb-bcb5-4f042772ebb2",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "b0652d9b-f06f-49a4-875e-1f69837f7a68",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "f58e078a-5034-491a-995d-2855f0eca295",
+        "conceptId": "3edae70f-c044-45f3-b43d-339507c56604",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -273986,10 +271986,6 @@
       },
       {
         "conceptId": "2abec937-0649-4564-b16a-dbe5f3d4b8e7",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "f171f4b9-a4f7-48d0-aee7-e38bb372ddad",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -274018,10 +272014,6 @@
       },
       {
         "conceptId": "c7a25caf-ab07-4189-a349-e22233dc0ca4",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "6f79f0e3-75fd-4c8b-8902-cd4b3a60c861",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -274054,10 +272046,6 @@
       },
       {
         "conceptId": "e134287c-5d4b-4cab-a4a5-b885d7d8df11",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "05c86051-36db-455c-a260-578ebf856015",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -274477,10 +272465,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "d825f0ac-9d8e-48cb-b35c-779457d11d02",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "67bbc44b-5a49-49ec-9af5-917d0e54cbfe",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -274490,10 +272474,6 @@
       },
       {
         "conceptId": "4c86dcf8-05e5-45a9-a4f8-f25a93d29e9d",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "271ce1ac-f3fe-407c-8878-50e2eed15e06",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -275277,10 +273257,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "6f05d736-8972-4253-ae1c-2ea602af5300",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "ab467155-f98b-48b5-a3d0-ab2fdcaf6eca",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -275505,10 +273481,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "52897919-a9c3-40b6-8ea2-8549c5726f96",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "8ae62c17-2137-4816-b123-6670332ef94b",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -275530,10 +273502,6 @@
       },
       {
         "conceptId": "fa8dcfb4-6577-4492-8791-348d83f6d978",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "d3813e21-5373-4e0f-9584-6cbbc1600f9f",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -275642,10 +273610,6 @@
       },
       {
         "conceptId": "b703adf8-9b9f-443e-8ab1-1fe6bcf8536c",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "b5f5d24f-9482-4454-8ab4-2c3fddfd3f5f",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -275861,7 +273825,7 @@
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
       {
-        "conceptId": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
+        "conceptId": "7db2fd3e-eb8a-46d4-be0a-adcf4102b05d",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
       {
@@ -276053,7 +274017,7 @@
         "categoryId": "c7ffee7f-8c1e-4dc7-b2f0-b918fdca2b35"
       },
       {
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
+        "conceptId": "a86a45db-6d84-4978-a65a-e60114b17255",
         "categoryId": "bf004d79-9f09-53db-87c9-830fd35db247"
       },
       {
@@ -276201,10 +274165,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "7cff1eda-4f55-42fe-af0b-28371b085c9a",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "ccbad396-0af7-4bf0-a60c-6dd021e818bd",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -276213,20 +274173,8 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "e49e1328-e833-4a9c-b805-3443290668f2",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "abf6d788-a9cd-4405-a8d5-267b3df3b949",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "3edae70f-c044-45f3-b43d-339507c56604",
         "categoryId": "883ee2e9-039c-423a-9211-380862f09d99"
-      },
-      {
-        "conceptId": "3edae70f-c044-45f3-b43d-339507c56604",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
         "conceptId": "a8e8f952-49c5-4d68-919c-ce0e436da21e",
@@ -276234,18 +274182,10 @@
       },
       {
         "conceptId": "a8e8f952-49c5-4d68-919c-ce0e436da21e",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "79641085-d586-44d2-bdf5-b4616b41b456",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
         "conceptId": "e1ca9ee8-91c6-44fb-9599-a62141752f1a",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "792cd2e0-bc90-4361-8956-0ff8ac01563a",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
@@ -276361,14 +274301,6 @@
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
-        "conceptId": "3ba226f9-3426-4b3a-90a5-b906c202ba59",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "c8047ecf-b333-4acf-9965-889f2e5952b2",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
         "conceptId": "3228aa82-7fda-42dc-8004-e1ede1d2e945",
         "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
@@ -276407,18 +274339,6 @@
       {
         "conceptId": "29454426-3626-4ee4-b5a2-8f24e6ae28b7",
         "categoryId": "883ee2e9-039c-423a-9211-380862f09d99"
-      },
-      {
-        "conceptId": "29454426-3626-4ee4-b5a2-8f24e6ae28b7",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "2c311149-96c5-4947-95f5-184d5a4f3d63",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
-      },
-      {
-        "conceptId": "0d05ee03-dd30-447a-a46f-6fc18ef9716f",
-        "categoryId": "4680aca0-e916-4c35-b8d4-f7ee20e662cb"
       },
       {
         "conceptId": "27c3da33-0e07-40fd-8623-a90d5975b8b1",
@@ -276854,24 +274774,6 @@
         "conceptId": "00be268c-df50-4b7b-9257-f3b71ade9d50",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "7e415333-b564-43b7-8bf7-eb39217ecadd",
-        "conceptId": "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "2b8c6537-63cf-407e-98b2-37119050b214",
-        "conceptId": "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -282493,15 +280395,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "874f5b4e-20f0-4515-b6e1-dce7a490f651",
-        "conceptId": "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
-        "direction": "REVERSE",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "1adaca89-5fd2-477b-912f-0205c07f9d92",
         "conceptId": "0e36e5f8-806d-46b9-8efd-33de1f4341d4",
         "direction": "REVERSE",
@@ -283611,24 +281504,6 @@
       {
         "id": "e53697cb-6942-4ecd-aaf8-5598d1bb0ed2",
         "conceptId": "10b709d0-2f68-4846-b527-1ac3ddd20159",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "101fb0a4-3f5c-44c0-92ce-4b4db147c648",
-        "conceptId": "10be8270-05a8-4ec1-8353-8e6b98d5edf1",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "c84e3987-0598-4ef9-b6c3-3860aa9309d3",
-        "conceptId": "10be8270-05a8-4ec1-8353-8e6b98d5edf1",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -286318,24 +284193,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "9f1adafc-0f96-4af0-8db2-6c68ec5c0ea6",
-        "conceptId": "1653b2e7-7420-4832-8b2a-4ca405ea559b",
-        "direction": "NORMAL",
-        "current": "VERY_HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": true
-      },
-      {
-        "id": "88c9c2a2-23ba-4a40-a830-3a22d4f0b26b",
-        "conceptId": "1653b2e7-7420-4832-8b2a-4ca405ea559b",
-        "direction": "REVERSE",
-        "current": "VERY_HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": true
-      },
-      {
         "id": "a09662d9-6fd9-41a1-9891-e665ce9199a4",
         "conceptId": "16544f14-4fa9-4394-aff7-c3f2ef4ea194",
         "direction": "NORMAL",
@@ -287528,15 +285385,6 @@
         "conceptId": "19717f6b-ddde-4ba6-aed0-5c5a192db6fe",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "c746ea5f-3077-440a-8cfd-12c5ff1e9547",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -289360,15 +287208,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "43b8bf99-ed79-4863-a571-fd88fbd006fc",
-        "conceptId": "1d869d66-160f-47e8-8736-e5be1aa19bc2",
-        "direction": "REVERSE",
-        "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "8577c88f-d8e0-4e2c-b108-10864991e836",
         "conceptId": "1d8e02f8-3549-4112-b45e-db2c6d4600c2",
         "direction": "REVERSE",
@@ -290667,15 +288506,6 @@
       {
         "id": "5f87b901-0fa8-4e8b-9800-88b54b4564cb",
         "conceptId": "20ade2cf-be38-456f-8ff6-bc26ab5707e9",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "1a2e7c32-0a56-48e5-af35-859cb6b1f9ca",
-        "conceptId": "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -293473,24 +291303,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "0e7a71e8-dc75-401f-88b3-ae567544443d",
-        "conceptId": "271ce1ac-f3fe-407c-8878-50e2eed15e06",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "a6660264-ac86-4231-bc60-7e03c32c5c72",
-        "conceptId": "271ce1ac-f3fe-407c-8878-50e2eed15e06",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "c40f822a-6cc0-4348-afc5-3235f31ca731",
         "conceptId": "271d0542-253f-4669-9f6a-0ff05487d284",
         "direction": "NORMAL",
@@ -294044,24 +291856,6 @@
         "conceptId": "284c6659-220d-4533-a99a-a5a290fd024c",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "5378f6d8-869f-4e85-9c61-2dd53386fbf7",
-        "conceptId": "284dc445-87a7-43fa-a561-406e6d22d983",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "326cfaa8-5a77-45ba-8ec5-7222773cb3cf",
-        "conceptId": "284dc445-87a7-43fa-a561-406e6d22d983",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -296751,15 +294545,6 @@
       {
         "id": "2c8197c4-dfa1-4229-8a25-d52e121a1f86",
         "conceptId": "2ed05ae8-5517-4d7c-8da0-798f53b684fa",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "69b132ce-1770-42a4-9c27-b2d46664fabb",
-        "conceptId": "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -300376,15 +298161,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "6e8d117b-c03a-4ab5-afaa-df9ddf0dec22",
-        "conceptId": "36f40391-0237-4344-b1fc-6727aca49eaf",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "3e2bc31a-c055-447a-b99a-40a69b2cf1c5",
         "conceptId": "36f44576-dc45-4507-b3a9-6fe0eb749954",
         "direction": "NORMAL",
@@ -300828,24 +298604,6 @@
       {
         "id": "d05fd30e-909d-4ef8-bcd1-b4455534c52c",
         "conceptId": "37bc1be6-e61c-4574-ae72-aab163858013",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "df9729b4-b005-407c-b5fa-56df731f5e4a",
-        "conceptId": "37cc7903-fca2-48ad-926f-810abebc2452",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "90c07dc2-a28a-4eb3-989e-e1b3421b241c",
-        "conceptId": "37cc7903-fca2-48ad-926f-810abebc2452",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -302779,24 +300537,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "c2f716dd-9e0e-42f4-8fcb-f3569ff5c7d3",
-        "conceptId": "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "04c82c5b-d623-4a95-b9e8-8d6a1180166d",
-        "conceptId": "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "5ff362d0-881c-415b-9fe4-125d13677eb6",
         "conceptId": "3c12f67a-99a8-4dbf-9bf0-ba36c5dad6db",
         "direction": "NORMAL",
@@ -303517,15 +301257,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "5c732612-19fc-48bd-9ce2-a19d13cd9cbe",
-        "conceptId": "3df9ddeb-f173-4f0f-ba5e-3ca99e4be3ff",
-        "direction": "REVERSE",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "1dee7988-97ab-4560-906e-c649a5fcfeb4",
         "conceptId": "3e0585b1-c022-4a85-b40c-392e5d820022",
         "direction": "NORMAL",
@@ -303907,10 +301638,10 @@
         "id": "25533232-975a-48df-8696-452976e27bfc",
         "conceptId": "3f2bb87d-2002-426a-9bcf-a4ce263cc32d",
         "direction": "REVERSE",
-        "current": "HARD",
+        "current": "VERY_HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
+        "hasReachedVeryHard": true
       },
       {
         "id": "35cfd258-3302-4b43-ac36-6ff7cbb3abc0",
@@ -305848,15 +303579,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "b174b978-c10d-46b7-a315-c348d3e9d530",
-        "conceptId": "434e2e91-cdf8-48c6-9612-cd24acc9b9ed",
-        "direction": "REVERSE",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "a55d4bd6-804b-4e8e-bb9d-b98f6ec3ce0b",
         "conceptId": "4357014e-407a-4627-8ca1-261088c5b9c6",
         "direction": "NORMAL",
@@ -306102,15 +303824,6 @@
       {
         "id": "d64eafc2-a1f0-45e6-ab72-5da5596a7969",
         "conceptId": "43d9dc42-3b2d-4f21-9483-3639561a0281",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "7c81163d-e8cb-4a38-8033-f3486d06cb79",
-        "conceptId": "43ddff0a-1894-42e1-a6d1-27d353c4ee0c",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -310123,24 +307836,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "3f8d3af8-ec1f-41ea-8ef0-9197a0c0295c",
-        "conceptId": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "9d540d69-5e23-4cbe-a1b9-4160d3162923",
-        "conceptId": "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "0e4cf7d3-8938-4360-aba6-8afb6d2e88fb",
         "conceptId": "4ca1733d-c494-46ec-a0c1-b61046ed4cb2",
         "direction": "REVERSE",
@@ -313165,15 +310860,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "e7d5ca56-4ca5-4a0f-94bb-f20df4284528",
-        "conceptId": "532f4831-e9fb-46b3-806b-fa3b3c13f1cf",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "66f22a95-891e-4104-82cd-827d3b3d2703",
         "conceptId": "533e2f2a-964e-496a-92a5-b977a02a6242",
         "direction": "NORMAL",
@@ -314085,15 +311771,6 @@
       {
         "id": "a76265c1-5e82-405c-a0fc-0432f0b46258",
         "conceptId": "556bf8c7-6491-4870-8ef6-35269e95ec58",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "7e52b443-0c18-40ec-9a53-4913155102ba",
-        "conceptId": "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -315766,15 +313443,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "8b1b8af9-25db-4a05-aff2-3d98a318e621",
-        "conceptId": "5925254b-d57c-4169-b500-fdc66fff4062",
-        "direction": "REVERSE",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "276f02ee-b982-4696-b461-16259f4ed868",
         "conceptId": "59263e0a-93d6-4ea7-b576-058a321fc322",
         "direction": "NORMAL",
@@ -317147,24 +314815,6 @@
         "conceptId": "5c9c9205-33b6-4c04-a242-8d395d092453",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "f6498766-ce7e-41eb-932b-60552960ac36",
-        "conceptId": "5ca98071-6b0c-46d7-8ed5-9134e121b5ce",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "ce0d4a6e-f6dc-42d9-ae8e-5889a047fafc",
-        "conceptId": "5ca98071-6b0c-46d7-8ed5-9134e121b5ce",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -321355,15 +319005,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "aa6126e5-e777-4f89-8e79-8b3f0b9c8fa7",
-        "conceptId": "66917c88-65a9-4788-b9fe-eb745dfc6fb9",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "7c67d3c9-fe54-4699-9279-1f8ce08cdb45",
         "conceptId": "66960036-e54a-4bd0-b479-f40fdf8a402b",
         "direction": "REVERSE",
@@ -321386,24 +319027,6 @@
         "conceptId": "669da202-5f33-4dfb-bfb7-d9e28276d9b8",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "45126f99-6db7-48b9-a600-9c9230618984",
-        "conceptId": "66a441d7-8b72-4656-9916-1e81445b561f",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "db87b5f3-6c42-4f6b-bb8c-9c94174d3f21",
-        "conceptId": "66a441d7-8b72-4656-9916-1e81445b561f",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -325353,24 +322976,6 @@
       {
         "id": "adb14422-b7ff-412c-87dc-0c5084de0596",
         "conceptId": "6f753501-1f52-4875-9a86-e6a37d485331",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "4cf8d9da-374f-4ede-ad6f-b1a142471fb6",
-        "conceptId": "6f79f0e3-75fd-4c8b-8902-cd4b3a60c861",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "c0282021-f2a7-4a01-898f-3e1ad775199d",
-        "conceptId": "6f79f0e3-75fd-4c8b-8902-cd4b3a60c861",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -332686,15 +330291,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "f30ba079-966f-4d57-bebf-0a9f74ef75ff",
-        "conceptId": "7f8b0159-3629-4e66-89b1-5b3b0eb44510",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "f6b4f843-e419-4393-9617-27b606b785d9",
         "conceptId": "7f8e35e7-a848-4967-918e-b7264a7adf48",
         "direction": "NORMAL",
@@ -332743,7 +330339,7 @@
         "id": "90d2ec34-7039-4a11-ada9-d5141031158e",
         "conceptId": "7fb37b52-6540-464f-9078-8752d1cff5e6",
         "direction": "REVERSE",
-        "current": "EASY",
+        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -334274,24 +331870,6 @@
         "conceptId": "82d85351-f059-4107-a13a-cf1deeb84f0b",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "3c799b63-7fe6-42ab-a8d4-e17a6b4f67dc",
-        "conceptId": "82e895cf-a3d3-4532-843a-ec75c7b63d57",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "41f0ecc3-f4d2-459d-b464-cade2b061268",
-        "conceptId": "82e895cf-a3d3-4532-843a-ec75c7b63d57",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -338446,15 +336024,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "eaf0d7b1-f6d3-4a29-a8e3-a67157eeaf50",
-        "conceptId": "8baa1de7-f9c2-42e1-93ff-6d82dc31f429",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "1da272e7-cdab-4aa9-a3d4-e230d85b652f",
         "conceptId": "8bbf54df-3990-4729-aec1-e0dc1f2e99d7",
         "direction": "NORMAL",
@@ -342136,15 +339705,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "758c6b13-c1cd-4e51-99ea-5dd8d6b23669",
-        "conceptId": "933ce6ea-6bf9-4a03-933d-dfaf524756e7",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "15a7f66a-0cbc-4d1e-a301-20774932eb7f",
         "conceptId": "933fc945-30ba-4c72-b586-0e600fed8c85",
         "direction": "NORMAL",
@@ -342768,24 +340328,6 @@
       {
         "id": "28be7e97-0730-44ee-9be4-8b499263a0a7",
         "conceptId": "9421fbb0-9d87-4bdf-a06b-74157da3bf69",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "4a0639cb-4b85-415b-baf9-f96186bf52db",
-        "conceptId": "942a8c67-e1b2-4f3a-aa51-ea40331ae9ac",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "199d79e5-ffc8-465e-892d-c68235e9551f",
-        "conceptId": "942a8c67-e1b2-4f3a-aa51-ea40331ae9ac",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -343623,15 +341165,6 @@
       {
         "id": "7ff64953-c3e6-4ad5-bb4c-97a3e1ec476f",
         "conceptId": "958e52f9-d254-41cc-aea7-7b67c0530173",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "3ae3aa5f-230a-43aa-aeb0-2f793b88f00a",
-        "conceptId": "95b11de9-fd12-44b2-8f66-5dafcef1407a",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -344946,15 +342479,6 @@
       {
         "id": "a8ac9d45-d13d-49fb-a78f-fc9db10fc79e",
         "conceptId": "99b98e1d-54f3-4d27-8a9b-e935e9c85138",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "8991e2b4-3064-4b01-8f32-c3ed0baef2ef",
-        "conceptId": "99c3cade-3178-4170-9dba-17ffbb8e4635",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -346585,7 +344109,7 @@
         "id": "dc04631d-76f2-40c1-999e-d22ab98703bc",
         "conceptId": "9d166c7f-4fad-4d2c-bda7-14692cfb1635",
         "direction": "REVERSE",
-        "current": "MEDIUM",
+        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -349138,24 +346662,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "c51efb97-2823-46ec-afc7-054e1533fe40",
-        "conceptId": "a25abedf-b936-4fe5-a878-167cc4eaaa8f",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "ba930b62-33d8-4e8e-92a7-c1f247616dac",
-        "conceptId": "a25abedf-b936-4fe5-a878-167cc4eaaa8f",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "535fac54-9844-4449-90ef-d4fed87ea837",
         "conceptId": "a25acc2e-505c-48c9-bb96-33c048b745a0",
         "direction": "REVERSE",
@@ -349295,15 +346801,6 @@
         "conceptId": "a292164a-78cf-4502-9538-0281fb8ec3c2",
         "direction": "REVERSE",
         "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "e5e5488c-a176-4fc6-a60e-2bcaf0e69401",
-        "conceptId": "a29a18e3-0d84-4893-9991-9c84380b12eb",
-        "direction": "REVERSE",
-        "current": "EASY",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -351967,7 +349464,7 @@
         "id": "131ae4cb-6714-4ad8-85c1-7ffba48b7243",
         "conceptId": "a86a45db-6d84-4978-a65a-e60114b17255",
         "direction": "REVERSE",
-        "current": "EASY",
+        "current": "MEDIUM",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -355726,24 +353223,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "70af403a-a14e-4889-bf28-9d562d71b7cc",
-        "conceptId": "b0652d9b-f06f-49a4-875e-1f69837f7a68",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "2480295f-8d02-4253-95d2-2d9e469995ba",
-        "conceptId": "b0652d9b-f06f-49a4-875e-1f69837f7a68",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "52ea43c0-035e-4f96-9b0f-634319ec62cf",
         "conceptId": "b0653e4b-8e1d-4392-b568-e00d46368d58",
         "direction": "NORMAL",
@@ -359047,24 +356526,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "becea087-4ff0-4e04-b1cf-3aa9a2c7ccd6",
-        "conceptId": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "8ce09d1c-53c4-48bd-9d1c-a40a93787391",
-        "conceptId": "b6cdd034-813c-4c74-8aa8-127110c551da",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "478e94b6-9625-4d1c-8490-c467146f4521",
         "conceptId": "b6de276f-6f53-4095-9717-8663be51aef3",
         "direction": "NORMAL",
@@ -360388,24 +357849,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "a5d052d1-3c2a-4dda-99e9-e76f029ebf36",
-        "conceptId": "b98aad98-fd69-4cb5-9af6-ca77927041ca",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "2068eddf-5cef-4080-b74b-833720afcf33",
-        "conceptId": "b98aad98-fd69-4cb5-9af6-ca77927041ca",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "23429149-6735-40dc-89ee-38756195a04f",
         "conceptId": "b98e304a-c78f-4e17-a122-749e9f8494e7",
         "direction": "REVERSE",
@@ -360680,24 +358123,6 @@
         "conceptId": "ba495391-71cc-4505-bfef-da10d505fb01",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "6440dd15-5099-410c-a284-09a65eb2e382",
-        "conceptId": "ba49d8ba-f0a3-44c3-a437-b2abd15662a5",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "cc64f9af-595a-438d-aa73-6aed0549724a",
-        "conceptId": "ba49d8ba-f0a3-44c3-a437-b2abd15662a5",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -363646,15 +361071,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "f40da9d3-f07c-4b30-b5e7-3248018455c1",
-        "conceptId": "c180a1a5-a452-43dc-a57f-5ff701ba4cdf",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "c3a9aa6f-f9ff-41f4-b17f-4f7d30970c42",
         "conceptId": "c18461a1-492a-4c91-b177-1e233cc10bec",
         "direction": "NORMAL",
@@ -363853,24 +361269,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "d6ce5e87-7c3e-47b6-b941-1dac4b34b8dc",
-        "conceptId": "c1e17138-1733-451b-92f4-74320704434f",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "f3dee9e9-95dd-414a-afe0-f45c7a21ffce",
-        "conceptId": "c1e17138-1733-451b-92f4-74320704434f",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "c2c237b5-0f4b-4843-8b8c-4a3d43171e42",
         "conceptId": "c1eeb66f-a34e-4c66-b755-33986312e364",
         "direction": "NORMAL",
@@ -363927,24 +361325,6 @@
       {
         "id": "4f465a62-cddf-434d-8e65-fc9774e27f2d",
         "conceptId": "c215625f-05b3-461d-9962-7b3e6dcb8702",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "7369d141-c785-4d59-a947-825292063ecc",
-        "conceptId": "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "dfb7a0f1-fae3-4d14-aed1-7cbc49076342",
-        "conceptId": "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -367282,24 +364662,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "013b7b40-44a4-4063-b036-797e2245eb26",
-        "conceptId": "c9d934b0-1538-4bda-a14e-214b9c90952d",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "5ac2c9b2-742d-47d7-aae4-6ab32446b9ef",
-        "conceptId": "c9d934b0-1538-4bda-a14e-214b9c90952d",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "573989a1-e180-4598-b9d0-179a31265eff",
         "conceptId": "c9e1a67c-1858-4f86-878c-6b64358a4717",
         "direction": "NORMAL",
@@ -368956,15 +366318,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "88cdf43e-d169-482a-abd3-f0366c7919c3",
-        "conceptId": "cdb1d520-c55b-4d33-ac6d-f44193f6d4b1",
-        "direction": "REVERSE",
-        "current": "VERY_HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": true
-      },
-      {
         "id": "27701889-1ad7-4082-b0a7-264a5297460f",
         "conceptId": "cdb82372-1f85-4970-bb9e-559341ce3d57",
         "direction": "REVERSE",
@@ -369498,24 +366851,6 @@
       {
         "id": "920f1a33-6895-4078-b0c8-f28cf4a03e81",
         "conceptId": "cf21d7d9-2fe3-40d8-a3f0-20f8b847f814",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "fd45f916-784e-42d2-8b92-08caac0acae8",
-        "conceptId": "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "0ad1a61a-8f52-494a-b5c8-ef959bb8ee09",
-        "conceptId": "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -370432,15 +367767,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "ca84bba7-902e-42d5-b6df-910241d35541",
-        "conceptId": "d14e1bb3-478f-4106-b264-477b4aacf870",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "f24d916f-4dbd-411c-aaa1-4b84427a571c",
         "conceptId": "d150346f-5df3-4ef1-b618-ce408e2fbf28",
         "direction": "NORMAL",
@@ -370596,24 +367922,6 @@
       {
         "id": "341049c8-078f-4a7a-8677-0009986198a0",
         "conceptId": "d19764d6-e90e-4873-ae86-df47793a4db3",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "56777524-8300-4bd1-a9c8-bdd42bd0ea56",
-        "conceptId": "d19a1d8e-1605-4ddb-bcb5-4f042772ebb2",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "a80acb07-cc8c-4552-ae69-11ac2c6fb126",
-        "conceptId": "d19a1d8e-1605-4ddb-bcb5-4f042772ebb2",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -371102,15 +368410,6 @@
         "conceptId": "d298a028-c030-4628-be88-d574c1c7216e",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "94f1f889-ebaa-4b02-81c8-7f963fa7f473",
-        "conceptId": "d299d37e-1ace-45b2-a585-7ad5f5d5e860",
-        "direction": "REVERSE",
-        "current": "EASY",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -372520,15 +369819,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "36909d50-fb1d-4429-af3b-64a781c36ec2",
-        "conceptId": "d59b0fd5-11c3-4d4d-9e6a-7c2016c86900",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "a6a10c5d-361e-4bce-9ad7-ae50d3de1711",
         "conceptId": "d59c7598-3f62-4186-b26b-d0219b1f3ac1",
         "direction": "NORMAL",
@@ -373739,24 +371029,6 @@
         "conceptId": "d82179bc-a3a9-45ad-bfe1-1ffbd1dffe99",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "f7628bee-71d3-4640-b469-c5388d98e7ec",
-        "conceptId": "d825f0ac-9d8e-48cb-b35c-779457d11d02",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "ada310a3-56d8-4d3d-9718-53fa4ccae9e2",
-        "conceptId": "d825f0ac-9d8e-48cb-b35c-779457d11d02",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -379117,24 +376389,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "2afe69ab-6469-4361-8aca-c8f2cf06e0bb",
-        "conceptId": "e40ef618-638a-45a5-9134-9d44acce5a13",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "091c05f7-83ee-4ad3-969e-e95894925a52",
-        "conceptId": "e40ef618-638a-45a5-9134-9d44acce5a13",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "bbc24f16-2db2-421f-946e-94c95efe016b",
         "conceptId": "e415fbba-885f-4c72-94c6-63b1c5e4e5a9",
         "direction": "NORMAL",
@@ -381538,24 +378792,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "85e10e01-9486-4db3-a619-dc08748970dd",
-        "conceptId": "e98a4474-2cc1-48de-ae23-427356f43e11",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "15f14b3f-f015-4ef3-b1c5-2e6b401b00fd",
-        "conceptId": "e98a4474-2cc1-48de-ae23-427356f43e11",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "2b380e55-6144-4627-8066-78364b5a2ad0",
         "conceptId": "e98ac18e-4bcf-440a-92cd-e0c8b66723bc",
         "direction": "NORMAL",
@@ -383234,15 +380470,6 @@
         "conceptId": "ed22bd8e-1532-4a61-be75-8ef8b1ab31a8",
         "direction": "REVERSE",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "5b0e690d-d765-454f-9bc6-0ac2f421390d",
-        "conceptId": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
-        "direction": "REVERSE",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -384967,24 +382194,6 @@
         "hasReachedVeryHard": true
       },
       {
-        "id": "6e32541c-538e-42f1-be71-746796ff53a6",
-        "conceptId": "f171f4b9-a4f7-48d0-aee7-e38bb372ddad",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "e9e0eeff-d3b4-4104-b6fb-fbe2c2bb720f",
-        "conceptId": "f171f4b9-a4f7-48d0-aee7-e38bb372ddad",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "31d0e4a5-22a9-44cd-bc44-7d232bf06576",
         "conceptId": "f1816ede-e96b-4518-942c-1fcc3c052d66",
         "direction": "NORMAL",
@@ -385565,15 +382774,6 @@
         "conceptId": "f24da9e4-8d42-4df6-86a0-949a90d478f8",
         "direction": "REVERSE",
         "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "d202808c-1a4d-48e1-98fb-cd7799d115ff",
-        "conceptId": "f2522797-0a09-42f9-91d7-558b9e81790f",
-        "direction": "REVERSE",
-        "current": "MEDIUM",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -390313,15 +387513,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "937d09d0-4636-4bb3-8822-2a0b51e28995",
-        "conceptId": "fe132a65-63fa-4818-9a86-4145651cefdd",
-        "direction": "REVERSE",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "731e1b97-5d12-4da2-919c-1e90fa616135",
         "conceptId": "fe147d6f-7621-40cd-b5bf-0eb52a4ea14a",
         "direction": "NORMAL",
@@ -391537,26 +388728,8 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "8aff6a95-5687-462e-9924-0cc919c53e7b",
-        "conceptId": "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "be894d4d-9d37-453d-8054-1b5c3d4da170",
         "conceptId": "2b80d433-3403-4b07-afba-94ed3075375e",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "c287969b-7608-4566-a134-9b1cdfcce673",
-        "conceptId": "66917c88-65a9-4788-b9fe-eb745dfc6fb9",
         "direction": "NORMAL",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -394732,15 +391905,6 @@
         "hasReachedVeryHard": true
       },
       {
-        "id": "bb99911f-97ba-4fb6-90a7-8f06cd319ed9",
-        "conceptId": "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "33b96414-ee77-47b0-8935-210bc0ac967a",
         "conceptId": "e708e05a-c1bb-40b3-b061-784d6812fee0",
         "direction": "NORMAL",
@@ -394807,7 +391971,7 @@
         "id": "60cf4da9-fd59-4012-9c8f-0b3b67bbacdd",
         "conceptId": "7fb37b52-6540-464f-9078-8752d1cff5e6",
         "direction": "NORMAL",
-        "current": "EASY",
+        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -395153,15 +392317,6 @@
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": true
-      },
-      {
-        "id": "944d259c-62ff-46d8-9776-3c58c2f975c9",
-        "conceptId": "6f05d736-8972-4253-ae1c-2ea602af5300",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
       },
       {
         "id": "d6db858a-6d6a-498a-bb6d-399744b176ff",
@@ -396676,15 +393831,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "b9825894-6fb8-4eca-b112-33e971eee796",
-        "conceptId": "cdb1d520-c55b-4d33-ac6d-f44193f6d4b1",
-        "direction": "NORMAL",
-        "current": "VERY_HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": true
-      },
-      {
         "id": "afee51d0-3f79-468a-8e39-972ad574e4f3",
         "conceptId": "6bac0489-0098-4cab-a568-8f73e579c7c9",
         "direction": "NORMAL",
@@ -396813,15 +393959,6 @@
       {
         "id": "cde8056d-12ea-4e9a-b672-0ef6fa8d29bf",
         "conceptId": "7fd7c6b9-3e18-41eb-8a06-1624fd1c9c97",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "56c434fd-2681-463b-97c4-95bc51c39fdb",
-        "conceptId": "6f05d736-8972-4253-ae1c-2ea602af5300",
         "direction": "NORMAL",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -396975,15 +394112,6 @@
       {
         "id": "5b3885ce-eca4-4a3c-9095-4bbd5763ec78",
         "conceptId": "0be893bf-7e16-4cda-9fa9-1d535675fce7",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "a8061e58-c7a4-4abb-956c-0345a2b1d5ae",
-        "conceptId": "532f4831-e9fb-46b3-806b-fa3b3c13f1cf",
         "direction": "NORMAL",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -397234,15 +394362,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "95d07e1c-3edb-4043-8b3a-7514973681eb",
-        "conceptId": "d59b0fd5-11c3-4d4d-9e6a-7c2016c86900",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "9b888aa1-1839-474d-b133-c1989a97c260",
         "conceptId": "6fbd4f89-7f7c-4be1-90ce-8f670971c25a",
         "direction": "NORMAL",
@@ -397292,15 +394411,6 @@
         "conceptId": "2a50bd09-5412-4766-b73b-4289dac83c35",
         "direction": "NORMAL",
         "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "1712cbec-9e22-44cf-ad58-9ab7fd2fb97c",
-        "conceptId": "8baa1de7-f9c2-42e1-93ff-6d82dc31f429",
-        "direction": "NORMAL",
-        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -397418,15 +394528,6 @@
         "conceptId": "6b1c71fb-14e5-4f23-9643-fa802eaaa648",
         "direction": "NORMAL",
         "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "658faefe-e51b-423e-85b2-7432c48eda99",
-        "conceptId": "f2522797-0a09-42f9-91d7-558b9e81790f",
-        "direction": "NORMAL",
-        "current": "MEDIUM",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -400222,15 +397323,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "e6e00574-ad74-487b-bde6-67ffc71706e9",
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
-        "direction": "REVERSE",
-        "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "fe165bc9-00c0-4aec-8342-9c5f48c94389",
         "conceptId": "e75eb0d5-5d10-46ec-8b3d-7f96faf4df78",
         "direction": "NORMAL",
@@ -401241,42 +398333,6 @@
       {
         "id": "cb61b38f-cf94-4c76-87c9-222314cef283",
         "conceptId": "a7b0d2f2-6cbd-4d93-976b-093a2246ee14",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "114a001d-5015-4696-9245-5b05731614af",
-        "conceptId": "f58e078a-5034-491a-995d-2855f0eca295",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "3887c489-d896-4c1c-bd25-a6eb3f149399",
-        "conceptId": "f58e078a-5034-491a-995d-2855f0eca295",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "96c228b9-c381-48dd-ad30-fccff76c8ad8",
-        "conceptId": "86f25d5c-9d27-4b5f-951c-792414fd0bf1",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "d92d0eec-561c-4f2f-8705-962a400db638",
-        "conceptId": "86f25d5c-9d27-4b5f-951c-792414fd0bf1",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -403831,15 +400887,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "a3496bfa-e3b5-439f-ad76-34110d6c1f0a",
-        "conceptId": "43ddff0a-1894-42e1-a6d1-27d353c4ee0c",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "652c05c0-3c37-451f-87d8-767814550a63",
         "conceptId": "b9a5d0a5-21fa-4383-8600-c5d5b0f2c97b",
         "direction": "NORMAL",
@@ -405379,15 +402426,6 @@
         "hasReachedVeryHard": true
       },
       {
-        "id": "040684a0-9c57-4bed-a42f-b6d42d867aea",
-        "conceptId": "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "1ec73795-f18f-4355-9e31-ee6d9b1b2930",
         "conceptId": "b7de2302-980a-4183-a6f5-f04be6be8195",
         "direction": "NORMAL",
@@ -405739,15 +402777,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "de645ad3-764b-4960-a5d1-078a5e9e91b0",
-        "conceptId": "434e2e91-cdf8-48c6-9612-cd24acc9b9ed",
-        "direction": "NORMAL",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "f7cf1937-3b5d-4603-a797-d2d39b2411db",
         "conceptId": "62ffb937-55d7-4872-839d-b1b901b2625f",
         "direction": "NORMAL",
@@ -405959,15 +402988,6 @@
         "conceptId": "9c318fd9-c80c-4fd4-8fd7-ce46a836eae0",
         "direction": "NORMAL",
         "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "44cba462-f125-4507-bb1e-94cea6ecc525",
-        "conceptId": "5925254b-d57c-4169-b500-fdc66fff4062",
-        "direction": "NORMAL",
-        "current": "EASY",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -406687,10 +403707,10 @@
         "id": "7489fef9-95a9-426e-87ad-3249ed47df40",
         "conceptId": "3f2bb87d-2002-426a-9bcf-a4ce263cc32d",
         "direction": "NORMAL",
-        "current": "HARD",
+        "current": "VERY_HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
+        "hasReachedVeryHard": true
       },
       {
         "id": "7e65e9ba-5343-483f-b1b5-742115a0c328",
@@ -409510,15 +406530,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "82f30fb8-611f-4009-8706-27400d78224c",
-        "conceptId": "197d7aa7-6e1e-4c28-859c-6c837115a05b",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "28ab0cbc-04c7-413d-8d0c-4fc48a6a5769",
         "conceptId": "894a1ad2-6251-4ccf-9678-ed9738f17b1b",
         "direction": "NORMAL",
@@ -409532,15 +406543,6 @@
         "conceptId": "19bed0ed-b13b-4b8a-ab75-dd75ca15c87b",
         "direction": "NORMAL",
         "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "beadf1c0-4a1c-45ff-903c-7d1fa20983de",
-        "conceptId": "d299d37e-1ace-45b2-a585-7ad5f5d5e860",
-        "direction": "NORMAL",
-        "current": "EASY",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -409640,15 +406642,6 @@
         "conceptId": "6e9dc0a0-13aa-4f14-a7c3-11924d124b10",
         "direction": "NORMAL",
         "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "c776078c-2996-4e6a-af10-775546e6608d",
-        "conceptId": "1d869d66-160f-47e8-8736-e5be1aa19bc2",
-        "direction": "NORMAL",
-        "current": "MEDIUM",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -410239,15 +407232,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "c0c4ab70-cbf3-4110-85dc-6d2a3e5524bd",
-        "conceptId": "7f8b0159-3629-4e66-89b1-5b3b0eb44510",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "809b60f5-0bb8-414e-a339-0a22b7044029",
         "conceptId": "17147570-4cdb-4572-9dba-ee03296bc117",
         "direction": "NORMAL",
@@ -410608,15 +407592,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "f2213fc1-eea6-4fc5-97cf-537dac7089b0",
-        "conceptId": "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
-        "direction": "NORMAL",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "d348599a-547d-4226-84b3-e22b178b6e65",
         "conceptId": "5bda6113-cb1f-4bd0-b9eb-309ed75f11b6",
         "direction": "NORMAL",
@@ -410674,7 +407649,7 @@
         "id": "7a8b5194-f0d8-4d3c-9f6b-f870b4695df1",
         "conceptId": "9d166c7f-4fad-4d2c-bda7-14692cfb1635",
         "direction": "NORMAL",
-        "current": "MEDIUM",
+        "current": "HARD",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -410711,15 +407686,6 @@
         "conceptId": "9ffec4e9-51dc-47a0-b1ff-37724dbebc32",
         "direction": "NORMAL",
         "current": "MEDIUM",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "ca60d13d-1a65-435f-9ac8-d1ce6719db59",
-        "conceptId": "3df9ddeb-f173-4f0f-ba5e-3ca99e4be3ff",
-        "direction": "NORMAL",
-        "current": "EASY",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -411472,15 +408438,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "0d150aef-4b5d-4392-9e9a-dfeeec0d7402",
-        "conceptId": "36f40391-0237-4344-b1fc-6727aca49eaf",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "8a6f793e-42a8-4193-a68b-01343deebbd4",
         "conceptId": "20c33a04-437b-4bf7-8803-f00d56097d88",
         "direction": "NORMAL",
@@ -412078,7 +409035,7 @@
         "id": "837a8ccd-a17e-44cb-8fc5-af7ec4bb3b73",
         "conceptId": "a86a45db-6d84-4978-a65a-e60114b17255",
         "direction": "NORMAL",
-        "current": "EASY",
+        "current": "MEDIUM",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -412210,15 +409167,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "b1c00c0d-3036-40e6-b3d5-a051a9235985",
-        "conceptId": "933ce6ea-6bf9-4a03-933d-dfaf524756e7",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "56710bbc-8329-4a90-85cf-03022e437ce2",
         "conceptId": "e1376f5d-5ebd-4ef2-b488-8c31546cb8c8",
         "direction": "NORMAL",
@@ -412284,15 +409232,6 @@
       {
         "id": "698e98d0-8fe5-4ba8-8751-c4f68ca2cca6",
         "conceptId": "d2df3e18-f93f-4284-89ae-c3e138d42505",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "4120b82d-edc9-49e8-a03a-3278ad78e393",
-        "conceptId": "99c3cade-3178-4170-9dba-17ffbb8e4635",
         "direction": "NORMAL",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -412831,15 +409770,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "0e935fcb-9254-416e-abdf-80aff848e047",
-        "conceptId": "fe132a65-63fa-4818-9a86-4145651cefdd",
-        "direction": "NORMAL",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "3bf3c5ed-dd04-473e-8b5f-d186df10e1d2",
         "conceptId": "d99266ae-48e4-4eec-a269-8d47d7c77579",
         "direction": "NORMAL",
@@ -413191,42 +410121,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "d6d91be5-f84b-4a9c-a973-cd1810c9a759",
-        "conceptId": "e49e1328-e833-4a9c-b805-3443290668f2",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "754c41e6-51e7-466c-81d6-3047728555e3",
-        "conceptId": "e49e1328-e833-4a9c-b805-3443290668f2",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "9055d214-ee7c-4c50-b55c-c3f052af7afd",
-        "conceptId": "abf6d788-a9cd-4405-a8d5-267b3df3b949",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "6c86085c-80e2-493e-bb94-227b3ec7b254",
-        "conceptId": "abf6d788-a9cd-4405-a8d5-267b3df3b949",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "5f789194-a241-4e2a-94ff-defffe2dd022",
         "conceptId": "ccd6d042-0e08-4fef-ad4e-b186df9a577d",
         "direction": "NORMAL",
@@ -413292,15 +410186,6 @@
       {
         "id": "c798677b-0c13-41fe-a75a-32c1934b3da3",
         "conceptId": "83120e47-d1c7-47e6-82ef-420e6db49766",
-        "direction": "NORMAL",
-        "current": "EASY",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "4efc81f2-002d-418a-a446-b668d8e14d21",
-        "conceptId": "a29a18e3-0d84-4893-9991-9c84380b12eb",
         "direction": "NORMAL",
         "current": "EASY",
         "consecutiveCorrect": 0,
@@ -413553,15 +410438,6 @@
       {
         "id": "c6b5e44f-ce59-4aa5-a4a2-5055e16fd0aa",
         "conceptId": "faefe5c7-52f9-4441-b5bf-a77052a362a5",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "bd597329-2a4a-4632-885c-b44efa622294",
-        "conceptId": "d14e1bb3-478f-4106-b264-477b4aacf870",
         "direction": "NORMAL",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -414316,15 +411192,6 @@
         "hasReachedVeryHard": true
       },
       {
-        "id": "1c555b69-da74-45c0-89b7-de61b02174fb",
-        "conceptId": "c180a1a5-a452-43dc-a57f-5ff701ba4cdf",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "07674e68-e586-4e8d-a509-97fdc6fda137",
         "conceptId": "465d6a7d-9f11-4c2b-821f-1c0c1fc2a00c",
         "direction": "NORMAL",
@@ -414901,15 +411768,6 @@
         "hasReachedVeryHard": false
       },
       {
-        "id": "2505b29f-ceb0-4011-b134-d1a3229b792b",
-        "conceptId": "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
         "id": "aaaa07d6-c3a0-487e-bd09-aba4d3711f88",
         "conceptId": "e7d37162-0a04-403a-9efa-1b9ecbe36da3",
         "direction": "NORMAL",
@@ -415022,15 +411880,6 @@
         "conceptId": "88632eba-b65b-448b-b339-dda6d3d24ffe",
         "direction": "NORMAL",
         "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "4bb26a9b-94d5-405d-83fd-85c3f8dae170",
-        "conceptId": "9213a64d-c402-4cad-8bba-ca41491edf81",
-        "direction": "NORMAL",
-        "current": "MEDIUM",
         "consecutiveCorrect": 0,
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
@@ -415650,15 +412499,6 @@
       {
         "id": "9d199d95-0018-4c16-8f9e-00768244b76b",
         "conceptId": "6ff6129d-fd3b-4a29-b52c-c7f89028bdb6",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "1b5b10ab-9778-414a-8664-de9379ddf3ff",
-        "conceptId": "95b11de9-fd12-44b2-8f66-5dafcef1407a",
         "direction": "NORMAL",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -416712,24 +413552,6 @@
       {
         "id": "54d94399-0946-45f6-a09f-1714d1f76439",
         "conceptId": "d6aecf81-b44e-4639-942b-52b810e96c2d",
-        "direction": "REVERSE",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "95b012d8-13d9-4eb9-9d40-8d84439cd9dc",
-        "conceptId": "3ba226f9-3426-4b3a-90a5-b906c202ba59",
-        "direction": "NORMAL",
-        "current": "HARD",
-        "consecutiveCorrect": 0,
-        "consecutiveWrong": 0,
-        "hasReachedVeryHard": false
-      },
-      {
-        "id": "59e0c671-7965-43ab-88b2-3a7a431f38f0",
-        "conceptId": "3ba226f9-3426-4b3a-90a5-b906c202ba59",
         "direction": "REVERSE",
         "current": "HARD",
         "consecutiveCorrect": 0,
@@ -418212,6 +415034,69 @@
         "consecutiveWrong": 0,
         "hasReachedVeryHard": false
       }
+    ],
+    "obsoleteConceptIds": [
+      "00c11ea3-d7d2-4785-bba6-b33cff5b352e",
+      "0e332cbe-4dc7-4017-a414-7f66d9e0e41c",
+      "10be8270-05a8-4ec1-8353-8e6b98d5edf1",
+      "1653b2e7-7420-4832-8b2a-4ca405ea559b",
+      "197d7aa7-6e1e-4c28-859c-6c837115a05b",
+      "1d869d66-160f-47e8-8736-e5be1aa19bc2",
+      "20ae07f1-2105-4ae2-a9b4-93aea5bc4e82",
+      "271ce1ac-f3fe-407c-8878-50e2eed15e06",
+      "284dc445-87a7-43fa-a561-406e6d22d983",
+      "2ed74f5b-6382-4227-8cf5-ff944eaa6ec4",
+      "36f40391-0237-4344-b1fc-6727aca49eaf",
+      "37cc7903-fca2-48ad-926f-810abebc2452",
+      "3ba226f9-3426-4b3a-90a5-b906c202ba59",
+      "3c10cf68-a771-4ca3-b51e-9fa07de7c4e5",
+      "3df9ddeb-f173-4f0f-ba5e-3ca99e4be3ff",
+      "434e2e91-cdf8-48c6-9612-cd24acc9b9ed",
+      "43ddff0a-1894-42e1-a6d1-27d353c4ee0c",
+      "4ca08e74-17f7-400d-8f38-6617c1e0dedf",
+      "532f4831-e9fb-46b3-806b-fa3b3c13f1cf",
+      "556cbbd9-d87a-4fc7-8efd-dd6573b564ed",
+      "5925254b-d57c-4169-b500-fdc66fff4062",
+      "5ca98071-6b0c-46d7-8ed5-9134e121b5ce",
+      "66917c88-65a9-4788-b9fe-eb745dfc6fb9",
+      "66a441d7-8b72-4656-9916-1e81445b561f",
+      "6f05d736-8972-4253-ae1c-2ea602af5300",
+      "6f79f0e3-75fd-4c8b-8902-cd4b3a60c861",
+      "7f8b0159-3629-4e66-89b1-5b3b0eb44510",
+      "82e895cf-a3d3-4532-843a-ec75c7b63d57",
+      "86f25d5c-9d27-4b5f-951c-792414fd0bf1",
+      "8baa1de7-f9c2-42e1-93ff-6d82dc31f429",
+      "9213a64d-c402-4cad-8bba-ca41491edf81",
+      "933ce6ea-6bf9-4a03-933d-dfaf524756e7",
+      "942a8c67-e1b2-4f3a-aa51-ea40331ae9ac",
+      "95b11de9-fd12-44b2-8f66-5dafcef1407a",
+      "99c3cade-3178-4170-9dba-17ffbb8e4635",
+      "a25abedf-b936-4fe5-a878-167cc4eaaa8f",
+      "a29a18e3-0d84-4893-9991-9c84380b12eb",
+      "abf6d788-a9cd-4405-a8d5-267b3df3b949",
+      "b0652d9b-f06f-49a4-875e-1f69837f7a68",
+      "b6cdd034-813c-4c74-8aa8-127110c551da",
+      "b98aad98-fd69-4cb5-9af6-ca77927041ca",
+      "ba49d8ba-f0a3-44c3-a437-b2abd15662a5",
+      "c180a1a5-a452-43dc-a57f-5ff701ba4cdf",
+      "c1e17138-1733-451b-92f4-74320704434f",
+      "c21a5a78-c3e9-4ea8-ba8c-77193161572a",
+      "c9d934b0-1538-4bda-a14e-214b9c90952d",
+      "cdb1d520-c55b-4d33-ac6d-f44193f6d4b1",
+      "cf28dd37-cb03-4aed-ab4b-3346d9d719d3",
+      "d14e1bb3-478f-4106-b264-477b4aacf870",
+      "d19a1d8e-1605-4ddb-bcb5-4f042772ebb2",
+      "d299d37e-1ace-45b2-a585-7ad5f5d5e860",
+      "d59b0fd5-11c3-4d4d-9e6a-7c2016c86900",
+      "d825f0ac-9d8e-48cb-b35c-779457d11d02",
+      "e40ef618-638a-45a5-9134-9d44acce5a13",
+      "e49e1328-e833-4a9c-b805-3443290668f2",
+      "e98a4474-2cc1-48de-ae23-427356f43e11",
+      "ed2b4dfc-e6c7-42cb-8993-55a93b736b9b",
+      "f171f4b9-a4f7-48d0-aee7-e38bb372ddad",
+      "f2522797-0a09-42f9-91d7-558b9e81790f",
+      "f58e078a-5034-491a-995d-2855f0eca295",
+      "fe132a65-63fa-4818-9a86-4145651cefdd"
     ]
   }
 }

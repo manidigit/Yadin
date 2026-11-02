@@ -413,7 +413,84 @@ object VocabularyParser {
             )
         }
 
-        return ParseResult(entries, warnings)
+        val mergedEntries = mergeSingularPluralParsedEntries(entries)
+        return ParseResult(mergedEntries, warnings)
+    }
+
+    /**
+     * ادغام خودکار مدخل‌های مفرد و جمع اسپانیایی در یک لیست ورودی:
+     * فرم مفرد به عنوان مدخل اصلی حفظ شده و فرم جمع (به همراه ترجمه آن) به بخش یادداشت منتقل می‌شود.
+     */
+    fun mergeSingularPluralParsedEntries(entries: List<ParsedEntry>): List<ParsedEntry> {
+        if (entries.size <= 1) return entries
+        val analyses = entries.map { TextUtilities.analyzeSpanishHeadword(it.sourceText) }
+        val byAccentKey = mutableMapOf<String, MutableList<Int>>()
+        analyses.forEachIndexed { idx, analysis ->
+            if (analysis.accentInsensitiveKey.isNotBlank()) {
+                byAccentKey.getOrPut(analysis.accentInsensitiveKey) { mutableListOf() }.add(idx)
+            }
+        }
+
+        val pluralToSingularIdx = mutableMapOf<Int, Int>()
+        for (i in entries.indices) {
+            val pluralEntry = entries[i]
+            if (pluralEntry.confidence < 0.90 || pluralEntry.possibleCorrection != null || pluralEntry.translations.isEmpty()) continue
+            val pluralAnalysis = analyses[i]
+            val candidateSingKeys = TextUtilities.spanishSingularCandidateKeys(pluralAnalysis)
+            if (candidateSingKeys.isEmpty()) continue
+
+            val matchedSingIdx = candidateSingKeys
+                .flatMap { key -> byAccentKey[key].orEmpty() }
+                .firstOrNull { sIdx ->
+                    sIdx != i &&
+                        entries[sIdx].confidence >= 0.90 &&
+                        entries[sIdx].possibleCorrection == null &&
+                        TextUtilities.isSpanishPhrasePluralOf(
+                            pluralAnalysis = pluralAnalysis,
+                            singularAnalysis = analyses[sIdx],
+                            pluralPersianTranslations = pluralEntry.translations
+                        )
+                }
+            if (matchedSingIdx != null) {
+                pluralToSingularIdx[i] = matchedSingIdx
+            }
+        }
+
+        if (pluralToSingularIdx.isEmpty()) return entries
+
+        val singularToPluralIndices = pluralToSingularIdx.entries.groupBy({ it.value }, { it.key })
+        val result = mutableListOf<ParsedEntry>()
+        for (i in entries.indices) {
+            if (i in pluralToSingularIdx) continue
+            val entry = entries[i]
+            val attachedPluralIndices = singularToPluralIndices[i]
+            if (attachedPluralIndices.isNullOrEmpty()) {
+                result.add(entry)
+            } else {
+                val allForms = listOf(entry.sourceText) + attachedPluralIndices.map { entries[it].sourceText }
+                val preferredHeadword = TextUtilities.selectPreferredSpanishHeadword(allForms).ifBlank { entry.sourceText }
+                var combinedNote = entry.note
+                for (pIdx in attachedPluralIndices) {
+                    val pEntry = entries[pIdx]
+                    val pluralNoteLine = TextUtilities.formatPluralFormNote(pEntry.sourceText, pEntry.translations)
+                    combinedNote = TextUtilities.mergeNotesWithPluralSupport(combinedNote, pluralNoteLine)
+                    if (!pEntry.note.isNullOrBlank()) {
+                        combinedNote = TextUtilities.mergeNotesWithPluralSupport(combinedNote, pEntry.note)
+                    }
+                }
+                val finalTranslations = entry.translations.ifEmpty {
+                    attachedPluralIndices.flatMap { entries[it].translations }.distinct()
+                }
+                result.add(
+                    entry.copy(
+                        sourceText = preferredHeadword,
+                        translations = finalTranslations,
+                        note = combinedNote
+                    )
+                )
+            }
+        }
+        return result
     }
 
     private fun classifyLine(line: String): LineType {

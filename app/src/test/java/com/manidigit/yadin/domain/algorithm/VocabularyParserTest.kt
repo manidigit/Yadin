@@ -285,6 +285,37 @@ class VocabularyParserTest {
         assertEquals(listOf("فرانشیز بیمه (سهم پرداخت خسارت بر عهده بیمه‌گذار)"), result.entries[9].translations)
         assertEquals(listOf("کفی سواره‌رو (بخشی از جاده ویژه حرکت وسایل نقلیه)"), result.entries[10].translations)
     }
+
+    @Test
+    fun parseMergesSingularAndPluralEntriesAndMovesPluralToNote() {
+        val raw = """
+            Testigo
+            شاهد
+            چراغ هشدار دهنده پشت آمپر
+            Testigos
+            چراغ‌های هشدار دهنده پشت آمپر
+            La luz de emergencia
+            چراغ خطر، جفت راهنما
+            Luces de emergencia
+            چراغ‌های اضطراری
+        """.trimIndent()
+
+        val result = VocabularyParser.parse(raw)
+        assertEquals(2, result.entries.size)
+
+        val testigo = result.entries[0]
+        assertEquals("Testigo", testigo.sourceText)
+        assertEquals(2, testigo.translations.size)
+        assertEquals("شاهد", testigo.translations[0])
+        assertTrue(testigo.translations[1].contains("چراغ") && testigo.translations[1].contains("آمپر"))
+        assertTrue(testigo.note?.contains("فرم جمع: Testigos") == true)
+        assertTrue(testigo.note?.contains("آمپر") == true)
+
+        val luz = result.entries[1]
+        assertEquals("La luz de emergencia", luz.sourceText)
+        assertEquals(listOf("چراغ خطر", "جفت راهنما"), luz.translations)
+        assertTrue(luz.note?.contains("فرم جمع: Luces de emergencia") == true)
+    }
 }
 
 

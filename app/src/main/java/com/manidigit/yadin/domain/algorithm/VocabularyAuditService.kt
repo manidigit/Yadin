@@ -294,9 +294,21 @@ class VocabularyAuditService(
         null -> 0
     }
 
+    private fun isPluralInGroup(candidate: ConceptWorkingData, group: List<ConceptWorkingData>): Boolean {
+        return group.any { other ->
+            other.concept.id != candidate.concept.id &&
+                TextUtilities.isSpanishPhrasePluralOf(
+                    pluralAnalysis = candidate.spanishAnalysis,
+                    singularAnalysis = other.spanishAnalysis,
+                    pluralPersianTranslations = candidate.allPersianTranslations()
+                )
+        }
+    }
+
     private fun selectPrimaryConcept(items: List<ConceptWorkingData>): ConceptWorkingData {
         return items.maxWithOrNull(
-            compareBy<ConceptWorkingData> { stageRank(it.learningState?.stage) }
+            compareBy<ConceptWorkingData> { if (!isPluralInGroup(it, items)) 1 else 0 }
+                .thenBy { stageRank(it.learningState?.stage) }
                 .thenBy { it.learningState?.sm2Repetitions ?: 0 }
                 .thenBy { if (it.spanishAnalysis.articlePrefix != null && it.spanishAnalysis.isDefiniteArticle) 1 else 0 }
                 .thenBy { it.learningState?.updatedAt ?: it.concept.updatedAt }
@@ -423,6 +435,60 @@ class VocabularyAuditService(
                     suspiciousGroups.add(combined)
                     combined.forEach { suspiciousConceptIds.add(it.concept.id) }
                 }
+            }
+        }
+
+        // ۴.۵. ادغام خودکار واژگان و عبارات مفرد و جمع اسپانیایی (مانند Testigo و Testigos یا La luz de emergencia و Luces de emergencia)
+        val byAccentKeyAll = workingList
+            .filter { it.spanishAnalysis.accentInsensitiveKey.isNotBlank() }
+            .groupBy { it.spanishAnalysis.accentInsensitiveKey }
+
+        val singularIdToPlurals = mutableMapOf<String, MutableList<ConceptWorkingData>>()
+        val candidatePluralItems = workingList.filter { it.concept.id !in mergedConceptIds }
+        for (pluralItem in candidatePluralItems) {
+            if (pluralItem.concept.id in mergedConceptIds) continue
+            val candidateSingKeys = TextUtilities.spanishSingularCandidateKeys(pluralItem.spanishAnalysis)
+            if (candidateSingKeys.isEmpty()) continue
+
+            val matchedSingulars = candidateSingKeys
+                .flatMap { singKey -> byAccentKeyAll[singKey].orEmpty() }
+                .filter { singItem ->
+                    singItem.concept.id != pluralItem.concept.id &&
+                        TextUtilities.isSpanishPhrasePluralOf(
+                            pluralAnalysis = pluralItem.spanishAnalysis,
+                            singularAnalysis = singItem.spanishAnalysis,
+                            pluralPersianTranslations = pluralItem.allPersianTranslations()
+                        ) &&
+                        !hasToneConflict(listOf(singItem, pluralItem))
+                }
+                .distinctBy { it.concept.id }
+
+            val bestSingular = matchedSingulars.firstOrNull()
+            if (bestSingular != null) {
+                val existingGroupIdx = definiteMergeGroups.indexOfFirst { grp ->
+                    grp.any { it.concept.id == bestSingular.concept.id }
+                }
+                if (existingGroupIdx >= 0) {
+                    val existingGroup = definiteMergeGroups[existingGroupIdx]
+                    if (existingGroup.none { it.concept.id == pluralItem.concept.id }) {
+                        definiteMergeGroups[existingGroupIdx] = existingGroup + pluralItem
+                        mergedConceptIds.add(pluralItem.concept.id)
+                    }
+                } else if (bestSingular.concept.id !in mergedConceptIds) {
+                    singularIdToPlurals.getOrPut(bestSingular.concept.id) { mutableListOf() }.add(pluralItem)
+                }
+            }
+        }
+
+        val workingByIdMap = workingList.associateBy { it.concept.id }
+        for ((singId, plurals) in singularIdToPlurals) {
+            val singItem = workingByIdMap[singId] ?: continue
+            if (singItem.concept.id in mergedConceptIds) continue
+            val validPlurals = plurals.filter { it.concept.id !in mergedConceptIds }.distinctBy { it.concept.id }
+            if (validPlurals.isNotEmpty()) {
+                val combined = listOf(singItem) + validPlurals
+                definiteMergeGroups.add(combined)
+                combined.forEach { mergedConceptIds.add(it.concept.id) }
             }
         }
 
@@ -584,15 +650,23 @@ class VocabularyAuditService(
             duplicateCount += (items.size - 1)
             val preferredWord = TextUtilities.selectPreferredSpanishHeadword(items.map { it.cleanedResult.cleanSourceText })
             val originalForms = items.map { it.sourceContent?.text ?: it.cleanedResult.cleanSourceText }.distinct().joinToString(" + ")
+            val hasPluralItem = items.any { isPluralInGroup(it, items) }
             actions.add(
                 AuditActionDetail(
                     originalText = originalForms,
                     cleanedText = preferredWord,
                     actionType = AuditActionType.MERGED,
-                    description = tr(
-                        "امکان ادغام ${items.size} واژه هم‌ریشه با حفظ فرم «$preferredWord» و بالاترین مرحله مرور",
-                        "Can merge ${items.size} duplicate words keeping «$preferredWord» and highest review stage"
-                    )
+                    description = if (hasPluralItem) {
+                        tr(
+                            "ادغام فرم مفرد و جمع به «$preferredWord» و انتقال فرم جمع به یادداشت",
+                            "Merge singular and plural into «$preferredWord» and move plural form to note"
+                        )
+                    } else {
+                        tr(
+                            "امکان ادغام ${items.size} واژه هم‌ریشه با حفظ فرم «$preferredWord» و بالاترین مرحله مرور",
+                            "Can merge ${items.size} duplicate words keeping «$preferredWord» and highest review stage"
+                        )
+                    }
                 )
             )
         }
@@ -851,17 +925,26 @@ class VocabularyAuditService(
             val duplicates = items.filter { it.concept.id != primary.concept.id }
             val duplicateIds = duplicates.map { it.concept.id }
 
-            // انتخاب عنوان اسپانیایی برتر (با حفظ حرف تعریف El/La برای یادگیری جنسیت اسم)
+            val pluralItems = items.filter { isPluralInGroup(it, items) }
+            val nonPluralItems = items.filterNot { isPluralInGroup(it, items) }.ifEmpty { items }
+
+            // انتخاب عنوان اسپانیایی برتر (با اولویت فرم مفرد و حفظ حرف تعریف El/La برای یادگیری جنسیت اسم)
             val preferredSourceText = TextUtilities.selectPreferredSpanishHeadword(
                 items.map { it.cleanedResult.cleanSourceText }
             ).ifBlank { primary.cleanedResult.cleanSourceText }
             val preferredCanonicalKey = TextUtilities.toCanonicalKey(preferredSourceText)
 
-            // ترکیب ترجمه‌ها و اعمال نرمال‌سازی نگارش فارسی و هماهنگی علائم
-            val existingTrans = (primary.targetContents.map { it.text } + primary.cleanedResult.extractedTranslations).toMutableList()
-            duplicates.forEach { dup ->
-                existingTrans.addAll(dup.targetContents.map { it.text })
-                existingTrans.addAll(dup.cleanedResult.extractedTranslations)
+            // ترکیب ترجمه‌های فرم مفرد و اعمال نرمال‌سازی نگارش فارسی (ترجمه‌های فرم جمع به یادداشت منتقل می‌شوند)
+            val existingTrans = mutableListOf<String>()
+            nonPluralItems.forEach { item ->
+                existingTrans.addAll(item.targetContents.map { it.text })
+                existingTrans.addAll(item.cleanedResult.extractedTranslations)
+            }
+            if (existingTrans.isEmpty()) {
+                pluralItems.forEach { dup ->
+                    existingTrans.addAll(dup.targetContents.map { it.text })
+                    existingTrans.addAll(dup.cleanedResult.extractedTranslations)
+                }
             }
             val normalizedTrans = existingTrans
                 .map { TextUtilities.normalizePersianTranslation(it, preferredSourceText).first }
@@ -871,7 +954,7 @@ class VocabularyAuditService(
                     normalizedTrans.distinct()
                 }
 
-            // ترکیب یادداشت‌ها (به همراه توضیحات پرانتزی که در عنوان نهایی نیستند)
+            // ترکیب یادداشت‌ها (به همراه انتقال فرم‌های جمع و توضیحات پرانتزی به یادداشت)
             val allNotes = mutableListOf<String>()
             primary.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
             allNotes.addAll(primary.cleanedResult.extractedNotes)
@@ -879,12 +962,25 @@ class VocabularyAuditService(
                 dup.sourceContent?.note?.let { if (it.isNotBlank()) allNotes.add(it) }
                 allNotes.addAll(dup.cleanedResult.extractedNotes)
             }
-            items.mapNotNull { it.spanishAnalysis.trailingParenNote }.forEach { parenNote ->
+            pluralItems.forEach { pluralItem ->
+                val pluralSource = pluralItem.cleanedResult.cleanSourceText
+                    .ifBlank { pluralItem.sourceContent?.text.orEmpty() }
+                if (pluralSource.isNotBlank()) {
+                    val pluralTrans = pluralItem.allPersianTranslations()
+                        .map { TextUtilities.normalizePersianTranslation(it, pluralSource).first }
+                        .filter { it.isNotBlank() }
+                    allNotes.add(TextUtilities.formatPluralFormNote(pluralSource, pluralTrans))
+                }
+            }
+            items.filter { it !in pluralItems }.mapNotNull { it.spanishAnalysis.trailingParenNote }.forEach { parenNote ->
                 if (parenNote.isNotBlank() && !preferredSourceText.contains(parenNote, ignoreCase = true)) {
                     allNotes.add(tr("توضیح واژه: $parenNote", "Word note: $parenNote"))
                 }
             }
-            val mergedNote = allNotes.distinct().joinToString("\n").ifBlank { null }
+            var mergedNote: String? = null
+            for (noteChunk in allNotes) {
+                mergedNote = TextUtilities.mergeNotesWithPluralSupport(mergedNote, noteChunk)
+            }
 
             val allCatIds = (primary.categoryIds + duplicates.flatMap { it.categoryIds }).distinct()
 
@@ -929,7 +1025,7 @@ class VocabularyAuditService(
                 conceptCategoriesToInsertAll.add(ConceptCategoryEntity(primary.concept.id, catId))
             }
 
-            // حفظ بالاترین وضعیت یادگیری و دشواری در هر دو جهت مرور (NORMAL و REVERSE)
+            // حفظ بالاترین وضعیت یادگیری و بالاترین سطح دشواری در هر دو جهت مرور (NORMAL و REVERSE)
             for (dir in CardDirection.entries) {
                 val statesForDir = items.flatMap { it.allLearningStates }.filter { it.direction == dir }
                 val bestLearningForDir = statesForDir.maxWithOrNull(
@@ -950,15 +1046,20 @@ class VocabularyAuditService(
                 }
 
                 val diffsForDir = items.flatMap { it.allDifficultyStates }.filter { it.direction == dir }
-                val bestDiffOwnerId = bestLearningForDir?.conceptId ?: primary.concept.id
-                val preferredDiffForDir = diffsForDir.firstOrNull { it.conceptId == bestDiffOwnerId }
-                    ?: diffsForDir.firstOrNull()
-                if (preferredDiffForDir != null) {
+                val highestDiffForDir = diffsForDir.maxWithOrNull(
+                    compareBy<DifficultyStateEntity> { it.current.ordinal }
+                        .thenBy { if (it.conceptId == primary.concept.id) 1 else 0 }
+                )
+                if (highestDiffForDir != null) {
                     val primaryExistingDiffForDir = primary.allDifficultyStates.firstOrNull { it.direction == dir }
+                    val anyReachedVeryHard = diffsForDir.any {
+                        it.hasReachedVeryHard || it.current == com.manidigit.yadin.domain.model.VocabularyDifficulty.VERY_HARD
+                    }
                     difficultyStatesToUpdate.add(
-                        preferredDiffForDir.copy(
+                        highestDiffForDir.copy(
                             id = primaryExistingDiffForDir?.id ?: UUID.randomUUID().toString(),
-                            conceptId = primary.concept.id
+                            conceptId = primary.concept.id,
+                            hasReachedVeryHard = anyReachedVeryHard
                         )
                     )
                 }
@@ -977,10 +1078,17 @@ class VocabularyAuditService(
                     originalText = originalForms,
                     cleanedText = preferredSourceText,
                     actionType = AuditActionType.MERGED,
-                    description = tr(
-                        "ادغام ${duplicates.size + 1} واژه تکراری به «$preferredSourceText» (مرحله: $bestStage، تعداد ترجمه‌ها: ${mergedTranslations.size})",
-                        "Merged ${duplicates.size + 1} duplicate words into «$preferredSourceText» (stage: $bestStage, translations: ${mergedTranslations.size})"
-                    )
+                    description = if (pluralItems.isNotEmpty()) {
+                        tr(
+                            "ادغام فرم مفرد و جمع به «$preferredSourceText» و انتقال فرم جمع به یادداشت (مرحله: $bestStage)",
+                            "Merged singular and plural into «$preferredSourceText» and moved plural to note (stage: $bestStage)"
+                        )
+                    } else {
+                        tr(
+                            "ادغام ${duplicates.size + 1} واژه تکراری به «$preferredSourceText» (مرحله: $bestStage، تعداد ترجمه‌ها: ${mergedTranslations.size})",
+                            "Merged ${duplicates.size + 1} duplicate words into «$preferredSourceText» (stage: $bestStage, translations: ${mergedTranslations.size})"
+                        )
+                    }
                 )
             )
         }

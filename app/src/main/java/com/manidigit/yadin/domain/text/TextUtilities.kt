@@ -1042,9 +1042,178 @@ object TextUtilities {
         return false
     }
 
+    private val SPANISH_SUBJECT_PRONOUNS = setOf(
+        "yo", "tu", "el", "ella", "usted",
+        "nosotros", "nosotras", "vosotros", "vosotras",
+        "ellos", "ellas", "ustedes"
+    )
+
+    private fun stripSpanishAccents(text: String): String =
+        DIACRITICS_REGEX.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "")
+
+    /**
+     * Checks whether [pluralToken] is the regular Spanish plural form of [singularToken]
+     * (after accent-stripping and lowercase normalization).
+     * Covers:
+     * - Words ending in 'z' -> '-ces' (e.g., luz -> luces, vez -> veces, voz -> voces)
+     * - Words ending in a vowel (a, e, i, o, u) -> '-s' (e.g., testigo -> testigos, silla -> sillas)
+     * - Words ending in a consonant (r, l, n, d, j, s, x, y) -> '-es' (e.g., señal -> señales, consumidor -> consumidores)
+     */
+    fun isSpanishWordPluralOf(pluralToken: String, singularToken: String): Boolean {
+        val p = stripSpanishAccents(pluralToken.trim().lowercase(Locale.ROOT))
+        val s = stripSpanishAccents(singularToken.trim().lowercase(Locale.ROOT))
+        if (s.length < 3 || p.length < 4 || p == s) return false
+        return when {
+            s.endsWith("z") -> p == s.dropLast(1) + "ces"
+            s.last() in "aeiou" -> p == s + "s"
+            s.last() in "rlndjsxy" -> p == s + "es"
+            else -> false
+        }
+    }
+
+    /**
+     * Checks whether [pluralAnalysis] is the plural noun or noun-phrase form of [singularAnalysis].
+     * Safely excludes sentences, questions, exclamations, slash-dual forms, pronoun-prefixed verb conjugations,
+     * and 2nd-person singular ('tú') verb forms whose Persian translations include 'تو'.
+     */
+    fun isSpanishPhrasePluralOf(
+        pluralAnalysis: SpanishHeadwordAnalysis,
+        singularAnalysis: SpanishHeadwordAnalysis,
+        pluralPersianTranslations: List<String> = emptyList()
+    ): Boolean {
+        if (pluralAnalysis.hasExclamation || pluralAnalysis.hasQuestion || pluralAnalysis.hasEllipsis) return false
+        if (singularAnalysis.hasExclamation || singularAnalysis.hasQuestion || singularAnalysis.hasEllipsis) return false
+        if (pluralAnalysis.isSlashDualForm || singularAnalysis.isSlashDualForm) return false
+        if (pluralAnalysis.coreText.any { it in ".?!¿¡" } || singularAnalysis.coreText.any { it in ".?!¿¡" }) return false
+
+        val pWords = pluralAnalysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+        val sWords = singularAnalysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+        if (pWords.size != sWords.size || pWords.size !in 1..5) return false
+        if (pWords.first() in SPANISH_SUBJECT_PRONOUNS || sWords.first() in SPANISH_SUBJECT_PRONOUNS) return false
+
+        if (pWords.size == 1 && pluralPersianTranslations.isNotEmpty()) {
+            val hasSecondPersonPronoun = pluralPersianTranslations.any { tr ->
+                val cleanedTr = cleanText(tr)
+                cleanedTr.startsWith("تو ") || cleanedTr.contains(" تو ")
+            }
+            if (hasSecondPersonPronoun) return false
+        }
+
+        if (!isSpanishWordPluralOf(pWords[0], sWords[0])) return false
+        for (i in 1 until pWords.size) {
+            val pw = pWords[i]
+            val sw = sWords[i]
+            if (pw != sw && !isSpanishWordPluralOf(pw, sw)) return false
+        }
+        return true
+    }
+
+    private fun singularCandidatesForWord(word: String): List<String> {
+        val w = stripSpanishAccents(word.trim().lowercase(Locale.ROOT))
+        if (w.length < 4) return emptyList()
+        val result = mutableListOf<String>()
+        if (w.length >= 5 && w.endsWith("ces")) {
+            result.add(w.dropLast(3) + "z")
+        }
+        if (w.length >= 5 && w.endsWith("es") && w[w.length - 3] in "rlndjsxy") {
+            result.add(w.dropLast(2))
+        }
+        if (w.length >= 4 && w.endsWith("s") && w[w.length - 2] in "aeiou") {
+            result.add(w.dropLast(1))
+        }
+        return result.distinct()
+    }
+
+    /**
+     * Generates candidate singular [SpanishHeadwordAnalysis.accentInsensitiveKey] values for a potentially
+     * plural Spanish word or noun phrase so singular/plural pairs can be matched in O(1) bucket lookups.
+     */
+    fun spanishSingularCandidateKeys(analysis: SpanishHeadwordAnalysis): Set<String> {
+        if (analysis.hasExclamation || analysis.hasQuestion || analysis.hasEllipsis || analysis.isSlashDualForm) {
+            return emptySet()
+        }
+        if (analysis.coreText.any { it in ".?!¿¡" }) return emptySet()
+        val words = analysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+        if (words.size !in 1..5 || words.first() in SPANISH_SUBJECT_PRONOUNS) return emptySet()
+
+        val firstSingulars = singularCandidatesForWord(words[0])
+        if (firstSingulars.isEmpty()) return emptySet()
+        if (words.size == 1) return firstSingulars.toSet()
+
+        var partialPhrases = firstSingulars
+        for (i in 1 until words.size) {
+            val w = words[i]
+            val options = (listOf(w) + singularCandidatesForWord(w)).distinct()
+            val nextPhrases = mutableListOf<String>()
+            for (prefix in partialPhrases) {
+                for (opt in options) {
+                    nextPhrases.add("$prefix $opt")
+                }
+            }
+            partialPhrases = nextPhrases
+        }
+        return partialPhrases.toSet()
+    }
+
+    /**
+     * Converts a plural Spanish article prefix ("Los", "Las", "Los/Las", "Unos", "Unas")
+     * to its corresponding singular article prefix ("El", "La", "El/La", "Un", "Una").
+     */
+    fun toSingularSpanishArticle(articlePrefix: String?): String? = when (articlePrefix) {
+        "Los" -> "El"
+        "Las" -> "La"
+        "Los/Las" -> "El/La"
+        "Unos" -> "Un"
+        "Unas" -> "Una"
+        else -> articlePrefix
+    }
+
+    /**
+     * Formats a plural Spanish form (and its Persian translations, if any) into a structured note line
+     * to attach to the singular concept.
+     */
+    fun formatPluralFormNote(
+        pluralSourceText: String,
+        pluralTranslations: List<String> = emptyList()
+    ): String {
+        val cleanPlural = cleanText(pluralSourceText)
+        val cleanTrans = pluralTranslations.map { cleanText(it) }.filter { it.isNotBlank() }.distinct()
+        return if (cleanTrans.isNotEmpty()) {
+            "فرم جمع: $cleanPlural (${cleanTrans.joinToString("، ")})"
+        } else {
+            "فرم جمع: $cleanPlural"
+        }
+    }
+
+    /**
+     * Appends [newNote] to [existingNote] without duplicating lines or repeating the same plural form note.
+     */
+    fun mergeNotesWithPluralSupport(existingNote: String?, newNote: String?): String? {
+        val lines = mutableListOf<String>()
+        existingNote?.split("\n")?.map { it.trim() }?.filter { it.isNotBlank() }?.let { lines.addAll(it) }
+        newNote?.split("\n")?.map { it.trim() }?.filter { it.isNotBlank() }?.forEach { candidate ->
+            val pluralMatch = Regex("""^(?:فرم جمع|Plural form):\s*([^(（\n]+)""", RegexOption.IGNORE_CASE).find(candidate)
+            if (pluralMatch != null) {
+                val pluralHead = cleanText(pluralMatch.groupValues[1]).lowercase(Locale.ROOT)
+                val alreadyHasThisPlural = lines.any { line ->
+                    val m = Regex("""^(?:فرم جمع|Plural form):\s*([^(（\n]+)""", RegexOption.IGNORE_CASE).find(line)
+                    m != null && cleanText(m.groupValues[1]).lowercase(Locale.ROOT) == pluralHead
+                }
+                if (!alreadyHasThisPlural) {
+                    lines.add(candidate)
+                }
+            } else if (lines.none { it.equals(candidate, ignoreCase = true) }) {
+                lines.add(candidate)
+            }
+        }
+        return lines.joinToString("\n").ifBlank { null }
+    }
+
     /**
      * Selects the preferred Spanish display headword when merging duplicate entries:
      * - Prioritizes dual slash forms (e.g., "Claro / clara" or "el sobrino / la sobrina") when merging with a single variant.
+     * - Prioritizes singular forms over plural forms (e.g., "Testigo" over "Testigos", "La luz de emergencia" over "Luces de emergencia"),
+     *   converting plural articles ("Los"/"Las") to singular ("El"/"La") when only the plural entry carried an article.
      * - Prioritizes forms that include the Spanish grammatical article (e.g., "El trampolín" over "Trampolín")
      *   so the learner learns the noun's gender.
      * - Prioritizes properly accented Spanish forms (e.g., "trampolín" over "trampolin").
@@ -1076,6 +1245,14 @@ object TextUtilities {
             }
         }
 
+        // Prefer singular forms over plural forms when both exist in the group
+        val nonPluralAnalyses = analyses.filter { candidate ->
+            analyses.none { other ->
+                other !== candidate && isSpanishPhrasePluralOf(candidate, other)
+            }
+        }.ifEmpty { analyses }
+        val hasSingularPluralMix = nonPluralAnalyses.size < analyses.size
+
         val hasBothMascAndFem = (analyses.any { it.gender == SpanishArticleGender.MASCULINE } &&
             analyses.any { it.gender == SpanishArticleGender.FEMININE }) ||
             analyses.any { it.gender == SpanishArticleGender.BOTH }
@@ -1085,6 +1262,7 @@ object TextUtilities {
             .maxByOrNull { analysis ->
                 var score = 0
                 if (analysis.isDefiniteArticle) score += 100 else score += 60
+                if (analysis in nonPluralAnalyses) score += 20
                 if (hasBothMascAndFem && analysis.gender == SpanishArticleGender.BOTH) score += 30
                 if (analysis.coreText.any { ch -> ch in SPANISH_ACCENT_CHARS }) score += 25
                 if (analysis.trailingParenNote == null) score += 10
@@ -1092,7 +1270,7 @@ object TextUtilities {
                 score
             }
 
-        val bestCoreAnalysis = analyses.maxByOrNull { analysis ->
+        val bestCoreAnalysis = nonPluralAnalyses.maxByOrNull { analysis ->
             var score = 0
             score += analysis.coreText.count { ch -> ch in SPANISH_ACCENT_CHARS } * 30
             if (analysis.trailingParenNote == null) score += 10
@@ -1106,13 +1284,18 @@ object TextUtilities {
             if (firstLetter?.isUpperCase() == true) score += 5
             if (analysis.articlePrefix != null && analysis.isDefiniteArticle) score += 5
             score
-        } ?: analyses.first()
+        } ?: nonPluralAnalyses.first()
 
         if (bestArticleAnalysis != null) {
-            val chosenPrefix = if (hasBothMascAndFem && bestArticleAnalysis.gender != SpanishArticleGender.BOTH) {
+            val rawPrefix = if (hasBothMascAndFem && bestArticleAnalysis.gender != SpanishArticleGender.BOTH) {
                 "El/La"
             } else {
                 bestArticleAnalysis.articlePrefix!!
+            }
+            val chosenPrefix = if (hasSingularPluralMix || bestCoreAnalysis in nonPluralAnalyses) {
+                toSingularSpanishArticle(rawPrefix) ?: rawPrefix
+            } else {
+                rawPrefix
             }
 
             val bestCore = bestCoreAnalysis.coreText

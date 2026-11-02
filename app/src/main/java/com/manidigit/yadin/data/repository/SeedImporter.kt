@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7875_v1.79.0"
+        const val CURRENT_SEED_VERSION = "7814_v1.82.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -60,7 +60,7 @@ class SeedImporter(
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
         val totalCount = conceptDao.getTotalConceptCount()
-        if (totalCount < 7800) {
+        if (totalCount < 7750) {
             return@withContext true
         }
         val seedVersion = settingsDao.getSetting("seedVersion")
@@ -425,8 +425,9 @@ class SeedImporter(
                         existingNote.contains("توضیح جداشده") ||
                         legacyNoteRegex.matches(existingNote.trim())
                     )
-                    if (existingNote != null && !isCorruptedLegacyNote && seedContent.note.isNullOrBlank()) {
-                        seedContent.copy(note = existingNote)
+                    if (existingNote != null && !isCorruptedLegacyNote) {
+                        val combinedNote = TextUtilities.mergeNotesWithPluralSupport(existingNote, seedContent.note)
+                        seedContent.copy(note = combinedNote)
                     } else {
                         seedContent
                     }
