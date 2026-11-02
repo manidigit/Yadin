@@ -439,9 +439,22 @@ class VocabularyAuditService(
         }
 
         // ۴.۵. ادغام خودکار واژگان و عبارات مفرد و جمع اسپانیایی (مانند Testigo و Testigos یا La luz de emergencia و Luces de emergencia)
-        val byAccentKeyAll = workingList
-            .filter { it.spanishAnalysis.accentInsensitiveKey.isNotBlank() }
-            .groupBy { it.spanishAnalysis.accentInsensitiveKey }
+        val byAccentKeyAll = mutableMapOf<String, MutableList<ConceptWorkingData>>()
+        for (wItem in workingList) {
+            val mainKey = wItem.spanishAnalysis.accentInsensitiveKey
+            if (mainKey.isNotBlank()) {
+                byAccentKeyAll.getOrPut(mainKey) { mutableListOf() }.add(wItem)
+            }
+            for (sv in wItem.spanishAnalysis.slashVariantKeys) {
+                val svAccentKey = TextUtilities.analyzeSpanishHeadword(sv).accentInsensitiveKey
+                if (svAccentKey.isNotBlank()) {
+                    val bucket = byAccentKeyAll.getOrPut(svAccentKey) { mutableListOf() }
+                    if (bucket.none { it.concept.id == wItem.concept.id }) {
+                        bucket.add(wItem)
+                    }
+                }
+            }
+        }
 
         val singularIdToPlurals = mutableMapOf<String, MutableList<ConceptWorkingData>>()
         val candidatePluralItems = workingList.filter { it.concept.id !in mergedConceptIds }
@@ -487,6 +500,35 @@ class VocabularyAuditService(
             val validPlurals = plurals.filter { it.concept.id !in mergedConceptIds }.distinctBy { it.concept.id }
             if (validPlurals.isNotEmpty()) {
                 val combined = listOf(singItem) + validPlurals
+                definiteMergeGroups.add(combined)
+                combined.forEach { mergedConceptIds.add(it.concept.id) }
+            }
+        }
+
+        // ۴.۶. ادغام خودکار جفت‌واژگان مذکر و مؤنث اسپانیایی (مانند Rojo و Roja یا El director و la directora) با فرمت اسلش (/)
+        val candidateGenderItems = workingList.filter { it.concept.id !in mergedConceptIds }
+        for (item in candidateGenderItems) {
+            if (item.concept.id in mergedConceptIds) continue
+            val partnerKeys = TextUtilities.spanishGenderPartnerCandidateKeys(item.spanishAnalysis)
+            if (partnerKeys.isEmpty()) continue
+
+            val matchedPartners = partnerKeys
+                .flatMap { pk -> byAccentKeyAll[pk].orEmpty() }
+                .filter { partner ->
+                    partner.concept.id != item.concept.id &&
+                        partner.concept.id !in mergedConceptIds &&
+                        TextUtilities.isSpanishMasculineFemininePair(
+                            firstAnalysis = item.spanishAnalysis,
+                            secondAnalysis = partner.spanishAnalysis,
+                            firstTranslations = item.allPersianTranslations(),
+                            secondTranslations = partner.allPersianTranslations()
+                        ) &&
+                        !hasToneConflict(listOf(item, partner))
+                }
+                .distinctBy { it.concept.id }
+
+            if (matchedPartners.isNotEmpty()) {
+                val combined = (listOf(item) + matchedPartners).distinctBy { it.concept.id }
                 definiteMergeGroups.add(combined)
                 combined.forEach { mergedConceptIds.add(it.concept.id) }
             }

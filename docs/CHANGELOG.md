@@ -2,6 +2,24 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۸۳.۰] - ۲۰۲۶-۱۱-۰۲ (۱۴۰۵/۰۸/۱۱)
+### غنی‌سازی جامع ترجمه‌های فارسی تک‌واژه‌ها (`WORD`)، یکپارچه‌سازی واژگان مذکر و مؤنث با خط کج (`/`) و نرمال‌سازی کلمات جمع به مفرد با انتقال فرم جمع به یادداشت (کد نسخه: ۹۶)
+- **ویژگی‌های جدید و بهبودهای بانک واژگان و موتور پالایش (Features & Enhancements):**
+  - **غنی‌سازی جامع ترجمه‌های فارسی منحصراً برای تک‌واژه‌ها (`entryType == "WORD"`) بدون تغییر در سختی یا مرور (`vocabulary_seed.json` و `SeedImporter.kt`):**
+    - بررسی تمام ۱,۸۲۶ مفهوم تک‌واژه‌ای (`WORD`) در بانک پایه و افزودن **۱,۷۳۵ معنای رایج، کاربردی و اصلی فارسی** به **۱,۰۸۶ تک‌واژه** که پیش از این تنها ۱ یا ۲ ترجمه ناقص داشتند (اکنون ۱۰۰٪ تک‌واژه‌های بانک پایه دارای حداقل ۲ معنای دقیق و کاربردی فارسی هستند؛ میانگین ۳.۷ معنای فارسی برای هر کلمه).
+    - حفظ ۱۰۰٪ دست‌نخورده بودن تمامی عبارات (`PHRASE`: ۴,۰۷۳ مورد) و جملات (`SENTENCE`: ۱,۹۰۲ مورد) و عدم اعمال هیچ‌گونه تغییر در سطوح دشواری (`difficultyStates`) یا وضعیت مرور (`learningStates`) مفاهیم، همراه با حفظ ترجمه‌های فارسی سفارشی اضافه‌شده توسط کاربر در `SeedImporter.kt` (`7801_v1.83.0`).
+  - **تشخیص و ادغام خودکار واژگان مذکر و مؤنث اسپانیایی با عنوان دوگانه اسلش‌دار (`TextUtilities.kt`، `VocabularyAuditService.kt`، `VocabularyParser.kt` و `VocabularyRepository.kt`):**
+    - پیاده‌سازی توابع `isSpanishWordMasculineOfFeminine`، `isSpanishMasculineFemininePair`، `spanishGenderPartnerCandidateKeys` و `formatMasculineFeminineSlashHeadword` برای شناسایی جفت‌های مذکر و مؤنث (`-o / -a`، `-or / -ora`، `-ón / -ona` و `-e / -a`) همراه با لیست محافظتی `SPANISH_FALSE_GENDER_PAIRS` جهت جلوگیری از ادغام کلمات هم‌ریشه با معنای متفاوت (مانند `libro`/`libra`، `plazo`/`plaza`، `cargo`/`carga`، `político`/`política`، `físico`/`física`، `cuento`/`cuenta` و `partido`/`partida`).
+    - ادغام خودکار جفت‌های مذکر و مؤنث در سیستم پالایش کتابخانه (`VocabularyAuditService`)، پارسر ورود دسته‌ای (`VocabularyParser`) و ایمپورت مخزن (`VocabularyRepository`) با نمایش هر دو فرم در عنوان با خط کج (`/`، مانند `Rojo / roja` و `El director / la directora`).
+    - ادغام ۱۱ جفت مفهوم مذکر/مؤنث مجزا در بانک پایه (`Hijo / hija`، `Nieto / nieta`، `Primo / prima`، `Tío / tía`، `Viudo / viuda`، `El director / la directora`، `El psicólogo / la psicóloga`، `El abogado / la abogada`، `Urbano / urbana`، `Nevado / nevada` و `Mareado / mareada`) و استانداردسازی عنوان ۸۷ تک‌واژه انسانی/شغلی/صفتی به فرم دوگانه اسلش‌دار (`Niño / niña`، `Amigo / amiga`، `Soltero / soltera`، `El médico / la médica`، `El jefe / la jefa`، `Bombero / bombera` و ...).
+  - **پشتیبانی از فرم جمع عناوین اسلش‌دار و نرمال‌سازی تک‌واژه‌های جمع به مفرد با انتقال جمع به یادداشت:**
+    - ارتقای `isSpanishPhrasePluralOf` و `VocabularyAuditService` برای شناسایی فرم جمع عناوین دوگانه اسلش‌دار (مانند ادغام `claros` در `Claro / clara` و `los costes` در `el costo / el coste`).
+    - تبدیل ۵۵ تک‌واژه جمع قابل‌شمارش در بانک پایه (`Canas -> Cana`، `Pecas -> Peca`، `los tampones -> El tampón`، `Sillones -> Sillón`، `Hermanos -> Hermano / hermana`، `Las botas -> La bota`، `Las luces -> La luz`، `los calcetines -> El calcetín`، `Las duchas -> La ducha`، `Las mancuernas -> La mancuerna` و ...) به فرم مفرد استاندارد و انتقال فرم جمع آن‌ها به بخش یادداشت (`فرم جمع: ...`).
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D73` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.83.0` (کد نسخه: `96`).
+
+---
+
 ### [نسخه ۱.۸۲.۰] - ۲۰۲۶-۱۱-۰۲ (۱۴۰۵/۰۸/۱۱)
 ### ادغام خودکار کلمات و عبارات مفرد و جمع اسپانیایی، حفظ فرم مفرد و انتقال فرم جمع به یادداشت در سیستم پالایش، ورود گروهی و بانک پایه (کد نسخه: ۹۵)
 - **ویژگی‌های جدید و بهبودهای موتور پالایش و ادغام (Features & Enhancements):**

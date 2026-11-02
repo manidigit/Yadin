@@ -1083,13 +1083,11 @@ object TextUtilities {
     ): Boolean {
         if (pluralAnalysis.hasExclamation || pluralAnalysis.hasQuestion || pluralAnalysis.hasEllipsis) return false
         if (singularAnalysis.hasExclamation || singularAnalysis.hasQuestion || singularAnalysis.hasEllipsis) return false
-        if (pluralAnalysis.isSlashDualForm || singularAnalysis.isSlashDualForm) return false
+        if (pluralAnalysis.isSlashDualForm) return false
         if (pluralAnalysis.coreText.any { it in ".?!¿¡" } || singularAnalysis.coreText.any { it in ".?!¿¡" }) return false
 
         val pWords = pluralAnalysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
-        val sWords = singularAnalysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
-        if (pWords.size != sWords.size || pWords.size !in 1..5) return false
-        if (pWords.first() in SPANISH_SUBJECT_PRONOUNS || sWords.first() in SPANISH_SUBJECT_PRONOUNS) return false
+        if (pWords.size !in 1..5 || pWords.first() in SPANISH_SUBJECT_PRONOUNS) return false
 
         if (pWords.size == 1 && pluralPersianTranslations.isNotEmpty()) {
             val hasSecondPersonPronoun = pluralPersianTranslations.any { tr ->
@@ -1098,6 +1096,17 @@ object TextUtilities {
             }
             if (hasSecondPersonPronoun) return false
         }
+
+        if (singularAnalysis.isSlashDualForm) {
+            if (pWords.size != 1) return false
+            return singularAnalysis.slashVariantKeys.any { variantKey ->
+                val vClean = stripSpanishAccents(variantKey.trim())
+                " " !in vClean && isSpanishWordPluralOf(pWords[0], vClean)
+            }
+        }
+
+        val sWords = singularAnalysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+        if (pWords.size != sWords.size || sWords.first() in SPANISH_SUBJECT_PRONOUNS) return false
 
         if (!isSpanishWordPluralOf(pWords[0], sWords[0])) return false
         for (i in 1 until pWords.size) {
@@ -1209,9 +1218,251 @@ object TextUtilities {
         return lines.joinToString("\n").ifBlank { null }
     }
 
+    private val SPANISH_FALSE_GENDER_PAIRS = setOf(
+        "libro" to "libra",
+        "plazo" to "plaza",
+        "puerto" to "puerta",
+        "punto" to "punta",
+        "modo" to "moda",
+        "caso" to "casa",
+        "piso" to "pisa",
+        "peso" to "pesa",
+        "paso" to "pasa",
+        "velo" to "vela",
+        "suelo" to "suela",
+        "ramo" to "rama",
+        "bolso" to "bolsa",
+        "banco" to "banca",
+        "barco" to "barca",
+        "cesto" to "cesta",
+        "cuadro" to "cuadra",
+        "charco" to "charca",
+        "fruto" to "fruta",
+        "gorro" to "gorra",
+        "huerto" to "huerta",
+        "jarro" to "jarra",
+        "leno" to "lena",
+        "manzano" to "manzana",
+        "naranjo" to "naranja",
+        "cerezo" to "cereza",
+        "almendro" to "almendra",
+        "olivo" to "oliva",
+        "caballo" to "caballa",
+        "foco" to "foca",
+        "pato" to "pata",
+        "rato" to "rata",
+        "resto" to "resta",
+        "cargo" to "carga",
+        "pago" to "paga",
+        "politico" to "politica",
+        "fisico" to "fisica",
+        "quimico" to "quimica",
+        "musico" to "musica",
+        "tecnico" to "tecnica",
+        "critico" to "critica",
+        "practico" to "practica",
+        "logico" to "logica",
+        "etico" to "etica",
+        "estetico" to "estetica",
+        "informatico" to "informatica",
+        "matematico" to "matematica",
+        "estadistico" to "estadistica",
+        "mecanico" to "mecanica",
+        "botanico" to "botanica",
+        "gramatico" to "gramatica",
+        "derecho" to "derecha",
+        "izquierdo" to "izquierda",
+        "puesto" to "puesta",
+        "presupuesto" to "presupuesta",
+        "impuesto" to "impuesta",
+        "cuento" to "cuenta",
+        "vuelto" to "vuelta",
+        "partido" to "partida",
+        "herido" to "herida",
+        "perdono" to "perdona",
+        "recuerdo" to "recuerda",
+        "estudio" to "estudia"
+    )
+
+    private val PERSIAN_GENDER_REPLACEMENTS = listOf(
+        "پدربزرگ" to "مادربزرگ",
+        "ناپدری" to "نامادری",
+        "پدرزن" to "مادرزن",
+        "پدرشوهر" to "مادرشوهر",
+        "برادرزن" to "خواهرزن",
+        "برادرشوهر" to "خواهرشوهر",
+        "پسرعمو" to "دخترعمو",
+        "پسرعمه" to "دخترعمه",
+        "پسردایی" to "دختردایی",
+        "پسرخاله" to "دخترخاله",
+        "دوست‌پسر" to "دوست‌دختر",
+        "دوست پسر" to "دوست دختر",
+        "پسر" to "دختر",
+        "مرد" to "زن",
+        "برادر" to "خواهر",
+        "عمو" to "عمه",
+        "دایی" to "خاله",
+        "پدر" to "مادر",
+        "شوهر" to "همسر",
+        "داماد" to "عروس",
+        "مذکر" to "مؤنث",
+        "مونث" to "مؤنث"
+    )
+
+    private fun neutralizePersianGenderTerms(text: String): String {
+        var normalized = cleanText(text)
+        for ((mascTerm, femTerm) in PERSIAN_GENDER_REPLACEMENTS) {
+            normalized = normalized.replace(femTerm, mascTerm)
+        }
+        return normalized
+    }
+
+    private fun isLikelyConjugatedPersianVerbOrImperative(translations: List<String>): Boolean {
+        if (translations.isEmpty()) return false
+        val verbMarkers = listOf("می‌کند", "می کند", "می‌آورد", "می آورد", "می‌خواهم", "می خواهم", "ببخشید", "بیاور")
+        return translations.any { tr ->
+            val cleaned = cleanText(tr)
+            verbMarkers.any { marker -> cleaned.contains(marker) }
+        }
+    }
+
+    /**
+     * Checks whether [mascToken] and [femToken] are regular Spanish masculine and feminine word counterparts
+     * (in that order: masculine first, feminine second), excluding false cognates/homographs.
+     */
+    fun isSpanishWordMasculineOfFeminine(mascToken: String, femToken: String): Boolean {
+        val m = stripSpanishAccents(mascToken.trim().lowercase(Locale.ROOT))
+        val f = stripSpanishAccents(femToken.trim().lowercase(Locale.ROOT))
+        if (m.length < 3 || f.length < 3 || m == f) return false
+        if (" " in m || " " in f || "/" in m || "/" in f) return false
+        if ((m to f) in SPANISH_FALSE_GENDER_PAIRS) return false
+
+        return when {
+            m.endsWith("o") -> f == m.dropLast(1) + "a"
+            m.endsWith("or") -> f == m + "a"
+            m.length >= 4 && (m.endsWith("on") || m.endsWith("es") || m.endsWith("an") || m.endsWith("in")) -> f == m + "a"
+            else -> false
+        }
+    }
+
+    private fun isOrderedSpanishMascFemAnalysisPair(
+        mascAnalysis: SpanishHeadwordAnalysis,
+        femAnalysis: SpanishHeadwordAnalysis,
+        mascTranslations: List<String> = emptyList(),
+        femTranslations: List<String> = emptyList()
+    ): Boolean {
+        if (mascAnalysis.hasExclamation || mascAnalysis.hasQuestion || mascAnalysis.hasEllipsis) return false
+        if (femAnalysis.hasExclamation || femAnalysis.hasQuestion || femAnalysis.hasEllipsis) return false
+        if (mascAnalysis.isSlashDualForm || femAnalysis.isSlashDualForm) return false
+        if (mascAnalysis.coreText.any { it in ".?!¿¡" } || femAnalysis.coreText.any { it in ".?!¿¡" }) return false
+
+        if (mascAnalysis.gender == SpanishArticleGender.FEMININE) return false
+        if (femAnalysis.gender == SpanishArticleGender.MASCULINE) return false
+
+        val mWords = mascAnalysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+        val fWords = femAnalysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+        if (mWords.size != 1 || fWords.size != 1) return false
+        if (!isSpanishWordMasculineOfFeminine(mWords[0], fWords[0])) return false
+
+        if (mascTranslations.isNotEmpty() && femTranslations.isNotEmpty()) {
+            val mascHasVerb = isLikelyConjugatedPersianVerbOrImperative(mascTranslations)
+            val femHasVerb = isLikelyConjugatedPersianVerbOrImperative(femTranslations)
+            if (mascHasVerb != femHasVerb) return false
+
+            if (hasPersianTranslationOverlap(mascTranslations, femTranslations)) return true
+            val neutralizedMasc = mascTranslations.map { neutralizePersianGenderTerms(it) }
+            val neutralizedFem = femTranslations.map { neutralizePersianGenderTerms(it) }
+            return hasPersianTranslationOverlap(neutralizedMasc, neutralizedFem)
+        }
+        return true
+    }
+
+    /**
+     * Checks whether [firstAnalysis] and [secondAnalysis] (in either order) form a valid Spanish
+     * masculine/feminine word pair that should be unified with a slash headword.
+     */
+    fun isSpanishMasculineFemininePair(
+        firstAnalysis: SpanishHeadwordAnalysis,
+        secondAnalysis: SpanishHeadwordAnalysis,
+        firstTranslations: List<String> = emptyList(),
+        secondTranslations: List<String> = emptyList()
+    ): Boolean {
+        return isOrderedSpanishMascFemAnalysisPair(firstAnalysis, secondAnalysis, firstTranslations, secondTranslations) ||
+            isOrderedSpanishMascFemAnalysisPair(secondAnalysis, firstAnalysis, secondTranslations, firstTranslations)
+    }
+
+    /**
+     * Generates candidate partner [SpanishHeadwordAnalysis.accentInsensitiveKey] values for a single-word
+     * Spanish masculine or feminine headword so gender pairs can be matched in O(1) bucket lookups.
+     */
+    fun spanishGenderPartnerCandidateKeys(analysis: SpanishHeadwordAnalysis): Set<String> {
+        if (analysis.hasExclamation || analysis.hasQuestion || analysis.hasEllipsis || analysis.isSlashDualForm) {
+            return emptySet()
+        }
+        if (analysis.coreText.any { it in ".?!¿¡" }) return emptySet()
+        val words = analysis.accentInsensitiveKey.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
+        if (words.size != 1) return emptySet()
+        val w = words[0]
+        if (w.length < 3 || w in SPANISH_SUBJECT_PRONOUNS) return emptySet()
+
+        val result = mutableSetOf<String>()
+        if (w.endsWith("o")) {
+            val fem = w.dropLast(1) + "a"
+            if ((w to fem) !in SPANISH_FALSE_GENDER_PAIRS) result.add(fem)
+        }
+        if (w.endsWith("or") || (w.length >= 4 && (w.endsWith("on") || w.endsWith("es") || w.endsWith("an") || w.endsWith("in")))) {
+            val fem = w + "a"
+            if ((w to fem) !in SPANISH_FALSE_GENDER_PAIRS) result.add(fem)
+        }
+        if (w.endsWith("a") && w.length >= 3) {
+            val stem = w.dropLast(1)
+            val mascO = stem + "o"
+            if ((mascO to w) !in SPANISH_FALSE_GENDER_PAIRS) result.add(mascO)
+            if (stem.endsWith("or") || (stem.length >= 4 && (stem.endsWith("on") || stem.endsWith("es") || stem.endsWith("an") || stem.endsWith("in")))) {
+                if ((stem to w) !in SPANISH_FALSE_GENDER_PAIRS) result.add(stem)
+            }
+        }
+        return result
+    }
+
+    /**
+     * Formats a Spanish masculine and feminine pair using a slash ("/"):
+     * - With definite articles: "El director / la directora", "El niño / la niña"
+     * - With indefinite articles: "Un niño / una niña"
+     * - Without articles: "Rojo / roja", "Hijo / hija"
+     */
+    fun formatMasculineFeminineSlashHeadword(firstText: String, secondText: String): String {
+        val a1 = analyzeSpanishHeadword(firstText)
+        val a2 = analyzeSpanishHeadword(secondText)
+        val (masc, fem) = if (isOrderedSpanishMascFemAnalysisPair(a1, a2)) {
+            a1 to a2
+        } else {
+            a2 to a1
+        }
+        val mascCore = masc.coreText.trim().lowercase(Locale.ROOT)
+        val femCore = fem.coreText.trim().lowercase(Locale.ROOT)
+        val hasDefinite = (masc.articlePrefix != null && masc.isDefiniteArticle) ||
+            (fem.articlePrefix != null && fem.isDefiniteArticle)
+        val hasIndefinite = !hasDefinite && (masc.articlePrefix != null || fem.articlePrefix != null)
+
+        return when {
+            hasDefinite -> "El $mascCore / la $femCore"
+            hasIndefinite -> "Un $mascCore / una $femCore"
+            else -> {
+                val mascCap = if (mascCore.isNotEmpty()) {
+                    mascCore.first().titlecase(Locale.ROOT) + mascCore.substring(1)
+                } else {
+                    mascCore
+                }
+                "$mascCap / $femCore"
+            }
+        }
+    }
+
     /**
      * Selects the preferred Spanish display headword when merging duplicate entries:
      * - Prioritizes dual slash forms (e.g., "Claro / clara" or "el sobrino / la sobrina") when merging with a single variant.
+     * - Synthesizes a dual slash form (e.g., "Rojo / roja" or "El director / la directora") when merging a masculine/feminine pair.
      * - Prioritizes singular forms over plural forms (e.g., "Testigo" over "Testigos", "La luz de emergencia" over "Luces de emergencia"),
      *   converting plural articles ("Los"/"Las") to singular ("El"/"La") when only the plural entry carried an article.
      * - Prioritizes forms that include the Spanish grammatical article (e.g., "El trampolín" over "Trampolín")
@@ -1252,6 +1503,17 @@ object TextUtilities {
             }
         }.ifEmpty { analyses }
         val hasSingularPluralMix = nonPluralAnalyses.size < analyses.size
+
+        // Check if non-plural candidates contain a masculine/feminine pair (e.g., "Rojo" and "Roja" or "El director" and "la directora")
+        for (i in nonPluralAnalyses.indices) {
+            for (j in i + 1 until nonPluralAnalyses.size) {
+                val first = nonPluralAnalyses[i]
+                val second = nonPluralAnalyses[j]
+                if (isSpanishMasculineFemininePair(first, second)) {
+                    return formatMasculineFeminineSlashHeadword(first.originalText, second.originalText)
+                }
+            }
+        }
 
         val hasBothMascAndFem = (analyses.any { it.gender == SpanishArticleGender.MASCULINE } &&
             analyses.any { it.gender == SpanishArticleGender.FEMININE }) ||

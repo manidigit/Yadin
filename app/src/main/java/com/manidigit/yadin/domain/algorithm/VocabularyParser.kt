@@ -456,41 +456,97 @@ object VocabularyParser {
             }
         }
 
-        if (pluralToSingularIdx.isEmpty()) return entries
-
         val singularToPluralIndices = pluralToSingularIdx.entries.groupBy({ it.value }, { it.key })
-        val result = mutableListOf<ParsedEntry>()
-        for (i in entries.indices) {
-            if (i in pluralToSingularIdx) continue
-            val entry = entries[i]
-            val attachedPluralIndices = singularToPluralIndices[i]
-            if (attachedPluralIndices.isNullOrEmpty()) {
-                result.add(entry)
-            } else {
-                val allForms = listOf(entry.sourceText) + attachedPluralIndices.map { entries[it].sourceText }
-                val preferredHeadword = TextUtilities.selectPreferredSpanishHeadword(allForms).ifBlank { entry.sourceText }
-                var combinedNote = entry.note
-                for (pIdx in attachedPluralIndices) {
-                    val pEntry = entries[pIdx]
-                    val pluralNoteLine = TextUtilities.formatPluralFormNote(pEntry.sourceText, pEntry.translations)
-                    combinedNote = TextUtilities.mergeNotesWithPluralSupport(combinedNote, pluralNoteLine)
-                    if (!pEntry.note.isNullOrBlank()) {
-                        combinedNote = TextUtilities.mergeNotesWithPluralSupport(combinedNote, pEntry.note)
+        val afterSingularPlural = if (pluralToSingularIdx.isEmpty()) {
+            entries
+        } else {
+            val result = mutableListOf<ParsedEntry>()
+            for (i in entries.indices) {
+                if (i in pluralToSingularIdx) continue
+                val entry = entries[i]
+                val attachedPluralIndices = singularToPluralIndices[i]
+                if (attachedPluralIndices.isNullOrEmpty()) {
+                    result.add(entry)
+                } else {
+                    val allForms = listOf(entry.sourceText) + attachedPluralIndices.map { entries[it].sourceText }
+                    val preferredHeadword = TextUtilities.selectPreferredSpanishHeadword(allForms).ifBlank { entry.sourceText }
+                    var combinedNote = entry.note
+                    for (pIdx in attachedPluralIndices) {
+                        val pEntry = entries[pIdx]
+                        val pluralNoteLine = TextUtilities.formatPluralFormNote(pEntry.sourceText, pEntry.translations)
+                        combinedNote = TextUtilities.mergeNotesWithPluralSupport(combinedNote, pluralNoteLine)
+                        if (!pEntry.note.isNullOrBlank()) {
+                            combinedNote = TextUtilities.mergeNotesWithPluralSupport(combinedNote, pEntry.note)
+                        }
                     }
+                    val finalTranslations = entry.translations.ifEmpty {
+                        attachedPluralIndices.flatMap { entries[it].translations }.distinct()
+                    }
+                    result.add(
+                        entry.copy(
+                            sourceText = preferredHeadword,
+                            translations = finalTranslations,
+                            note = combinedNote
+                        )
+                    )
                 }
-                val finalTranslations = entry.translations.ifEmpty {
-                    attachedPluralIndices.flatMap { entries[it].translations }.distinct()
+            }
+            result
+        }
+
+        if (afterSingularPlural.size <= 1) return afterSingularPlural
+        val genderAnalyses = afterSingularPlural.map { TextUtilities.analyzeSpanishHeadword(it.sourceText) }
+        val genderByAccentKey = mutableMapOf<String, MutableList<Int>>()
+        genderAnalyses.forEachIndexed { idx, analysis ->
+            if (analysis.accentInsensitiveKey.isNotBlank()) {
+                genderByAccentKey.getOrPut(analysis.accentInsensitiveKey) { mutableListOf() }.add(idx)
+            }
+        }
+
+        val consumedGenderIndices = mutableSetOf<Int>()
+        val finalMerged = mutableListOf<ParsedEntry>()
+        for (i in afterSingularPlural.indices) {
+            if (i in consumedGenderIndices) continue
+            val entry = afterSingularPlural[i]
+            if (entry.confidence < 0.90 || entry.possibleCorrection != null || entry.translations.isEmpty()) {
+                finalMerged.add(entry)
+                continue
+            }
+            val analysis = genderAnalyses[i]
+            val partnerKeys = TextUtilities.spanishGenderPartnerCandidateKeys(analysis)
+            val partnerIdx = partnerKeys
+                .flatMap { key -> genderByAccentKey[key].orEmpty() }
+                .firstOrNull { pIdx ->
+                    pIdx > i &&
+                        pIdx !in consumedGenderIndices &&
+                        afterSingularPlural[pIdx].confidence >= 0.90 &&
+                        afterSingularPlural[pIdx].possibleCorrection == null &&
+                        TextUtilities.isSpanishMasculineFemininePair(
+                            firstAnalysis = analysis,
+                            secondAnalysis = genderAnalyses[pIdx],
+                            firstTranslations = entry.translations,
+                            secondTranslations = afterSingularPlural[pIdx].translations
+                        )
                 }
-                result.add(
+            if (partnerIdx == null) {
+                finalMerged.add(entry)
+            } else {
+                consumedGenderIndices.add(partnerIdx)
+                val partnerEntry = afterSingularPlural[partnerIdx]
+                val slashHeadword = TextUtilities.formatMasculineFeminineSlashHeadword(entry.sourceText, partnerEntry.sourceText)
+                val combinedTrans = TextUtilities.deduplicatePersianTranslations(entry.translations + partnerEntry.translations)
+                    .ifEmpty { (entry.translations + partnerEntry.translations).distinct() }
+                val combinedNote = TextUtilities.mergeNotesWithPluralSupport(entry.note, partnerEntry.note)
+                finalMerged.add(
                     entry.copy(
-                        sourceText = preferredHeadword,
-                        translations = finalTranslations,
+                        sourceText = slashHeadword,
+                        translations = combinedTrans,
                         note = combinedNote
                     )
                 )
             }
         }
-        return result
+        return finalMerged
     }
 
     private fun classifyLine(line: String): LineType {

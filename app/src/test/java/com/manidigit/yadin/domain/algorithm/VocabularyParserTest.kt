@@ -316,6 +316,39 @@ class VocabularyParserTest {
         assertEquals(listOf("چراغ خطر", "جفت راهنما"), luz.translations)
         assertTrue(luz.note?.contains("فرم جمع: Luces de emergencia") == true)
     }
+
+    @Test
+    fun parseMergesMasculineAndFeminineEntriesWithSlashHeadword() {
+        val raw = """
+            Rojo
+            قرمز
+            سرخ
+            Roja
+            قرمز (مؤنث)
+            گلگون
+            El director
+            مدیر
+            La directora
+            مدیر خانم، رئیسه
+            El libro
+            کتاب
+            La libra
+            پوند (واحد وزن و پول)
+        """.trimIndent()
+
+        val result = VocabularyParser.parse(raw)
+        assertEquals(4, result.entries.size)
+
+        val rojo = result.entries[0]
+        assertEquals("Rojo / roja", rojo.sourceText)
+        assertEquals(listOf("قرمز", "سرخ", "گلگون"), rojo.translations)
+
+        val director = result.entries[1]
+        assertEquals("El director / la directora", director.sourceText)
+        assertEquals(listOf("مدیر", "مدیر خانم", "رئیسه"), director.translations)
+
+        // False gender pair must NOT be merged
+        assertEquals("El libro", result.entries[2].sourceText)
+        assertEquals("La libra", result.entries[3].sourceText)
+    }
 }
-
-

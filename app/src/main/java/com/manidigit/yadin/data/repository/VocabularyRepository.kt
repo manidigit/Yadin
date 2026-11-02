@@ -943,6 +943,20 @@ class VocabularyRepository(
                                 )
                             }?.first
                     }
+
+                    // ۴. اگر ورودی جدید فرم مذکر یا مؤنث واژه‌ای است که فرم جفت آن در دیتابیس وجود دارد، ادغام با فرمت اسلش (/)
+                    if (existingContent == null) {
+                        val partnerKeys = TextUtilities.spanishGenderPartnerCandidateKeys(entryAnalysis)
+                        existingContent = partnerKeys
+                            .flatMap { key -> byAccentKey[key].orEmpty() }
+                            .firstOrNull { (_, existingAnalysis) ->
+                                TextUtilities.isSpanishMasculineFemininePair(
+                                    firstAnalysis = entryAnalysis,
+                                    secondAnalysis = existingAnalysis,
+                                    firstTranslations = entry.translations
+                                )
+                            }?.first
+                    }
                 }
 
                 val enrichedNote = formatEnrichedNote(entry)
