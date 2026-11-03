@@ -312,6 +312,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val cards by viewModel.sessionCards.collectAsStateWithLifecycle()
             val currentIndex by viewModel.currentCardIndex.collectAsStateWithLifecycle()
             val isFlipped by viewModel.isCardFlipped.collectAsStateWithLifecycle()
+            val userAnswers by viewModel.flashcardUserAnswers.collectAsStateWithLifecycle()
             val showCategory by viewModel.showCategoryInReview.collectAsStateWithLifecycle()
             val ttsEnabled by viewModel.ttsEnabled.collectAsStateWithLifecycle()
             val ttsAutoPlay by viewModel.ttsAutoPlay.collectAsStateWithLifecycle()
@@ -329,6 +330,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 cards = cards,
                 currentIndex = currentIndex,
                 isFlipped = isFlipped,
+                userAnswers = userAnswers,
                 showCategory = showCategory,
                 ttsEnabled = ttsEnabled,
                 ttsAutoPlay = ttsAutoPlay,
@@ -338,6 +340,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onFlip = { viewModel.flipCard() },
                 onAnswer = { isCorrect -> viewModel.submitFlashcardAnswer(isCorrect) },
                 onSm2Answer = { quality -> viewModel.submitFlashcardSm2Answer(quality) },
+                onPreviousCard = { viewModel.previousFlashcard() },
+                onNextCard = { viewModel.nextFlashcard() },
+                onGoToCard = { targetIdx -> viewModel.goToFlashcard(targetIdx) },
                 onExit = { viewModel.exitSession() }
             )
         }

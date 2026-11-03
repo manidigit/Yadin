@@ -749,4 +749,8 @@ libro: book</string>
     <string name="flashcard_hint_context_clue_label">Contextual Clue:</string>
     <string name="flashcard_hint_reveal_more">More clue (next letter)</string>
     <string name="flashcard_hint_inline_prefix">Clue: %1$s</string>
+    <string name="flashcard_previous_card">Previous Card</string>
+    <string name="flashcard_next_card">Next Card</string>
+    <string name="flashcard_finish_session">View Session Results</string>
+    <string name="flashcard_recorded_answer_fmt">Recorded answer: %1$s</string>
 </resources>

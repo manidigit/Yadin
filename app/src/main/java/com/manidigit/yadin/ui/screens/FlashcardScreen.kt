@@ -74,10 +74,13 @@ import com.manidigit.yadin.ui.theme.LocalYadinDimensions
 import com.manidigit.yadin.ui.util.formatDigits
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
+import com.manidigit.yadin.ui.viewmodel.FlashcardAnswerRecord
 
 internal data class FlashcardHintInfo(
     val coreAnswer: String,
@@ -148,6 +151,7 @@ fun FlashcardScreen(
     cards: List<ReviewCard>,
     currentIndex: Int,
     isFlipped: Boolean,
+    userAnswers: Map<Int, FlashcardAnswerRecord> = emptyMap(),
     showCategory: Boolean = false,
     ttsEnabled: Boolean = true,
     ttsAutoPlay: Boolean = false,
@@ -157,6 +161,9 @@ fun FlashcardScreen(
     onFlip: () -> Unit,
     onAnswer: (Boolean) -> Unit,
     onSm2Answer: (Sm2Quality) -> Unit = { onAnswer(it.isCorrect) },
+    onPreviousCard: () -> Unit = {},
+    onNextCard: () -> Unit = {},
+    onGoToCard: (Int) -> Unit = {},
     onExit: () -> Unit
 ) {
     val colors = LocalYadinColors.current
@@ -225,9 +232,12 @@ fun FlashcardScreen(
 
     val card = cards[currentIndex]
     val progress = (currentIndex + 1).toFloat() / cards.size
+    val currentAnswerRecord = userAnswers[currentIndex]
+    val hasAnswered = currentAnswerRecord != null
 
     val frontScrollState = rememberScrollState()
     val backScrollState = rememberScrollState()
+    val cardListState = rememberLazyListState()
 
     var dragOffset by remember { mutableStateOf(0f) }
     val animatedOffsetX by animateFloatAsState(
@@ -244,7 +254,8 @@ fun FlashcardScreen(
         hintRevealCount = 0
         frontScrollState.scrollTo(0)
         backScrollState.scrollTo(0)
-        rotationAnimatable.snapTo(0f)
+        rotationAnimatable.snapTo(if (isFlipped) 180f else 0f)
+        cardListState.animateScrollToItem(index = (currentIndex - 2).coerceAtLeast(0))
     }
 
     val activeHintInfo = remember(card.conceptId, card.targetTranslations, hintRevealCount) {
@@ -328,6 +339,57 @@ fun FlashcardScreen(
                 color = colors.primary,
                 trackColor = colors.surfaceVariant
             )
+
+            // Numbered Card Navigation Strip
+            LazyRow(
+                state = cardListState,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(cards.size) { idx ->
+                    val recorded = userAnswers[idx]
+                    val isAnswered = recorded != null
+                    val isCurrent = idx == currentIndex
+                    val isItemCorrect = recorded?.isCorrect == true
+
+                    val bgColor = when {
+                        isCurrent -> colors.primary
+                        isAnswered && isItemCorrect -> colors.success.copy(alpha = 0.2f)
+                        isAnswered && !isItemCorrect -> colors.error.copy(alpha = 0.2f)
+                        else -> colors.surfaceVariant
+                    }
+                    val textColor = when {
+                        isCurrent -> colors.onPrimary
+                        isAnswered && isItemCorrect -> colors.success
+                        isAnswered && !isItemCorrect -> colors.error
+                        else -> colors.onSurfaceVariant
+                    }
+                    val borderColor = when {
+                        isCurrent -> colors.primary
+                        isAnswered && isItemCorrect -> colors.success.copy(alpha = 0.6f)
+                        isAnswered && !isItemCorrect -> colors.error.copy(alpha = 0.6f)
+                        else -> Color.Transparent
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(bgColor)
+                            .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                            .clickable { onGoToCard(idx) }
+                            .testTag("flashcard_nav_item_$idx"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = (idx + 1).formatDigits(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                    }
+                }
+            }
         }
 
         // Flippable Flashcard
@@ -335,7 +397,7 @@ fun FlashcardScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(vertical = 12.dp),
+                .padding(vertical = 10.dp),
             contentAlignment = Alignment.Center
         ) {
             YadinCard(
@@ -347,10 +409,10 @@ fun FlashcardScreen(
                         rotationZ = (animatedOffsetX / 25f).coerceIn(-12f, 12f)
                         cameraDistance = 16f * density
                     }
-                    .pointerInput(currentIndex, isFlipped) {
+                    .pointerInput(currentIndex, isFlipped, hasAnswered) {
                         detectHorizontalDragGestures(
                             onDragEnd = {
-                                if (!isFlipped) {
+                                if (!isFlipped || hasAnswered) {
                                     dragOffset = 0f
                                 } else if (dragOffset > 150f) {
                                     dragOffset = 0f
@@ -365,7 +427,7 @@ fun FlashcardScreen(
                             onDragCancel = { dragOffset = 0f },
                             onHorizontalDrag = { change, dragAmount ->
                                 change.consume()
-                                if (isFlipped) {
+                                if (isFlipped && !hasAnswered) {
                                     dragOffset += dragAmount
                                 }
                             }
@@ -399,137 +461,68 @@ fun FlashcardScreen(
             }
         }
 
-        // Bottom Action Buttons
-        if (isFlipped) {
-            if (isSm2Mode || isFsrsMode) {
-                val intervalPreview = remember(
-                    card.conceptId,
-                    card.stage,
-                    isFsrsMode,
-                    fsrsDesiredRetention,
-                    card.sm2Repetitions,
-                    card.sm2EasinessFactor,
-                    card.sm2IntervalDays,
-                    card.fsrsStability,
-                    card.fsrsDifficulty,
-                    card.fsrsReps,
-                    card.fsrsLapses,
-                    card.fsrsState,
-                    card.lastReviewedDay
-                ) {
-                    if (isFsrsMode) {
-                        val effectiveFsrs = FsrsAlgorithm.resolveEffectiveState(
-                            state = FsrsState(
-                                stability = card.fsrsStability,
-                                difficulty = card.fsrsDifficulty,
-                                reps = card.fsrsReps,
-                                lapses = card.fsrsLapses,
-                                state = card.fsrsState
-                            ),
-                            stage = card.stage,
-                            lastReviewedDay = card.lastReviewedDay,
-                            sm2IntervalDays = card.sm2IntervalDays,
-                            sm2Repetitions = card.sm2Repetitions
-                        )
-                        FsrsAlgorithm.previewIntervals(
-                            currentState = effectiveFsrs,
-                            lastReviewedDay = card.lastReviewedDay,
-                            desiredRetention = fsrsDesiredRetention
-                        )
+        // Bottom Action & Navigation Buttons
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (currentAnswerRecord != null) {
+                val answerStatusLabel = when (currentAnswerRecord.sm2Quality) {
+                    Sm2Quality.AGAIN -> stringResource(R.string.flashcard_sm2_again)
+                    Sm2Quality.HARD -> stringResource(R.string.flashcard_sm2_hard)
+                    Sm2Quality.GOOD -> stringResource(R.string.flashcard_sm2_good)
+                    Sm2Quality.EASY -> stringResource(R.string.flashcard_sm2_easy)
+                    null -> if (currentAnswerRecord.isCorrect) {
+                        stringResource(R.string.flashcard_remembered)
                     } else {
-                        val effectiveSm2 = Sm2Algorithm.resolveEffectiveState(
-                            state = Sm2State(
-                                repetitions = card.sm2Repetitions,
-                                easinessFactor = card.sm2EasinessFactor,
-                                intervalDays = card.sm2IntervalDays
-                            ),
-                            stage = card.stage,
-                            lastReviewedDay = card.lastReviewedDay,
-                            fsrsStability = card.fsrsStability
-                        )
-                        Sm2Algorithm.previewIntervals(effectiveSm2)
+                        stringResource(R.string.flashcard_forgot)
                     }
                 }
+                val statusColor = when (currentAnswerRecord.sm2Quality) {
+                    Sm2Quality.HARD -> colors.warning
+                    else -> if (currentAnswerRecord.isCorrect) colors.success else colors.error
+                }
+
+                // Recorded answer badge + flip button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Sm2QualityButton(
-                        title = stringResource(R.string.flashcard_sm2_again),
-                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.againDays.formatDigits()),
-                        containerColor = colors.error.copy(alpha = 0.16f),
-                        contentColor = colors.error,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSm2Answer(Sm2Quality.AGAIN) }
-                    )
-                    Sm2QualityButton(
-                        title = stringResource(R.string.flashcard_sm2_hard),
-                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.hardDays.formatDigits()),
-                        containerColor = colors.warning.copy(alpha = 0.16f),
-                        contentColor = colors.warning,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSm2Answer(Sm2Quality.HARD) }
-                    )
-                    Sm2QualityButton(
-                        title = stringResource(R.string.flashcard_sm2_good),
-                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.goodDays.formatDigits()),
-                        containerColor = colors.primary.copy(alpha = 0.18f),
-                        contentColor = colors.primary,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSm2Answer(Sm2Quality.GOOD) }
-                    )
-                    Sm2QualityButton(
-                        title = stringResource(R.string.flashcard_sm2_easy),
-                        intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.easyDays.formatDigits()),
-                        containerColor = colors.success.copy(alpha = 0.18f),
-                        contentColor = colors.success,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onSm2Answer(Sm2Quality.EASY) }
-                    )
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(statusColor.copy(alpha = 0.14f))
+                            .border(1.dp, statusColor.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = if (currentAnswerRecord.isCorrect) YadinIcons.check else YadinIcons.close,
+                            contentDescription = null,
+                            tint = statusColor,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.flashcard_recorded_answer_fmt, answerStatusLabel),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = statusColor,
+                            maxLines = 1
+                        )
+                    }
+
                     IconButton(
                         onClick = onFlip,
                         modifier = Modifier
                             .size(44.dp)
                             .clip(RoundedCornerShape(10.dp))
                             .background(colors.surfaceVariant)
-                    ) {
-                        Icon(
-                            imageVector = YadinIcons.flipCard,
-                            contentDescription = stringResource(R.string.flashcard_flip_back),
-                            tint = colors.onSurface,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(
-                        onClick = { onAnswer(false) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.error.copy(alpha = 0.15f),
-                            contentColor = colors.error
-                        )
-                    ) {
-                        Icon(YadinIcons.close, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.flashcard_forgot), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    }
-
-                    IconButton(
-                        onClick = onFlip,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.surfaceVariant)
+                            .testTag("flashcard_review_flip_button")
                     ) {
                         Icon(
                             imageVector = YadinIcons.flipCard,
@@ -538,83 +531,352 @@ fun FlashcardScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                }
 
-                    Button(
-                        onClick = { onAnswer(true) },
+                // Previous / Next Navigation Row (Review Mode)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onPreviousCard,
+                        enabled = currentIndex > 0,
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
+                            .weight(0.35f)
+                            .height(46.dp)
+                            .testTag("flashcard_previous_button"),
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.success,
-                            contentColor = colors.onSuccess
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colors.onSurface,
+                            disabledContentColor = colors.onSurfaceVariant.copy(alpha = 0.35f)
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            if (currentIndex > 0) colors.outline.copy(alpha = 0.4f) else colors.outline.copy(alpha = 0.15f)
                         )
                     ) {
-                        Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.flashcard_remembered), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.back,
+                                contentDescription = stringResource(R.string.flashcard_previous_card),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.quiz_previous),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = onNextCard,
+                        modifier = Modifier
+                            .weight(0.65f)
+                            .height(46.dp)
+                            .testTag("flashcard_next_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.secondary,
+                            contentColor = colors.onSecondary
+                        )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = if (currentIndex + 1 < cards.size) {
+                                    stringResource(R.string.flashcard_next_card)
+                                } else {
+                                    stringResource(R.string.flashcard_finish_session)
+                                },
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = YadinIcons.forward,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedButton(
-                    onClick = openHintDialog,
-                    modifier = Modifier
-                        .weight(0.36f)
-                        .height(48.dp)
-                        .testTag("flashcard_hint_button"),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = colors.warning.copy(alpha = 0.10f),
-                        contentColor = colors.onSurface
-                    ),
-                    border = BorderStroke(1.dp, colors.warning.copy(alpha = 0.45f))
-                ) {
-                    Icon(
-                        imageVector = YadinIcons.hintLightbulb,
-                        contentDescription = null,
-                        tint = colors.warning,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    Text(
-                        text = stringResource(R.string.flashcard_hint_btn),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.5.sp,
-                        maxLines = 1
-                    )
+            } else if (isFlipped) {
+                if (isSm2Mode || isFsrsMode) {
+                    val intervalPreview = remember(
+                        card.conceptId,
+                        card.stage,
+                        isFsrsMode,
+                        fsrsDesiredRetention,
+                        card.sm2Repetitions,
+                        card.sm2EasinessFactor,
+                        card.sm2IntervalDays,
+                        card.fsrsStability,
+                        card.fsrsDifficulty,
+                        card.fsrsReps,
+                        card.fsrsLapses,
+                        card.fsrsState,
+                        card.lastReviewedDay
+                    ) {
+                        if (isFsrsMode) {
+                            val effectiveFsrs = FsrsAlgorithm.resolveEffectiveState(
+                                state = FsrsState(
+                                    stability = card.fsrsStability,
+                                    difficulty = card.fsrsDifficulty,
+                                    reps = card.fsrsReps,
+                                    lapses = card.fsrsLapses,
+                                    state = card.fsrsState
+                                ),
+                                stage = card.stage,
+                                lastReviewedDay = card.lastReviewedDay,
+                                sm2IntervalDays = card.sm2IntervalDays,
+                                sm2Repetitions = card.sm2Repetitions
+                            )
+                            FsrsAlgorithm.previewIntervals(
+                                currentState = effectiveFsrs,
+                                lastReviewedDay = card.lastReviewedDay,
+                                desiredRetention = fsrsDesiredRetention
+                            )
+                        } else {
+                            val effectiveSm2 = Sm2Algorithm.resolveEffectiveState(
+                                state = Sm2State(
+                                    repetitions = card.sm2Repetitions,
+                                    easinessFactor = card.sm2EasinessFactor,
+                                    intervalDays = card.sm2IntervalDays
+                                ),
+                                stage = card.stage,
+                                lastReviewedDay = card.lastReviewedDay,
+                                fsrsStability = card.fsrsStability
+                            )
+                            Sm2Algorithm.previewIntervals(effectiveSm2)
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Sm2QualityButton(
+                            title = stringResource(R.string.flashcard_sm2_again),
+                            intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.againDays.formatDigits()),
+                            containerColor = colors.error.copy(alpha = 0.16f),
+                            contentColor = colors.error,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSm2Answer(Sm2Quality.AGAIN) }
+                        )
+                        Sm2QualityButton(
+                            title = stringResource(R.string.flashcard_sm2_hard),
+                            intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.hardDays.formatDigits()),
+                            containerColor = colors.warning.copy(alpha = 0.16f),
+                            contentColor = colors.warning,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSm2Answer(Sm2Quality.HARD) }
+                        )
+                        Sm2QualityButton(
+                            title = stringResource(R.string.flashcard_sm2_good),
+                            intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.goodDays.formatDigits()),
+                            containerColor = colors.primary.copy(alpha = 0.18f),
+                            contentColor = colors.primary,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSm2Answer(Sm2Quality.GOOD) }
+                        )
+                        Sm2QualityButton(
+                            title = stringResource(R.string.flashcard_sm2_easy),
+                            intervalLabel = stringResource(R.string.flashcard_sm2_days_format, intervalPreview.easyDays.formatDigits()),
+                            containerColor = colors.success.copy(alpha = 0.18f),
+                            contentColor = colors.success,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSm2Answer(Sm2Quality.EASY) }
+                        )
+                        IconButton(
+                            onClick = onFlip,
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.surfaceVariant)
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.flipCard,
+                                contentDescription = stringResource(R.string.flashcard_flip_back),
+                                tint = colors.onSurface,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = { onAnswer(false) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.error.copy(alpha = 0.15f),
+                                contentColor = colors.error
+                            )
+                        ) {
+                            Icon(YadinIcons.close, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.flashcard_forgot), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        IconButton(
+                            onClick = onFlip,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.surfaceVariant)
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.flipCard,
+                                contentDescription = stringResource(R.string.flashcard_flip_back),
+                                tint = colors.onSurface,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Button(
+                            onClick = { onAnswer(true) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.success,
+                                contentColor = colors.onSuccess
+                            )
+                        ) {
+                            Icon(YadinIcons.check, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.flashcard_remembered), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
                 }
 
-                Button(
-                    onClick = onFlip,
-                    modifier = Modifier
-                        .weight(0.64f)
-                        .height(48.dp)
-                        .testTag("flashcard_show_answer_button"),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.primary,
-                        contentColor = colors.onPrimary
-                    )
+                if (currentIndex > 0) {
+                    OutlinedButton(
+                        onClick = onPreviousCard,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp)
+                            .testTag("flashcard_previous_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.onSurface),
+                        border = BorderStroke(1.dp, colors.outline.copy(alpha = 0.35f))
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.back,
+                            contentDescription = stringResource(R.string.flashcard_previous_card),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.flashcard_previous_card),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = YadinIcons.flipCard,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.flashcard_show_answer),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        maxLines = 1
-                    )
+                    if (currentIndex > 0) {
+                        OutlinedButton(
+                            onClick = onPreviousCard,
+                            modifier = Modifier
+                                .weight(0.24f)
+                                .height(48.dp)
+                                .testTag("flashcard_previous_button"),
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.onSurface),
+                            border = BorderStroke(1.dp, colors.outline.copy(alpha = 0.4f))
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.back,
+                                contentDescription = stringResource(R.string.flashcard_previous_card),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = stringResource(R.string.quiz_previous),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = openHintDialog,
+                        modifier = Modifier
+                            .weight(if (currentIndex > 0) 0.30f else 0.36f)
+                            .height(48.dp)
+                            .testTag("flashcard_hint_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = colors.warning.copy(alpha = 0.10f),
+                            contentColor = colors.onSurface
+                        ),
+                        border = BorderStroke(1.dp, colors.warning.copy(alpha = 0.45f))
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.hintLightbulb,
+                            contentDescription = null,
+                            tint = colors.warning,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = stringResource(R.string.flashcard_hint_btn),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.5.sp,
+                            maxLines = 1
+                        )
+                    }
+
+                    Button(
+                        onClick = onFlip,
+                        modifier = Modifier
+                            .weight(if (currentIndex > 0) 0.46f else 0.64f)
+                            .height(48.dp)
+                            .testTag("flashcard_show_answer_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.primary,
+                            contentColor = colors.onPrimary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.flipCard,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.flashcard_show_answer),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }

@@ -27,6 +27,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 
+data class FlashcardAnswerRecord(
+    val isCorrect: Boolean,
+    val sm2Quality: Sm2Quality? = null
+)
+
 /**
  * مدیریت نشست‌های مرور (فلش‌کارت و آزمون ۴گزینه‌ای) - ReviewViewModel
  *
@@ -96,6 +101,10 @@ class ReviewViewModel(
     /** نگاشت شاخص هر سؤال به شاخص گزینه انتخاب‌شده توسط کاربر */
     val quizUserAnswers: StateFlow<Map<Int, Int>> = _quizUserAnswers.asStateFlow()
 
+    private val _flashcardUserAnswers = MutableStateFlow<Map<Int, FlashcardAnswerRecord>>(emptyMap())
+    /** نگاشت شاخص هر فلش‌کارت به پاسخ ثبت‌شده کاربر در نشست جاری */
+    val flashcardUserAnswers: StateFlow<Map<Int, FlashcardAnswerRecord>> = _flashcardUserAnswers.asStateFlow()
+
     private val _sessionCorrectCount = MutableStateFlow(0)
     /** تعداد پاسخ‌های درست در نشست جاری */
     val sessionCorrectCount: StateFlow<Int> = _sessionCorrectCount.asStateFlow()
@@ -157,6 +166,7 @@ class ReviewViewModel(
                 _isCardFlipped.value = false
                 _quizSelectedOption.value = null
                 _quizUserAnswers.value = emptyMap()
+                _flashcardUserAnswers.value = emptyMap()
                 _sessionCorrectCount.value = 0
                 _sessionWrongCount.value = 0
 
@@ -231,6 +241,7 @@ class ReviewViewModel(
         val cards = _sessionCards.value
         val idx = _currentCardIndex.value
         if (idx >= cards.size) return
+        if (_flashcardUserAnswers.value.containsKey(idx)) return
 
         isSubmittingFlashcard = true
         val currentCard = cards[idx]
@@ -273,6 +284,13 @@ class ReviewViewModel(
                     _sessionCards.value = updatedList
                 }
 
+                _flashcardUserAnswers.value = _flashcardUserAnswers.value + (
+                    idx to FlashcardAnswerRecord(
+                        isCorrect = effectiveIsCorrect,
+                        sm2Quality = sm2Quality
+                    )
+                )
+
                 if (effectiveIsCorrect) {
                     _sessionCorrectCount.value += 1
                 } else {
@@ -282,8 +300,9 @@ class ReviewViewModel(
                 onAnswerRecorded?.invoke()
 
                 if (idx + 1 < cards.size) {
-                    _currentCardIndex.value = idx + 1
-                    _isCardFlipped.value = false
+                    val nextIdx = idx + 1
+                    _currentCardIndex.value = nextIdx
+                    _isCardFlipped.value = _flashcardUserAnswers.value.containsKey(nextIdx)
                 } else {
                     reviewRepo.completeSession(session.id)
                     withContext(Dispatchers.Main) {
@@ -295,6 +314,63 @@ class ReviewViewModel(
             } finally {
                 isSubmittingFlashcard = false
             }
+        }
+    }
+
+    /**
+     * رفتن به فلش‌کارت بعدی یا اتمام نشست در صورت رسیدن به انتها.
+     */
+    fun nextFlashcard(onSessionCompleted: (() -> Unit)? = null) {
+        val cards = _sessionCards.value
+        val idx = _currentCardIndex.value
+        val session = _activeSession.value
+
+        if (idx + 1 < cards.size) {
+            val nextIdx = idx + 1
+            _currentCardIndex.value = nextIdx
+            _isCardFlipped.value = _flashcardUserAnswers.value.containsKey(nextIdx)
+        } else if (_flashcardUserAnswers.value.containsKey(idx)) {
+            session?.let {
+                scope.launch {
+                    try {
+                        lastSubmitFlashcardJob?.join()
+                        reviewRepo.completeSession(it.id)
+                        withContext(Dispatchers.Main) {
+                            onSessionCompleted?.invoke()
+                        }
+                    } catch (e: Exception) {
+                        _reviewErrorMessage.value = formatError(R.string.err_complete_session_fmt, "خطا در اتمام نشست مرور", e.message)
+                        withContext(Dispatchers.Main) {
+                            onSessionCompleted?.invoke()
+                        }
+                    }
+                }
+            } ?: run {
+                onSessionCompleted?.invoke()
+            }
+        }
+    }
+
+    /**
+     * بازگشت به فلش‌کارت قبلی در نشست مرور.
+     */
+    fun previousFlashcard() {
+        val idx = _currentCardIndex.value
+        if (idx > 0) {
+            val prevIdx = idx - 1
+            _currentCardIndex.value = prevIdx
+            _isCardFlipped.value = _flashcardUserAnswers.value.containsKey(prevIdx)
+        }
+    }
+
+    /**
+     * پرش مستقیم به فلش‌کارت دلخواه از روی نوار شماره‌دار بالای صفحه.
+     */
+    fun goToFlashcard(targetIndex: Int) {
+        val cards = _sessionCards.value
+        if (targetIndex in cards.indices) {
+            _currentCardIndex.value = targetIndex
+            _isCardFlipped.value = _flashcardUserAnswers.value.containsKey(targetIndex)
         }
     }
 

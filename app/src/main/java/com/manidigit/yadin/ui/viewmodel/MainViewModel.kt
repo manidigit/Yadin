@@ -203,6 +203,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isCardFlipped: StateFlow<Boolean> get() = reviewVm.isCardFlipped
     val quizSelectedOption: StateFlow<Int?> get() = reviewVm.quizSelectedOption
     val quizUserAnswers: StateFlow<Map<Int, Int>> get() = reviewVm.quizUserAnswers
+    val flashcardUserAnswers: StateFlow<Map<Int, FlashcardAnswerRecord>> get() = reviewVm.flashcardUserAnswers
     val sessionCorrectCount: StateFlow<Int> get() = reviewVm.sessionCorrectCount
     val sessionWrongCount: StateFlow<Int> get() = reviewVm.sessionWrongCount
     val reviewErrorMessage: StateFlow<String?> get() = reviewVm.reviewErrorMessage
@@ -391,6 +392,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         )
     }
+
+    fun nextFlashcard() {
+        reviewVm.nextFlashcard {
+            statisticsVm.refreshStatistics()
+            navigateTo(Screen.SessionSummary)
+        }
+    }
+
+    fun previousFlashcard() = reviewVm.previousFlashcard()
+
+    fun goToFlashcard(targetIndex: Int) = reviewVm.goToFlashcard(targetIndex)
 
     fun exitSession() {
         reviewVm.exitSession {
