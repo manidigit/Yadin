@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "7801_v1.83.0"
+        const val CURRENT_SEED_VERSION = "8189_v1.86.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -60,7 +60,7 @@ class SeedImporter(
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
         val totalCount = conceptDao.getTotalConceptCount()
-        if (totalCount < 7750) {
+        if (totalCount < 8100) {
             return@withContext true
         }
         val seedVersion = settingsDao.getSetting("seedVersion")
@@ -434,29 +434,6 @@ class SeedImporter(
                 } else {
                     seedContent
                 }
-            }.toMutableList()
-
-            // حفظ ترجمه‌های فارسی سفارشی که کاربر به مفاهیم موجود اضافه کرده است
-            val seedFaByConcept = contents.filter { it.languageCode == "fa" }.groupBy { it.conceptId }
-            for ((cid, existingRows) in existingContentsByConcept) {
-                val seedFaRows = seedFaByConcept[cid].orEmpty()
-                if (seedFaRows.isEmpty()) continue
-                val seedFaKeys = seedFaRows.map { it.canonicalKey }.toMutableSet()
-                var nextIdx = (seedFaRows.maxOfOrNull { it.translationIndex } ?: -1) + 1
-                existingRows
-                    .filter { it.languageCode == "fa" }
-                    .sortedBy { it.translationIndex }
-                    .forEach { existingFa ->
-                        val key = existingFa.canonicalKey.ifBlank { TextUtilities.toCanonicalKey(existingFa.text) }
-                        if (key.isNotBlank() && seedFaKeys.add(key)) {
-                            mergedSeedContents.add(
-                                existingFa.copy(
-                                    canonicalKey = key,
-                                    translationIndex = nextIdx++
-                                )
-                            )
-                        }
-                    }
             }
 
             val primaryConceptCategories = concepts.mapNotNull { concept ->
@@ -526,6 +503,7 @@ class SeedImporter(
 
                 val missingLearningBatch = mutableListOf<LearningStateEntity>()
                 val missingDiffBatch = mutableListOf<DifficultyStateEntity>()
+                val updatedDiffBatch = mutableListOf<DifficultyStateEntity>()
 
                 for (cid in allDbConceptIds) {
                     for (dir in listOf(CardDirection.NORMAL, CardDirection.REVERSE)) {
@@ -555,6 +533,25 @@ class SeedImporter(
                                     current = VocabularyDifficulty.EASY
                                 )
                             )
+                        } else if (seedDiff != null) {
+                            val shouldSyncDiff = if (key !in practicedLearningKeys) {
+                                existingDiff.current != seedDiff.current ||
+                                    existingDiff.consecutiveCorrect != seedDiff.consecutiveCorrect ||
+                                    existingDiff.consecutiveWrong != seedDiff.consecutiveWrong ||
+                                    existingDiff.hasReachedVeryHard != seedDiff.hasReachedVeryHard
+                            } else {
+                                existingDiff.current != seedDiff.current
+                            }
+                            if (shouldSyncDiff) {
+                                updatedDiffBatch.add(
+                                    existingDiff.copy(
+                                        current = seedDiff.current,
+                                        consecutiveCorrect = if (key !in practicedLearningKeys) seedDiff.consecutiveCorrect else existingDiff.consecutiveCorrect,
+                                        consecutiveWrong = if (key !in practicedLearningKeys) seedDiff.consecutiveWrong else existingDiff.consecutiveWrong,
+                                        hasReachedVeryHard = existingDiff.hasReachedVeryHard || seedDiff.hasReachedVeryHard || seedDiff.current == VocabularyDifficulty.VERY_HARD
+                                    )
+                                )
+                            }
                         }
                     }
                 }
@@ -567,6 +564,11 @@ class SeedImporter(
                 if (missingDiffBatch.isNotEmpty()) {
                     missingDiffBatch.chunked(1000).forEach {
                         learningDao.insertDifficultyStatesIgnore(it)
+                    }
+                }
+                if (updatedDiffBatch.isNotEmpty()) {
+                    updatedDiffBatch.chunked(1000).forEach {
+                        learningDao.insertDifficultyStates(it)
                     }
                 }
 
