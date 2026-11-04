@@ -753,4 +753,6 @@ libro: book</string>
     <string name="flashcard_next_card">Next Card</string>
     <string name="flashcard_finish_session">View Session Results</string>
     <string name="flashcard_recorded_answer_fmt">Recorded answer: %1$s</string>
+    <string name="category_multi_selected_fmt">%1$s categories: %2$s</string>
+    <string name="category_done_selection">Done (%1$s selected)</string>
 </resources>

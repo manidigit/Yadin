@@ -50,8 +50,11 @@ import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.toStringRes
+import androidx.compose.foundation.layout.FlowRow
 import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.ExposedEntryTypeDropdown
+import com.manidigit.yadin.ui.components.ExposedMultiCategoryDropdown
+import com.manidigit.yadin.ui.components.getCategoryIcon
 import com.manidigit.yadin.ui.components.VocabStatType
 import com.manidigit.yadin.ui.components.YadinCard
 import com.manidigit.yadin.ui.components.YadinScreenHeader
@@ -113,7 +116,7 @@ fun ReviewSetupScreen(
     var selectedDifficulties by remember(initialDifficulties) {
         mutableStateOf(if (initialDifficulties.isNotEmpty()) initialDifficulties else VocabularyDifficulty.entries.toSet())
     }
-    var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    var selectedCategoryIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var selectedEntryType by remember { mutableStateOf<EntryType?>(null) }
     var selectedMaxCards by remember(initialMaxCards) { mutableStateOf(initialMaxCards) }
 
@@ -123,7 +126,7 @@ fun ReviewSetupScreen(
         direction = appLanguageDirection,
         quizLevel = if (selectedMode == ReviewMode.QUIZ) selectedQuizLevel else null,
         difficulties = selectedDifficulties,
-        categoryIds = if (selectedCategoryId != null) setOf(selectedCategoryId!!) else emptySet(),
+        categoryIds = selectedCategoryIds,
         entryTypes = if (selectedEntryType != null) setOf(selectedEntryType!!) else emptySet(),
         maxCards = selectedMaxCards,
         algorithm = when (selectedType) {
@@ -137,7 +140,7 @@ fun ReviewSetupScreen(
         selectedType,
         appLanguageDirection,
         selectedDifficulties,
-        selectedCategoryId,
+        selectedCategoryIds,
         selectedEntryType,
         defaultAlgorithm,
         statistics?.reviewedTodayCount
@@ -340,12 +343,12 @@ fun ReviewSetupScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ExposedCategoryDropdown(
+                            ExposedMultiCategoryDropdown(
                                 categories = categories,
-                                selectedCategoryId = selectedCategoryId,
-                                onSelectCategory = { selectedCategoryId = it },
+                                selectedCategoryIds = selectedCategoryIds,
+                                onSelectionChanged = { selectedCategoryIds = it },
                                 onAddNewCategory = onAddNewCategory?.let { callback ->
-                                    { newName -> callback(newName) { newId -> selectedCategoryId = newId } }
+                                    { newName -> callback(newName) { newId -> selectedCategoryIds = selectedCategoryIds + newId } }
                                 },
                                 label = stringResource(R.string.review_setup_category_label),
                                 modifier = Modifier.weight(1f)
@@ -356,6 +359,48 @@ fun ReviewSetupScreen(
                                 label = stringResource(R.string.review_setup_entry_type_label),
                                 modifier = Modifier.weight(1f)
                             )
+                        }
+
+                        val selectedCategoryObjects = categories.filter { it.id in selectedCategoryIds }
+                        if (selectedCategoryObjects.size > 1) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                selectedCategoryObjects.forEach { cat ->
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(colors.primary.copy(alpha = 0.12f))
+                                            .border(0.8.dp, colors.primary.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+                                            .clickable { selectedCategoryIds = selectedCategoryIds - cat.id }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = getCategoryIcon(cat.name),
+                                            contentDescription = null,
+                                            tint = colors.primary,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Text(
+                                            text = cat.name,
+                                            color = colors.primary,
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1
+                                        )
+                                        Icon(
+                                            imageVector = YadinIcons.clear,
+                                            contentDescription = stringResource(R.string.category_clear_selection),
+                                            tint = colors.primary,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }

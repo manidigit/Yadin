@@ -42,6 +42,7 @@ import com.manidigit.yadin.R
 import com.manidigit.yadin.domain.model.Category
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.YadinIcons
+import com.manidigit.yadin.ui.util.formatDigits
 
 fun getCategoryIcon(categoryName: String?): ImageVector = YadinIcons.forCategoryName(categoryName)
 
@@ -382,6 +383,348 @@ fun ExposedCategoryDropdown(
                         onSelectCategory(cat.id)
                         expanded = false
                     }
+                )
+            }
+
+            if (onAddNewCategory != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.add,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.category_add_new_action),
+                                color = colors.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    onClick = {
+                        expanded = false
+                        showAddDialog = true
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ExposedMultiCategoryDropdown(
+    categories: List<Category>,
+    selectedCategoryIds: Set<String>,
+    onSelectionChanged: (Set<String>) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    onAddNewCategory: ((String) -> Unit)? = null
+) {
+    val colors = LocalYadinColors.current
+    var expanded by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var newCategoryText by remember { mutableStateOf("") }
+
+    val resolvedLabel = label ?: stringResource(R.string.category_label)
+    val defaultAllText = stringResource(R.string.category_all_general)
+    val selectedCategories = categories.filter { it.id in selectedCategoryIds }
+    val isFilterActive = selectedCategories.isNotEmpty()
+
+    val displayText = when {
+        selectedCategories.isEmpty() -> defaultAllText
+        selectedCategories.size == 1 -> selectedCategories.first().name
+        else -> stringResource(
+            R.string.category_multi_selected_fmt,
+            selectedCategories.size.formatDigits(),
+            selectedCategories.joinToString("، ") { it.name }
+        )
+    }
+    val icon = if (selectedCategories.size == 1) {
+        getCategoryIcon(selectedCategories.first().name)
+    } else {
+        YadinIcons.categoryDefault
+    }
+
+    if (showAddDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.category_create_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.category_create_hint_prompt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = newCategoryText,
+                        onValueChange = { newCategoryText = it },
+                        label = { Text(stringResource(R.string.category_title_field)) },
+                        placeholder = { Text(stringResource(R.string.category_title_placeholder)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val name = newCategoryText.trim()
+                        if (name.isNotBlank()) {
+                            onAddNewCategory?.invoke(name)
+                            showAddDialog = false
+                            newCategoryText = ""
+                        }
+                    },
+                    enabled = newCategoryText.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary
+                    )
+                ) {
+                    Text(stringResource(R.string.category_submit_select), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showAddDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+
+    val shape = RoundedCornerShape(12.dp)
+    val bgColor = if (isFilterActive) colors.primary.copy(alpha = 0.10f) else colors.surface
+    val borderColor = if (isFilterActive) colors.primary.copy(alpha = 0.55f) else colors.outline.copy(alpha = 0.25f)
+    val accentColor = if (isFilterActive) colors.primary else colors.onSurfaceVariant
+
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(shape)
+                .background(bgColor)
+                .border(if (isFilterActive) 1.2.dp else 1.dp, borderColor, shape)
+                .clickable { expanded = true }
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = resolvedLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        fontSize = 9.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = displayText,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isFilterActive) colors.primary else colors.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 11.5.sp
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (isFilterActive) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { onSelectionChanged(emptySet()) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = YadinIcons.clear,
+                            contentDescription = stringResource(R.string.category_clear_selection),
+                            tint = colors.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = YadinIcons.dropdown,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(colors.surface)
+        ) {
+            val isAllSelected = selectedCategoryIds.isEmpty()
+            DropdownMenuItem(
+                text = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.categoryDefault,
+                                contentDescription = null,
+                                tint = if (isAllSelected) colors.primary else colors.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = defaultAllText,
+                                fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isAllSelected) colors.primary else colors.onSurface
+                            )
+                        }
+                        if (isAllSelected) {
+                            Icon(
+                                imageVector = YadinIcons.check,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                },
+                onClick = {
+                    onSelectionChanged(emptySet())
+                    expanded = false
+                }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
+
+            categories.forEach { cat ->
+                val catIcon = getCategoryIcon(cat.name)
+                val isSelected = cat.id in selectedCategoryIds
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSelected) colors.primary.copy(alpha = 0.10f) else androidx.compose.ui.graphics.Color.Transparent)
+                                .padding(horizontal = 6.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = catIcon,
+                                    contentDescription = null,
+                                    tint = if (isSelected) colors.primary else colors.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = cat.name,
+                                    color = if (isSelected) colors.primary else colors.onSurface,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .background(if (isSelected) colors.primary else androidx.compose.ui.graphics.Color.Transparent)
+                                    .border(
+                                        width = 1.4.dp,
+                                        color = if (isSelected) colors.primary else colors.outline.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(5.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = YadinIcons.check,
+                                        contentDescription = null,
+                                        tint = colors.onPrimary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    onClick = {
+                        val updated = if (isSelected) {
+                            selectedCategoryIds - cat.id
+                        } else {
+                            selectedCategoryIds + cat.id
+                        }
+                        onSelectionChanged(updated)
+                    }
+                )
+            }
+
+            if (selectedCategoryIds.isNotEmpty()) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.check,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.category_done_selection,
+                                    selectedCategoryIds.size.formatDigits()
+                                ),
+                                color = colors.primary,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
+                        }
+                    },
+                    onClick = { expanded = false }
                 )
             }
 

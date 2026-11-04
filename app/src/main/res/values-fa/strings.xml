@@ -753,4 +753,6 @@ libro: کتاب</string>
     <string name="flashcard_next_card">کارت بعدی</string>
     <string name="flashcard_finish_session">مشاهده نتیجه مرور</string>
     <string name="flashcard_recorded_answer_fmt">پاسخ ثبت‌شده: %1$s</string>
+    <string name="category_multi_selected_fmt">%1$s دسته: %2$s</string>
+    <string name="category_done_selection">تأیید انتخاب (%1$s دسته)</string>
 </resources>
