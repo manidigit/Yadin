@@ -34,6 +34,8 @@ local.properties
 .DS_Store
 Thumbs.db
 
-# AI Studio temporary media and artifacts
+# AI Studio temporary media, artifacts, and virtual environment files
 .aistudio/
 public/
+.env
+.env.*
