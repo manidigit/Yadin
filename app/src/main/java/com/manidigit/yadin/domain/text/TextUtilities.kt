@@ -75,8 +75,9 @@ object TextUtilities {
     private val EZAFE_HEH_YEH_REGEX = Regex("""ه[\u200C\s]*ی(?:\s|$)""")
     private val PERSIAN_NON_ALNUM_REGEX = Regex("""[\u200C\u200F\u200E\s\-_،,.;؛:!؟?()\[\]«»"'/\\]+""")
     private val PARENTHETICAL_BLOCK_REGEX = Regex("""\([^)]*\)""")
-    private val GENDER_PAREN_ONLY_REGEX = Regex("""\(\s*(?:مذکر|مؤنث|مرد|زن|آقا|خانم)(?:\s*[/،,و]\s*(?:مذکر|مؤنث|مرد|زن|آقا|خانم))*\s*\)""")
+    private val GENDER_PAREN_ONLY_REGEX = Regex("""\(\s*(?:(?:در\s+معنای\s+|به\s+عنوان\s+|در\s+بافت\s+|در\s+حالت\s+|بافت\s+|حالت\s+)?(?:صفت|اسم|فعل|قید|فرم)(?:\s+(?:مذکر|مؤنث|مونث|مفرد|جمع))?|(?:مذکر|مؤنث|مونث|مرد|زن|آقا|خانم|پسر|دختر|مفرد|جمع|مؤنث\s+جمع|مونث\s+جمع|مذکر\s+جمع|از\s+زبان\s+آقا|از\s+زبان\s+خانم))(?:\s*[/،,و\-]\s*(?:صفت|اسم|مذکر|مؤنث|مونث|مرد|زن|آقا|خانم|پسر|دختر|مفرد|جمع))*\s*\)""")
     private val TRAILING_GENDER_WORD_REGEX = Regex("""\s+(مرد|زن|مذکر|مؤنث)\s*$""")
+    private val PERSIAN_COMPOUND_SPLIT_REGEX = Regex("""\s+(?:و|یا)\s+""")
 
     /**
      * Splits text by delimiters ONLY when outside parentheses (...), brackets [...], or guillemets «...».
@@ -241,21 +242,65 @@ object TextUtilities {
             }
         }
 
-        // 5. If both "X" and "X (توضیح)" exist with the exact same base "X", keep only one
-        if (deduped.size > 1) {
-            val bareKeys = deduped.filter { !it.contains('(') }.map { persianDedupeKey(it) }.toSet()
-            if (bareKeys.isNotEmpty()) {
-                val filteredParens = deduped.filterNot { item ->
-                    item.contains('(') &&
-                        persianDedupeKey(PARENTHETICAL_BLOCK_REGEX.replace(item, "")) in bareKeys
+        // 5. Collapse duplicate base headwords before parentheses (e.g., "X" + "X (توضیح)" or multiple "X (توضیح ۱)" + "X (توضیح ۲)")
+        val baseCollapsed = mutableListOf<String>()
+        val seenBaseKeys = mutableSetOf<String>()
+        val bareKeys = deduped.filter { !it.contains('(') }.map { persianDedupeKey(it) }.toSet()
+        for (item in deduped) {
+            val baseText = PARENTHETICAL_BLOCK_REGEX.replace(item, "").trim()
+            val baseKey = persianDedupeKey(baseText)
+            if (baseKey.isEmpty()) {
+                baseCollapsed.add(item)
+                continue
+            }
+            if (item.contains('(') && baseKey in bareKeys) {
+                continue
+            }
+            if (baseKey in seenBaseKeys) {
+                continue
+            }
+            seenBaseKeys.add(baseKey)
+            baseCollapsed.add(item)
+        }
+        val afterBaseCollapse = if (baseCollapsed.isNotEmpty()) baseCollapsed else deduped
+
+        // 6. Remove redundant compound translations ("A و B" or "A یا B") when A or B already exists as a standalone translation
+        if (afterBaseCollapse.size > 1) {
+            val standaloneKeys = afterBaseCollapse
+                .map { persianDedupeKey(PARENTHETICAL_BLOCK_REGEX.replace(it, "")) }
+                .filter { it.isNotEmpty() }
+                .toSet()
+            val usedCompoundParts = mutableSetOf<String>()
+            val prunedCompounds = mutableListOf<String>()
+            for ((idx, item) in afterBaseCollapse.withIndex()) {
+                val base = PARENTHETICAL_BLOCK_REGEX.replace(item, "").trim()
+                val baseKey = persianDedupeKey(base)
+                val wordCount = base.split(WHITESPACE_REGEX).count { it.isNotBlank() }
+                if ((base.contains(" و ") || base.contains(" یا ")) && wordCount <= 5) {
+                    val parts = base.split(PERSIAN_COMPOUND_SPLIT_REGEX).map { it.trim() }.filter { it.isNotEmpty() }
+                    if (parts.size >= 2) {
+                        val partKeys = parts.map { persianDedupeKey(it) }.filter { it.isNotEmpty() }
+                        val matchesStandalone = partKeys.any { it in standaloneKeys && it != baseKey }
+                        val matchesPreviousCompound = partKeys.any { it.length >= 3 && it in usedCompoundParts }
+                        val allPartsStandalone = partKeys.all { it in standaloneKeys && it != baseKey }
+                        val remainingCount = prunedCompounds.size + (afterBaseCollapse.size - idx - 1)
+                        if (allPartsStandalone && remainingCount >= 1) {
+                            continue
+                        }
+                        if ((matchesStandalone || matchesPreviousCompound) && remainingCount >= 2) {
+                            continue
+                        }
+                        partKeys.filter { it.length >= 3 }.forEach { usedCompoundParts.add(it) }
+                    }
                 }
-                if (filteredParens.isNotEmpty()) {
-                    return filteredParens
-                }
+                prunedCompounds.add(item)
+            }
+            if (prunedCompounds.isNotEmpty()) {
+                return prunedCompounds
             }
         }
 
-        return deduped
+        return afterBaseCollapse
     }
 
     fun splitTranslations(text: String?): List<String> {
