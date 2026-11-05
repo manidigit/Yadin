@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "12048_v1.93.0"
+        const val CURRENT_SEED_VERSION = "12362_v1.94.1"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -60,7 +60,7 @@ class SeedImporter(
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
         val totalCount = conceptDao.getTotalConceptCount()
-        if (totalCount < 12000) {
+        if (totalCount < 12300) {
             return@withContext true
         }
         val seedVersion = settingsDao.getSetting("seedVersion")
@@ -371,20 +371,140 @@ class SeedImporter(
             } else {
                 emptyList()
             }
-            val practicedConceptIds = existingLearningStates
-                .filter { it.lastReviewedDay != null || it.stage != Stage.DAILY || it.sm2Repetitions > 0 || it.fsrsReps > 0 }
-                .map { it.conceptId }
-                .toSet()
-            val practicedLearningKeys = existingLearningStates
-                .filter { it.lastReviewedDay != null || it.stage != Stage.DAILY || it.sm2Repetitions > 0 || it.fsrsReps > 0 }
-                .map { it.conceptId to it.direction }
-                .toSet()
+            val existingDiffStates = if (existingConceptIds.isNotEmpty()) {
+                learningDao.getAllDifficultyStates()
+            } else {
+                emptyList()
+            }
+            val allExistingContents = if (existingConceptIds.isNotEmpty()) {
+                conceptDao.getAllContents()
+            } else {
+                emptyList()
+            }
+            val existingContentsByConceptAll = allExistingContents.groupBy { it.conceptId }
 
-            // حذف کلیه مفاهیم تکراری ادغام‌شده (obsoleteConceptIds) تا واژگان ادغام‌شده دوباره در دستگاه کاربر باقی نمانند
-            val obsoleteToDelete = obsoleteSeedConceptIds
-                .filter { it in existingConceptIds }
+            val seedConceptIds = concepts.map { it.id }.toSet()
+            val seedByCanonicalKey = mutableMapOf<String, String>()
+            val seedByDedupeKey = mutableMapOf<String, String>()
+            val seedByAccentInsensitiveKey = mutableMapOf<String, String>()
+            val seedBySlashPartKey = mutableMapOf<String, String>()
 
+            contents.asSequence().filter { it.languageCode != "fa" }.forEach { seedEs ->
+                seedByCanonicalKey.putIfAbsent(seedEs.canonicalKey, seedEs.conceptId)
+                val dedupeKey = TextUtilities.spanishDedupeKey(seedEs.text)
+                if (dedupeKey.isNotBlank()) {
+                    seedByDedupeKey.putIfAbsent(dedupeKey, seedEs.conceptId)
+                }
+                val analysis = TextUtilities.analyzeSpanishHeadword(seedEs.text)
+                if (analysis.accentInsensitiveKey.isNotBlank()) {
+                    seedByAccentInsensitiveKey.putIfAbsent(analysis.accentInsensitiveKey, seedEs.conceptId)
+                }
+                analysis.slashVariantKeys.forEach { part ->
+                    if (part.isNotBlank()) {
+                        seedBySlashPartKey.putIfAbsent(part, seedEs.conceptId)
+                        seedBySlashPartKey.putIfAbsent(TextUtilities.spanishDedupeKey(part), seedEs.conceptId)
+                    }
+                }
+            }
+
+            fun findMatchingSeedConceptId(sourceText: String): String? {
+                if (sourceText.isBlank()) return null
+                val cKey = TextUtilities.toCanonicalKey(sourceText)
+                seedByCanonicalKey[cKey]?.let { return it }
+                val dKey = TextUtilities.spanishDedupeKey(sourceText)
+                if (dKey.isNotBlank()) {
+                    seedByDedupeKey[dKey]?.let { return it }
+                }
+                val analysis = TextUtilities.analyzeSpanishHeadword(sourceText)
+                if (analysis.accentInsensitiveKey.isNotBlank()) {
+                    seedByAccentInsensitiveKey[analysis.accentInsensitiveKey]?.let { return it }
+                    seedBySlashPartKey[analysis.accentInsensitiveKey]?.let { return it }
+                    for (singCand in TextUtilities.spanishSingularCandidateKeys(analysis)) {
+                        seedByAccentInsensitiveKey[singCand]?.let { return it }
+                        seedBySlashPartKey[singCand]?.let { return it }
+                    }
+                }
+                for (part in analysis.slashVariantKeys) {
+                    seedBySlashPartKey[part]?.let { return it }
+                    seedBySlashPartKey[TextUtilities.spanishDedupeKey(part)]?.let { return it }
+                }
+                if (analysis.accentInsensitiveKey == "esperana") {
+                    seedByAccentInsensitiveKey["esperanza"]?.let { return it }
+                }
+                return null
+            }
+
+            // شناسایی کلیه مفاهیم منسوخ (obsoleteConceptIds) و مفاهیم غیربذر تکراری که همتای مستقیم در بانک پایه دارند
+            val duplicateToTargetSeedMap = mutableMapOf<String, String?>()
+            for (existingId in existingConceptIds) {
+                if (existingId in seedConceptIds) continue
+                val existingEsText = existingContentsByConceptAll[existingId]
+                    ?.firstOrNull { it.languageCode != "fa" }
+                    ?.text
+                    .orEmpty()
+                val matchedSeedId = findMatchingSeedConceptId(existingEsText)
+                if (existingId in obsoleteSeedConceptIds || matchedSeedId != null) {
+                    duplicateToTargetSeedMap[existingId] = matchedSeedId
+                }
+            }
+
+            val obsoleteToDelete = duplicateToTargetSeedMap.keys.toList()
             val activeExistingConceptIds = existingConceptIds - obsoleteToDelete.toSet()
+
+            fun isPracticedState(state: LearningStateEntity): Boolean =
+                state.lastReviewedDay != null || state.stage != Stage.DAILY || state.sm2Repetitions > 0 || state.fsrsReps > 0
+
+            val practicedLearningKeys = existingLearningStates
+                .filter { isPracticedState(it) }
+                .map { it.conceptId to it.direction }
+                .toMutableSet()
+
+            val migratedLearningStates = mutableMapOf<Pair<String, CardDirection>, LearningStateEntity>()
+            val migratedDiffStates = mutableMapOf<Pair<String, CardDirection>, DifficultyStateEntity>()
+            val existingLearningByKey = existingLearningStates.associateBy { it.conceptId to it.direction }.toMutableMap()
+            val existingDiffByKey = existingDiffStates.associateBy { it.conceptId to it.direction }.toMutableMap()
+
+            for ((dupId, targetSeedId) in duplicateToTargetSeedMap) {
+                if (targetSeedId == null) continue
+                for (dir in listOf(CardDirection.NORMAL, CardDirection.REVERSE)) {
+                    val dupKey = dupId to dir
+                    val targetKey = targetSeedId to dir
+                    val dupLearning = existingLearningByKey[dupKey]
+                    val targetLearning = existingLearningByKey[targetKey]
+                    if (dupLearning != null && isPracticedState(dupLearning)) {
+                        val shouldReplaceLearning = targetLearning == null ||
+                            !isPracticedState(targetLearning) ||
+                            dupLearning.stage.ordinal > targetLearning.stage.ordinal ||
+                            (dupLearning.stage == targetLearning.stage && dupLearning.sm2Repetitions > targetLearning.sm2Repetitions) ||
+                            (dupLearning.stage == targetLearning.stage && dupLearning.fsrsReps > targetLearning.fsrsReps)
+                        if (shouldReplaceLearning) {
+                            val migrated = dupLearning.copy(
+                                id = targetLearning?.id ?: UUID.randomUUID().toString(),
+                                conceptId = targetSeedId
+                            )
+                            existingLearningByKey[targetKey] = migrated
+                            migratedLearningStates[targetKey] = migrated
+                            practicedLearningKeys.add(targetKey)
+                        }
+                    }
+
+                    val dupDiff = existingDiffByKey[dupKey]
+                    val targetDiff = existingDiffByKey[targetKey]
+                    if (dupDiff != null) {
+                        if (targetDiff == null || dupDiff.current.ordinal > targetDiff.current.ordinal) {
+                            val migratedDiff = dupDiff.copy(
+                                id = targetDiff?.id ?: UUID.randomUUID().toString(),
+                                conceptId = targetSeedId,
+                                hasReachedVeryHard = (targetDiff?.hasReachedVeryHard == true) ||
+                                    dupDiff.hasReachedVeryHard ||
+                                    dupDiff.current == VocabularyDifficulty.VERY_HARD
+                            )
+                            existingDiffByKey[targetKey] = migratedDiff
+                            migratedDiffStates[targetKey] = migratedDiff
+                        }
+                    }
+                }
+            }
 
             // ۱. تفکیک مفاهیم جدید از مفاهیم موجود:
             // هرگز از REPLACE روی جدول concepts استفاده نمی‌کنیم، زیرا در SQLite دستور INSERT OR REPLACE
@@ -408,13 +528,8 @@ class SeedImporter(
             }
 
             // ۲. حفظ یادداشت‌های شخصی معتبر کاربر و پاک‌سازی ترجمه‌های تکراری بدون دست زدن به جدول والد concepts
-            val existingContentsByConcept = if (activeExistingConceptIds.isNotEmpty()) {
-                conceptDao.getAllContents()
-                    .filter { it.conceptId in activeExistingConceptIds }
-                    .groupBy { it.conceptId }
-            } else {
-                emptyMap()
-            }
+            val existingContentsByConcept = existingContentsByConceptAll
+                .filterKeys { it in activeExistingConceptIds }
 
             val legacyNoteRegex = Regex("""^[\d۰-۹\s.،؛مترادفابعادزیادماشینحجمموتور]+$""")
             val numberedArtifactRegex = Regex("""[۰-۹0-9]+\.""")
@@ -453,18 +568,9 @@ class SeedImporter(
             val now = System.currentTimeMillis()
             val today = ClockAndDayMath.todayDayString()
             val seedDiffMap = seedDifficultyStates.associateBy { it.conceptId to it.direction }
+            val reviewSessionDao = database.reviewSessionDao()
 
             database.withTransaction {
-                if (obsoleteToDelete.isNotEmpty()) {
-                    obsoleteToDelete.chunked(500).forEach { chunkIds ->
-                        learningDao.deleteLearningStatesForConcepts(chunkIds)
-                        learningDao.deleteDifficultyStatesForConcepts(chunkIds)
-                        conceptDao.deleteContentsForConcepts(chunkIds)
-                        conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
-                        conceptDao.deleteConceptsPermanently(chunkIds)
-                    }
-                }
-
                 if (categories.isNotEmpty()) {
                     conceptDao.insertCategories(categories)
                 }
@@ -472,6 +578,24 @@ class SeedImporter(
                 if (newConcepts.isNotEmpty()) {
                     newConcepts.chunked(500).forEach { chunk ->
                         conceptDao.insertConceptsIgnore(chunk)
+                    }
+                }
+
+                // انتقال تاریخچه مرور و آیتم‌های جلسات از شناسه‌های منسوخ به شناسه اصلی پیش از حذف
+                for ((dupId, targetSeedId) in duplicateToTargetSeedMap) {
+                    if (targetSeedId != null) {
+                        reviewSessionDao.repointReviewHistory(listOf(dupId), targetSeedId)
+                        reviewSessionDao.repointReviewSessionItems(listOf(dupId), targetSeedId)
+                    }
+                }
+
+                if (obsoleteToDelete.isNotEmpty()) {
+                    obsoleteToDelete.chunked(500).forEach { chunkIds ->
+                        learningDao.deleteLearningStatesForConcepts(chunkIds)
+                        learningDao.deleteDifficultyStatesForConcepts(chunkIds)
+                        conceptDao.deleteContentsForConcepts(chunkIds)
+                        conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
+                        conceptDao.deleteConceptsPermanently(chunkIds)
                     }
                 }
 
@@ -504,22 +628,23 @@ class SeedImporter(
                 onProgress(0.85f, context.getString(R.string.seed_categorizing_topics))
 
                 // ۳. تضمین وجود رکوردهای learning_states و difficulty_states برای تمام واژگان (عادی و معکوس)
-                // بدون دست زدن به رکوردهای موجود کاربر
+                // همراه با اعمال وضعیت‌های منتقل‌شده از مفاهیم تکراری ادغام‌شده
                 val allDbConceptIds = (activeExistingConceptIds + concepts.map { it.id }).distinct()
-                val existingLearningKeys = learningDao.getAllLearningStates()
+                val currentLearningKeys = learningDao.getAllLearningStates()
                     .map { it.conceptId to it.direction }
                     .toSet()
-                val existingDiffMap = learningDao.getAllDifficultyStates()
+                val currentDiffMap = learningDao.getAllDifficultyStates()
                     .associateBy { it.conceptId to it.direction }
 
                 val missingLearningBatch = mutableListOf<LearningStateEntity>()
+                val updatedLearningBatch = migratedLearningStates.values.toList()
                 val missingDiffBatch = mutableListOf<DifficultyStateEntity>()
                 val updatedDiffBatch = mutableListOf<DifficultyStateEntity>()
 
                 for (cid in allDbConceptIds) {
                     for (dir in listOf(CardDirection.NORMAL, CardDirection.REVERSE)) {
                         val key = cid to dir
-                        if (key !in existingLearningKeys) {
+                        if (key !in currentLearningKeys && key !in migratedLearningStates) {
                             missingLearningBatch.add(
                                 LearningStateEntity(
                                     id = UUID.randomUUID().toString(),
@@ -533,7 +658,7 @@ class SeedImporter(
                                 )
                             )
                         }
-                        val existingDiff = existingDiffMap[key]
+                        val existingDiff = migratedDiffStates[key] ?: currentDiffMap[key]
                         val seedDiff = seedDiffMap[key]
                         if (existingDiff == null) {
                             missingDiffBatch.add(
@@ -545,24 +670,32 @@ class SeedImporter(
                                 )
                             )
                         } else if (seedDiff != null) {
+                            val maxCurrent = if (seedDiff.current.ordinal >= existingDiff.current.ordinal) {
+                                seedDiff.current
+                            } else {
+                                existingDiff.current
+                            }
                             val shouldSyncDiff = if (key !in practicedLearningKeys) {
                                 existingDiff.current != seedDiff.current ||
                                     existingDiff.consecutiveCorrect != seedDiff.consecutiveCorrect ||
                                     existingDiff.consecutiveWrong != seedDiff.consecutiveWrong ||
-                                    existingDiff.hasReachedVeryHard != seedDiff.hasReachedVeryHard
+                                    existingDiff.hasReachedVeryHard != seedDiff.hasReachedVeryHard ||
+                                    key in migratedDiffStates
                             } else {
-                                existingDiff.current != seedDiff.current
+                                existingDiff.current != maxCurrent || key in migratedDiffStates
                             }
                             if (shouldSyncDiff) {
                                 updatedDiffBatch.add(
                                     existingDiff.copy(
-                                        current = seedDiff.current,
+                                        current = if (key !in practicedLearningKeys) seedDiff.current else maxCurrent,
                                         consecutiveCorrect = if (key !in practicedLearningKeys) seedDiff.consecutiveCorrect else existingDiff.consecutiveCorrect,
                                         consecutiveWrong = if (key !in practicedLearningKeys) seedDiff.consecutiveWrong else existingDiff.consecutiveWrong,
-                                        hasReachedVeryHard = existingDiff.hasReachedVeryHard || seedDiff.hasReachedVeryHard || seedDiff.current == VocabularyDifficulty.VERY_HARD
+                                        hasReachedVeryHard = existingDiff.hasReachedVeryHard || seedDiff.hasReachedVeryHard || maxCurrent == VocabularyDifficulty.VERY_HARD
                                     )
                                 )
                             }
+                        } else if (key in migratedDiffStates) {
+                            updatedDiffBatch.add(existingDiff)
                         }
                     }
                 }
@@ -570,6 +703,11 @@ class SeedImporter(
                 if (missingLearningBatch.isNotEmpty()) {
                     missingLearningBatch.chunked(1000).forEach {
                         learningDao.insertLearningStatesIgnore(it)
+                    }
+                }
+                if (updatedLearningBatch.isNotEmpty()) {
+                    updatedLearningBatch.chunked(1000).forEach {
+                        learningDao.insertLearningStates(it)
                     }
                 }
                 if (missingDiffBatch.isNotEmpty()) {

@@ -289,6 +289,7 @@ class VocabularyAuditService(
                     .thenBy { stageRank(it.learningState?.stage) }
                     .thenBy { it.learningState?.sm2Repetitions ?: 0 }
                     .thenBy { if (it.spanishAnalysis.articlePrefix != null && it.spanishAnalysis.isDefiniteArticle) 1 else 0 }
+                    .thenByDescending { it.concept.createdAt }
                     .thenBy { it.learningState?.updatedAt ?: it.concept.updatedAt }
             ) ?: items.first()
         }
