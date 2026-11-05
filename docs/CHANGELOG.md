@@ -2,6 +2,24 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۹۴.۰] - ۲۰۲۶-۱۱-۰۵ (۱۴۰۵/۰۸/۱۴)
+### همگام‌سازی کامل بانک واژگان (`vocabulary_seed.json`) با فایل پشتیبان جدید `docs/yadin-backup.json` (`12362_v1.94.0`)، افزودن ۳۱۴ مفهوم جدید، ادغام ۳۶ مفهوم تکراری، پاک‌سازی یادداشت‌های کاذب و ارتقای `SeedImporter.kt` (کد نسخه: ۱۰۸)
+- **بهبودها و همگام‌سازی بانک واژگان (Database & Seed Sync):**
+  - **همگام‌سازی با `docs/yadin-backup.json` در `app/src/main/assets/seed/vocabulary_seed.json`:**
+    - افزودن ۳۱۴ مفهوم واژگانی جدید ثبت‌شده در فایل پشتیبان کاربر به بانک پایه.
+    - شناسایی و ادغام ۳۶ مفهوم تکراری بین مفاهیم جدید (`EXTRA`) و شناسه‌های استاندارد بانک پایه (`SEED`) همراه با افزودن ۳۶ شناسه ادغام‌شده به لیست `obsoleteConceptIds` (مجموع **۱۵۹ شناسه منسوخ**).
+    - تثبیت بانک پایه روی **۱۲,۳۶۲ مفهوم فعال** (`WORD`: ۶,۱۰۳، `PHRASE`: ۴,۳۴۷، `SENTENCE`: ۱,۹۱۲)، **۲۶,۲۶۰ ترجمه فارسی پالایش‌شده**، **۳۸,۶۲۲ رکورد محتوا**، **۱۲,۲۱۴ نگاشت دسته‌بندی** و **۲۴,۷۲۴ وضعیت دشواری متقارن** (`NORMAL` و `REVERSE`).
+    - پاک‌سازی تمام یادداشت‌های کاذب `فرم جمع:` به‌جامانده از ادغام‌های نادرست قبلی (`la factura`، `India`، `Pareja`، `la música`، `La carretera`، `el objetivo`، `el bolso`، `el pasado` و ...) و پاک‌سازی ۲۱ یادداشت شماره‌دار/قدیمی مخدوش با حفظ کامل ۳۴ یادداشت جمع معتبر جدید (`Retrovisores`، `Ciclomotores`، `Patrullas escolares`، `Captafaros`، `Vehículos a motor` و ...) و تفکیک ترجمه‌های `El material` از `la materia`.
+- **ارتقای الگوریتم پالایش و ایمپورتر بانک پایه (`VocabularyAuditService.kt`، `TextUtilities.kt` و `SeedImporter.kt`):**
+  - افزودن لیست کلمات دارای تیلده تمایزدهنده اسپانیایی (`SPANISH_DIACRITICAL_TILDE_KEYS`: `cuando`/`cuándo`، `como`/`cómo`، `cual`/`cuál`، `que`/`qué`، `donde`/`dónde` و ...) در `VocabularyAuditService.kt` جهت جلوگیری از ادغام کلمات پرسشی و ربطی در گام بررسی اکسان‌ها.
+  - افزودن جفت متمایز `"material" to "materia"` به `SPANISH_DISTINCT_NEAR_SPELLING_PAIRS` و حذف `سازه|` از `PERSIAN_SILENT_HEH_EI_REGEX` در `TextUtilities.kt` جهت حفظ املای صحیح `سازهای` (مانند `سازهای بادی برنجی`).
+  - ارتقای `SeedImporter.kt` (`CURRENT_SEED_VERSION = "12362_v1.94.0"` و `totalCount < 12300`) برای حذف قطعی تمام شناسه‌های منسوخ `obsoleteConceptIds` موجود در دیتابیس گوشی و بازنویسی یادداشت‌های خودکار/قدیمی مخدوش با یادداشت‌های تمیز بانک پایه.
+  - افزودن تست واحد جامع `testSeedJsonHasZeroAuditIssues` در `VocabularyAuditServiceTest.kt` و حذف فایل موقت `docs/yadin-backup.json`.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D84` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.94.0` (کد نسخه: `108`).
+
+---
+
 ### [نسخه ۱.۹۳.۱] - ۲۰۲۶-۱۱-۰۵ (۱۴۰۵/۰۸/۱۴)
 ### رفع خطای تست واحد `VocabularyParserTest` در پایپ‌لاین GitHub Actions CI (`TextUtilities.kt`) (کد نسخه: ۱۰۷)
 - **اصلاحات و باگ‌زدایی (Fixes):**

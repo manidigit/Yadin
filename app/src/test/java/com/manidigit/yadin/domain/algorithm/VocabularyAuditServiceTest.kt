@@ -184,4 +184,104 @@ class VocabularyAuditServiceTest {
             assertEquals("Expected 0 unnormalized Spanish punctuation entries in ${file.path}", 0, remainingUnnormalized)
         }
     }
+
+    private fun unescapeJson(s: String): String {
+        return s.replace("\\\"", "\"")
+            .replace("\\n", "\n")
+            .replace("\\r", "\r")
+            .replace("\\t", "\t")
+            .replace("\\\\", "\\")
+    }
+
+    private fun parseWorkingListFromRawJson(raw: String): List<VocabularyAuditService.ConceptWorkingData> {
+        val contentBlockRegex = Regex(
+            """\{\s*"id":\s*"([^"]+)",\s*"conceptId":\s*"([^"]+)",\s*"languageCode":\s*"([^"]+)",\s*"text":\s*"((?:[^"\\]|\\.)*)",\s*"canonicalKey":\s*"((?:[^"\\]|\\.)*)",\s*"note":\s*(null|"(?:[^"\\]|\\.)*"),\s*"translationIndex":\s*(\d+)\s*\}"""
+        )
+        val contentsByConcept = mutableMapOf<String, MutableList<com.manidigit.yadin.data.local.entity.ContentEntity>>()
+        for (m in contentBlockRegex.findAll(raw)) {
+            val id = m.groupValues[1]
+            val cid = m.groupValues[2]
+            val lang = m.groupValues[3]
+            val text = unescapeJson(m.groupValues[4])
+            val cKey = unescapeJson(m.groupValues[5])
+            val noteRaw = m.groupValues[6]
+            val note = if (noteRaw == "null") null else unescapeJson(noteRaw.substring(1, noteRaw.length - 1))
+            val tIdx = m.groupValues[7].toIntOrNull() ?: 0
+            contentsByConcept.getOrPut(cid) { mutableListOf() }.add(
+                com.manidigit.yadin.data.local.entity.ContentEntity(
+                    id = id,
+                    conceptId = cid,
+                    languageCode = lang,
+                    text = text,
+                    canonicalKey = cKey,
+                    note = note,
+                    translationIndex = tIdx
+                )
+            )
+        }
+        return contentsByConcept.map { (cid, cts) ->
+            val source = cts.firstOrNull { it.languageCode == "es" } ?: cts.firstOrNull()
+            val targets = cts.filter { it.id != source?.id }.sortedBy { it.translationIndex }
+            val rawSource = source?.text.orEmpty()
+            val cleaned = VocabularyAuditService.cleanAndExtractWord(rawSource)
+            VocabularyAuditService.ConceptWorkingData(
+                concept = com.manidigit.yadin.data.local.entity.ConceptEntity(
+                    id = cid,
+                    categoryId = null,
+                    entryType = com.manidigit.yadin.domain.model.EntryType.WORD,
+                    active = true,
+                    createdAt = 0L,
+                    updatedAt = 0L
+                ),
+                sourceContent = source,
+                targetContents = targets,
+                learningState = null,
+                allLearningStates = emptyList(),
+                allDifficultyStates = emptyList(),
+                categoryIds = emptyList(),
+                cleanedResult = cleaned,
+                spanishAnalysis = com.manidigit.yadin.domain.text.TextUtilities.analyzeSpanishHeadword(cleaned.cleanSourceText)
+            )
+        }
+    }
+
+    @Test
+    fun testSeedJsonHasZeroAuditIssues() {
+        val seedFile = listOf(
+            java.io.File("src/main/assets/seed/vocabulary_seed.json"),
+            java.io.File("app/src/main/assets/seed/vocabulary_seed.json")
+        ).firstOrNull { it.exists() && it.isFile } ?: return
+
+        val workingList = parseWorkingListFromRawJson(seedFile.readText(Charsets.UTF_8))
+        var manualReviewCount = 0
+        var autoCleanCount = 0
+        for (item in workingList) {
+            val cid = item.concept.id
+            val rawSource = item.sourceContent?.text.orEmpty()
+            val rawTrans = item.targetContents.map { it.text }
+            val validation = FieldValidationEngine.validateRecord(rawSource, rawTrans, item.sourceContent?.note)
+            val normTargets = rawTrans.map { com.manidigit.yadin.domain.text.TextUtilities.normalizePersianTranslation(it, item.cleanedResult.cleanSourceText).first }
+            val persianOrthographyChanged = normTargets != rawTrans
+            if (validation.action == com.manidigit.yadin.domain.model.ReviewAction.MANUAL_REVIEW || validation.confidence < 0.98) {
+                manualReviewCount++
+                println("MANUAL_REVIEW: $cid | $rawSource -> $rawTrans | reason=${validation.reason}")
+            } else if (validation.action == com.manidigit.yadin.domain.model.ReviewAction.MOVE_TO_NOTE || validation.action == com.manidigit.yadin.domain.model.ReviewAction.SUGGEST_CORRECTION || persianOrthographyChanged || item.cleanedResult.wasModified) {
+                autoCleanCount++
+                println("AUTO_CLEAN: $cid | $rawSource -> $rawTrans | norm=$normTargets | cleanEs=${item.cleanedResult.cleanSourceText} | action=${validation.action}")
+            }
+        }
+
+        val partition = VocabularyAuditService.partitionDuplicateGroups(workingList)
+        println("SEED_AUDIT_SUMMARY: total=${workingList.size}, definite=${partition.definiteMergeGroups.size}, suspicious=${partition.suspiciousGroups.size}, manualReview=$manualReviewCount, autoClean=$autoCleanCount")
+        partition.definiteMergeGroups.forEachIndexed { idx, grp ->
+            println("DEFINITE[$idx]: " + grp.joinToString(" + ") { "${it.concept.id}(${it.sourceContent?.text} -> ${it.targetContents.map { t -> t.text }})" })
+        }
+        partition.suspiciousGroups.forEachIndexed { idx, grp ->
+            println("SUSPICIOUS[$idx]: " + grp.joinToString(" vs ") { "${it.concept.id}(${it.sourceContent?.text} -> ${it.targetContents.map { t -> t.text }})" })
+        }
+        assertEquals("Expected 0 definite merge groups in vocabulary_seed.json", 0, partition.definiteMergeGroups.size)
+        assertEquals("Expected 0 suspicious groups in vocabulary_seed.json", 0, partition.suspiciousGroups.size)
+        assertEquals("Expected 0 manual review items in vocabulary_seed.json", 0, manualReviewCount)
+        assertEquals("Expected 0 auto-clean items in vocabulary_seed.json", 0, autoCleanCount)
+    }
 }

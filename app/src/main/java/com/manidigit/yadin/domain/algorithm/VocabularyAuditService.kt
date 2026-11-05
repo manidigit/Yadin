@@ -263,9 +263,341 @@ class VocabularyAuditService(
             }
             return res
         }
+
+        internal fun stageRank(stage: Stage?): Int = when (stage) {
+            Stage.LEARNED -> 4
+            Stage.MONTHLY -> 3
+            Stage.WEEKLY -> 2
+            Stage.DAILY -> 1
+            null -> 0
+        }
+
+        internal fun isPluralInGroup(candidate: ConceptWorkingData, group: List<ConceptWorkingData>): Boolean {
+            return group.any { other ->
+                other.concept.id != candidate.concept.id &&
+                    TextUtilities.isSpanishPhrasePluralOf(
+                        pluralAnalysis = candidate.spanishAnalysis,
+                        singularAnalysis = other.spanishAnalysis,
+                        pluralPersianTranslations = candidate.allPersianTranslations()
+                    )
+            }
+        }
+
+        internal fun selectPrimaryConcept(items: List<ConceptWorkingData>): ConceptWorkingData {
+            return items.maxWithOrNull(
+                compareBy<ConceptWorkingData> { if (!isPluralInGroup(it, items)) 1 else 0 }
+                    .thenBy { stageRank(it.learningState?.stage) }
+                    .thenBy { it.learningState?.sm2Repetitions ?: 0 }
+                    .thenBy { if (it.spanishAnalysis.articlePrefix != null && it.spanishAnalysis.isDefiniteArticle) 1 else 0 }
+                    .thenBy { it.learningState?.updatedAt ?: it.concept.updatedAt }
+            ) ?: items.first()
+        }
+
+        internal fun hasGroupTranslationOverlap(items: List<ConceptWorkingData>): Boolean {
+            if (items.size <= 1) return false
+            for (i in items.indices) {
+                for (j in i + 1 until items.size) {
+                    if (TextUtilities.hasPersianTranslationOverlap(
+                            items[i].allPersianTranslations(),
+                            items[j].allPersianTranslations()
+                        )
+                    ) {
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+
+        private val SUBJECT_PRONOUN_PREFIXES = setOf(
+            "yo", "tu", "el", "ella", "usted",
+            "nosotros", "nosotras", "vosotros", "vosotras",
+            "ellos", "ellas", "ustedes"
+        )
+
+        private val SPANISH_DIACRITICAL_TILDE_KEYS = setOf(
+            "que", "como", "cuando", "donde", "adonde",
+            "cual", "cuales", "quien", "quienes",
+            "cuanto", "cuanta", "cuantos", "cuantas",
+            "si", "mas", "aun", "de", "se", "tu", "mi", "el", "te", "solo"
+        )
+
+        private fun isSubjectPronounVerbDrill(item: ConceptWorkingData): Boolean {
+            val words = item.spanishAnalysis.accentInsensitiveKey.split(Regex("\\s+")).filter { it.isNotBlank() }
+            return words.size >= 2 && words.first() in SUBJECT_PRONOUN_PREFIXES
+        }
+
+        internal fun hasToneConflict(items: List<ConceptWorkingData>): Boolean {
+            val hasEllipsisItem = items.any { it.spanishAnalysis.hasEllipsis }
+            val hasExclItem = items.any { it.spanishAnalysis.hasExclamation }
+            val hasNonExclItem = items.any { !it.spanishAnalysis.hasExclamation }
+            val hasQuestItem = items.any { it.spanishAnalysis.hasQuestion }
+            val hasNonQuestItem = items.any { !it.spanishAnalysis.hasQuestion }
+            if (hasExclItem && hasNonExclItem) return true
+            if (hasQuestItem && hasNonQuestItem) return true
+            if (hasEllipsisItem && (hasExclItem || hasQuestItem)) return true
+            val hasNonEllipsisItem = items.any { !it.spanishAnalysis.hasEllipsis }
+            if (hasEllipsisItem && hasNonEllipsisItem && !hasGroupTranslationOverlap(items)) return true
+            return false
+        }
+
+        /**
+         * تفکیک هوشمند واژگان به سه گروه:
+         * ۱. تکراری‌های قطعی قابل ادغام خودکار (مثلاً El trampolín و Trampolín، فرم‌های اسلش‌دار هم‌معنی مثل Claro / clara و claro، یا تفاوت نقطه پایانی)
+         * ۲. تکراری‌های مشکوک نیازمند بررسی دستی (مثلاً تضاد جنسیت El در برابر La با هم‌پوشانی معنایی، یا ترجمه فارسی کاملاً یکسان با املای نزدیک اسپانیایی)
+         * ۳. واژگان غیرتکراری
+         */
+        internal fun partitionDuplicateGroups(workingList: List<ConceptWorkingData>): DuplicatePartitionResult {
+            val definiteMergeGroups = mutableListOf<List<ConceptWorkingData>>()
+            val suspiciousGroups = mutableListOf<List<ConceptWorkingData>>()
+            val mergedConceptIds = mutableSetOf<String>()
+            val suspiciousConceptIds = mutableSetOf<String>()
+
+            // ۱. گروه‌بندی بر اساس کلید اسپانیایی بدون حرف تعریف (با حفظ حساسیت به آکسان)
+            val byDedupeKey = workingList
+                .filter { it.spanishAnalysis.dedupeKey.isNotBlank() }
+                .groupBy { it.spanishAnalysis.dedupeKey }
+
+            // ۲. بررسی گروه‌هایی که فقط در آکسان/تیلده تفاوت دارند (accentInsensitiveKey یکسان ولی dedupeKey متفاوت)
+            val byAccentInsensitive = byDedupeKey.entries
+                .filter { it.key.length >= 3 }
+                .groupBy { (_, list) -> list.first().spanishAnalysis.accentInsensitiveKey }
+
+            val processedDedupeKeys = mutableSetOf<String>()
+
+            for ((accentKey, bucketEntries) in byAccentInsensitive) {
+                if (accentKey.isBlank() || bucketEntries.size <= 1 || accentKey in SPANISH_DIACRITICAL_TILDE_KEYS) continue
+                val combinedItems = bucketEntries.flatMap { it.value }
+                val hasMasc = combinedItems.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.MASCULINE }
+                val hasFem = combinedItems.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.FEMININE }
+                val hasGenderConflict = hasMasc && hasFem && combinedItems.none { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
+                val toneConflict = hasToneConflict(combinedItems)
+                val hasOverlap = hasGroupTranslationOverlap(combinedItems)
+
+                val isMultiWordPhrase = accentKey.split(Regex("\\s+")).filter { it.isNotBlank() }.size >= 3
+                if (!hasGenderConflict && !toneConflict && (hasOverlap || isMultiWordPhrase)) {
+                    definiteMergeGroups.add(combinedItems)
+                    combinedItems.forEach { mergedConceptIds.add(it.concept.id) }
+                    bucketEntries.forEach { processedDedupeKeys.add(it.key) }
+                } else if (!toneConflict && hasOverlap) {
+                    suspiciousGroups.add(combinedItems)
+                    combinedItems.forEach { suspiciousConceptIds.add(it.concept.id) }
+                }
+            }
+
+            // ۳. بررسی گروه‌های هم‌کلید (dedupeKey یکسان، مانند El trampolín و Trampolín یا Vale. و Vale...)
+            for ((dedupeKey, items) in byDedupeKey) {
+                if (dedupeKey in processedDedupeKeys || items.size <= 1) continue
+
+                val hasMasc = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.MASCULINE }
+                val hasFem = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.FEMININE }
+                val hasBothTag = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
+                val hasGenderConflict = hasMasc && hasFem && !hasBothTag
+                val toneConflict = hasToneConflict(items)
+                val hasOverlap = hasGroupTranslationOverlap(items)
+
+                val hasOnlyIndefiniteVsBare = items.none { it.spanishAnalysis.isDefiniteArticle } &&
+                    items.any { it.spanishAnalysis.articlePrefix != null && !it.spanishAnalysis.isDefiniteArticle } &&
+                    items.any { it.spanishAnalysis.articlePrefix == null }
+
+                val isDefiniteDuplicate = when {
+                    toneConflict -> false
+                    hasGenderConflict -> hasOverlap
+                    hasOnlyIndefiniteVsBare -> hasOverlap
+                    else -> true
+                }
+
+                if (isDefiniteDuplicate) {
+                    definiteMergeGroups.add(items)
+                    items.forEach { mergedConceptIds.add(it.concept.id) }
+                } else if (!toneConflict && hasOverlap) {
+                    suspiciousGroups.add(items)
+                    items.forEach { suspiciousConceptIds.add(it.concept.id) }
+                }
+            }
+
+            // ۴. بررسی فرم‌های اسلش‌دار (مانند Claro / clara یا el sobrino / la sobrina) در برابر فرم‌های تکی هم‌ریشه
+            val slashItems = workingList.filter {
+                it.spanishAnalysis.isSlashDualForm &&
+                    it.spanishAnalysis.slashVariantKeys.size >= 2 &&
+                    it.concept.id !in mergedConceptIds
+            }
+            for (slashItem in slashItems) {
+                if (slashItem.concept.id in mergedConceptIds) continue
+                val vKeys = slashItem.spanishAnalysis.slashVariantKeys
+                val isProtectedHomographSlash = vKeys.size == 2 && TextUtilities.isFalseSpanishGenderPair(vKeys[0], vKeys[1])
+                if (isProtectedHomographSlash) continue
+
+                val matchedVariants = vKeys
+                    .flatMap { variantKey -> byDedupeKey[variantKey].orEmpty() }
+                    .filter { candidate ->
+                        candidate.concept.id != slashItem.concept.id &&
+                            candidate.concept.id !in mergedConceptIds &&
+                            !hasToneConflict(listOf(slashItem, candidate))
+                    }
+                    .distinctBy { it.concept.id }
+
+                if (matchedVariants.isNotEmpty()) {
+                    val combined = listOf(slashItem) + matchedVariants
+                    if (!hasToneConflict(combined) && hasGroupTranslationOverlap(combined)) {
+                        definiteMergeGroups.add(combined)
+                        combined.forEach { mergedConceptIds.add(it.concept.id) }
+                    }
+                }
+            }
+
+            // ۴.۵. ادغام خودکار واژگان و عبارات مفرد و جمع اسپانیایی (مانند Testigo و Testigos یا La luz de emergencia و Luces de emergencia)
+            val byAccentKeyAll = mutableMapOf<String, MutableList<ConceptWorkingData>>()
+            for (wItem in workingList) {
+                val mainKey = wItem.spanishAnalysis.accentInsensitiveKey
+                if (mainKey.isNotBlank()) {
+                    byAccentKeyAll.getOrPut(mainKey) { mutableListOf() }.add(wItem)
+                }
+                for (sv in wItem.spanishAnalysis.slashVariantKeys) {
+                    val svAccentKey = TextUtilities.analyzeSpanishHeadword(sv).accentInsensitiveKey
+                    if (svAccentKey.isNotBlank()) {
+                        val bucket = byAccentKeyAll.getOrPut(svAccentKey) { mutableListOf() }
+                        if (bucket.none { it.concept.id == wItem.concept.id }) {
+                            bucket.add(wItem)
+                        }
+                    }
+                }
+            }
+
+            val singularIdToPlurals = mutableMapOf<String, MutableList<ConceptWorkingData>>()
+            val candidatePluralItems = workingList.filter { it.concept.id !in mergedConceptIds }
+            for (pluralItem in candidatePluralItems) {
+                if (pluralItem.concept.id in mergedConceptIds) continue
+                val candidateSingKeys = TextUtilities.spanishSingularCandidateKeys(pluralItem.spanishAnalysis)
+                if (candidateSingKeys.isEmpty()) continue
+
+                val matchedSingulars = candidateSingKeys
+                    .flatMap { singKey -> byAccentKeyAll[singKey].orEmpty() }
+                    .filter { singItem ->
+                        singItem.concept.id != pluralItem.concept.id &&
+                            TextUtilities.isSpanishPhrasePluralOf(
+                                pluralAnalysis = pluralItem.spanishAnalysis,
+                                singularAnalysis = singItem.spanishAnalysis,
+                                pluralPersianTranslations = pluralItem.allPersianTranslations()
+                            ) &&
+                            !hasToneConflict(listOf(singItem, pluralItem))
+                    }
+                    .distinctBy { it.concept.id }
+
+                val bestSingular = matchedSingulars.firstOrNull()
+                if (bestSingular != null) {
+                    val existingGroupIdx = definiteMergeGroups.indexOfFirst { grp ->
+                        grp.any { it.concept.id == bestSingular.concept.id }
+                    }
+                    if (existingGroupIdx >= 0) {
+                        val existingGroup = definiteMergeGroups[existingGroupIdx]
+                        if (existingGroup.none { it.concept.id == pluralItem.concept.id }) {
+                            definiteMergeGroups[existingGroupIdx] = existingGroup + pluralItem
+                            mergedConceptIds.add(pluralItem.concept.id)
+                        }
+                    } else if (bestSingular.concept.id !in mergedConceptIds) {
+                        singularIdToPlurals.getOrPut(bestSingular.concept.id) { mutableListOf() }.add(pluralItem)
+                    }
+                }
+            }
+
+            val workingByIdMap = workingList.associateBy { it.concept.id }
+            for ((singId, plurals) in singularIdToPlurals) {
+                val singItem = workingByIdMap[singId] ?: continue
+                if (singItem.concept.id in mergedConceptIds) continue
+                val validPlurals = plurals.filter { it.concept.id !in mergedConceptIds }.distinctBy { it.concept.id }
+                if (validPlurals.isNotEmpty()) {
+                    val combined = listOf(singItem) + validPlurals
+                    definiteMergeGroups.add(combined)
+                    combined.forEach { mergedConceptIds.add(it.concept.id) }
+                }
+            }
+
+            // ۴.۶. ادغام خودکار جفت‌واژگان مذکر و مؤنث اسپانیایی (مانند Rojo و Roja یا El director و la directora) با فرمت اسلش (/)
+            val candidateGenderItems = workingList.filter { it.concept.id !in mergedConceptIds }
+            for (item in candidateGenderItems) {
+                if (item.concept.id in mergedConceptIds) continue
+                val partnerKeys = TextUtilities.spanishGenderPartnerCandidateKeys(item.spanishAnalysis)
+                if (partnerKeys.isEmpty()) continue
+
+                val matchedPartners = partnerKeys
+                    .flatMap { pk -> byAccentKeyAll[pk].orEmpty() }
+                    .filter { partner ->
+                        partner.concept.id != item.concept.id &&
+                            partner.concept.id !in mergedConceptIds &&
+                            TextUtilities.isSpanishMasculineFemininePair(
+                                firstAnalysis = item.spanishAnalysis,
+                                secondAnalysis = partner.spanishAnalysis,
+                                firstTranslations = item.allPersianTranslations(),
+                                secondTranslations = partner.allPersianTranslations()
+                            ) &&
+                            !hasToneConflict(listOf(item, partner))
+                    }
+                    .distinctBy { it.concept.id }
+
+                if (matchedPartners.isNotEmpty()) {
+                    val combined = (listOf(item) + matchedPartners).distinctBy { it.concept.id }
+                    definiteMergeGroups.add(combined)
+                    combined.forEach { mergedConceptIds.add(it.concept.id) }
+                }
+            }
+
+            // ۵. یافتن کارت‌های مشکوک با ترجمه فارسی کاملاً یکسان و املای نزدیک اسپانیایی (مانند claro/claros یا tranquilo/tranquila)
+            val unmergedItems = workingList.filter { it.concept.id !in mergedConceptIds }
+            val byPersianKey = mutableMapOf<String, MutableList<ConceptWorkingData>>()
+            for (item in unmergedItems) {
+                if (isSubjectPronounVerbDrill(item) || item.spanishAnalysis.isSlashDualForm) continue
+                val faKeys = item.allPersianTranslations()
+                    .map { TextUtilities.persianDedupeKey(it) }
+                    .filter { it.length >= 2 }
+                    .distinct()
+                for (fk in faKeys) {
+                    byPersianKey.getOrPut(fk) { mutableListOf() }.add(item)
+                }
+            }
+
+            val pairedNearKeys = mutableSetOf<String>()
+            for ((_, bucket) in byPersianKey) {
+                if (bucket.size !in 2..10) continue
+                for (i in bucket.indices) {
+                    for (j in i + 1 until bucket.size) {
+                        val a = bucket[i]
+                        val b = bucket[j]
+                        if (a.concept.id == b.concept.id) continue
+                        val pairId = if (a.concept.id < b.concept.id) "${a.concept.id}_${b.concept.id}" else "${b.concept.id}_${a.concept.id}"
+                        if (pairId in pairedNearKeys) continue
+                        val keyA = a.spanishAnalysis.accentInsensitiveKey
+                        val keyB = b.spanishAnalysis.accentInsensitiveKey
+                        if (hasToneConflict(listOf(a, b)) || TextUtilities.isFalseSpanishGenderPair(keyA, keyB)) continue
+                        val aIsBareInfinitive = a.spanishAnalysis.articlePrefix == null && (keyA.endsWith("ar") || keyA.endsWith("er") || keyA.endsWith("ir"))
+                        val bIsBareInfinitive = b.spanishAnalysis.articlePrefix == null && (keyB.endsWith("ar") || keyB.endsWith("er") || keyB.endsWith("ir"))
+                        if ((aIsBareInfinitive && b.spanishAnalysis.articlePrefix != null) ||
+                            (bIsBareInfinitive && a.spanishAnalysis.articlePrefix != null)
+                        ) {
+                            continue
+                        }
+                        if (TextUtilities.areSpanishNearSpellingVariants(keyA, keyB)) {
+                            pairedNearKeys.add(pairId)
+                            if (a.concept.id !in suspiciousConceptIds || b.concept.id !in suspiciousConceptIds) {
+                                suspiciousGroups.add(listOf(a, b))
+                                suspiciousConceptIds.add(a.concept.id)
+                                suspiciousConceptIds.add(b.concept.id)
+                            }
+                        }
+                    }
+                }
+            }
+
+            val singleItems = workingList.filter { it.concept.id !in mergedConceptIds }
+            return DuplicatePartitionResult(
+                definiteMergeGroups = definiteMergeGroups,
+                suspiciousGroups = suspiciousGroups,
+                singleItems = singleItems
+            )
+        }
     }
 
-    private data class ConceptWorkingData(
+    internal data class ConceptWorkingData(
         val concept: ConceptEntity,
         val sourceContent: ContentEntity?,
         val targetContents: List<ContentEntity>,
@@ -280,336 +612,11 @@ class VocabularyAuditService(
             (targetContents.map { it.text } + cleanedResult.extractedTranslations).filter { it.isNotBlank() }
     }
 
-    private data class DuplicatePartitionResult(
+    internal data class DuplicatePartitionResult(
         val definiteMergeGroups: List<List<ConceptWorkingData>>,
         val suspiciousGroups: List<List<ConceptWorkingData>>,
         val singleItems: List<ConceptWorkingData>
     )
-
-    private fun stageRank(stage: Stage?): Int = when (stage) {
-        Stage.LEARNED -> 4
-        Stage.MONTHLY -> 3
-        Stage.WEEKLY -> 2
-        Stage.DAILY -> 1
-        null -> 0
-    }
-
-    private fun isPluralInGroup(candidate: ConceptWorkingData, group: List<ConceptWorkingData>): Boolean {
-        return group.any { other ->
-            other.concept.id != candidate.concept.id &&
-                TextUtilities.isSpanishPhrasePluralOf(
-                    pluralAnalysis = candidate.spanishAnalysis,
-                    singularAnalysis = other.spanishAnalysis,
-                    pluralPersianTranslations = candidate.allPersianTranslations()
-                )
-        }
-    }
-
-    private fun selectPrimaryConcept(items: List<ConceptWorkingData>): ConceptWorkingData {
-        return items.maxWithOrNull(
-            compareBy<ConceptWorkingData> { if (!isPluralInGroup(it, items)) 1 else 0 }
-                .thenBy { stageRank(it.learningState?.stage) }
-                .thenBy { it.learningState?.sm2Repetitions ?: 0 }
-                .thenBy { if (it.spanishAnalysis.articlePrefix != null && it.spanishAnalysis.isDefiniteArticle) 1 else 0 }
-                .thenBy { it.learningState?.updatedAt ?: it.concept.updatedAt }
-        ) ?: items.first()
-    }
-
-    private fun hasGroupTranslationOverlap(items: List<ConceptWorkingData>): Boolean {
-        if (items.size <= 1) return false
-        for (i in items.indices) {
-            for (j in i + 1 until items.size) {
-                if (TextUtilities.hasPersianTranslationOverlap(
-                        items[i].allPersianTranslations(),
-                        items[j].allPersianTranslations()
-                    )
-                ) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
-
-    private val SUBJECT_PRONOUN_PREFIXES = setOf(
-        "yo", "tu", "el", "ella", "usted",
-        "nosotros", "nosotras", "vosotros", "vosotras",
-        "ellos", "ellas", "ustedes"
-    )
-
-    private fun isSubjectPronounVerbDrill(item: ConceptWorkingData): Boolean {
-        val words = item.spanishAnalysis.accentInsensitiveKey.split(Regex("\\s+")).filter { it.isNotBlank() }
-        return words.size >= 2 && words.first() in SUBJECT_PRONOUN_PREFIXES
-    }
-
-    private fun hasToneConflict(items: List<ConceptWorkingData>): Boolean {
-        val hasEllipsisItem = items.any { it.spanishAnalysis.hasEllipsis }
-        val hasExclItem = items.any { it.spanishAnalysis.hasExclamation }
-        val hasNonExclItem = items.any { !it.spanishAnalysis.hasExclamation }
-        val hasQuestItem = items.any { it.spanishAnalysis.hasQuestion }
-        val hasNonQuestItem = items.any { !it.spanishAnalysis.hasQuestion }
-        if (hasExclItem && hasNonExclItem) return true
-        if (hasQuestItem && hasNonQuestItem) return true
-        if (hasEllipsisItem && (hasExclItem || hasQuestItem)) return true
-        val hasNonEllipsisItem = items.any { !it.spanishAnalysis.hasEllipsis }
-        if (hasEllipsisItem && hasNonEllipsisItem && !hasGroupTranslationOverlap(items)) return true
-        return false
-    }
-
-    /**
-     * تفکیک هوشمند واژگان به سه گروه:
-     * ۱. تکراری‌های قطعی قابل ادغام خودکار (مثلاً El trampolín و Trampolín، فرم‌های اسلش‌دار هم‌معنی مثل Claro / clara و claro، یا تفاوت نقطه پایانی)
-     * ۲. تکراری‌های مشکوک نیازمند بررسی دستی (مثلاً تضاد جنسیت El در برابر La با هم‌پوشانی معنایی، یا ترجمه فارسی کاملاً یکسان با املای نزدیک اسپانیایی)
-     * ۳. واژگان غیرتکراری
-     */
-    private fun partitionDuplicateGroups(workingList: List<ConceptWorkingData>): DuplicatePartitionResult {
-        val definiteMergeGroups = mutableListOf<List<ConceptWorkingData>>()
-        val suspiciousGroups = mutableListOf<List<ConceptWorkingData>>()
-        val mergedConceptIds = mutableSetOf<String>()
-        val suspiciousConceptIds = mutableSetOf<String>()
-
-        // ۱. گروه‌بندی بر اساس کلید اسپانیایی بدون حرف تعریف (با حفظ حساسیت به آکسان)
-        val byDedupeKey = workingList
-            .filter { it.spanishAnalysis.dedupeKey.isNotBlank() }
-            .groupBy { it.spanishAnalysis.dedupeKey }
-
-        // ۲. بررسی گروه‌هایی که فقط در آکسان/تیلده تفاوت دارند (accentInsensitiveKey یکسان ولی dedupeKey متفاوت)
-        val byAccentInsensitive = byDedupeKey.entries
-            .filter { it.key.length >= 3 }
-            .groupBy { (_, list) -> list.first().spanishAnalysis.accentInsensitiveKey }
-
-        val processedDedupeKeys = mutableSetOf<String>()
-
-        for ((accentKey, bucketEntries) in byAccentInsensitive) {
-            if (accentKey.isBlank() || bucketEntries.size <= 1) continue
-            val combinedItems = bucketEntries.flatMap { it.value }
-            val hasMasc = combinedItems.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.MASCULINE }
-            val hasFem = combinedItems.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.FEMININE }
-            val hasGenderConflict = hasMasc && hasFem && combinedItems.none { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
-            val toneConflict = hasToneConflict(combinedItems)
-            val hasOverlap = hasGroupTranslationOverlap(combinedItems)
-
-            val isMultiWordPhrase = accentKey.split(Regex("\\s+")).filter { it.isNotBlank() }.size >= 3
-            if (!hasGenderConflict && !toneConflict && (hasOverlap || isMultiWordPhrase)) {
-                definiteMergeGroups.add(combinedItems)
-                combinedItems.forEach { mergedConceptIds.add(it.concept.id) }
-                bucketEntries.forEach { processedDedupeKeys.add(it.key) }
-            } else if (!toneConflict && hasOverlap) {
-                suspiciousGroups.add(combinedItems)
-                combinedItems.forEach { suspiciousConceptIds.add(it.concept.id) }
-            }
-        }
-
-        // ۳. بررسی گروه‌های هم‌کلید (dedupeKey یکسان، مانند El trampolín و Trampolín یا Vale. و Vale...)
-        for ((dedupeKey, items) in byDedupeKey) {
-            if (dedupeKey in processedDedupeKeys || items.size <= 1) continue
-
-            val hasMasc = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.MASCULINE }
-            val hasFem = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.FEMININE }
-            val hasBothTag = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
-            val hasGenderConflict = hasMasc && hasFem && !hasBothTag
-            val toneConflict = hasToneConflict(items)
-            val hasOverlap = hasGroupTranslationOverlap(items)
-
-            val hasOnlyIndefiniteVsBare = items.none { it.spanishAnalysis.isDefiniteArticle } &&
-                items.any { it.spanishAnalysis.articlePrefix != null && !it.spanishAnalysis.isDefiniteArticle } &&
-                items.any { it.spanishAnalysis.articlePrefix == null }
-
-            val isDefiniteDuplicate = when {
-                toneConflict -> false
-                hasGenderConflict -> hasOverlap
-                hasOnlyIndefiniteVsBare -> hasOverlap
-                else -> true
-            }
-
-            if (isDefiniteDuplicate) {
-                definiteMergeGroups.add(items)
-                items.forEach { mergedConceptIds.add(it.concept.id) }
-            } else if (!toneConflict && hasOverlap) {
-                suspiciousGroups.add(items)
-                items.forEach { suspiciousConceptIds.add(it.concept.id) }
-            }
-        }
-
-        // ۴. بررسی فرم‌های اسلش‌دار (مانند Claro / clara یا el sobrino / la sobrina) در برابر فرم‌های تکی هم‌ریشه
-        val slashItems = workingList.filter {
-            it.spanishAnalysis.isSlashDualForm &&
-                it.spanishAnalysis.slashVariantKeys.size >= 2 &&
-                it.concept.id !in mergedConceptIds
-        }
-        for (slashItem in slashItems) {
-            if (slashItem.concept.id in mergedConceptIds) continue
-            val vKeys = slashItem.spanishAnalysis.slashVariantKeys
-            val isProtectedHomographSlash = vKeys.size == 2 && TextUtilities.isFalseSpanishGenderPair(vKeys[0], vKeys[1])
-            if (isProtectedHomographSlash) continue
-
-            val matchedVariants = vKeys
-                .flatMap { variantKey -> byDedupeKey[variantKey].orEmpty() }
-                .filter { candidate ->
-                    candidate.concept.id != slashItem.concept.id &&
-                        candidate.concept.id !in mergedConceptIds &&
-                        !hasToneConflict(listOf(slashItem, candidate))
-                }
-                .distinctBy { it.concept.id }
-
-            if (matchedVariants.isNotEmpty()) {
-                val combined = listOf(slashItem) + matchedVariants
-                if (!hasToneConflict(combined) && hasGroupTranslationOverlap(combined)) {
-                    definiteMergeGroups.add(combined)
-                    combined.forEach { mergedConceptIds.add(it.concept.id) }
-                }
-            }
-        }
-
-        // ۴.۵. ادغام خودکار واژگان و عبارات مفرد و جمع اسپانیایی (مانند Testigo و Testigos یا La luz de emergencia و Luces de emergencia)
-        val byAccentKeyAll = mutableMapOf<String, MutableList<ConceptWorkingData>>()
-        for (wItem in workingList) {
-            val mainKey = wItem.spanishAnalysis.accentInsensitiveKey
-            if (mainKey.isNotBlank()) {
-                byAccentKeyAll.getOrPut(mainKey) { mutableListOf() }.add(wItem)
-            }
-            for (sv in wItem.spanishAnalysis.slashVariantKeys) {
-                val svAccentKey = TextUtilities.analyzeSpanishHeadword(sv).accentInsensitiveKey
-                if (svAccentKey.isNotBlank()) {
-                    val bucket = byAccentKeyAll.getOrPut(svAccentKey) { mutableListOf() }
-                    if (bucket.none { it.concept.id == wItem.concept.id }) {
-                        bucket.add(wItem)
-                    }
-                }
-            }
-        }
-
-        val singularIdToPlurals = mutableMapOf<String, MutableList<ConceptWorkingData>>()
-        val candidatePluralItems = workingList.filter { it.concept.id !in mergedConceptIds }
-        for (pluralItem in candidatePluralItems) {
-            if (pluralItem.concept.id in mergedConceptIds) continue
-            val candidateSingKeys = TextUtilities.spanishSingularCandidateKeys(pluralItem.spanishAnalysis)
-            if (candidateSingKeys.isEmpty()) continue
-
-            val matchedSingulars = candidateSingKeys
-                .flatMap { singKey -> byAccentKeyAll[singKey].orEmpty() }
-                .filter { singItem ->
-                    singItem.concept.id != pluralItem.concept.id &&
-                        TextUtilities.isSpanishPhrasePluralOf(
-                            pluralAnalysis = pluralItem.spanishAnalysis,
-                            singularAnalysis = singItem.spanishAnalysis,
-                            pluralPersianTranslations = pluralItem.allPersianTranslations()
-                        ) &&
-                        !hasToneConflict(listOf(singItem, pluralItem))
-                }
-                .distinctBy { it.concept.id }
-
-            val bestSingular = matchedSingulars.firstOrNull()
-            if (bestSingular != null) {
-                val existingGroupIdx = definiteMergeGroups.indexOfFirst { grp ->
-                    grp.any { it.concept.id == bestSingular.concept.id }
-                }
-                if (existingGroupIdx >= 0) {
-                    val existingGroup = definiteMergeGroups[existingGroupIdx]
-                    if (existingGroup.none { it.concept.id == pluralItem.concept.id }) {
-                        definiteMergeGroups[existingGroupIdx] = existingGroup + pluralItem
-                        mergedConceptIds.add(pluralItem.concept.id)
-                    }
-                } else if (bestSingular.concept.id !in mergedConceptIds) {
-                    singularIdToPlurals.getOrPut(bestSingular.concept.id) { mutableListOf() }.add(pluralItem)
-                }
-            }
-        }
-
-        val workingByIdMap = workingList.associateBy { it.concept.id }
-        for ((singId, plurals) in singularIdToPlurals) {
-            val singItem = workingByIdMap[singId] ?: continue
-            if (singItem.concept.id in mergedConceptIds) continue
-            val validPlurals = plurals.filter { it.concept.id !in mergedConceptIds }.distinctBy { it.concept.id }
-            if (validPlurals.isNotEmpty()) {
-                val combined = listOf(singItem) + validPlurals
-                definiteMergeGroups.add(combined)
-                combined.forEach { mergedConceptIds.add(it.concept.id) }
-            }
-        }
-
-        // ۴.۶. ادغام خودکار جفت‌واژگان مذکر و مؤنث اسپانیایی (مانند Rojo و Roja یا El director و la directora) با فرمت اسلش (/)
-        val candidateGenderItems = workingList.filter { it.concept.id !in mergedConceptIds }
-        for (item in candidateGenderItems) {
-            if (item.concept.id in mergedConceptIds) continue
-            val partnerKeys = TextUtilities.spanishGenderPartnerCandidateKeys(item.spanishAnalysis)
-            if (partnerKeys.isEmpty()) continue
-
-            val matchedPartners = partnerKeys
-                .flatMap { pk -> byAccentKeyAll[pk].orEmpty() }
-                .filter { partner ->
-                    partner.concept.id != item.concept.id &&
-                        partner.concept.id !in mergedConceptIds &&
-                        TextUtilities.isSpanishMasculineFemininePair(
-                            firstAnalysis = item.spanishAnalysis,
-                            secondAnalysis = partner.spanishAnalysis,
-                            firstTranslations = item.allPersianTranslations(),
-                            secondTranslations = partner.allPersianTranslations()
-                        ) &&
-                        !hasToneConflict(listOf(item, partner))
-                }
-                .distinctBy { it.concept.id }
-
-            if (matchedPartners.isNotEmpty()) {
-                val combined = (listOf(item) + matchedPartners).distinctBy { it.concept.id }
-                definiteMergeGroups.add(combined)
-                combined.forEach { mergedConceptIds.add(it.concept.id) }
-            }
-        }
-
-        // ۵. یافتن کارت‌های مشکوک با ترجمه فارسی کاملاً یکسان و املای نزدیک اسپانیایی (مانند claro/claros یا tranquilo/tranquila)
-        val unmergedItems = workingList.filter { it.concept.id !in mergedConceptIds }
-        val byPersianKey = mutableMapOf<String, MutableList<ConceptWorkingData>>()
-        for (item in unmergedItems) {
-            if (isSubjectPronounVerbDrill(item) || item.spanishAnalysis.isSlashDualForm) continue
-            val faKeys = item.allPersianTranslations()
-                .map { TextUtilities.persianDedupeKey(it) }
-                .filter { it.length >= 2 }
-                .distinct()
-            for (fk in faKeys) {
-                byPersianKey.getOrPut(fk) { mutableListOf() }.add(item)
-            }
-        }
-
-        val pairedNearKeys = mutableSetOf<String>()
-        for ((_, bucket) in byPersianKey) {
-            if (bucket.size !in 2..10) continue
-            for (i in bucket.indices) {
-                for (j in i + 1 until bucket.size) {
-                    val a = bucket[i]
-                    val b = bucket[j]
-                    if (a.concept.id == b.concept.id) continue
-                    val pairId = if (a.concept.id < b.concept.id) "${a.concept.id}_${b.concept.id}" else "${b.concept.id}_${a.concept.id}"
-                    if (pairId in pairedNearKeys) continue
-                    val keyA = a.spanishAnalysis.accentInsensitiveKey
-                    val keyB = b.spanishAnalysis.accentInsensitiveKey
-                    if (hasToneConflict(listOf(a, b)) || TextUtilities.isFalseSpanishGenderPair(keyA, keyB)) continue
-                    val aIsBareInfinitive = a.spanishAnalysis.articlePrefix == null && (keyA.endsWith("ar") || keyA.endsWith("er") || keyA.endsWith("ir"))
-                    val bIsBareInfinitive = b.spanishAnalysis.articlePrefix == null && (keyB.endsWith("ar") || keyB.endsWith("er") || keyB.endsWith("ir"))
-                    if ((aIsBareInfinitive && b.spanishAnalysis.articlePrefix != null) ||
-                        (bIsBareInfinitive && a.spanishAnalysis.articlePrefix != null)
-                    ) {
-                        continue
-                    }
-                    if (TextUtilities.areSpanishNearSpellingVariants(keyA, keyB)) {
-                        pairedNearKeys.add(pairId)
-                        if (a.concept.id !in suspiciousConceptIds || b.concept.id !in suspiciousConceptIds) {
-                            suspiciousGroups.add(listOf(a, b))
-                            suspiciousConceptIds.add(a.concept.id)
-                            suspiciousConceptIds.add(b.concept.id)
-                        }
-                    }
-                }
-            }
-        }
-
-        val singleItems = workingList.filter { it.concept.id !in mergedConceptIds }
-        return DuplicatePartitionResult(
-            definiteMergeGroups = definiteMergeGroups,
-            suspiciousGroups = suspiciousGroups,
-            singleItems = singleItems
-        )
-    }
 
     /**
      * گام ۱: اسکن، تحلیل و گزارش‌گیری امن از پایگاه‌داده کتابخانه بدون اعمال هرگونه تغییر
