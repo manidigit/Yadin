@@ -2,6 +2,17 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۹۳.۱] - ۲۰۲۶-۱۱-۰۵ (۱۴۰۵/۰۸/۱۴)
+### رفع خطای تست واحد `VocabularyParserTest` در پایپ‌لاین GitHub Actions CI (`TextUtilities.kt`) (کد نسخه: ۱۰۷)
+- **اصلاحات و باگ‌زدایی (Fixes):**
+  - **رفع خطای `parseMergesMasculineAndFeminineEntriesWithSlashHeadword` در `VocabularyParserTest.kt`:**
+    - پس از حذف تطابق زیررشته‌ای از `hasPersianTranslationOverlap` در نسخه `1.93.0` (برای جلوگیری از ادغام کاذب کلماتی مانند `هند` با `هندی` و `موسیقی` با `موسیقی‌دان`)، جفت‌های مذکر و مؤنثی که یک طرف آن‌ها دارای شاخص جنسیتی جداگانه بود (مانند `El director: مدیر` و `La directora: مدیر خانم، رئیسه`) در `neutralizePersianGenderTerms` یکسان‌سازی نمی‌شدند.
+    - افزودن الگوی `PERSIAN_GENDER_QUALIFIER_WORDS_REGEX` در `TextUtilities.neutralizePersianGenderTerms` جهت حذف شاخص‌های جنسیتی مستقل (`خانم`، `آقا`، `مؤنث`، `مونث`، `مذکر`) در بررسی جفت‌های مذکر و مؤنث و عبور کامل تمامی ۱۲۸ تست واحد پروژه (`gradle :app:testDebugUnitTest`).
+- **به‌روزرسانی مستندات (Documentation):**
+  - همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.93.1` (کد نسخه: `107`).
+
+---
+
 ### [نسخه ۱.۹۳.۰] - ۲۰۲۶-۱۱-۰۵ (۱۴۰۵/۰۸/۱۴)
 ### ادغام ۳۷ جفت تکراری واقعی در بانک واژگان (`vocabulary_seed.json`)، حفظ تمایز کلمات تعجبی/ندایی، و رفع کامل تشخیص‌های کاذب در موتور «بررسی، پالایش و ادغام» (`VocabularyAuditService.kt` و `TextUtilities.kt`) (کد نسخه: ۱۰۶)
 - **بهبودها و پالایش بانک واژگان (Database & Seed Cleanup):**

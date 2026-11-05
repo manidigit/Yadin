@@ -1488,8 +1488,15 @@ object TextUtilities {
         "مونث" to "مؤنث"
     )
 
+    private val PERSIAN_GENDER_QUALIFIER_WORDS_REGEX =
+        Regex("""(?:^|\s+)(?:خانم|آقا|مؤنث|مونث|مذکر)(?=\s+|$)""")
+
     private fun neutralizePersianGenderTerms(text: String): String {
         var normalized = cleanText(text)
+        val withoutQualifiers = PERSIAN_GENDER_QUALIFIER_WORDS_REGEX.replace(normalized, " ").trim()
+        if (withoutQualifiers.isNotBlank()) {
+            normalized = withoutQualifiers
+        }
         for ((mascTerm, femTerm) in PERSIAN_GENDER_REPLACEMENTS) {
             normalized = normalized.replace(femTerm, mascTerm)
         }
