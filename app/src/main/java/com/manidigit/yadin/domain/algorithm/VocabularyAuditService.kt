@@ -331,10 +331,26 @@ class VocabularyAuditService(
         return false
     }
 
+    private val SUBJECT_PRONOUN_PREFIXES = setOf(
+        "yo", "tu", "el", "ella", "usted",
+        "nosotros", "nosotras", "vosotros", "vosotras",
+        "ellos", "ellas", "ustedes"
+    )
+
+    private fun isSubjectPronounVerbDrill(item: ConceptWorkingData): Boolean {
+        val words = item.spanishAnalysis.accentInsensitiveKey.split(Regex("\\s+")).filter { it.isNotBlank() }
+        return words.size >= 2 && words.first() in SUBJECT_PRONOUN_PREFIXES
+    }
+
     private fun hasToneConflict(items: List<ConceptWorkingData>): Boolean {
         val hasEllipsisItem = items.any { it.spanishAnalysis.hasEllipsis }
-        val hasExclOrQuestItem = items.any { it.spanishAnalysis.hasExclamation || it.spanishAnalysis.hasQuestion }
-        if (hasEllipsisItem && hasExclOrQuestItem) return true
+        val hasExclItem = items.any { it.spanishAnalysis.hasExclamation }
+        val hasNonExclItem = items.any { !it.spanishAnalysis.hasExclamation }
+        val hasQuestItem = items.any { it.spanishAnalysis.hasQuestion }
+        val hasNonQuestItem = items.any { !it.spanishAnalysis.hasQuestion }
+        if (hasExclItem && hasNonExclItem) return true
+        if (hasQuestItem && hasNonQuestItem) return true
+        if (hasEllipsisItem && (hasExclItem || hasQuestItem)) return true
         val hasNonEllipsisItem = items.any { !it.spanishAnalysis.hasEllipsis }
         if (hasEllipsisItem && hasNonEllipsisItem && !hasGroupTranslationOverlap(items)) return true
         return false
@@ -343,7 +359,7 @@ class VocabularyAuditService(
     /**
      * تفکیک هوشمند واژگان به سه گروه:
      * ۱. تکراری‌های قطعی قابل ادغام خودکار (مثلاً El trampolín و Trampolín، فرم‌های اسلش‌دار هم‌معنی مثل Claro / clara و claro، یا تفاوت نقطه پایانی)
-     * ۲. تکراری‌های مشکوک نیازمند بررسی دستی (مثلاً تضاد جنسیت El در برابر La، تفاوت سه‌نقطه ... در برابر علامت تعجب !، یا ترجمه فارسی کاملاً یکسان با املای نزدیک اسپانیایی)
+     * ۲. تکراری‌های مشکوک نیازمند بررسی دستی (مثلاً تضاد جنسیت El در برابر La با هم‌پوشانی معنایی، یا ترجمه فارسی کاملاً یکسان با املای نزدیک اسپانیایی)
      * ۳. واژگان غیرتکراری
      */
     private fun partitionDuplicateGroups(workingList: List<ConceptWorkingData>): DuplicatePartitionResult {
@@ -371,13 +387,14 @@ class VocabularyAuditService(
             val hasFem = combinedItems.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.FEMININE }
             val hasGenderConflict = hasMasc && hasFem && combinedItems.none { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
             val toneConflict = hasToneConflict(combinedItems)
+            val hasOverlap = hasGroupTranslationOverlap(combinedItems)
 
             val isMultiWordPhrase = accentKey.split(Regex("\\s+")).filter { it.isNotBlank() }.size >= 3
-            if (!hasGenderConflict && !toneConflict && (hasGroupTranslationOverlap(combinedItems) || isMultiWordPhrase)) {
+            if (!hasGenderConflict && !toneConflict && (hasOverlap || isMultiWordPhrase)) {
                 definiteMergeGroups.add(combinedItems)
                 combinedItems.forEach { mergedConceptIds.add(it.concept.id) }
                 bucketEntries.forEach { processedDedupeKeys.add(it.key) }
-            } else {
+            } else if (!toneConflict && hasOverlap) {
                 suspiciousGroups.add(combinedItems)
                 combinedItems.forEach { suspiciousConceptIds.add(it.concept.id) }
             }
@@ -392,6 +409,7 @@ class VocabularyAuditService(
             val hasBothTag = items.any { it.spanishAnalysis.gender == TextUtilities.SpanishArticleGender.BOTH }
             val hasGenderConflict = hasMasc && hasFem && !hasBothTag
             val toneConflict = hasToneConflict(items)
+            val hasOverlap = hasGroupTranslationOverlap(items)
 
             val hasOnlyIndefiniteVsBare = items.none { it.spanishAnalysis.isDefiniteArticle } &&
                 items.any { it.spanishAnalysis.articlePrefix != null && !it.spanishAnalysis.isDefiniteArticle } &&
@@ -399,15 +417,15 @@ class VocabularyAuditService(
 
             val isDefiniteDuplicate = when {
                 toneConflict -> false
-                hasGenderConflict -> hasGroupTranslationOverlap(items)
-                hasOnlyIndefiniteVsBare -> hasGroupTranslationOverlap(items)
+                hasGenderConflict -> hasOverlap
+                hasOnlyIndefiniteVsBare -> hasOverlap
                 else -> true
             }
 
             if (isDefiniteDuplicate) {
                 definiteMergeGroups.add(items)
                 items.forEach { mergedConceptIds.add(it.concept.id) }
-            } else {
+            } else if (!toneConflict && hasOverlap) {
                 suspiciousGroups.add(items)
                 items.forEach { suspiciousConceptIds.add(it.concept.id) }
             }
@@ -421,9 +439,17 @@ class VocabularyAuditService(
         }
         for (slashItem in slashItems) {
             if (slashItem.concept.id in mergedConceptIds) continue
-            val matchedVariants = slashItem.spanishAnalysis.slashVariantKeys
+            val vKeys = slashItem.spanishAnalysis.slashVariantKeys
+            val isProtectedHomographSlash = vKeys.size == 2 && TextUtilities.isFalseSpanishGenderPair(vKeys[0], vKeys[1])
+            if (isProtectedHomographSlash) continue
+
+            val matchedVariants = vKeys
                 .flatMap { variantKey -> byDedupeKey[variantKey].orEmpty() }
-                .filter { it.concept.id != slashItem.concept.id && it.concept.id !in mergedConceptIds }
+                .filter { candidate ->
+                    candidate.concept.id != slashItem.concept.id &&
+                        candidate.concept.id !in mergedConceptIds &&
+                        !hasToneConflict(listOf(slashItem, candidate))
+                }
                 .distinctBy { it.concept.id }
 
             if (matchedVariants.isNotEmpty()) {
@@ -431,9 +457,6 @@ class VocabularyAuditService(
                 if (!hasToneConflict(combined) && hasGroupTranslationOverlap(combined)) {
                     definiteMergeGroups.add(combined)
                     combined.forEach { mergedConceptIds.add(it.concept.id) }
-                } else {
-                    suspiciousGroups.add(combined)
-                    combined.forEach { suspiciousConceptIds.add(it.concept.id) }
                 }
             }
         }
@@ -538,6 +561,7 @@ class VocabularyAuditService(
         val unmergedItems = workingList.filter { it.concept.id !in mergedConceptIds }
         val byPersianKey = mutableMapOf<String, MutableList<ConceptWorkingData>>()
         for (item in unmergedItems) {
+            if (isSubjectPronounVerbDrill(item) || item.spanishAnalysis.isSlashDualForm) continue
             val faKeys = item.allPersianTranslations()
                 .map { TextUtilities.persianDedupeKey(it) }
                 .filter { it.length >= 2 }
@@ -557,11 +581,17 @@ class VocabularyAuditService(
                     if (a.concept.id == b.concept.id) continue
                     val pairId = if (a.concept.id < b.concept.id) "${a.concept.id}_${b.concept.id}" else "${b.concept.id}_${a.concept.id}"
                     if (pairId in pairedNearKeys) continue
-                    if (TextUtilities.areSpanishNearSpellingVariants(
-                            a.spanishAnalysis.accentInsensitiveKey,
-                            b.spanishAnalysis.accentInsensitiveKey
-                        )
+                    val keyA = a.spanishAnalysis.accentInsensitiveKey
+                    val keyB = b.spanishAnalysis.accentInsensitiveKey
+                    if (hasToneConflict(listOf(a, b)) || TextUtilities.isFalseSpanishGenderPair(keyA, keyB)) continue
+                    val aIsBareInfinitive = a.spanishAnalysis.articlePrefix == null && (keyA.endsWith("ar") || keyA.endsWith("er") || keyA.endsWith("ir"))
+                    val bIsBareInfinitive = b.spanishAnalysis.articlePrefix == null && (keyB.endsWith("ar") || keyB.endsWith("er") || keyB.endsWith("ir"))
+                    if ((aIsBareInfinitive && b.spanishAnalysis.articlePrefix != null) ||
+                        (bIsBareInfinitive && a.spanishAnalysis.articlePrefix != null)
                     ) {
+                        continue
+                    }
+                    if (TextUtilities.areSpanishNearSpellingVariants(keyA, keyB)) {
                         pairedNearKeys.add(pairId)
                         if (a.concept.id !in suspiciousConceptIds || b.concept.id !in suspiciousConceptIds) {
                             suspiciousGroups.add(listOf(a, b))

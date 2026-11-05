@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "12085_v1.92.0"
+        const val CURRENT_SEED_VERSION = "12048_v1.93.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -450,6 +450,10 @@ class SeedImporter(
             database.withTransaction {
                 if (obsoleteUnpracticedToDelete.isNotEmpty()) {
                     obsoleteUnpracticedToDelete.chunked(500).forEach { chunkIds ->
+                        learningDao.deleteLearningStatesForConcepts(chunkIds)
+                        learningDao.deleteDifficultyStatesForConcepts(chunkIds)
+                        conceptDao.deleteContentsForConcepts(chunkIds)
+                        conceptDao.deleteConceptCategoriesForConcepts(chunkIds)
                         conceptDao.deleteConceptsPermanently(chunkIds)
                     }
                 }

@@ -568,7 +568,9 @@ object TextUtilities {
         """(^|[\s(«،])([آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی\u200C]{2,}[بپتثجچحخسشصضطظعغفقکگلمنهی])(ها(?:یی|یم|یت|یش|یمان|یتان|یشان)?)(?=$|[\s)»!؟.،؛])"""
     )
     private val PERSIAN_NON_PLURAL_HA_WORDS = setOf(
-        "تنها", "آنها", "اینها", "منتها", "انتها", "اشتها", "بی\u200Cانتها", "بیانتها", "ناانتها"
+        "تنها", "آنها", "اینها", "منتها", "انتها", "اشتها", "بی\u200Cانتها", "بیانتها", "ناانتها",
+        "بها", "گران\u200Cبها", "گرانبها", "اجاره\u200Cبها", "اجارهبها", "کم\u200Cبها", "پربها", "بی\u200Cبها",
+        "نهایت", "بی\u200Cنهایت", "بینهایت"
     )
 
     // Attached passive participle suffix 'شده' / 'نشده' without ZWNJ after a joining letter (e.g. 'سیستمیشده' -> 'سیستمی‌شده', 'تاییدشده' -> 'تاییدشده')
@@ -657,7 +659,11 @@ object TextUtilities {
                 val stem = m.groupValues[2]
                 val suffix = m.groupValues[3]
                 val fullWord = stem + suffix
-                if (fullWord in PERSIAN_NON_PLURAL_HA_WORDS || stem in PERSIAN_STOPWORDS_BEFORE_SUFFIX) {
+                if (fullWord in PERSIAN_NON_PLURAL_HA_WORDS ||
+                    fullWord.endsWith("بها") ||
+                    fullWord.endsWith("نهایت") ||
+                    stem in PERSIAN_STOPWORDS_BEFORE_SUFFIX
+                ) {
                     m.value
                 } else {
                     "$leading$stem\u200C$suffix"
@@ -689,13 +695,21 @@ object TextUtilities {
                 val leading = m.groupValues[1]
                 val stem = m.groupValues[2]
                 val suffix = m.groupValues[3]
-                if (stem.length < 2 || stem == "نا") m.value else "$leading$stem\u200C$suffix"
+                if (stem.length < 2 || stem == "نا" || stem.endsWith("\u200Cن")) {
+                    m.value
+                } else {
+                    "$leading$stem\u200C$suffix"
+                }
             }
             val afterCompoundSuffix = PERSIAN_ATTACHED_COMPOUND_SUFFIX_REGEX.replace(afterShodeh) { m ->
                 val leading = m.groupValues[1]
                 val stem = m.groupValues[2]
                 val suffix = m.groupValues[3]
-                if (stem.length < 2) m.value else "$leading$stem\u200C$suffix"
+                if (stem.length < 2 || (stem == "آب" && suffix == "کشی")) {
+                    m.value
+                } else {
+                    "$leading$stem\u200C$suffix"
+                }
             }
             var afterCompounds = afterCompoundSuffix
             for ((regex, replacement) in PERSIAN_ZWNJ_COMPOUND_REPLACEMENTS) {
@@ -734,7 +748,7 @@ object TextUtilities {
                     "$trimmedBase؟"
                 }
                 modifications.add("هماهنگ‌سازی علامت سؤال فارسی (؟) با جمله پرسشی اسپانیایی")
-            } else if (isEsExclamation && !text.contains("!")) {
+            } else if (isEsExclamation && !text.contains("!") && !text.contains("؟")) {
                 val parenMatch = TRAILING_PAREN_IN_PERSIAN_REGEX.find(text)
                 text = if (parenMatch != null) {
                     val mainPart = parenMatch.groupValues[1].trimEnd('.', '!', '?', '؟', ' ')
@@ -790,7 +804,8 @@ object TextUtilities {
         "que", "qué", "cual", "cuál", "cuales", "cuáles", "de", "del", "mismo", "misma", "otro", "otra"
     )
     private val INDEFINITE_FIXED_FOLLOWERS = setOf(
-        "poco", "poquito", "vez", "día", "dia", "rato", "momento", "par", "millón", "millon", "ciento", "tanto", "todo", "nada"
+        "poco", "poquito", "vez", "día", "dia", "rato", "momento", "par", "millón", "millon", "ciento", "tanto", "todo", "nada",
+        "gusto", "placer"
     )
     private val SPANISH_ACCENT_CHARS = setOf('á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ü', 'Ñ')
 
@@ -923,13 +938,26 @@ object TextUtilities {
             coreText = extracted.third.second
         }
 
-        // Check for slash-separated dual forms such as "Claro / clara", "el sobrino / la sobrina", "el paciente / la paciente"
+        // Check for slash-separated dual forms such as "Claro / clara", "el sobrino / la sobrina", "doscientos/as", "magnífico/a"
         if (workingText.contains('/')) {
             val slashParts = workingText.split('/')
                 .map { SURROUNDING_SPANISH_PUNCT_REGEX.replace(it.trim(), "").trim() }
                 .filter { it.isNotBlank() }
             if (slashParts.size == 2) {
-                val partAnalyses = slashParts.map { extractArticleAndCore(it) }
+                val firstPart = slashParts[0]
+                val secondPartRaw = slashParts[1]
+                val expandedSecondPart = when {
+                    secondPartRaw.equals("a", ignoreCase = true) && firstPart.endsWith("o", ignoreCase = true) ->
+                        firstPart.dropLast(1) + "a"
+                    secondPartRaw.equals("as", ignoreCase = true) && firstPart.endsWith("os", ignoreCase = true) ->
+                        firstPart.dropLast(2) + "as"
+                    secondPartRaw.equals("o", ignoreCase = true) && firstPart.endsWith("a", ignoreCase = true) ->
+                        firstPart.dropLast(1) + "o"
+                    secondPartRaw.equals("os", ignoreCase = true) && firstPart.endsWith("as", ignoreCase = true) ->
+                        firstPart.dropLast(2) + "os"
+                    else -> secondPartRaw
+                }
+                val partAnalyses = listOf(firstPart, expandedSecondPart).map { extractArticleAndCore(it) }
                 val variantCores = partAnalyses.map { it.third.second }
                 val variantKeys = variantCores.map { c ->
                     val raw = INLINE_PUNCT_FOR_KEY_REGEX.replace(c.lowercase(Locale.ROOT), " ")
@@ -1009,6 +1037,20 @@ object TextUtilities {
         return prev[b.length]
     }
 
+    private val SPANISH_DISTINCT_NEAR_SPELLING_PAIRS = setOf(
+        "factura" to "factor",
+        "luz de freno" to "luz de frenado",
+        "disculpa" to "disculpe",
+        "senal" to "sena",
+        "alli" to "alla",
+        "bueno" to "buen",
+        "diferencial" to "diferencia",
+        "empuje" to "empujon",
+        "imperio" to "imperial",
+        "portal" to "portada",
+        "egoista" to "egoismo"
+    )
+
     /**
      * Checks whether two Spanish normalized keys (already stripped of articles/accents) are near-spelling
      * variants (e.g., singular/plural "claro" vs "claros", masculine/feminine "tranquilo" vs "tranquila",
@@ -1020,6 +1062,9 @@ object TextUtilities {
         if (a.isEmpty() || b.isEmpty() || a == b) return false
         if (a.length < 4 || b.length < 4) return false
         if (kotlin.math.abs(a.length - b.length) > 2) return false
+        if (isFalseSpanishGenderPair(a, b)) return false
+        if ((a to b) in SPANISH_DISTINCT_NEAR_SPELLING_PAIRS || (b to a) in SPANISH_DISTINCT_NEAR_SPELLING_PAIRS) return false
+        if (a == "${b}se" || b == "${a}se") return false
 
         val wordsA = a.split(WHITESPACE_REGEX)
         val wordsB = b.split(WHITESPACE_REGEX)
@@ -1057,11 +1102,17 @@ object TextUtilities {
 
         if (keysA.intersect(keysB).isNotEmpty()) return true
 
+        val derivationalSuffixes = listOf("دان", "ستان", "گر", "بان", "چی", "کار", "مند", "ور")
         for (a in keysA) {
-            if (a.length < 3) continue
+            if (a.length < 5) continue
             for (b in keysB) {
-                if (b.length < 3) continue
-                if (a.contains(b) || b.contains(a)) return true
+                if (b.length < 5) continue
+                val (shorter, longer) = if (a.length <= b.length) a to b else b to a
+                if (longer.length >= 6 && longer.startsWith(shorter)) {
+                    val remainder = longer.removePrefix(shorter)
+                    if (remainder == "ی" || remainder in derivationalSuffixes) continue
+                    if (remainder in listOf("ها", "های", "ات", "ان")) return true
+                }
             }
         }
 
@@ -1096,6 +1147,17 @@ object TextUtilities {
     private fun stripSpanishAccents(text: String): String =
         DIACRITICS_REGEX.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "")
 
+    private val SPANISH_FALSE_PLURAL_PAIRS = setOf(
+        "ante" to "antes",
+        "gracia" to "gracias",
+        "bien" to "bienes",
+        "afuera" to "afueras",
+        "coma" to "comas",
+        "manual" to "manuales",
+        "amarillo" to "amarillas",
+        "amarilla" to "amarillas"
+    )
+
     /**
      * Checks whether [pluralToken] is the regular Spanish plural form of [singularToken]
      * (after accent-stripping and lowercase normalization).
@@ -1108,6 +1170,7 @@ object TextUtilities {
         val p = stripSpanishAccents(pluralToken.trim().lowercase(Locale.ROOT))
         val s = stripSpanishAccents(singularToken.trim().lowercase(Locale.ROOT))
         if (s.length < 3 || p.length < 4 || p == s) return false
+        if ((s to p) in SPANISH_FALSE_PLURAL_PAIRS) return false
         return when {
             s.endsWith("z") -> p == s.dropLast(1) + "ces"
             s.last() in "aeiou" -> p == s + "s"
@@ -1326,8 +1389,79 @@ object TextUtilities {
         "herido" to "herida",
         "perdono" to "perdona",
         "recuerdo" to "recuerda",
-        "estudio" to "estudia"
+        "estudio" to "estudia",
+        "pino" to "pina",
+        "bando" to "banda",
+        "dicho" to "dicha",
+        "pasado" to "pasada",
+        "busco" to "busca",
+        "odio" to "odia",
+        "uso" to "usa",
+        "trato" to "trata",
+        "tomo" to "toma",
+        "desmayo" to "desmaya",
+        "descuido" to "descuida",
+        "helado" to "helada",
+        "acero" to "acera",
+        "trono" to "trona",
+        "llanto" to "llanta",
+        "tormento" to "tormenta",
+        "manto" to "manta",
+        "pasto" to "pasta",
+        "conducto" to "conducta",
+        "calzado" to "calzada",
+        "tramo" to "trama",
+        "rodillo" to "rodilla",
+        "mango" to "manga",
+        "haciendo" to "hacienda",
+        "lanzo" to "lanza",
+        "plato" to "plata",
+        "correo" to "correa",
+        "capo" to "capa",
+        "riendo" to "rienda",
+        "rayo" to "raya",
+        "oro" to "ora",
+        "flor" to "flora",
+        "palo" to "pala",
+        "reino" to "reina",
+        "arco" to "arca",
+        "marco" to "marca",
+        "bolo" to "bola",
+        "bombo" to "bomba",
+        "seno" to "sena",
+        "cubo" to "cuba",
+        "barro" to "barra",
+        "indio" to "india",
+        "judio" to "judia",
+        "moro" to "mora",
+        "cuerdo" to "cuerda",
+        "parejo" to "pareja",
+        "visto" to "vista",
+        "carretero" to "carretera",
+        "parado" to "parada",
+        "entrado" to "entrada",
+        "llegado" to "llegada",
+        "despedido" to "despedida",
+        "llamado" to "llamada",
+        "bajo" to "baja",
+        "junto" to "junta",
+        "caro" to "cara",
+        "comodo" to "comoda",
+        "minimo" to "minima",
+        "recto" to "recta",
+        "muneco" to "muneca",
+        "chino" to "china",
+        "negativo" to "negativa",
+        "castano" to "castana",
+        "mediano" to "mediana",
+        "fiero" to "fiera"
     )
+
+    fun isFalseSpanishGenderPair(wordA: String, wordB: String): Boolean {
+        val a = stripSpanishAccents(wordA.trim().lowercase(Locale.ROOT))
+        val b = stripSpanishAccents(wordB.trim().lowercase(Locale.ROOT))
+        return (a to b) in SPANISH_FALSE_GENDER_PAIRS || (b to a) in SPANISH_FALSE_GENDER_PAIRS
+    }
 
     private val PERSIAN_GENDER_REPLACEMENTS = listOf(
         "پدربزرگ" to "مادربزرگ",

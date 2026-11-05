@@ -2,6 +2,28 @@
 
 تمام تغییرات مهم، اصلاحات باگ‌ها و قابلیت‌های جدید اضافه شده به برنامه یادین در این سند ثبت می‌شوند.
 
+### [نسخه ۱.۹۳.۰] - ۲۰۲۶-۱۱-۰۵ (۱۴۰۵/۰۸/۱۴)
+### ادغام ۳۷ جفت تکراری واقعی در بانک واژگان (`vocabulary_seed.json`)، حفظ تمایز کلمات تعجبی/ندایی، و رفع کامل تشخیص‌های کاذب در موتور «بررسی، پالایش و ادغام» (`VocabularyAuditService.kt` و `TextUtilities.kt`) (کد نسخه: ۱۰۶)
+- **بهبودها و پالایش بانک واژگان (Database & Seed Cleanup):**
+  - **ادغام ۳۷ جفت مفهوم تکراری واقعی در `app/src/main/assets/seed/vocabulary_seed.json`:**
+    - ادغام ۸ جفت هم‌ریشه/املایی و اسلش‌دار (`de repente`، `¡Ay!` + `¡ay!`، `quizá / quizás` + `Quizás`، `adonde / adónde` + `adónde`، `la vacación / las vacaciones` + `Las vacaciones`، `el monje / la monja` + `la monja`، `Estoy resfriado / resfriada.` و `la esperanza` + `la esperana`).
+    - ادغام ۱۶ جفت مفرد و جمع اسپانیایی با حفظ فرم مفرد به عنوان عنوان کارت و انتقال فرم جمع به یادداشت (`el daño` + `Daños`، `la enfermedad` + `Enfermedades`، `la herramienta` + `Herramientas`، `el pañuelo` + `pañuelos`، `la advertencia` + `Advertencias`، `el animal` + `Animales`، `la dimensión` + `Dimensiones`، `la flecha` + `Flechas`، `la fractura` + `Fracturas`، `el medicamento` + `Medicamentos`، `la pantalla` + `Pantallas`، `el demonio` + `demonios`، `el dado` + `dados`، `la tontería` + `tonterías`، `inútil` + `inútiles` و `todo / toda` + `Todos`).
+    - ادغام ۱۳ جفت جمله مذکر و مؤنث گوینده با فرمت اسلش (`Me siento solo / sola.`، `Estoy solo / sola.`، `Estoy lleno / llena.`، `Estoy asustado / asustada.`، `Estoy contento / contenta.`، `Estoy enojado / enojada.`، `Estoy enfadado / enfadada.`، `Estoy preocupado / preocupada.`، `Estoy cansado / cansada.`، `Estoy agotado / agotada.`، `Estoy aburrido / aburrida.`، `Estoy sorprendido / sorprendida.` و `Estoy nervioso / nerviosa.`).
+    - اصلاح ۴ مورد نگارشی در بانک پایه (`la cuba`: اصلاح تایپو `کشور کuba` به `کشور کوبا`، تفکیک `ejercito` از `el ejército`، اصلاح `el ancla (f)` و افزودن علامت تعجب به `¡diablos!` و `¡ca!`).
+    - افزودن ۳۷ شناسه ادغام‌شده به `obsoleteConceptIds` (مجموع ۱۲۳ شناسه منسوخ) و تثبیت بانک پایه روی **۱۲,۰۴۸ مفهوم فعال** (`WORD`: ۵,۹۲۹، `PHRASE`: ۴,۲۱۸، `SENTENCE`: ۱,۹۰۱)، **۲۵,۵۶۲ ترجمه فارسی**، **۳۷,۶۱۰ رکورد محتوا** و **۲۴,۰۹۶ وضعیت دشواری**.
+- **ارتقای الگوریتم پالایش و ادغام هوشمند (`VocabularyAuditService.kt`، `TextUtilities.kt` و `SeedImporter.kt`):**
+  - **حفظ تمایز واژگان تعجبی و ندایی از فرم عادی:** گسترش گارد `hasToneConflict` به تمامی مراحل ادغام (گام‌های ۲، ۳، ۴ و ۵) تا واژگان تعجبی/ندایی مانند `¡Increíble!`، `¡Tranquilo!`، `¡Fuego!`، `¡Jesús!`، `¡Maravilloso!` و `¡Magnífico!` با همتای صفت/اسم عادی خود ادغام نشوند.
+  - **رفع تشخیص‌های کاذب در موتور پالایش:**
+    - اصلاح الگوهای نیم‌فاصله فارسی در `TextUtilities` برای جلوگیری از تغییر کاذب کلماتی مانند `گران‌بها`، `بی‌نهایت`، `رام‌نشده` و `آبکشی`.
+    - بسط پسوندهای اختصاری اسلش‌دار اسپانیایی (مانند `doscientos/as` به `doscientas` و `magnífico/a` به `magnífica`) در `analyzeSpanishHeadword` تا پسوند `/as` با واژه مستقل `el as` (تک‌خال) تداخل نکند.
+    - افزودن مجموعه‌های محافظتی `SPANISH_FALSE_PLURAL_PAIRS` (`bien`/`bienes`، `celo`/`celos` و ...) و `SPANISH_DISTINCT_NEAR_SPELLING_PAIRS`، تکمیل `SPANISH_FALSE_GENDER_PAIRS` (`indio`/`india` در برابر `la India`، `músico`/`música` در برابر `la música`، `físico`/`física` در برابر `la física` و ...) و حذف تطابق زیررشته‌ای کاذب (`هند` با `هندی` و `موسیقی` با `موسیقی‌دان`) از `hasPersianTranslationOverlap`.
+    - پشتیبانی از ضمایر `usted` و `ustedes` در `isSubjectPronounVerbDrill` جهت جلوگیری از مشکوک‌شدن تمرین‌های صرف فعل در زمان‌های مختلف.
+    - ارتقای `SeedImporter.kt` (`12048_v1.93.0`) برای حذف کامل رکوردهای وابسته مفاهیم منسوخ تمرین‌نشده هنگام به‌روزرسانی دیتابیس.
+- **به‌روزرسانی مستندات (Documentation):**
+  - ثبت تصمیم `D83` و همگام‌سازی کامل `README.md`، `docs/Yadin-Specification1-1.md`، `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md` با نسخه `1.93.0` (کد نسخه: `106`).
+
+---
+
 ### [نسخه ۱.۹۲.۰] - ۲۰۲۶-۱۱-۰۴ (۱۴۰۵/۰۸/۱۳)
 ### پاک‌سازی، تفکیک و حذف جامع ترجمه‌های فارسی تکراری، ادغامی و ترکیبی در بانک واژگان (`vocabulary_seed.json`) و موتور پالایش متن (`TextUtilities`) (کد نسخه: ۱۰۵)
 - **بهبودها و پالایش بانک واژگان (Database & Text Engine Cleanup):**
