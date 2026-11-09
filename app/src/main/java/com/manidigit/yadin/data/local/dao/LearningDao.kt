@@ -199,8 +199,12 @@ interface LearningDao {
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
             (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             ((:reviewType = 'SM2' OR :reviewType = 'FSRS') AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (
-                (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-                (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+                (:practiceFilter = 'ALL' AND (
+                    (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+                    (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+                )) OR
+                (:practiceFilter = 'PRACTICED' AND ls.lastReviewedDay IS NOT NULL) OR
+                (:practiceFilter = 'UNPRACTICED' AND ls.lastReviewedDay IS NULL)
             ))
         )
         AND (:hasDifficultyFilter = 0 OR COALESCE(ds.current, 'EASY') IN (:difficulties))
@@ -226,7 +230,8 @@ interface LearningDao {
         categoryIds: List<String>,
         limit: Int,
         hasEntryTypeFilter: Int = 0,
-        entryTypes: List<String> = emptyList()
+        entryTypes: List<String> = emptyList(),
+        practiceFilter: String = "ALL"
     ): List<String>
 
     @Query("""
@@ -242,8 +247,12 @@ interface LearningDao {
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
             (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             ((:reviewType = 'SM2' OR :reviewType = 'FSRS') AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (
-                (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-                (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+                (:practiceFilter = 'ALL' AND (
+                    (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+                    (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+                )) OR
+                (:practiceFilter = 'PRACTICED' AND ls.lastReviewedDay IS NOT NULL) OR
+                (:practiceFilter = 'UNPRACTICED' AND ls.lastReviewedDay IS NULL)
             ))
         )
         AND (:hasDifficultyFilter = 0 OR COALESCE(ds.current, 'EASY') IN (:difficulties))
@@ -259,7 +268,8 @@ interface LearningDao {
         hasCategoryFilter: Int,
         categoryIds: List<String>,
         hasEntryTypeFilter: Int = 0,
-        entryTypes: List<String> = emptyList()
+        entryTypes: List<String> = emptyList(),
+        practiceFilter: String = "ALL"
     ): Int
 
     @Query("""

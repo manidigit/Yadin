@@ -99,9 +99,10 @@ enum class SpacedRepetitionAlgorithm {
 
     companion object {
         fun fromString(value: String?): SpacedRepetitionAlgorithm = when (value?.uppercase()) {
+            "YADIN", "LEITNER" -> YADIN
             "SM2", "SM-2", "SUPERMEMO2" -> SM2
             "FSRS", "FSRS-4.5", "FSRS-5" -> FSRS
-            else -> YADIN
+            else -> FSRS
         }
     }
 }
@@ -128,6 +129,12 @@ enum class ReviewType {
     RANDOM,
     SM2,
     FSRS
+}
+
+enum class SmartPracticeFilter {
+    ALL,
+    PRACTICED,
+    UNPRACTICED
 }
 
 enum class ReviewMode {

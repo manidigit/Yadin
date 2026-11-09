@@ -31,6 +31,7 @@ import com.manidigit.yadin.domain.model.ReviewSession
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.SessionItemState
 import com.manidigit.yadin.domain.model.SessionStatus
+import com.manidigit.yadin.domain.model.SmartPracticeFilter
 import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
@@ -67,7 +68,8 @@ data class ReviewFilters(
     val entryTypes: Set<EntryType> = emptySet(),
     val maxCards: Int = 20,
     val algorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
-    val fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION
+    val fsrsDesiredRetention: Double = FsrsAlgorithm.DEFAULT_DESIRED_RETENTION,
+    val practiceFilter: SmartPracticeFilter = SmartPracticeFilter.ALL
 )
 
 class ReviewRepository(
@@ -118,7 +120,8 @@ class ReviewRepository(
             hasCategoryFilter = if (hasCatFilter) 1 else 0,
             categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
             hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
-            entryTypes = if (hasTypeFilter) expandedTypes else listOf("")
+            entryTypes = if (hasTypeFilter) expandedTypes else listOf(""),
+            practiceFilter = filters.practiceFilter.name
         )
     }
 
@@ -141,7 +144,8 @@ class ReviewRepository(
             categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
             limit = filters.maxCards,
             hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
-            entryTypes = if (hasTypeFilter) expandedTypes else listOf("")
+            entryTypes = if (hasTypeFilter) expandedTypes else listOf(""),
+            practiceFilter = filters.practiceFilter.name
         )
 
         val sessionId = UUID.randomUUID().toString()

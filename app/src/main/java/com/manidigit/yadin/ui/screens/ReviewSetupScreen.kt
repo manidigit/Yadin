@@ -46,6 +46,7 @@ import com.manidigit.yadin.domain.model.EntryType
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
 import com.manidigit.yadin.domain.model.ReviewType
+import com.manidigit.yadin.domain.model.SmartPracticeFilter
 import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
 import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
@@ -70,6 +71,7 @@ import com.manidigit.yadin.ui.components.getReviewTypeColor
 import com.manidigit.yadin.ui.components.getReviewTypeIcon
 import com.manidigit.yadin.ui.components.getStageColor
 import com.manidigit.yadin.ui.components.getStageIcon
+import com.manidigit.yadin.ui.components.getVocabStatColor
 import com.manidigit.yadin.ui.components.getVocabStatIcon
 import com.manidigit.yadin.ui.theme.LocalYadinColors
 import com.manidigit.yadin.ui.theme.LocalYadinDimensions
@@ -87,10 +89,10 @@ private data class DiffItem(
 fun ReviewSetupScreen(
     initialType: ReviewType = ReviewType.RANDOM,
     initialDifficulties: Set<VocabularyDifficulty> = emptySet(),
-    initialMode: ReviewMode = ReviewMode.QUIZ,
-    initialQuizLevel: QuizLevel = QuizLevel.NORMAL,
+    initialMode: ReviewMode = ReviewMode.FLASHCARD,
+    initialQuizLevel: QuizLevel = QuizLevel.BEGINNER,
     initialMaxCards: Int = 20,
-    defaultAlgorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.YADIN,
+    defaultAlgorithm: SpacedRepetitionAlgorithm = SpacedRepetitionAlgorithm.FSRS,
     categories: List<Category>,
     difficultyCounts: Map<VocabularyDifficulty, Int>,
     candidateCount: Int,
@@ -104,13 +106,17 @@ fun ReviewSetupScreen(
     val colors = LocalYadinColors.current
     val dimensions = LocalYadinDimensions.current
 
-    val effectiveInitialType = when {
-        initialType == ReviewType.RANDOM && initialDifficulties.isEmpty() && defaultAlgorithm == SpacedRepetitionAlgorithm.SM2 -> ReviewType.SM2
-        initialType == ReviewType.RANDOM && initialDifficulties.isEmpty() && defaultAlgorithm == SpacedRepetitionAlgorithm.FSRS -> ReviewType.FSRS
-        else -> initialType
+    val effectiveInitialType = when (defaultAlgorithm) {
+        SpacedRepetitionAlgorithm.SM2 -> ReviewType.SM2
+        SpacedRepetitionAlgorithm.FSRS -> ReviewType.FSRS
+        SpacedRepetitionAlgorithm.YADIN -> when (initialType) {
+            ReviewType.SM2, ReviewType.FSRS -> ReviewType.RANDOM
+            else -> initialType
+        }
     }
 
-    var selectedType by remember(effectiveInitialType) { mutableStateOf(effectiveInitialType) }
+    var selectedType by remember(effectiveInitialType, defaultAlgorithm) { mutableStateOf(effectiveInitialType) }
+    var selectedPracticeFilter by remember(defaultAlgorithm) { mutableStateOf(SmartPracticeFilter.ALL) }
     var selectedMode by remember(initialMode) { mutableStateOf(initialMode) }
     var selectedQuizLevel by remember(initialQuizLevel) { mutableStateOf(initialQuizLevel) }
     var selectedDifficulties by remember(initialDifficulties) {
@@ -133,11 +139,17 @@ fun ReviewSetupScreen(
             ReviewType.SM2 -> SpacedRepetitionAlgorithm.SM2
             ReviewType.FSRS -> SpacedRepetitionAlgorithm.FSRS
             else -> defaultAlgorithm
+        },
+        practiceFilter = if (defaultAlgorithm == SpacedRepetitionAlgorithm.YADIN) {
+            SmartPracticeFilter.ALL
+        } else {
+            selectedPracticeFilter
         }
     )
 
     LaunchedEffect(
         selectedType,
+        selectedPracticeFilter,
         appLanguageDirection,
         selectedDifficulties,
         selectedCategoryIds,
@@ -238,44 +250,6 @@ fun ReviewSetupScreen(
                         val dueMonthly = stats?.dueMonthlyCount ?: 0
                         val totalMonthly = stats?.monthlyStageCount ?: 0
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            LeitnerSelectableStageBox(
-                                title = stringResource(R.string.stage_daily),
-                                dueCount = dueDaily,
-                                totalCount = totalDaily,
-                                accentColor = getStageColor(Stage.DAILY, colors),
-                                icon = getStageIcon(Stage.DAILY),
-                                isSelected = (selectedType == ReviewType.DAILY),
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedType = ReviewType.DAILY }
-                            )
-
-                            LeitnerSelectableStageBox(
-                                title = stringResource(R.string.stage_weekly),
-                                dueCount = dueWeekly,
-                                totalCount = totalWeekly,
-                                accentColor = getStageColor(Stage.WEEKLY, colors),
-                                icon = getStageIcon(Stage.WEEKLY),
-                                isSelected = (selectedType == ReviewType.WEEKLY),
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedType = ReviewType.WEEKLY }
-                            )
-
-                            LeitnerSelectableStageBox(
-                                title = stringResource(R.string.stage_monthly),
-                                dueCount = dueMonthly,
-                                totalCount = totalMonthly,
-                                accentColor = getStageColor(Stage.MONTHLY, colors),
-                                icon = getStageIcon(Stage.MONTHLY),
-                                isSelected = (selectedType == ReviewType.MONTHLY),
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedType = ReviewType.MONTHLY }
-                            )
-                        }
-
                         val dueRandom = dueDaily + dueWeekly + dueMonthly
                         val dueAlgorithm = stats?.dueTodayCount ?: dueRandom
                         val totalRandom = stats?.totalWords ?: 0
@@ -283,59 +257,127 @@ fun ReviewSetupScreen(
                         val dueLearned = stats?.availableLearnedCount ?: 0
                         val totalLearned = stats?.learnedStageCount ?: 0
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            CompactHorizontalSourceBox(
-                                title = stringResource(R.string.review_setup_mode_random),
-                                dueCount = dueRandom,
-                                totalCount = totalRandom,
-                                accentColor = getReviewTypeColor(ReviewType.RANDOM, colors),
-                                icon = getReviewTypeIcon(ReviewType.RANDOM),
-                                isSelected = (selectedType == ReviewType.RANDOM),
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedType = ReviewType.RANDOM }
-                            )
+                        if (defaultAlgorithm == SpacedRepetitionAlgorithm.YADIN) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                LeitnerSelectableStageBox(
+                                    title = stringResource(R.string.stage_daily),
+                                    dueCount = dueDaily,
+                                    totalCount = totalDaily,
+                                    accentColor = getStageColor(Stage.DAILY, colors),
+                                    icon = getStageIcon(Stage.DAILY),
+                                    isSelected = (selectedType == ReviewType.DAILY),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.DAILY }
+                                )
 
-                            CompactHorizontalSourceBox(
-                                title = stringResource(R.string.stage_learned),
-                                dueCount = dueLearned,
-                                totalCount = totalLearned,
-                                accentColor = getReviewTypeColor(ReviewType.LEARNED, colors),
-                                icon = getReviewTypeIcon(ReviewType.LEARNED),
-                                isSelected = (selectedType == ReviewType.LEARNED),
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedType = ReviewType.LEARNED }
-                            )
-                        }
+                                LeitnerSelectableStageBox(
+                                    title = stringResource(R.string.stage_weekly),
+                                    dueCount = dueWeekly,
+                                    totalCount = totalWeekly,
+                                    accentColor = getStageColor(Stage.WEEKLY, colors),
+                                    icon = getStageIcon(Stage.WEEKLY),
+                                    isSelected = (selectedType == ReviewType.WEEKLY),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.WEEKLY }
+                                )
 
-                        // Dedicated SM-2 & FSRS Smart Review Cards side-by-side
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            CompactHorizontalSourceBox(
-                                title = stringResource(R.string.review_setup_sm2_title),
-                                dueCount = dueAlgorithm,
-                                totalCount = totalRandom,
-                                accentColor = getReviewTypeColor(ReviewType.SM2, colors),
-                                icon = getReviewTypeIcon(ReviewType.SM2),
-                                isSelected = (selectedType == ReviewType.SM2),
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedType = ReviewType.SM2 }
-                            )
+                                LeitnerSelectableStageBox(
+                                    title = stringResource(R.string.stage_monthly),
+                                    dueCount = dueMonthly,
+                                    totalCount = totalMonthly,
+                                    accentColor = getStageColor(Stage.MONTHLY, colors),
+                                    icon = getStageIcon(Stage.MONTHLY),
+                                    isSelected = (selectedType == ReviewType.MONTHLY),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.MONTHLY }
+                                )
+                            }
 
-                            CompactHorizontalSourceBox(
-                                title = stringResource(R.string.review_setup_fsrs_title),
-                                dueCount = dueAlgorithm,
-                                totalCount = totalRandom,
-                                accentColor = getReviewTypeColor(ReviewType.FSRS, colors),
-                                icon = getReviewTypeIcon(ReviewType.FSRS),
-                                isSelected = (selectedType == ReviewType.FSRS),
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedType = ReviewType.FSRS }
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                CompactHorizontalSourceBox(
+                                    title = stringResource(R.string.review_setup_mode_random),
+                                    dueCount = dueRandom,
+                                    totalCount = totalRandom,
+                                    accentColor = getReviewTypeColor(ReviewType.RANDOM, colors),
+                                    icon = getReviewTypeIcon(ReviewType.RANDOM),
+                                    isSelected = (selectedType == ReviewType.RANDOM),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.RANDOM }
+                                )
+
+                                CompactHorizontalSourceBox(
+                                    title = stringResource(R.string.stage_learned),
+                                    dueCount = dueLearned,
+                                    totalCount = totalLearned,
+                                    accentColor = getReviewTypeColor(ReviewType.LEARNED, colors),
+                                    icon = getReviewTypeIcon(ReviewType.LEARNED),
+                                    isSelected = (selectedType == ReviewType.LEARNED),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { selectedType = ReviewType.LEARNED }
+                                )
+                            }
+                        } else {
+                            val smartReviewType = if (defaultAlgorithm == SpacedRepetitionAlgorithm.FSRS) {
+                                ReviewType.FSRS
+                            } else {
+                                ReviewType.SM2
+                            }
+                            val unpracticedCount = stats?.unpracticedCount ?: 0
+                            val practicedTotalCount = (totalRandom - unpracticedCount).coerceAtLeast(0)
+                            val practicedDueCount = (dueAlgorithm - unpracticedCount).coerceAtLeast(0)
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                LeitnerSelectableStageBox(
+                                    title = stringResource(R.string.home_total_words),
+                                    dueCount = dueAlgorithm,
+                                    totalCount = totalRandom,
+                                    accentColor = getVocabStatColor(VocabStatType.TOTAL, colors),
+                                    icon = getVocabStatIcon(VocabStatType.TOTAL),
+                                    isSelected = (selectedPracticeFilter == SmartPracticeFilter.ALL),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        selectedType = smartReviewType
+                                        selectedPracticeFilter = SmartPracticeFilter.ALL
+                                    }
+                                )
+
+                                LeitnerSelectableStageBox(
+                                    title = stringResource(R.string.home_practiced_words),
+                                    dueCount = if (practicedDueCount > 0) practicedDueCount else practicedTotalCount,
+                                    totalCount = practicedTotalCount,
+                                    accentColor = getVocabStatColor(VocabStatType.PRACTICED, colors),
+                                    icon = getVocabStatIcon(VocabStatType.PRACTICED),
+                                    isSelected = (selectedPracticeFilter == SmartPracticeFilter.PRACTICED),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        selectedType = smartReviewType
+                                        selectedPracticeFilter = SmartPracticeFilter.PRACTICED
+                                    }
+                                )
+
+                                LeitnerSelectableStageBox(
+                                    title = stringResource(R.string.review_setup_filter_unpracticed),
+                                    dueCount = unpracticedCount,
+                                    totalCount = unpracticedCount,
+                                    accentColor = getVocabStatColor(VocabStatType.UNPRACTICED, colors),
+                                    icon = getVocabStatIcon(VocabStatType.UNPRACTICED),
+                                    isSelected = (selectedPracticeFilter == SmartPracticeFilter.UNPRACTICED),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        selectedType = smartReviewType
+                                        selectedPracticeFilter = SmartPracticeFilter.UNPRACTICED
+                                    }
+                                )
+                            }
                         }
 
                         Row(

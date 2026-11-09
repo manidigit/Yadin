@@ -62,7 +62,7 @@ class SettingsViewModel(
         .stateIn(scope, SharingStarted.Eagerly, "fa")
 
     val difficultyThreshold: StateFlow<Int> = settingsRepo.difficultyThresholdFlow
-        .stateIn(scope, SharingStarted.Eagerly, 3)
+        .stateIn(scope, SharingStarted.Eagerly, 2)
 
     val showCategoryInReview: StateFlow<Boolean> = settingsRepo.showCategoryInReviewFlow
         .stateIn(scope, SharingStarted.Eagerly, false)
@@ -71,25 +71,25 @@ class SettingsViewModel(
         .stateIn(scope, SharingStarted.Eagerly, true)
 
     val ttsAutoPlay: StateFlow<Boolean> = settingsRepo.ttsAutoPlayFlow
-        .stateIn(scope, SharingStarted.Eagerly, false)
+        .stateIn(scope, SharingStarted.Eagerly, true)
 
     val ttsSpeechRate: StateFlow<Float> = settingsRepo.ttsSpeechRateFlow
         .stateIn(scope, SharingStarted.Eagerly, 1.0f)
 
     val quizAutoAdvanceSeconds: StateFlow<Int> = settingsRepo.quizAutoAdvanceSecondsFlow
-        .stateIn(scope, SharingStarted.Eagerly, 2)
+        .stateIn(scope, SharingStarted.Eagerly, 5)
 
     val defaultQuizLevel: StateFlow<com.manidigit.yadin.domain.model.QuizLevel> = settingsRepo.defaultQuizLevelFlow
-        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.QuizLevel.NORMAL)
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.QuizLevel.BEGINNER)
 
     val defaultReviewMode: StateFlow<com.manidigit.yadin.domain.model.ReviewMode> = settingsRepo.defaultReviewModeFlow
-        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.ReviewMode.QUIZ)
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD)
 
     val appLanguageDirection: StateFlow<CardDirection> = settingsRepo.appLanguageDirectionFlow
         .stateIn(scope, SharingStarted.Eagerly, CardDirection.NORMAL)
 
     val reviewAlgorithm: StateFlow<com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm> = settingsRepo.reviewAlgorithmFlow
-        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm.YADIN)
+        .stateIn(scope, SharingStarted.Eagerly, com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm.FSRS)
 
     val fsrsDesiredRetention: StateFlow<Double> = settingsRepo.fsrsDesiredRetentionFlow
         .stateIn(scope, SharingStarted.Eagerly, 0.90)

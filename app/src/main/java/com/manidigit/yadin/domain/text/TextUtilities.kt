@@ -1455,7 +1455,8 @@ object TextUtilities {
         "negativo" to "negativa",
         "castano" to "castana",
         "mediano" to "mediana",
-        "fiero" to "fiera"
+        "fiero" to "fiera",
+        "perdon" to "perdona"
     )
 
     fun isFalseSpanishGenderPair(wordA: String, wordB: String): Boolean {

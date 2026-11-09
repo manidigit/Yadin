@@ -24,7 +24,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         .map { if (it == "REVERSE") CardDirection.REVERSE else CardDirection.NORMAL }
 
     val difficultyThresholdFlow: Flow<Int> = settingsDao.getSettingFlow("difficultyThreshold")
-        .map { it?.toIntOrNull()?.coerceIn(1, 5) ?: 3 }
+        .map { it?.toIntOrNull()?.coerceIn(1, 5) ?: 2 }
 
     val showCategoryInReviewFlow: Flow<Boolean> = settingsDao.getSettingFlow("showCategoryInReview")
         .map { it?.toBooleanStrictOrNull() ?: false }
@@ -33,29 +33,29 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         .map { it?.toBooleanStrictOrNull() ?: true }
 
     val ttsAutoPlayFlow: Flow<Boolean> = settingsDao.getSettingFlow("ttsAutoPlay")
-        .map { it?.toBooleanStrictOrNull() ?: false }
+        .map { it?.toBooleanStrictOrNull() ?: true }
 
     val ttsSpeechRateFlow: Flow<Float> = settingsDao.getSettingFlow("ttsSpeechRate")
         .map { it?.toFloatOrNull()?.coerceIn(0.5f, 2.0f) ?: 1.0f }
 
     val quizAutoAdvanceSecondsFlow: Flow<Int> = settingsDao.getSettingFlow("quizAutoAdvanceSeconds")
-        .map { it?.toIntOrNull()?.coerceIn(1, 10) ?: 2 }
+        .map { it?.toIntOrNull()?.coerceIn(0, 10) ?: 5 }
 
     val defaultQuizLevelFlow: Flow<com.manidigit.yadin.domain.model.QuizLevel> = settingsDao.getSettingFlow("defaultQuizLevel")
         .map {
-            com.manidigit.yadin.domain.model.QuizLevel.fromString(it) ?: com.manidigit.yadin.domain.model.QuizLevel.NORMAL
+            com.manidigit.yadin.domain.model.QuizLevel.fromString(it) ?: com.manidigit.yadin.domain.model.QuizLevel.BEGINNER
         }
 
     /**
      * جریان داده حالت پیش‌فرض مرور واژگان برنامه.
-     * به صورت تثبیت‌شده و سراسری روی آزمون ۴ گزینه‌ای ([com.manidigit.yadin.domain.model.ReviewMode.QUIZ]) تنظیم شده است.
+     * به صورت پیش‌فرض روی فلش‌کارت تعاملی ([com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD]) تنظیم شده است.
      */
     val defaultReviewModeFlow: Flow<com.manidigit.yadin.domain.model.ReviewMode> = settingsDao.getSettingFlow("defaultReviewMode")
         .map {
             try {
-                if (it != null) com.manidigit.yadin.domain.model.ReviewMode.valueOf(it) else com.manidigit.yadin.domain.model.ReviewMode.QUIZ
+                if (it != null) com.manidigit.yadin.domain.model.ReviewMode.valueOf(it) else com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD
             } catch (e: Exception) {
-                com.manidigit.yadin.domain.model.ReviewMode.QUIZ
+                com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD
             }
         }
 
@@ -110,7 +110,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     }
 
     suspend fun setQuizAutoAdvanceSeconds(seconds: Int) {
-        val clamped = seconds.coerceIn(1, 10)
+        val clamped = seconds.coerceIn(0, 10)
         settingsDao.setSetting(SettingEntity("quizAutoAdvanceSeconds", clamped.toString()))
     }
 
