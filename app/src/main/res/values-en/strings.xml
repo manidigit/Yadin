@@ -574,8 +574,6 @@ libro: book</string>
     <string name="settings_fsrs_retention_85">85% (Relaxed)</string>
     <string name="settings_fsrs_retention_90">90% (Standard)</string>
     <string name="settings_fsrs_retention_95">95% (Intensive)</string>
-    <string name="review_setup_sm2_title">SM-2 Smart Review (SuperMemo 2)</string>
-    <string name="review_setup_fsrs_title">FSRS Smart Review</string>
     <string name="review_setup_filter_unpracticed">Unpracticed</string>
     <string name="flashcard_sm2_again">Again</string>
     <string name="flashcard_sm2_hard">Hard</string>

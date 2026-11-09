@@ -603,8 +603,6 @@ libro: کتاب</string>
     <string name="settings_fsrs_retention_85">۸۵٪ (متعادل)</string>
     <string name="settings_fsrs_retention_90">۹۰٪ (استاندارد)</string>
     <string name="settings_fsrs_retention_95">۹۵٪ (فشرده)</string>
-    <string name="review_setup_sm2_title">مرور هوشمند SM-2 (SuperMemo 2)</string>
-    <string name="review_setup_fsrs_title">مرور هوشمند FSRS</string>
     <string name="review_setup_filter_unpracticed">تمرین‌نشده‌ها</string>
     <string name="flashcard_sm2_again">فراموش کردم</string>
     <string name="flashcard_sm2_hard">سخت</string>

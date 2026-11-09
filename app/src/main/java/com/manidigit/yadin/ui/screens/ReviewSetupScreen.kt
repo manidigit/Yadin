@@ -52,7 +52,6 @@ import com.manidigit.yadin.domain.model.Stage
 import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import com.manidigit.yadin.domain.model.toStringRes
 import androidx.compose.foundation.layout.FlowRow
-import com.manidigit.yadin.ui.components.ExposedCategoryDropdown
 import com.manidigit.yadin.ui.components.ExposedEntryTypeDropdown
 import com.manidigit.yadin.ui.components.ExposedMultiCategoryDropdown
 import com.manidigit.yadin.ui.components.getCategoryIcon

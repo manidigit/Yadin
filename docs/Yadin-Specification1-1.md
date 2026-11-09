@@ -176,6 +176,8 @@
 | D84 | **همگام‌سازی کامل بانک پایه (`vocabulary_seed.json`) با فایل پشتیبان جدید `docs/yadin-backup.json` (`12362_v1.94.1`)، افزودن ۳۱۴ مفهوم جدید، ادغام ۳۶ مفهوم تکراری، پاک‌سازی یادداشت‌های کاذب و ارتقای `SeedImporter.kt` با انتقال خودکار پیشرفت:** ۱. استخراج و افزودن ۳۱۴ مفهوم واژگانی جدید از فایل پشتیبان و ادغام ۳۶ مفهوم تکراری با شناسه‌های استاندارد بانک پایه (افزودن ۳۶ شناسه به `obsoleteConceptIds` با مجموع ۱۵۹ شناسه منسوخ؛ تثبیت بانک پایه روی **۱۲,۳۶۲ مفهوم فعال** شامل `WORD`: ۶,۱۰۳، `PHRASE`: ۴,۳۴۷ و `SENTENCE`: ۱,۹۱۲، **۲۶,۲۶۰ ترجمه فارسی**، **۳۸,۶۲۲ رکورد محتوا**، **۱۲,۲۱۴ نگاشت دسته‌بندی** و **۲۴,۷۲۴ وضعیت دشواری متقارن** با صفر خطای ممیزی در `testSeedJsonHasZeroAuditIssues`)؛ ۲. پاک‌سازی تمام یادداشت‌های کاذب `فرم جمع:` به‌جامانده از ادغام‌های نادرست قبلی و ۲۱ یادداشت شماره‌دار/قدیمی مخدوش با حفظ ۳۴ یادداشت جمع معتبر جدید؛ ۳. افزودن لیست کلمات دارای تیلده تمایزدهنده اسپانیایی (`SPANISH_DIACRITICAL_TILDE_KEYS`: `cuando`/`cuándo`، `como`/`cómo`، `cual`/`cuál` و ...) و اولویت شناسه قدیمی‌تر (`createdAt`) در `VocabularyAuditService.kt`، افزودن جفت متمایز `material`/`materia` و اصلاح قاعده نیم‌فاصله برای `سازهای` در `TextUtilities.kt`؛ ۴. ارتقای `SeedImporter.kt` (`12362_v1.94.1` و `totalCount < 12300`) برای انتقال خودکار وضعیت یادگیری، سطح دشواری و تاریخچه مرور از شناسه‌های منسوخ/تکراری به شناسه اصلی بانک پایه پیش از حذف قطعی آن‌ها و بازنویسی یادداشت‌های کاذب قدیمی در گوشی کاربر، و حذف فایل موقت `docs/yadin-backup.json`. | تصمیم کارفرما / پیاده‌سازی ۱.۹۴.۰ و ۱.۹۴.۱ |
 | D85 | **همگام‌سازی کامل بانک پایه واژگان با پشتیبان جدید (`docs/yadin-custom-backup.json`)، افزودن ۲۳۶ مفهوم جدید (تثبیت روی ۱۲,۵۹۸ مفهوم فعال) و ارتقای `SeedImporter.kt` به `12598_v1.95.0`:** ۱. استخراج و ادغام کامل داده‌های پشتیبان جدید شامل ۲۳۶ مفهوم واژگانی جدید، ثبت ادغام‌های معتبر صورت‌گرفته روی گوشی (`Autopista / Autovía`، `Motocicleta / Moto`، `Práctico / Examen práctico` و `Cilindrada / Centímetros cúbicos`) و ارتقای شناسه‌های منسوخ به ۱۶۳ مورد؛ ۲. تثبیت بانک پایه واژگان (`vocabulary_seed.json`) روی **۱۲,۵۹۸ مفهوم فعال** (`WORD`: ۶,۱۵۳، `PHRASE`: ۴,۴۶۹، `SENTENCE`: ۱,۹۷۶)، **۲۷,۰۷۸ ترجمه فارسی پالایش‌شده**، **۳۹,۶۷۶ رکورد محتوا**، **۱۲,۲۰۷ نگاشت دسته‌بندی** و **۲۵,۱۹۶ وضعیت دشواری متقارن** با تأیید صحت ۱۰۰٪ و صفر مورد خطا یا تکراری در `testSeedJsonHasZeroAuditIssues`؛ ۳. ارتقای `CURRENT_SEED_VERSION = "12598_v1.95.0"` و حد آستانه `totalCount < 12500` در `SeedImporter.kt` همراه با انتقال خودکار پیشرفت مطالعه؛ ۴. حذف فایل موقت پشتیبان. | تصمیم کارفرما / پیاده‌سازی ۱.۹۵.۰ |
 | D86 | **اصلاح عنوان نادرست «`El perdón / la perdona`» به «`El perdón`»، افزودن جفت هم‌ریشه کاذب به `SPANISH_FALSE_GENDER_PAIRS` و ارتقای `SeedImporter.kt` به `12598_v1.95.1`:** ۱. تصحیح عنوان اسم مذکر اسپانیایی از ترکیب نادرست «`El perdón / la perdona`» به فرم استاندارد «`El perdón`» در بانک پایه واژگان و حذف ترجمه فعلی نامرتبط «`می‌بخشد (سوم‌شخص مفرد)`»؛ ۲. افزودن جفت «`perdon` به `perdona`» به لیست محافظتی `SPANISH_FALSE_GENDER_PAIRS` در `TextUtilities.kt` جهت جلوگیری از ادغام کاذب اسم «`El perdón`» با فعل صرف‌شده «`perdona`» به عنوان جفت مذکر/مؤنث در الگوریتم پالایش؛ ۳. ارتقای `CURRENT_SEED_VERSION = "12598_v1.95.1"` در `SeedImporter.kt` جهت ادغام خودکار و قطعی کارت تکراری «`perdón`» موجود در گوشی با کارت استاندارد «`El perdón`» و تثبیت دقیق ۱۲,۵۹۸ واژه خالص. | تصمیم کارفرما / پیاده‌سازی ۱.۹۵.۱ |
+| D87 | **تفکیک پویای فیلترهای منبع کلمات در صفحه تنظیمات مرور (`ReviewSetupScreen.kt`) بر اساس الگوریتم انتخاب‌شده در تنظیمات (`SpacedRepetitionAlgorithm` و `SmartPracticeFilter`):** ۱. در صورت انتخاب الگوریتم «یادین» (`YADIN`) در تنظیمات، در بخش «منبع کلمات و تکرار فاصله‌دار» صفحه مرور صرفاً ۵ فیلتر لایتنر (`روزانه`، `هفتگی`، `ماهانه`، `تصادفی` و `یادگرفته`) نمایش داده می‌شوند و کارت‌های مرور هوشمند `SM-2` و `FSRS` نمایش داده نمی‌شوند؛ ۲. در صورت انتخاب الگوریتم‌های هوشمند `FSRS` یا `SM-2` در تنظیمات، ۵ فیلتر لایتنر حذف شده و به جای آن‌ها ۳ فیلتر وضعیت تمرین (`SmartPracticeFilter.ALL` کل کلمات، `SmartPracticeFilter.PRACTICED` تمرین‌شده‌ها، و `SmartPracticeFilter.UNPRACTICED` تمرین‌نشده‌ها) نمایش داده می‌شوند و کوئری‌های `LearningDao` (`countFilteredCandidates` و `getFilteredCandidateConceptIds`) مستقیماً بر اساس `practiceFilter` فیلتر می‌شوند. | تصمیم کارفرما / پیاده‌سازی ۱.۹۶.۰ |
+| D88 | **به‌روزرسانی مقادیر پیش‌فرض تنظیمات برنامه (`SettingsRepository.kt`، `SettingsViewModel.kt` و `Enums.kt`):** تنظیم مقادیر پیش‌فرض برنامه بر روی: ۱. آستانه پاسخ‌های متوالی تغییر سطح سختی (`difficultyThreshold = 2`)؛ ۲. الگوریتم زمان‌بندی مرور پیش‌فرض (`reviewAlgorithm = FSRS`) با نرخ هدف ماندگاری حافظه (`fsrsDesiredRetention = 0.90`)؛ ۳. جهت پیش‌فرض مطالعه (`appLanguageDirection = NORMAL` / `activePair = es-fa`) و زبان رابط کاربری (`uiLanguage = fa`)؛ ۴. فعال‌سازی دکمه تلفظ صوتی (`ttsEnabled = true`)، پخش خودکار تلفظ در شروع کارت (`ttsAutoPlay = true`) و سرعت خوانش (`ttsSpeechRate = 1.0f`)؛ ۵. عدم نمایش دسته‌بندی روی کارت مرور (`showCategoryInReview = false`)، حالت مرور پیش‌فرض فلش‌کارت تعاملی (`defaultReviewMode = FLASHCARD`)، سطح پیش‌فرض آزمون مبتدی (`defaultQuizLevel = BEGINNER`) و رفتن خودکار به سؤال بعدی آزمون روی ۵ ثانیه (`quizAutoAdvanceSeconds = 5`). | تصمیم کارفرما / پیاده‌سازی ۱.۹۷.۰ |
 
 ---
 
@@ -2522,19 +2524,20 @@ gemini: screenPadding 18 ، contentGap 12 ، sectionGap 16 ، statCardHeight 124
 | isDark | بولی | true | |
 | uiLanguage | متن | fa | fa، en |
 | activePair | متن | es-fa | از language_pairs فعال |
-| activeDirection | متن | NORMAL | NORMAL، REVERSE |
-| difficultyThreshold | عدد | 3 | 1 تا 5 |
-| defaultQuizLevel | متن | MEDIUM | EASY، MEDIUM، HARD |
+| appLanguageDirection | متن | NORMAL | NORMAL، REVERSE |
+| difficultyThreshold | عدد | 2 | 1 تا 5 |
+| reviewAlgorithm | متن | FSRS | YADIN، SM2، FSRS |
+| fsrsDesiredRetention | عدد اعشاری | 0.90 | 0.75 تا 0.97 |
+| showCategoryInReview | بولی | false | |
+| defaultQuizLevel | متن | BEGINNER | BEGINNER، NORMAL، PROFESSIONAL |
 | defaultReviewMode | متن | FLASHCARD | FLASHCARD، QUIZ |
-| maxReviewCards | عدد | 30 | 1 تا 100 |
-| quizAutoAdvanceSeconds | عدد | 3 | 1 تا 10 |
+| maxReviewCards | عدد | 20 | 10 تا 100 |
+| quizAutoAdvanceSeconds | عدد | 5 | 0 تا 10 |
 | ttsEnabled | بولی | true | |
-| ttsAutoPlay | بولی | false | |
+| ttsAutoPlay | بولی | true | |
 | ttsSpeechRate | عدد اعشاری | 1.0 | 0.5 تا 2.0 |
-| tutorialSeen | بولی | false | |
 | seedImported | بولی | false | |
-| dataVersion.concept | عدد | 0 | |
-| dataVersion.content | عدد | 0 | |
+| seedVersion | متن | 12598_v1.95.1 | |
 
 مقدار خارج از بازه هنگام خواندن به نزدیک‌ترین مقدار مجاز محدود می‌شود (clamp).
 تنظیم مقدار نامعتبر enum هنگام خواندن به پیش‌فرض برمی‌گردد.
