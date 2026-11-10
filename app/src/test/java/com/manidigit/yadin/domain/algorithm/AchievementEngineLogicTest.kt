@@ -26,12 +26,12 @@ class AchievementEngineLogicTest {
             if (streakDays >= ach.threshold) unlocked.add(ach)
         }
 
-        // 2. Practiced words (100, 500, 2000, 5000)
+        // 2. Practiced words (250, 1500, 5000, 10000)
         for (ach in AchievementId.values().filter { it.category == AchievementCategory.VOCABULARY }) {
             if (practicedWords >= ach.threshold) unlocked.add(ach)
         }
 
-        // 3. Long-term memory (100, 500, 2000, 5000)
+        // 3. Long-term memory (250, 1500, 5000, 10000)
         for (ach in AchievementId.values().filter { it.category == AchievementCategory.RETENTION }) {
             if (learnedWords >= ach.threshold) unlocked.add(ach)
         }
@@ -72,47 +72,51 @@ class AchievementEngineLogicTest {
     }
 
     @Test
-    fun `practiced words trigger tiers progressively at 100, 500, 2000, 5000`() {
-        val u99 = evaluateAchievements(0, 99, 0, 0, 0)
-        assertFalse(u99.contains(AchievementId.FIRST_TEN_WORDS))
+    fun `practiced words trigger tiers progressively at 250, 1500, 5000, 10000`() {
+        val u249 = evaluateAchievements(0, 249, 0, 0, 0)
+        assertFalse(u249.contains(AchievementId.FIRST_TEN_WORDS))
 
-        val u100 = evaluateAchievements(0, 100, 0, 0, 0)
-        assertTrue(u100.contains(AchievementId.FIRST_TEN_WORDS))
-        assertFalse(u100.contains(AchievementId.VOCABULARY_BUILDER))
+        val u250 = evaluateAchievements(0, 250, 0, 0, 0)
+        assertTrue(u250.contains(AchievementId.FIRST_TEN_WORDS))
+        assertFalse(u250.contains(AchievementId.VOCABULARY_BUILDER))
 
-        val u500 = evaluateAchievements(0, 500, 0, 0, 0)
-        assertTrue(u500.contains(AchievementId.FIRST_TEN_WORDS))
-        assertTrue(u500.contains(AchievementId.VOCABULARY_BUILDER))
-        assertFalse(u500.contains(AchievementId.VOCABULARY_MASTER))
+        val u1500 = evaluateAchievements(0, 1500, 0, 0, 0)
+        assertTrue(u1500.contains(AchievementId.FIRST_TEN_WORDS))
+        assertTrue(u1500.contains(AchievementId.VOCABULARY_BUILDER))
+        assertFalse(u1500.contains(AchievementId.VOCABULARY_MASTER))
 
-        val u1000 = evaluateAchievements(0, 1000, 0, 0, 0)
-        assertTrue(u1000.contains(AchievementId.VOCABULARY_BUILDER))
-        assertFalse(u1000.contains(AchievementId.VOCABULARY_MASTER))
-        assertFalse(u1000.contains(AchievementId.VOCABULARY_LEGEND))
-
-        val u2000 = evaluateAchievements(0, 2000, 0, 0, 0)
-        assertTrue(u2000.contains(AchievementId.VOCABULARY_MASTER))
-        assertFalse(u2000.contains(AchievementId.VOCABULARY_LEGEND))
+        val u3000 = evaluateAchievements(0, 3000, 0, 0, 0)
+        assertTrue(u3000.contains(AchievementId.VOCABULARY_BUILDER))
+        assertFalse(u3000.contains(AchievementId.VOCABULARY_MASTER))
+        assertFalse(u3000.contains(AchievementId.VOCABULARY_LEGEND))
 
         val u5000 = evaluateAchievements(0, 5000, 0, 0, 0)
-        assertTrue(u5000.contains(AchievementId.VOCABULARY_LEGEND))
+        assertTrue(u5000.contains(AchievementId.VOCABULARY_MASTER))
+        assertFalse(u5000.contains(AchievementId.VOCABULARY_LEGEND))
+
+        val u10000 = evaluateAchievements(0, 10000, 0, 0, 0)
+        assertTrue(u10000.contains(AchievementId.VOCABULARY_LEGEND))
     }
 
     @Test
-    fun `learned retention words trigger tiers at 100, 500, 2000, 5000`() {
-        val u99 = evaluateAchievements(0, 0, 99, 0, 0)
-        assertFalse(u99.contains(AchievementId.LONG_TERM_MEMORY))
+    fun `learned retention words trigger tiers at 250, 1500, 5000, 10000`() {
+        val u249 = evaluateAchievements(0, 0, 249, 0, 0)
+        assertFalse(u249.contains(AchievementId.LONG_TERM_MEMORY))
 
-        val u100 = evaluateAchievements(0, 0, 100, 0, 0)
-        assertTrue(u100.contains(AchievementId.LONG_TERM_MEMORY))
-        assertFalse(u100.contains(AchievementId.RETENTION_SILVER))
+        val u250 = evaluateAchievements(0, 0, 250, 0, 0)
+        assertTrue(u250.contains(AchievementId.LONG_TERM_MEMORY))
+        assertFalse(u250.contains(AchievementId.RETENTION_SILVER))
 
-        val u500 = evaluateAchievements(0, 0, 500, 0, 0)
-        assertTrue(u500.contains(AchievementId.RETENTION_SILVER))
-        assertFalse(u500.contains(AchievementId.RETENTION_GOLD))
+        val u1500 = evaluateAchievements(0, 0, 1500, 0, 0)
+        assertTrue(u1500.contains(AchievementId.RETENTION_SILVER))
+        assertFalse(u1500.contains(AchievementId.RETENTION_GOLD))
 
         val u5000 = evaluateAchievements(0, 0, 5000, 0, 0)
-        assertTrue(u5000.contains(AchievementId.RETENTION_PLATINUM))
+        assertTrue(u5000.contains(AchievementId.RETENTION_GOLD))
+        assertFalse(u5000.contains(AchievementId.RETENTION_PLATINUM))
+
+        val u10000 = evaluateAchievements(0, 0, 10000, 0, 0)
+        assertTrue(u10000.contains(AchievementId.RETENTION_PLATINUM))
     }
 
     @Test
@@ -152,10 +156,10 @@ class AchievementEngineLogicTest {
     @Test
     fun `AchievementTierEvaluator replaces completed tier with next tier`() {
         val achievements = listOf(
-            AchievementEntity(id = AchievementId.FIRST_TEN_WORDS.name, unlockedAt = 1000L, progress = 100),
-            AchievementEntity(id = AchievementId.VOCABULARY_BUILDER.name, unlockedAt = 2000L, progress = 500),
-            AchievementEntity(id = AchievementId.VOCABULARY_MASTER.name, unlockedAt = null, progress = 1000),
-            AchievementEntity(id = AchievementId.VOCABULARY_LEGEND.name, unlockedAt = null, progress = 1000)
+            AchievementEntity(id = AchievementId.FIRST_TEN_WORDS.name, unlockedAt = 1000L, progress = 250),
+            AchievementEntity(id = AchievementId.VOCABULARY_BUILDER.name, unlockedAt = 2000L, progress = 1500),
+            AchievementEntity(id = AchievementId.VOCABULARY_MASTER.name, unlockedAt = null, progress = 3000),
+            AchievementEntity(id = AchievementId.VOCABULARY_LEGEND.name, unlockedAt = null, progress = 3000)
         )
 
         val groups = AchievementTierEvaluator.getTieredGroups(achievements)
@@ -164,8 +168,8 @@ class AchievementEngineLogicTest {
         assertEquals(AchievementTier.SILVER, vocabGroup.currentTier)
         assertEquals(AchievementTier.GOLD, vocabGroup.nextTier)
         assertEquals(AchievementId.VOCABULARY_MASTER, vocabGroup.displayAchievement)
-        assertEquals(1000, vocabGroup.currentProgress)
-        assertEquals(2000, vocabGroup.targetThreshold)
+        assertEquals(3000, vocabGroup.currentProgress)
+        assertEquals(5000, vocabGroup.targetThreshold)
         assertFalse(vocabGroup.isMaxLevel)
     }
 

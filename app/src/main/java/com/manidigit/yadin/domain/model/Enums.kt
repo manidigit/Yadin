@@ -246,11 +246,11 @@ enum class AchievementId(
     val tier: AchievementTier,
     val threshold: Int
 ) {
-    // ۱. دایره واژگان (Vocabulary Footprint: 100, 500, 2000, 5000)
-    FIRST_TEN_WORDS(R.string.ach_title_first_ten, R.string.ach_desc_first_ten, "school", AchievementCategory.VOCABULARY, AchievementTier.BRONZE, 100),
-    VOCABULARY_BUILDER(R.string.ach_title_builder, R.string.ach_desc_builder, "auto_stories", AchievementCategory.VOCABULARY, AchievementTier.SILVER, 500),
-    VOCABULARY_MASTER(R.string.ach_title_master, R.string.ach_desc_master, "library_books", AchievementCategory.VOCABULARY, AchievementTier.GOLD, 2000),
-    VOCABULARY_LEGEND(R.string.ach_title_legend, R.string.ach_desc_legend, "menu_book", AchievementCategory.VOCABULARY, AchievementTier.PLATINUM, 5000),
+    // ۱. دایره واژگان (Vocabulary Footprint: 250, 1500, 5000, 10000)
+    FIRST_TEN_WORDS(R.string.ach_title_first_ten, R.string.ach_desc_first_ten, "school", AchievementCategory.VOCABULARY, AchievementTier.BRONZE, 250),
+    VOCABULARY_BUILDER(R.string.ach_title_builder, R.string.ach_desc_builder, "auto_stories", AchievementCategory.VOCABULARY, AchievementTier.SILVER, 1500),
+    VOCABULARY_MASTER(R.string.ach_title_master, R.string.ach_desc_master, "library_books", AchievementCategory.VOCABULARY, AchievementTier.GOLD, 5000),
+    VOCABULARY_LEGEND(R.string.ach_title_legend, R.string.ach_desc_legend, "menu_book", AchievementCategory.VOCABULARY, AchievementTier.PLATINUM, 10000),
 
     // ۲. رگبار و مداومت (Streak Fire: 7, 30, 100, 365 days)
     STREAK_3_DAYS(R.string.ach_title_streak_3, R.string.ach_desc_streak_3, "local_fire_department", AchievementCategory.STREAK, AchievementTier.BRONZE, 7),
@@ -258,11 +258,11 @@ enum class AchievementId(
     STREAK_30_DAYS(R.string.ach_title_streak_30, R.string.ach_desc_streak_30, "military_tech", AchievementCategory.STREAK, AchievementTier.GOLD, 100),
     STREAK_100_DAYS(R.string.ach_title_streak_100, R.string.ach_desc_streak_100, "diamond", AchievementCategory.STREAK, AchievementTier.PLATINUM, 365),
 
-    // ۳. تثبیت لایتنر و حافظه دائمی (Deep Retention: 100, 500, 2000, 5000)
-    LONG_TERM_MEMORY(R.string.ach_title_retention_bronze, R.string.ach_desc_retention_bronze, "neurology", AchievementCategory.RETENTION, AchievementTier.BRONZE, 100),
-    RETENTION_SILVER(R.string.ach_title_retention_silver, R.string.ach_desc_retention_silver, "psychology", AchievementCategory.RETENTION, AchievementTier.SILVER, 500),
-    RETENTION_GOLD(R.string.ach_title_retention_gold, R.string.ach_desc_retention_gold, "archive", AchievementCategory.RETENTION, AchievementTier.GOLD, 2000),
-    RETENTION_PLATINUM(R.string.ach_title_retention_platinum, R.string.ach_desc_retention_platinum, "workspace_premium", AchievementCategory.RETENTION, AchievementTier.PLATINUM, 5000),
+    // ۳. تثبیت لایتنر و حافظه دائمی (Deep Retention: 250, 1500, 5000, 10000)
+    LONG_TERM_MEMORY(R.string.ach_title_retention_bronze, R.string.ach_desc_retention_bronze, "neurology", AchievementCategory.RETENTION, AchievementTier.BRONZE, 250),
+    RETENTION_SILVER(R.string.ach_title_retention_silver, R.string.ach_desc_retention_silver, "psychology", AchievementCategory.RETENTION, AchievementTier.SILVER, 1500),
+    RETENTION_GOLD(R.string.ach_title_retention_gold, R.string.ach_desc_retention_gold, "archive", AchievementCategory.RETENTION, AchievementTier.GOLD, 5000),
+    RETENTION_PLATINUM(R.string.ach_title_retention_platinum, R.string.ach_desc_retention_platinum, "workspace_premium", AchievementCategory.RETENTION, AchievementTier.PLATINUM, 10000),
 
     // ۴. واژگان سخت و چالش‌برانگیز (Hard Words Conqueror: 10, 50, 150, 500)
     HARD_MASTER(R.string.ach_title_hard_bronze, R.string.ach_desc_hard_bronze, "fitness_center", AchievementCategory.HARD_WORDS, AchievementTier.BRONZE, 10),

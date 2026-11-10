@@ -866,7 +866,7 @@ class ReviewRepository(
             streak
         )
 
-        // ۲. دایره واژگان (VOCABULARY: 100, 500, 2000, 5000 words practiced)
+        // ۲. دایره واژگان (VOCABULARY: 250, 1500, 5000, 10000 words practiced)
         syncTierGroup(
             listOf(
                 AchievementId.FIRST_TEN_WORDS,
@@ -877,7 +877,7 @@ class ReviewRepository(
             practicedCount
         )
 
-        // ۳. تثبیت لایتنر و حافظه دائمی (RETENTION: 100, 500, 2000, 5000 words in LEARNED)
+        // ۳. تثبیت لایتنر و حافظه دائمی (RETENTION: 250, 1500, 5000, 10000 words in LEARNED)
         syncTierGroup(
             listOf(
                 AchievementId.LONG_TERM_MEMORY,
