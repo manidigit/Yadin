@@ -125,6 +125,28 @@ class ReviewRepository(
         )
     }
 
+    suspend fun countCandidatesByDifficulty(filters: ReviewFilters): Map<VocabularyDifficulty, Int> {
+        val today = ClockAndDayMath.todayDayString()
+        val expandedTypes = expandEntryTypes(filters.entryTypes)
+        val hasCatFilter = filters.categoryIds.isNotEmpty()
+        val hasTypeFilter = expandedTypes.isNotEmpty()
+        val list = learningDao.getFilteredDifficultyBreakdown(
+            direction = filters.direction,
+            reviewType = filters.reviewType.name,
+            todayDayString = today,
+            hasCategoryFilter = if (hasCatFilter) 1 else 0,
+            categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
+            hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
+            entryTypes = if (hasTypeFilter) expandedTypes else listOf(""),
+            practiceFilter = filters.practiceFilter.name
+        )
+        val map = list.associate { it.current to it.count }.toMutableMap()
+        VocabularyDifficulty.entries.forEach { diff ->
+            if (!map.containsKey(diff)) map[diff] = 0
+        }
+        return map
+    }
+
     suspend fun createFilteredSession(filters: ReviewFilters): ReviewSession = runInTransaction {
         // ISS-42: Clean up any prior orphan active sessions before starting a new session
         abandonOrphanActiveSessions()

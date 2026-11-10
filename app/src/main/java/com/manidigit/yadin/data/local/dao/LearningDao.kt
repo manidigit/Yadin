@@ -199,10 +199,10 @@ interface LearningDao {
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
             (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             ((:reviewType = 'SM2' OR :reviewType = 'FSRS') AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (
-                (:practiceFilter = 'ALL' AND (
-                    (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-                    (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
-                )) OR
+                (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+                (ls.stage = 'LEARNED' AND (ls.sm2Repetitions > 0 OR ls.fsrsReps > 0) AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+            ) AND (
+                :practiceFilter = 'ALL' OR
                 (:practiceFilter = 'PRACTICED' AND ls.lastReviewedDay IS NOT NULL) OR
                 (:practiceFilter = 'UNPRACTICED' AND ls.lastReviewedDay IS NULL)
             ))
@@ -247,10 +247,10 @@ interface LearningDao {
             (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
             (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
             ((:reviewType = 'SM2' OR :reviewType = 'FSRS') AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (
-                (:practiceFilter = 'ALL' AND (
-                    (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
-                    (ls.stage = 'LEARNED' AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
-                )) OR
+                (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+                (ls.stage = 'LEARNED' AND (ls.sm2Repetitions > 0 OR ls.fsrsReps > 0) AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+            ) AND (
+                :practiceFilter = 'ALL' OR
                 (:practiceFilter = 'PRACTICED' AND ls.lastReviewedDay IS NOT NULL) OR
                 (:practiceFilter = 'UNPRACTICED' AND ls.lastReviewedDay IS NULL)
             ))
@@ -271,6 +271,43 @@ interface LearningDao {
         entryTypes: List<String> = emptyList(),
         practiceFilter: String = "ALL"
     ): Int
+
+    @Query("""
+        SELECT COALESCE(ds.current, 'EASY') AS current, COUNT(DISTINCT ls.conceptId) AS count
+        FROM learning_states ls
+        INNER JOIN concepts c ON ls.conceptId = c.id
+        LEFT JOIN difficulty_states ds ON (ds.conceptId = ls.conceptId AND ds.direction = ls.direction)
+        WHERE c.active = 1
+        AND ls.direction = :direction
+        AND (
+            (:reviewType = 'DAILY' AND ls.stage = 'DAILY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+            (:reviewType = 'WEEKLY' AND ls.stage = 'WEEKLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+            (:reviewType = 'MONTHLY' AND ls.stage = 'MONTHLY' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+            (:reviewType = 'LEARNED' AND ls.stage = 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString)) OR
+            (:reviewType = 'RANDOM' AND ls.stage != 'LEARNED' AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+            ((:reviewType = 'SM2' OR :reviewType = 'FSRS') AND (ls.lastReviewedDay IS NULL OR ls.lastReviewedDay != :todayDayString) AND (
+                (ls.stage != 'LEARNED' AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString)) OR
+                (ls.stage = 'LEARNED' AND (ls.sm2Repetitions > 0 OR ls.fsrsReps > 0) AND ls.nextReviewDay IS NOT NULL AND ls.nextReviewDay <= :todayDayString)
+            ) AND (
+                :practiceFilter = 'ALL' OR
+                (:practiceFilter = 'PRACTICED' AND ls.lastReviewedDay IS NOT NULL) OR
+                (:practiceFilter = 'UNPRACTICED' AND ls.lastReviewedDay IS NULL)
+            ))
+        )
+        AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds) OR EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId IN (:categoryIds)))
+        AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
+        GROUP BY COALESCE(ds.current, 'EASY')
+    """)
+    suspend fun getFilteredDifficultyBreakdown(
+        direction: CardDirection,
+        reviewType: String,
+        todayDayString: String,
+        hasCategoryFilter: Int,
+        categoryIds: List<String>,
+        hasEntryTypeFilter: Int = 0,
+        entryTypes: List<String> = emptyList(),
+        practiceFilter: String = "ALL"
+    ): List<DifficultyCount>
 
     @Query("""
         SELECT COALESCE(ds.current, 'EASY') AS current, COUNT(DISTINCT c.id) AS count

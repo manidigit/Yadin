@@ -195,6 +195,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // تفویض وضعیت مرور و نشست‌ها (ReviewViewModel)
     // ==========================================
     val setupCandidateCount: StateFlow<Int> get() = reviewVm.setupCandidateCount
+    val setupDifficultyCounts: StateFlow<Map<VocabularyDifficulty, Int>> get() = reviewVm.setupDifficultyCounts
     val activeSession: StateFlow<ReviewSession?> get() = reviewVm.activeSession
     val activeAlgorithm: StateFlow<SpacedRepetitionAlgorithm> get() = reviewVm.activeAlgorithm
     val sessionCards: StateFlow<List<ReviewCard>> get() = reviewVm.sessionCards

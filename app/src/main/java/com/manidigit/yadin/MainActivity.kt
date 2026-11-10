@@ -274,7 +274,7 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
 
         is Screen.ReviewSetup -> {
             val categories by viewModel.categories.collectAsStateWithLifecycle()
-            val difficultyCounts by viewModel.difficultyCounts.collectAsStateWithLifecycle()
+            val difficultyCounts by viewModel.setupDifficultyCounts.collectAsStateWithLifecycle()
             val candidateCount by viewModel.setupCandidateCount.collectAsStateWithLifecycle()
             val statistics by viewModel.statistics.collectAsStateWithLifecycle()
             val appLanguageDirection by viewModel.appLanguageDirection.collectAsStateWithLifecycle()

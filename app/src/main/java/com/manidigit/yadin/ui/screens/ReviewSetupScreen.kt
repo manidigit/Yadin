@@ -351,7 +351,7 @@ fun ReviewSetupScreen(
 
                                 LeitnerSelectableStageBox(
                                     title = stringResource(R.string.home_practiced_words),
-                                    dueCount = if (practicedDueCount > 0) practicedDueCount else practicedTotalCount,
+                                    dueCount = practicedDueCount,
                                     totalCount = practicedTotalCount,
                                     accentColor = getVocabStatColor(VocabStatType.PRACTICED, colors),
                                     icon = getVocabStatIcon(VocabStatType.PRACTICED),

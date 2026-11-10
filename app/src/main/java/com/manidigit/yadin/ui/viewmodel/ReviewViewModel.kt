@@ -17,6 +17,7 @@ import com.manidigit.yadin.domain.model.ReviewSession
 import com.manidigit.yadin.domain.model.ReviewType
 import com.manidigit.yadin.domain.model.SessionStatus
 import com.manidigit.yadin.domain.model.SpacedRepetitionAlgorithm
+import com.manidigit.yadin.domain.model.VocabularyDifficulty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -63,6 +64,17 @@ class ReviewViewModel(
     private val _setupCandidateCount = MutableStateFlow(0)
     /** تعداد کارت‌های کاندید برای مرور با فیلترهای جاری */
     val setupCandidateCount: StateFlow<Int> = _setupCandidateCount.asStateFlow()
+
+    private val _setupDifficultyCounts = MutableStateFlow(
+        mapOf(
+            VocabularyDifficulty.EASY to 0,
+            VocabularyDifficulty.MEDIUM to 0,
+            VocabularyDifficulty.HARD to 0,
+            VocabularyDifficulty.VERY_HARD to 0
+        )
+    )
+    /** تعداد کارت‌های سررسیدشده به تفکیک درجه سختی متناسب با فیلترهای منبع، دسته و نوع در صفحه تنظیمات مرور */
+    val setupDifficultyCounts: StateFlow<Map<VocabularyDifficulty, Int>> = _setupDifficultyCounts.asStateFlow()
 
     // --- وضعیت نشست فعال ---
     private val _activeSession = MutableStateFlow<ReviewSession?>(null)
@@ -132,6 +144,7 @@ class ReviewViewModel(
         countJob = scope.launch {
             try {
                 _setupCandidateCount.value = reviewRepo.countCandidates(filters)
+                _setupDifficultyCounts.value = reviewRepo.countCandidatesByDifficulty(filters)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Ignore cancellation
             } catch (e: Exception) {
