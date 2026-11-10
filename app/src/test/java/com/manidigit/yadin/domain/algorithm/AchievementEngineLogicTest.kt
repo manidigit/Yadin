@@ -1,14 +1,17 @@
 package com.manidigit.yadin.domain.algorithm
 
 import com.manidigit.yadin.data.local.entity.AchievementEntity
+import com.manidigit.yadin.data.repository.ReviewRepository
 import com.manidigit.yadin.domain.model.AchievementCategory
 import com.manidigit.yadin.domain.model.AchievementId
 import com.manidigit.yadin.domain.model.AchievementTier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.random.Random
 
 class AchievementEngineLogicTest {
 
@@ -189,5 +192,37 @@ class AchievementEngineLogicTest {
         assertNull(streakGroup.nextTier)
         assertTrue(streakGroup.isMaxLevel)
         assertEquals(AchievementId.STREAK_100_DAYS, streakGroup.displayAchievement)
+    }
+
+    @Test
+    fun `interleaveCandidateItems prevents consecutive same-category items and randomizes order`() {
+        val candidates = buildList {
+            for (i in 1..15) add(ReviewRepository.InterleaveCandidate("verb_$i", "cat_verbs", "WORD"))
+            for (i in 1..15) add(ReviewRepository.InterleaveCandidate("food_$i", "cat_food", "WORD"))
+            for (i in 1..15) add(ReviewRepository.InterleaveCandidate("med_$i", "cat_medical", "PHRASE"))
+            for (i in 1..15) add(ReviewRepository.InterleaveCandidate("work_$i", "cat_work", "SENTENCE"))
+        }
+
+        val selected1 = ReviewRepository.interleaveCandidateItems(
+            candidates = candidates,
+            maxCards = 20,
+            random = Random(42L)
+        )
+        val selected2 = ReviewRepository.interleaveCandidateItems(
+            candidates = candidates,
+            maxCards = 20,
+            random = Random(99L)
+        )
+
+        assertEquals(20, selected1.size)
+        assertEquals(20, selected1.distinct().size)
+        assertNotEquals(selected1, selected2)
+
+        val categoryById = candidates.associate { it.conceptId to it.categoryKey }
+        for (i in 1 until selected1.size) {
+            val prevCat = categoryById[selected1[i - 1]]
+            val currCat = categoryById[selected1[i]]
+            assertNotEquals("Adjacent items at $i should not share category", prevCat, currCat)
+        }
     }
 }

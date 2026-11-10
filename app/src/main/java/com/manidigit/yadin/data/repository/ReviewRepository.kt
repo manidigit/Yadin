@@ -156,7 +156,8 @@ class ReviewRepository(
         val hasDiffFilter = filters.difficulties.isNotEmpty() && filters.difficulties.size < VocabularyDifficulty.entries.size
         val hasCatFilter = filters.categoryIds.isNotEmpty()
         val hasTypeFilter = expandedTypes.isNotEmpty()
-        val conceptIds = learningDao.getFilteredCandidateConceptIds(
+        val candidatePoolLimit = (filters.maxCards * 4).coerceIn(filters.maxCards, 400)
+        val rawPoolIds = learningDao.getFilteredCandidateConceptIds(
             direction = filters.direction,
             reviewType = filters.reviewType.name,
             todayDayString = today,
@@ -164,11 +165,12 @@ class ReviewRepository(
             difficulties = if (hasDiffFilter) filters.difficulties.map { it.name } else listOf(""),
             hasCategoryFilter = if (hasCatFilter) 1 else 0,
             categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
-            limit = filters.maxCards,
+            limit = candidatePoolLimit,
             hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
             entryTypes = if (hasTypeFilter) expandedTypes else listOf(""),
             practiceFilter = filters.practiceFilter.name
         )
+        val conceptIds = selectAndInterleaveByCategory(rawPoolIds, filters.maxCards)
 
         val sessionId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
@@ -230,8 +232,119 @@ class ReviewRepository(
         )
     }
 
+    private suspend fun selectAndInterleaveByCategory(
+        rawPoolIds: List<String>,
+        maxCards: Int
+    ): List<String> {
+        if (rawPoolIds.isEmpty() || maxCards <= 0) return emptyList()
+        val distinctIds = rawPoolIds.distinct()
+        if (distinctIds.size <= 1) return distinctIds.take(maxCards)
+
+        val conceptsMap = distinctIds.chunked(300)
+            .flatMap { conceptDao.getConceptsByIds(it) }
+            .associateBy { it.id }
+
+        val joinedCategoriesMap = distinctIds.chunked(300)
+            .flatMap { conceptDao.getCategoriesForConcepts(it) }
+            .groupBy { it.conceptId }
+            .mapValues { (_, list) -> list.firstOrNull()?.id }
+
+        val candidates = distinctIds.mapIndexed { idx, cid ->
+            val concept = conceptsMap[cid]
+            val catKey = concept?.categoryId
+                ?: joinedCategoriesMap[cid]
+                ?: "UNCATEGORIZED_${concept?.entryType?.name ?: idx}"
+            val typeKey = concept?.entryType?.name ?: "WORD"
+            InterleaveCandidate(
+                conceptId = cid,
+                categoryKey = catKey,
+                entryTypeKey = typeKey
+            )
+        }
+
+        return interleaveCandidateItems(candidates, maxCards)
+    }
+
     suspend fun abandonOrphanActiveSessions() {
         reviewSessionDao.abandonAllActiveSessions(System.currentTimeMillis())
+    }
+
+    data class InterleaveCandidate(
+        val conceptId: String,
+        val categoryKey: String,
+        val entryTypeKey: String
+    )
+
+    companion object {
+        fun interleaveCandidateItems(
+            candidates: List<InterleaveCandidate>,
+            maxCards: Int,
+            random: kotlin.random.Random = kotlin.random.Random.Default
+        ): List<String> {
+            if (candidates.isEmpty() || maxCards <= 0) return emptyList()
+            val shuffled = candidates.shuffled(random)
+            if (shuffled.size <= 1) return shuffled.take(maxCards).map { it.conceptId }
+
+            val buckets = shuffled
+                .groupBy { it.categoryKey }
+                .mapValues { (_, items) -> ArrayDeque(items.shuffled(random)) }
+                .toMutableMap()
+
+            val result = ArrayList<InterleaveCandidate>(minOf(maxCards, shuffled.size))
+            var lastCategoryKey: String? = null
+            var lastEntryTypeKey: String? = null
+
+            while (result.size < maxCards && buckets.isNotEmpty()) {
+                val nonRepeatingKeys = buckets.keys.filter { it != lastCategoryKey && buckets[it]?.isNotEmpty() == true }
+                val eligibleKeys = if (nonRepeatingKeys.isNotEmpty()) {
+                    nonRepeatingKeys
+                } else {
+                    buckets.keys.filter { buckets[it]?.isNotEmpty() == true }
+                }
+                if (eligibleKeys.isEmpty()) break
+
+                // Weighted random choice by bucket size so larger categories drain proportionally
+                // without bunching up at the end while keeping category order random
+                val totalWeight = eligibleKeys.sumOf { buckets[it]?.size ?: 0 }
+                val chosenKey = if (totalWeight > 0) {
+                    var pick = random.nextInt(totalWeight)
+                    var selected = eligibleKeys.first()
+                    for (key in eligibleKeys) {
+                        val w = buckets[key]?.size ?: 0
+                        if (pick < w) {
+                            selected = key
+                            break
+                        }
+                        pick -= w
+                    }
+                    selected
+                } else {
+                    eligibleKeys.random(random)
+                }
+
+                val queue = buckets[chosenKey] ?: break
+                val diverseIdx = if (lastEntryTypeKey != null) {
+                    queue.indexOfFirst { it.entryTypeKey != lastEntryTypeKey }
+                } else {
+                    -1
+                }
+                val item = if (diverseIdx >= 0) {
+                    queue.removeAt(diverseIdx)
+                } else {
+                    queue.removeFirst()
+                }
+
+                result.add(item)
+                lastCategoryKey = item.categoryKey
+                lastEntryTypeKey = item.entryTypeKey
+
+                if (queue.isEmpty()) {
+                    buckets.remove(chosenKey)
+                }
+            }
+
+            return result.map { it.conceptId }
+        }
     }
 
 

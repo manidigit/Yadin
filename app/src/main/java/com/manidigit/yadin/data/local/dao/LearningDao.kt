@@ -210,14 +210,7 @@ interface LearningDao {
         AND (:hasDifficultyFilter = 0 OR COALESCE(ds.current, 'EASY') IN (:difficulties))
         AND (:hasCategoryFilter = 0 OR c.categoryId IN (:categoryIds) OR EXISTS (SELECT 1 FROM concept_categories cc WHERE cc.conceptId = c.id AND cc.categoryId IN (:categoryIds)))
         AND (:hasEntryTypeFilter = 0 OR c.entryType IN (:entryTypes))
-        ORDER BY 
-            CASE 
-                WHEN :reviewType = 'RANDOM' THEN RANDOM() 
-                WHEN ls.lastReviewedDay IS NOT NULL AND (ls.nextReviewDay IS NULL OR ls.nextReviewDay <= :todayDayString) THEN 0
-                WHEN ls.lastReviewedDay IS NULL THEN 1
-                ELSE 2
-            END ASC,
-            ls.nextReviewDay ASC
+        ORDER BY RANDOM()
         LIMIT :limit
     """)
     suspend fun getFilteredCandidateConceptIds(
