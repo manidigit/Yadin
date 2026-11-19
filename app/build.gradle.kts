@@ -117,6 +117,8 @@ android {
 }
 
 dependencies {
+    // SVG renderer used by the independent GPT Glossy icon family.
+    implementation("com.caverock:androidsvg-aar:1.4")
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
