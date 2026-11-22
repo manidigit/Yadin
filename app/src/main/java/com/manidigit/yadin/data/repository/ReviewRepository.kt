@@ -156,21 +156,32 @@ class ReviewRepository(
         val hasDiffFilter = filters.difficulties.isNotEmpty() && filters.difficulties.size < VocabularyDifficulty.entries.size
         val hasCatFilter = filters.categoryIds.isNotEmpty()
         val hasTypeFilter = expandedTypes.isNotEmpty()
-        val candidatePoolLimit = (filters.maxCards * 4).coerceIn(filters.maxCards, 400)
-        val rawPoolIds = learningDao.getFilteredCandidateConceptIds(
-            direction = filters.direction,
-            reviewType = filters.reviewType.name,
-            todayDayString = today,
-            hasDifficultyFilter = if (hasDiffFilter) 1 else 0,
-            difficulties = if (hasDiffFilter) filters.difficulties.map { it.name } else listOf(""),
-            hasCategoryFilter = if (hasCatFilter) 1 else 0,
-            categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
-            limit = candidatePoolLimit,
-            hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
-            entryTypes = if (hasTypeFilter) expandedTypes else listOf(""),
-            practiceFilter = filters.practiceFilter.name
-        )
-        val conceptIds = selectAndInterleaveByCategory(rawPoolIds, filters.maxCards)
+        val conceptIds = if (filters.direction == CardDirection.REVERSE) {
+            selectReversePrioritizedConceptIds(
+                filters = filters,
+                today = today,
+                hasDiffFilter = hasDiffFilter,
+                hasCatFilter = hasCatFilter,
+                hasTypeFilter = hasTypeFilter,
+                expandedTypes = expandedTypes
+            )
+        } else {
+            val candidatePoolLimit = (filters.maxCards * 4).coerceIn(filters.maxCards, 400)
+            val rawPoolIds = learningDao.getFilteredCandidateConceptIds(
+                direction = filters.direction,
+                reviewType = filters.reviewType.name,
+                todayDayString = today,
+                hasDifficultyFilter = if (hasDiffFilter) 1 else 0,
+                difficulties = if (hasDiffFilter) filters.difficulties.map { it.name } else listOf(""),
+                hasCategoryFilter = if (hasCatFilter) 1 else 0,
+                categoryIds = if (hasCatFilter) filters.categoryIds.toList() else listOf(""),
+                limit = candidatePoolLimit,
+                hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
+                entryTypes = if (hasTypeFilter) expandedTypes else listOf(""),
+                practiceFilter = filters.practiceFilter.name
+            )
+            selectAndInterleaveByCategory(rawPoolIds, filters.maxCards)
+        }
 
         val sessionId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
@@ -232,6 +243,64 @@ class ReviewRepository(
         )
     }
 
+    private suspend fun selectReversePrioritizedConceptIds(
+        filters: ReviewFilters,
+        today: String,
+        hasDiffFilter: Boolean,
+        hasCatFilter: Boolean,
+        hasTypeFilter: Boolean,
+        expandedTypes: List<String>
+    ): List<String> {
+        if (filters.maxCards <= 0) return emptyList()
+
+        val selectedIds = ArrayList<String>(filters.maxCards)
+        val seenIds = HashSet<String>(filters.maxCards)
+        val difficultiesArg = if (hasDiffFilter) filters.difficulties.map { it.name } else listOf("")
+        val categoriesArg = if (hasCatFilter) filters.categoryIds.toList() else listOf("")
+        val entryTypesArg = if (hasTypeFilter) expandedTypes else listOf("")
+
+        val tiers = listOf(
+            REVERSE_PRIORITY_TIER_LEARNED,
+            REVERSE_PRIORITY_TIER_PRACTICED,
+            REVERSE_PRIORITY_TIER_NEW
+        )
+
+        for (tier in tiers) {
+            val remaining = filters.maxCards - selectedIds.size
+            if (remaining <= 0) break
+
+            val tierPoolLimit = (remaining * 4).coerceIn(remaining, 400)
+            val rawTierPoolIds = learningDao.getFilteredCandidateConceptIdsByOppositeTier(
+                direction = CardDirection.REVERSE,
+                oppositeDirection = CardDirection.NORMAL,
+                priorityTier = tier,
+                reviewType = filters.reviewType.name,
+                todayDayString = today,
+                hasDifficultyFilter = if (hasDiffFilter) 1 else 0,
+                difficulties = difficultiesArg,
+                hasCategoryFilter = if (hasCatFilter) 1 else 0,
+                categoryIds = categoriesArg,
+                limit = tierPoolLimit,
+                hasEntryTypeFilter = if (hasTypeFilter) 1 else 0,
+                entryTypes = entryTypesArg,
+                practiceFilter = filters.practiceFilter.name
+            )
+            if (rawTierPoolIds.isEmpty()) continue
+
+            val freshPoolIds = rawTierPoolIds.filter { it !in seenIds }
+            if (freshPoolIds.isEmpty()) continue
+
+            val interleavedTierIds = selectAndInterleaveByCategory(freshPoolIds, remaining)
+            for (cid in interleavedTierIds) {
+                if (seenIds.add(cid)) {
+                    selectedIds.add(cid)
+                }
+            }
+        }
+
+        return selectedIds
+    }
+
     private suspend fun selectAndInterleaveByCategory(
         rawPoolIds: List<String>,
         maxCards: Int
@@ -276,6 +345,53 @@ class ReviewRepository(
     )
 
     companion object {
+        /** اولویت ۱ در جهت معکوس: واژگان یادگرفته‌شده در جهت عادی (`NORMAL.stage == LEARNED`). */
+        const val REVERSE_PRIORITY_TIER_LEARNED = 1
+
+        /** اولویت ۲ در جهت معکوس: واژگان تمرین‌شده در جهت عادی (`NORMAL.stage != LEARNED && NORMAL.lastReviewedDay != null`). */
+        const val REVERSE_PRIORITY_TIER_PRACTICED = 2
+
+        /** اولویت ۳ در جهت معکوس: سایر واژگان واجد شرایط (جدید/تمرین‌نشده در جهت عادی). */
+        const val REVERSE_PRIORITY_TIER_NEW = 3
+
+        fun resolveOppositeProgressTier(
+            oppositeStage: Stage?,
+            oppositeLastReviewedDay: String?
+        ): Int = when {
+            oppositeStage == Stage.LEARNED -> REVERSE_PRIORITY_TIER_LEARNED
+            oppositeStage != null && !oppositeLastReviewedDay.isNullOrBlank() -> REVERSE_PRIORITY_TIER_PRACTICED
+            else -> REVERSE_PRIORITY_TIER_NEW
+        }
+
+        fun selectPrioritizedInterleavedTiers(
+            tierCandidateGroups: List<List<InterleaveCandidate>>,
+            maxCards: Int,
+            random: kotlin.random.Random = kotlin.random.Random.Default
+        ): List<String> {
+            if (maxCards <= 0 || tierCandidateGroups.isEmpty()) return emptyList()
+            val selected = ArrayList<String>(maxCards)
+            val seen = HashSet<String>(maxCards)
+
+            for (group in tierCandidateGroups) {
+                val remaining = maxCards - selected.size
+                if (remaining <= 0) break
+                val freshCandidates = group.filter { it.conceptId !in seen }.distinctBy { it.conceptId }
+                if (freshCandidates.isEmpty()) continue
+
+                val picked = interleaveCandidateItems(
+                    candidates = freshCandidates,
+                    maxCards = remaining,
+                    random = random
+                )
+                for (cid in picked) {
+                    if (seen.add(cid)) {
+                        selected.add(cid)
+                    }
+                }
+            }
+            return selected
+        }
+
         fun interleaveCandidateItems(
             candidates: List<InterleaveCandidate>,
             maxCards: Int,
