@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "13342_v2.3.0"
+        const val CURRENT_SEED_VERSION = "13342_v2.3.1"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
