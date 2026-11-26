@@ -51,7 +51,7 @@ class SeedImporter(
 ) {
 
     companion object {
-        const val CURRENT_SEED_VERSION = "12598_v1.98.0"
+        const val CURRENT_SEED_VERSION = "13342_v2.3.0"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
@@ -60,7 +60,7 @@ class SeedImporter(
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
         val totalCount = conceptDao.getTotalConceptCount()
-        if (totalCount < 12500) {
+        if (totalCount < 13300) {
             return@withContext true
         }
         val seedVersion = settingsDao.getSetting("seedVersion")
