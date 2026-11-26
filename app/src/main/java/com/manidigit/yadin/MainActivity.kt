@@ -640,6 +640,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
             val quizAutoAdvanceSeconds by viewModel.quizAutoAdvanceSeconds.collectAsStateWithLifecycle()
             val defaultReviewMode by viewModel.defaultReviewMode.collectAsStateWithLifecycle()
             val defaultQuizLevel by viewModel.defaultQuizLevel.collectAsStateWithLifecycle()
+            val installedSeedVersion by viewModel.installedSeedVersion.collectAsStateWithLifecycle()
+            val installedSeedRevision by viewModel.installedSeedRevision.collectAsStateWithLifecycle()
+            val seedUpdateState by viewModel.seedUpdateState.collectAsStateWithLifecycle()
             SettingsScreen(
                 currentThemeId = themeId,
                 isDark = isDark,
@@ -655,6 +658,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 quizAutoAdvanceSeconds = quizAutoAdvanceSeconds,
                 defaultReviewMode = defaultReviewMode,
                 defaultQuizLevel = defaultQuizLevel,
+                installedSeedVersion = installedSeedVersion,
+                installedSeedRevision = installedSeedRevision,
+                seedUpdateState = seedUpdateState,
                 onSelectTheme = { viewModel.setTheme(it) },
                 onToggleDarkMode = { viewModel.setDarkMode(it) },
                 onSetDifficultyThreshold = { viewModel.setDifficultyThreshold(it) },
@@ -670,6 +676,9 @@ fun AppNavigator(viewModel: MainViewModel, screen: Screen) {
                 onSetDefaultReviewMode = { viewModel.setDefaultReviewMode(it) },
                 onSetDefaultQuizLevel = { viewModel.setDefaultQuizLevel(it) },
                 onPurgeInactiveWords = { onComplete -> viewModel.purgeInactiveWords(onComplete) },
+                onCheckSeedUpdate = { viewModel.checkForSeedUpdate() },
+                onApplySeedUpdate = { viewModel.applyAvailableSeedUpdate() },
+                onDismissSeedUpdate = { viewModel.dismissSeedUpdateState() },
                 onOpenBackup = { viewModel.navigateTo(Screen.Backup) },
                 onOpenHelp = { viewModel.navigateTo(Screen.Help) },
                 onOpenAbout = { viewModel.navigateTo(Screen.About) },

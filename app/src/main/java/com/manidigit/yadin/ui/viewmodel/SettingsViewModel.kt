@@ -12,6 +12,9 @@ import com.manidigit.yadin.data.repository.BackupExportFormat
 import com.manidigit.yadin.data.repository.BackupOptions
 import com.manidigit.yadin.data.repository.BackupRepository
 import com.manidigit.yadin.data.repository.BackupType
+import com.manidigit.yadin.data.repository.RemoteSeedUpdateRepository
+import com.manidigit.yadin.data.repository.SeedImporter
+import com.manidigit.yadin.data.repository.SeedUpdateState
 import com.manidigit.yadin.data.repository.SettingsRepository
 import com.manidigit.yadin.domain.model.CardDirection
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +27,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 /**
  * مدیریت تنظیمات برنامه، تم، جهت مطالعه و پشتیبان‌گیری/بازیابی - SettingsViewModel
@@ -42,7 +47,9 @@ class SettingsViewModel(
     application: Application,
     val settingsRepo: SettingsRepository,
     val backupRepo: BackupRepository,
-    private val externalScope: CoroutineScope? = null
+    private val externalScope: CoroutineScope? = null,
+    private val seedImporter: SeedImporter? = null,
+    private val remoteSeedUpdateRepo: RemoteSeedUpdateRepository? = null
 ) : AndroidViewModel(application) {
 
     private val scope: CoroutineScope
@@ -123,8 +130,19 @@ class SettingsViewModel(
     /** لیست فایل‌های پشتیبان و خروجی ذخیره‌شده در پوشه backups برنامه */
     val internalBackups: StateFlow<List<File>> = _internalBackups.asStateFlow()
 
+    // --- وضعیت به‌روزرسانی آنلاین بانک واژگان از گیت‌هاب ---
+    private val _installedSeedVersion = MutableStateFlow(SeedImporter.CURRENT_SEED_VERSION)
+    val installedSeedVersion: StateFlow<String> = _installedSeedVersion.asStateFlow()
+
+    private val _installedSeedRevision = MutableStateFlow(SeedImporter.CURRENT_BUNDLED_SEED_REVISION)
+    val installedSeedRevision: StateFlow<Int> = _installedSeedRevision.asStateFlow()
+
+    private val _seedUpdateState = MutableStateFlow<SeedUpdateState>(SeedUpdateState.Idle)
+    val seedUpdateState: StateFlow<SeedUpdateState> = _seedUpdateState.asStateFlow()
+
     init {
         loadInternalBackups()
+        refreshInstalledSeedInfo()
         scope.launch {
             settingsRepo.uiLanguageFlow.collect { lang ->
                 getApplication<Application>()
@@ -575,6 +593,120 @@ class SettingsViewModel(
                 _isBackupError.value = true
             }
             _isBackupProcessing.value = false
+        }
+    }
+
+    // ==========================================
+    // به‌روزرسانی آنلاین بانک واژگان از مخزن گیت‌هاب
+    // ==========================================
+
+    fun refreshInstalledSeedInfo() {
+        val importer = seedImporter ?: return
+        scope.launch {
+            try {
+                val (version, revision) = importer.getInstalledSeedInfo()
+                _installedSeedVersion.value = version
+                _installedSeedRevision.value = revision
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun checkForSeedUpdate() {
+        val repo = remoteSeedUpdateRepo ?: return
+        val importer = seedImporter ?: return
+        val currentState = _seedUpdateState.value
+        if (currentState is SeedUpdateState.Checking ||
+            currentState is SeedUpdateState.Downloading ||
+            currentState is SeedUpdateState.Applying
+        ) {
+            return
+        }
+        val context = getApplication<Application>()
+        scope.launch {
+            _seedUpdateState.value = SeedUpdateState.Checking
+            try {
+                val (localVersion, localRevision) = importer.getInstalledSeedInfo()
+                _installedSeedVersion.value = localVersion
+                _installedSeedRevision.value = localRevision
+
+                val result = repo.checkForUpdate(localRevision)
+                result.fold(
+                    onSuccess = { manifest ->
+                        if (manifest != null) {
+                            _seedUpdateState.value = SeedUpdateState.Available(manifest)
+                        } else {
+                            _seedUpdateState.value = SeedUpdateState.UpToDate(localVersion, localRevision)
+                        }
+                    },
+                    onFailure = { error ->
+                        _seedUpdateState.value = SeedUpdateState.Error(mapSeedUpdateError(context, error))
+                    }
+                )
+            } catch (e: Exception) {
+                _seedUpdateState.value = SeedUpdateState.Error(mapSeedUpdateError(context, e))
+            }
+        }
+    }
+
+    fun applyAvailableSeedUpdate(onUpdateCompleted: (() -> Unit)? = null) {
+        val repo = remoteSeedUpdateRepo ?: return
+        val available = _seedUpdateState.value as? SeedUpdateState.Available ?: return
+        val manifest = available.manifest
+        val context = getApplication<Application>()
+
+        scope.launch {
+            _seedUpdateState.value = SeedUpdateState.Downloading(
+                progress = 0.02f,
+                message = context.getString(R.string.seed_update_downloading)
+            )
+            try {
+                val result = repo.downloadAndApplyUpdate(
+                    manifest = manifest,
+                    onDownloading = { p, msg ->
+                        _seedUpdateState.value = SeedUpdateState.Downloading(p, msg)
+                    },
+                    onApplying = { p, msg ->
+                        _seedUpdateState.value = SeedUpdateState.Applying(p, msg)
+                    }
+                )
+                result.fold(
+                    onSuccess = { syncedCount ->
+                        _installedSeedVersion.value = manifest.seedVersion
+                        _installedSeedRevision.value = manifest.seedRevision
+                        _seedUpdateState.value = SeedUpdateState.Success(
+                            newVersion = manifest.seedVersion,
+                            newRevision = manifest.seedRevision,
+                            conceptCount = syncedCount
+                        )
+                        loadInternalBackups()
+                        onUpdateCompleted?.invoke()
+                    },
+                    onFailure = { error ->
+                        _seedUpdateState.value = SeedUpdateState.Error(mapSeedUpdateError(context, error))
+                    }
+                )
+            } catch (e: Exception) {
+                _seedUpdateState.value = SeedUpdateState.Error(mapSeedUpdateError(context, e))
+            }
+        }
+    }
+
+    fun dismissSeedUpdateState() {
+        val current = _seedUpdateState.value
+        if (current !is SeedUpdateState.Downloading && current !is SeedUpdateState.Applying) {
+            _seedUpdateState.value = SeedUpdateState.Idle
+        }
+    }
+
+    private fun mapSeedUpdateError(context: Context, error: Throwable): String {
+        return when (error) {
+            is UnknownHostException, is SocketTimeoutException ->
+                context.getString(R.string.seed_update_err_offline)
+            is SecurityException ->
+                error.message ?: context.getString(R.string.seed_update_err_checksum)
+            else ->
+                context.getString(R.string.seed_update_err_network_fmt, error.message ?: "Unknown")
         }
     }
 }

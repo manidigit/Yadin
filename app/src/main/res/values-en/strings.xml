@@ -754,4 +754,22 @@ libro: book</string>
     <string name="flashcard_recorded_answer_fmt">Recorded answer: %1$s</string>
     <string name="category_multi_selected_fmt">%1$s categories: %2$s</string>
     <string name="category_done_selection">Done (%1$s selected)</string>
+    <string name="settings_seed_update_title">Online Vocabulary Database Update</string>
+    <string name="settings_seed_update_desc">Fetch the latest words, meanings, and categories from the official repository without reinstalling the app (your progress is fully preserved)</string>
+    <string name="settings_seed_update_current_version_fmt">Installed database: %1$s (rev %2$s)</string>
+    <string name="settings_seed_update_check_btn">Check for Updates</string>
+    <string name="settings_seed_update_checking">Checking GitHub repository...</string>
+    <string name="settings_seed_update_up_to_date_fmt">Your vocabulary database is completely up to date (rev %1$s).</string>
+    <string name="settings_seed_update_available_title">New Vocabulary Update Available</string>
+    <string name="settings_seed_update_available_summary_fmt">New version: %1$s (rev %2$s)\nTotal concepts: %3$s\nCompressed size: %4$s MB\nRelease date: %5$s</string>
+    <string name="settings_seed_update_changelog_label">What\'s new:</string>
+    <string name="settings_seed_update_safety_note">An automatic safety backup is created before syncing, and all your learning progress, levels, and review history remain completely untouched.</string>
+    <string name="settings_seed_update_apply_btn">Download &amp; Sync</string>
+    <string name="settings_seed_update_success_fmt">Vocabulary database successfully synced to %1$s (rev %2$s) with %3$s concepts.</string>
+    <string name="seed_update_downloading">Downloading compressed vocabulary package...</string>
+    <string name="seed_update_creating_backup">Creating automatic safety backup...</string>
+    <string name="seed_update_applying">Safely syncing with local database...</string>
+    <string name="seed_update_err_checksum">Downloaded file SHA-256 signature mismatch. Update cancelled for safety.</string>
+    <string name="seed_update_err_network_fmt">Vocabulary update error: %1$s</string>
+    <string name="seed_update_err_offline">Could not reach GitHub repository. Please check your internet connection and try again.</string>
 </resources>

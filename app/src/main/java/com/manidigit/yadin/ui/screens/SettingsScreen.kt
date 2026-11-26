@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,8 +19,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,11 +34,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.manidigit.yadin.R
+import com.manidigit.yadin.data.repository.SeedImporter
+import com.manidigit.yadin.data.repository.SeedManifestParser
+import com.manidigit.yadin.data.repository.SeedUpdateState
 import com.manidigit.yadin.domain.model.CardDirection
 import com.manidigit.yadin.domain.model.QuizLevel
 import com.manidigit.yadin.domain.model.ReviewMode
@@ -74,6 +81,9 @@ fun SettingsScreen(
     quizAutoAdvanceSeconds: Int = 5,
     defaultReviewMode: com.manidigit.yadin.domain.model.ReviewMode = com.manidigit.yadin.domain.model.ReviewMode.FLASHCARD,
     defaultQuizLevel: com.manidigit.yadin.domain.model.QuizLevel = com.manidigit.yadin.domain.model.QuizLevel.BEGINNER,
+    installedSeedVersion: String = SeedImporter.CURRENT_SEED_VERSION,
+    installedSeedRevision: Int = SeedImporter.CURRENT_BUNDLED_SEED_REVISION,
+    seedUpdateState: SeedUpdateState = SeedUpdateState.Idle,
     onSelectTheme: (String) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onSetDifficultyThreshold: (Int) -> Unit = {},
@@ -89,6 +99,9 @@ fun SettingsScreen(
     onSetDefaultReviewMode: (com.manidigit.yadin.domain.model.ReviewMode) -> Unit = {},
     onSetDefaultQuizLevel: (com.manidigit.yadin.domain.model.QuizLevel) -> Unit = {},
     onPurgeInactiveWords: (onComplete: (Int) -> Unit) -> Unit = {},
+    onCheckSeedUpdate: () -> Unit = {},
+    onApplySeedUpdate: () -> Unit = {},
+    onDismissSeedUpdate: () -> Unit = {},
     onOpenBackup: () -> Unit,
     onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -664,6 +677,287 @@ fun SettingsScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
                     ) {
                         Text(stringResource(R.string.action_confirm), fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
+
+        // Online Vocabulary Database Update Card (GitHub Static Seed)
+        YadinCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("settings_seed_update_card"),
+            backgroundColor = colors.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                YadinSectionHeader(
+                    title = stringResource(R.string.settings_seed_update_title),
+                    subtitle = stringResource(R.string.settings_seed_update_desc),
+                    icon = YadinIcons.databaseStorage,
+                    iconTint = colors.primary
+                )
+
+                Text(
+                    text = stringResource(
+                        R.string.settings_seed_update_current_version_fmt,
+                        installedSeedVersion,
+                        installedSeedRevision.formatDigits()
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
+                )
+
+                val isBusy = seedUpdateState is SeedUpdateState.Checking ||
+                    seedUpdateState is SeedUpdateState.Downloading ||
+                    seedUpdateState is SeedUpdateState.Applying
+
+                Button(
+                    onClick = onCheckSeedUpdate,
+                    enabled = !isBusy,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .testTag("settings_check_seed_update_btn"),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                ) {
+                    if (seedUpdateState is SeedUpdateState.Checking) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = colors.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.settings_seed_update_checking),
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Icon(
+                            imageVector = YadinIcons.refresh,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.settings_seed_update_check_btn),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                when (val state = seedUpdateState) {
+                    is SeedUpdateState.Downloading -> {
+                        val pct = (state.progress * 100).toInt().coerceIn(0, 100)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            LinearProgressIndicator(
+                                progress = { state.progress.coerceIn(0f, 1f) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = colors.primary,
+                                trackColor = colors.surfaceVariant
+                            )
+                            Text(
+                                text = "${state.message} (${stringResource(R.string.percent_fmt, pct.formatDigits())})",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    is SeedUpdateState.Applying -> {
+                        val pct = (state.progress * 100).toInt().coerceIn(0, 100)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            LinearProgressIndicator(
+                                progress = { state.progress.coerceIn(0f, 1f) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = colors.success,
+                                trackColor = colors.surfaceVariant
+                            )
+                            Text(
+                                text = "${state.message} (${stringResource(R.string.percent_fmt, pct.formatDigits())})",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    is SeedUpdateState.UpToDate -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.success.copy(alpha = 0.12f))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.statusSuccess,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.settings_seed_update_up_to_date_fmt,
+                                    state.currentRevision.formatDigits()
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurface
+                            )
+                        }
+                    }
+
+                    is SeedUpdateState.Success -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.success.copy(alpha = 0.14f))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.statusSuccess,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.settings_seed_update_success_fmt,
+                                    state.newVersion,
+                                    state.newRevision.formatDigits(),
+                                    state.conceptCount.formatDigits()
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurface
+                            )
+                        }
+                    }
+
+                    is SeedUpdateState.Error -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.error.copy(alpha = 0.12f))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = YadinIcons.statusError,
+                                contentDescription = null,
+                                tint = colors.error,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurface
+                            )
+                        }
+                    }
+
+                    else -> Unit
+                }
+            }
+        }
+
+        if (seedUpdateState is SeedUpdateState.Available) {
+            val manifest = seedUpdateState.manifest
+            val localizedChangelog = if (uiLanguage == "fa") {
+                manifest.changelogFa.ifBlank { manifest.changelogEn }
+            } else {
+                manifest.changelogEn.ifBlank { manifest.changelogFa }
+            }
+            AlertDialog(
+                onDismissRequest = onDismissSeedUpdate,
+                containerColor = colors.surface,
+                title = {
+                    Text(
+                        text = stringResource(R.string.settings_seed_update_available_title),
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = stringResource(
+                                R.string.settings_seed_update_available_summary_fmt,
+                                manifest.seedVersion,
+                                manifest.seedRevision.formatDigits(),
+                                manifest.conceptCount.formatDigits(),
+                                SeedManifestParser.formatFileSizeMb(manifest.sizeBytes).formatDigits(),
+                                manifest.updatedAt.ifBlank { "-" }
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurface
+                        )
+                        if (localizedChangelog.isNotBlank()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(colors.surfaceVariant)
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_seed_update_changelog_label),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                                Text(
+                                    text = localizedChangelog,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.onSurface
+                                )
+                            }
+                        }
+                        Text(
+                            text = stringResource(R.string.settings_seed_update_safety_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = onApplySeedUpdate,
+                        modifier = Modifier.testTag("settings_apply_seed_update_btn"),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_seed_update_apply_btn),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = onDismissSeedUpdate,
+                        modifier = Modifier.testTag("settings_dismiss_seed_update_btn")
+                    ) {
+                        Text(
+                            text = stringResource(R.string.action_cancel),
+                            color = colors.onSurfaceVariant
+                        )
                     }
                 }
             )

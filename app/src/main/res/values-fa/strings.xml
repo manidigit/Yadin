@@ -754,4 +754,22 @@ libro: کتاب</string>
     <string name="flashcard_recorded_answer_fmt">پاسخ ثبت‌شده: %1$s</string>
     <string name="category_multi_selected_fmt">%1$s دسته: %2$s</string>
     <string name="category_done_selection">تأیید انتخاب (%1$s دسته)</string>
+    <string name="settings_seed_update_title">به‌روزرسانی آنلاین بانک واژگان</string>
+    <string name="settings_seed_update_desc">دریافت جدیدترین واژگان، معانی و دسته‌بندی‌ها از مخزن رسمی بدون نیاز به نصب نسخه جدید برنامه (با حفظ کامل پیشرفت شما)</string>
+    <string name="settings_seed_update_current_version_fmt">نسخه فعلی: %1$s (بازبینی %2$s)</string>
+    <string name="settings_seed_update_check_btn">بررسی به‌روزرسانی جدید</string>
+    <string name="settings_seed_update_checking">در حال بررسی مخزن گیت‌هاب...</string>
+    <string name="settings_seed_update_up_to_date_fmt">بانک واژگان شما کاملاً به‌روز است (بازبینی %1$s).</string>
+    <string name="settings_seed_update_available_title">نسخه جدید بانک واژگان آماده است</string>
+    <string name="settings_seed_update_available_summary_fmt">نسخه جدید: %1$s (بازبینی %2$s)\nتعداد کل واژگان: %3$s\nحجم فایل فشرده: %4$s مگابایت\nتاریخ انتشار: %5$s</string>
+    <string name="settings_seed_update_changelog_label">تغییرات این نسخه:</string>
+    <string name="settings_seed_update_safety_note">پیش از اعمال تغییرات، یک پشتیبان ایمنی خودکار ذخیره می‌شود و تمام پیشرفت، سطوح و تاریخچه مرور شما دست‌نخورده باقی می‌ماند.</string>
+    <string name="settings_seed_update_apply_btn">دانلود و همگام‌سازی</string>
+    <string name="settings_seed_update_success_fmt">بانک واژگان با موفقیت به نسخه %1$s (بازبینی %2$s) با %3$s واژه همگام‌سازی شد.</string>
+    <string name="seed_update_downloading">در حال دانلود بسته فشرده واژگان...</string>
+    <string name="seed_update_creating_backup">در حال تهیه پشتیبان ایمنی خودکار...</string>
+    <string name="seed_update_applying">در حال همگام‌سازی هوشمند با دیتابیس محلی...</string>
+    <string name="seed_update_err_checksum">عدم تطابق امضای امنیتی (SHA-256) فایل دانلودشده. عملیات جهت حفظ امنیت لغو شد.</string>
+    <string name="seed_update_err_network_fmt">خطا در به‌روزرسانی بانک واژگان: %1$s</string>
+    <string name="seed_update_err_offline">دسترسی به مخزن گیت‌هاب برقرار نشد. لطفاً اتصال اینترنت خود را بررسی کرده و دوباره تلاش کنید.</string>
 </resources>

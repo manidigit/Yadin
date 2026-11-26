@@ -35,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -52,10 +53,32 @@ class SeedImporter(
 
     companion object {
         const val CURRENT_SEED_VERSION = "13342_v2.3.1"
+        const val CURRENT_BUNDLED_SEED_REVISION = 120
+        const val SETTING_SEED_IMPORTED = "seedImported"
+        const val SETTING_SEED_VERSION = "seedVersion"
+        const val SETTING_SEED_REVISION = "seedRevision"
     }
 
     suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
         conceptDao.getTotalConceptCount() == 0
+    }
+
+    /**
+     * نسخه و شماره بازبینی (Revision) بانک واژگان نصب‌شده را برمی‌گرداند.
+     * در دستگاه‌هایی که پیش از افزودن کلید seedRevision نصب شده‌اند، در صورت تطابق نسخه بذر،
+     * شماره بازبینی برابر با بذر داخلی فعلی در نظر گرفته می‌شود.
+     */
+    suspend fun getInstalledSeedInfo(): Pair<String, Int> = withContext(Dispatchers.IO) {
+        val storedVersion = settingsDao.getSetting(SETTING_SEED_VERSION)
+        val storedRevision = settingsDao.getSetting(SETTING_SEED_REVISION)?.toIntOrNull()
+        if (storedRevision != null) {
+            return@withContext (storedVersion ?: CURRENT_SEED_VERSION) to storedRevision
+        }
+        val alreadyImported = settingsDao.getSetting(SETTING_SEED_IMPORTED) == "true"
+        if (alreadyImported && storedVersion == CURRENT_SEED_VERSION) {
+            return@withContext CURRENT_SEED_VERSION to CURRENT_BUNDLED_SEED_REVISION
+        }
+        (storedVersion ?: CURRENT_SEED_VERSION) to 0
     }
 
     suspend fun shouldImportSeed(): Boolean = withContext(Dispatchers.IO) {
@@ -63,12 +86,16 @@ class SeedImporter(
         if (totalCount < 13300) {
             return@withContext true
         }
-        val seedVersion = settingsDao.getSetting("seedVersion")
-        if (seedVersion != CURRENT_SEED_VERSION) {
+        val (_, installedRevision) = getInstalledSeedInfo()
+        if (installedRevision < CURRENT_BUNDLED_SEED_REVISION) {
             return@withContext true
         }
-        val alreadyImported = settingsDao.getSetting("seedImported") == "true"
+        val alreadyImported = settingsDao.getSetting(SETTING_SEED_IMPORTED) == "true"
         if (alreadyImported) {
+            // هم‌ترازسازی یک‌باره کلید seedRevision برای نسخه‌های قدیمی‌تر بدون اجرای مجدد همگام‌سازی
+            if (settingsDao.getSetting(SETTING_SEED_REVISION) == null) {
+                settingsDao.setSetting(SettingEntity(SETTING_SEED_REVISION, installedRevision.toString()))
+            }
             val learningCount = learningDao.getLearningStateCount()
             val difficultyCount = learningDao.getDifficultyStateCount()
             if (learningCount < totalCount * 2 || difficultyCount < totalCount * 2) {
@@ -139,6 +166,37 @@ class SeedImporter(
     }
 
     suspend fun importSeedIfNeeded(onProgress: (Float, String) -> Unit) = withContext(Dispatchers.IO) {
+        val result = try {
+            context.assets.open("seed/vocabulary_seed.json").use { assetStream ->
+                importSeedFromStream(
+                    inputStream = assetStream,
+                    targetSeedVersion = CURRENT_SEED_VERSION,
+                    targetSeedRevision = CURRENT_BUNDLED_SEED_REVISION,
+                    onProgress = onProgress
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+        if (result.isFailure) {
+            result.exceptionOrNull()?.printStackTrace()
+            ensureDefaultAchievements()
+        }
+    }
+
+    /**
+     * همگام‌سازی ایمن و بدون تخریب پیشرفت مطالعه از هر جریان ورودی JSON بذر
+     * (چه فایل داخلی assets و چه فایل دانلودشده از مخزن گیت‌هاب).
+     *
+     * تمامی رکوردهای پیشرفت (learning_states)، تاریخچه مرور، نشست‌ها و واژگان شخصی کاربر
+     * حفظ شده و در پایان نسخه و شماره بازبینی جدید در جدول settings ثبت می‌گردد.
+     */
+    suspend fun importSeedFromStream(
+        inputStream: InputStream,
+        targetSeedVersion: String,
+        targetSeedRevision: Int,
+        onProgress: (Float, String) -> Unit
+    ): Result<Int> = withContext(Dispatchers.IO) {
         onProgress(0.05f, context.getString(R.string.seed_reading_initial_data))
 
         try {
@@ -154,8 +212,7 @@ class SeedImporter(
                 }
             }
 
-            val assetStream = context.assets.open("seed/vocabulary_seed.json")
-            val reader = JsonReader(InputStreamReader(assetStream, "UTF-8"))
+            val reader = JsonReader(InputStreamReader(inputStream, "UTF-8"))
 
             val categories = mutableListOf<CategoryEntity>()
             val concepts = mutableListOf<ConceptEntity>()
@@ -363,6 +420,10 @@ class SeedImporter(
             }
             reader.endObject()
             reader.close()
+
+            if (concepts.isEmpty() || contents.isEmpty()) {
+                throw IllegalStateException("Seed payload contains no valid vocabulary concepts")
+            }
 
             onProgress(0.45f, context.getString(R.string.seed_categorizing_topics))
 
@@ -722,14 +783,17 @@ class SeedImporter(
                 }
 
                 ensureDefaultAchievements()
-                settingsDao.setSetting(SettingEntity("seedImported", "true"))
-                settingsDao.setSetting(SettingEntity("seedVersion", CURRENT_SEED_VERSION))
+                settingsDao.setSetting(SettingEntity(SETTING_SEED_IMPORTED, "true"))
+                settingsDao.setSetting(SettingEntity(SETTING_SEED_VERSION, targetSeedVersion))
+                settingsDao.setSetting(SettingEntity(SETTING_SEED_REVISION, targetSeedRevision.toString()))
             }
 
             onProgress(1.0f, context.getString(R.string.seed_import_completed))
+            Result.success(concepts.size)
         } catch (e: Exception) {
             e.printStackTrace()
             ensureDefaultAchievements()
+            Result.failure(e)
         }
     }
 

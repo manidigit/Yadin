@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "seedRevision": 120,
+  "seedVersion": "13342_v2.3.1",
+  "conceptCount": 13342,
+  "updatedAt": "2026-11-26",
+  "sizeBytes": 3924030,
+  "sha256": "c69bf0fbf372f423d3449dc92e8311738ba314893d35bddb8fced120f0903712",
+  "compressed": true,
+  "downloadUrl": "https://raw.githubusercontent.com/manidigit/Yadin/main/seed/vocabulary_seed.json.gz",
+  "changelogFa": "نسخه پایه بانک واژگان آنلاین با ۱۳٬۳۴۲ واژه، ۲۸٬۸۰۸ معنی فارسی و طبقه‌بندی متوازن سطح سختی.",
+  "changelogEn": "Baseline online vocabulary database with 13,342 concepts, 28,808 Persian meanings, and balanced difficulty classification."
+}

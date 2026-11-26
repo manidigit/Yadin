@@ -17,26 +17,30 @@
 
 ### ۲. به‌روزرسانی شماره نسخه برنامه (App Versioning)
 - [x] افزایش و بروزرسانی مقادیر در `build.gradle.kts`:
-  - `versionCode`: افزایش عدد صحیح به میزان ۱ واحد (۱۲۰).
-  - `versionName`: به روزرسانی به نسخه معنایی جدید (2.3.1).
+  - `versionCode`: افزایش عدد صحیح به میزان ۱ واحد (۱۲۱).
+  - `versionName`: به روزرسانی به نسخه معنایی جدید (2.4.0).
 
-### ۳. همگام‌سازی مستندات اصلی (`README.md` و `docs/Yadin-Specification1-1.md`)
+### ۳. همگام‌سازی بسته آنلاین بانک واژگان (در صورت تغییر `vocabulary_seed.json`)
+- [x] اجرای `gradle packageRemoteSeed` با افزایش `seedRevision` جهت به‌روزرسانی هم‌زمان `seed/vocabulary_seed.json.gz` و `seed/seed_manifest.json` و تأیید با تست واحد `RemoteSeedUpdateTest`.
+
+### ۴. همگام‌سازی مستندات اصلی (`README.md` و `docs/Yadin-Specification1-1.md`)
 - [x] به روزرسانی شماره نسخه اجرایی منطبق در صدر فایل `README.md` و `docs/Yadin-Specification1-1.md`.
 - [x] اضافه کردن قابلیت‌های جدید، اصلاحات معماری، و رفع باگ‌ها در بخش‌های مرتبط.
 - [x] اطمینان از به روز بودن راهنمای ساخت، ساختار پروژه، و ویژگی‌های برنامه.
 
-### ۴. ثبت تاریخچه تغییرات در `docs/CHANGELOG.md`
+### ۵. ثبت تاریخچه تغییرات در `docs/CHANGELOG.md`
 - [x] ایجاد بخش جدید برای نسخه منتشرشده با درج تاریخ شمسی/میلادی.
 - [x] ثبت تفکیکی تغییرات در بخش‌های: **ویژگی‌های جدید (Features)**، **اصلاحات و باگ‌زدایی (Fixes)**، و **به‌روزرسانی مستندات (Documentation)**.
 
-### ۵. بررسی متادیتای پروژه (`metadata.json`)
+### ۶. بررسی متادیتای پروژه (`metadata.json`)
 - [x] همگام بودن نام و توضیحات پروژه در `metadata.json` با منابع متنی برنامه (`res/values/strings.xml`).
 
 ---
 
 ## 🔄 خلاصه دستورالعمل اجرایی سریع برای توسعه‌دهنده / هوش مصنوعی:
 1. **اعمال تغییرات کد:** اصلاح کدهای `.kt` و واکشی استثناها در UI/ViewModel.
-2. **ارزیابی ساخت:** اجرای `compile_applet` تا دریافت تایید ساخت موفق بدون خطا.
-3. **ارتقای نسخه:** افزایش `versionCode` و `versionName` در `build.gradle.kts`.
-4. **به‌روزرسانی همزمان اسناد:** آپدیت کامل `README.md` و `docs/Yadin-Specification1-1.md` و `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md`.
+2. **همگام‌سازی بسته آنلاین واژگان (در صورت تغییر دیتابیس):** اجرای `gradle packageRemoteSeed` برای تولید `seed/vocabulary_seed.json.gz` و `seed/seed_manifest.json`.
+3. **ارزیابی ساخت و تست:** اجرای `compile_applet` و `gradle :app:testDebugUnitTest` تا دریافت تایید ساخت موفق بدون خطا.
+4. **ارتقای نسخه:** افزایش `versionCode` و `versionName` در `build.gradle.kts`.
+5. **به‌روزرسانی همزمان اسناد:** آپدیت کامل `README.md` و `docs/Yadin-Specification1-1.md` و `docs/CHANGELOG.md` و `docs/RELEASE_ROUTINE_CHECKLIST.md`.
 

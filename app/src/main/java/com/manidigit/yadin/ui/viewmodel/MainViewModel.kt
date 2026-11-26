@@ -14,9 +14,11 @@ import com.manidigit.yadin.data.repository.BackupExportFormat
 import com.manidigit.yadin.data.repository.BackupOptions
 import com.manidigit.yadin.data.repository.BackupRepository
 import com.manidigit.yadin.data.repository.BackupType
+import com.manidigit.yadin.data.repository.RemoteSeedUpdateRepository
 import com.manidigit.yadin.data.repository.ReviewFilters
 import com.manidigit.yadin.data.repository.ReviewRepository
 import com.manidigit.yadin.data.repository.SeedImporter
+import com.manidigit.yadin.data.repository.SeedUpdateState
 import com.manidigit.yadin.data.repository.SettingsRepository
 import com.manidigit.yadin.data.repository.VocabularyRepository
 import com.manidigit.yadin.domain.algorithm.Sm2Quality
@@ -104,11 +106,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         db.achievementDao()
     )
 
+    private val remoteSeedUpdateRepo = RemoteSeedUpdateRepository(application, seedImporter, backupRepo)
+
     // --- زیر-ویومدل‌های تفکیک‌شده طبق اصول SOLID (ISS-27) ---
     val reviewVm = ReviewViewModel(reviewRepo, viewModelScope, application)
     val libraryVm = LibraryViewModel(vocabularyRepo, viewModelScope, application)
     val statisticsVm = StatisticsViewModel(vocabularyRepo, reviewRepo, viewModelScope)
-    val settingsVm = SettingsViewModel(application, settingsRepo, backupRepo, viewModelScope)
+    val settingsVm = SettingsViewModel(
+        application = application,
+        settingsRepo = settingsRepo,
+        backupRepo = backupRepo,
+        externalScope = viewModelScope,
+        seedImporter = seedImporter,
+        remoteSeedUpdateRepo = remoteSeedUpdateRepo
+    )
 
     // ==========================================
     // ناوبری و وضعیت صفحات
@@ -219,6 +230,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val backupLastResult: StateFlow<String?> get() = settingsVm.backupLastResult
     val isBackupError: StateFlow<Boolean> get() = settingsVm.isBackupError
     val internalBackups: StateFlow<List<File>> get() = settingsVm.internalBackups
+    val installedSeedVersion: StateFlow<String> get() = settingsVm.installedSeedVersion
+    val installedSeedRevision: StateFlow<Int> get() = settingsVm.installedSeedRevision
+    val seedUpdateState: StateFlow<SeedUpdateState> get() = settingsVm.seedUpdateState
 
     init {
         initializeDatabase()
@@ -242,6 +256,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _currentScreen.value = Screen.Home
             }
             statisticsVm.refreshStatistics()
+            settingsVm.refreshInstalledSeedInfo()
             loadRecentWords()
             viewModelScope.launch {
                 settingsVm.appLanguageDirection.collect { dir ->
@@ -549,7 +564,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun loadInternalBackups() = settingsVm.loadInternalBackups()
     fun restoreBackup(jsonString: String, isReplace: Boolean) {
         settingsVm.restoreBackup(jsonString, isReplace) {
+            settingsVm.refreshInstalledSeedInfo()
+            statisticsVm.refreshStatistics()
             loadRecentWords()
         }
     }
+
+    // ==========================================
+    // متدهای به‌روزرسانی آنلاین بانک واژگان
+    // ==========================================
+    fun checkForSeedUpdate() = settingsVm.checkForSeedUpdate()
+
+    fun applyAvailableSeedUpdate() {
+        settingsVm.applyAvailableSeedUpdate {
+            statisticsVm.refreshStatistics()
+            loadRecentWords()
+        }
+    }
+
+    fun dismissSeedUpdateState() = settingsVm.dismissSeedUpdateState()
 }
